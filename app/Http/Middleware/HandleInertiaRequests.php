@@ -45,6 +45,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'flash' => [
+                'ticket_number' => fn () => $request->session()->get('ticket_number'),
+            ],
         ]);
     }
 }

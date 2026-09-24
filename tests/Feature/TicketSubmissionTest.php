@@ -1,0 +1,161 @@
+<?php
+
+use App\Models\Channel;
+use App\Models\Ticket;
+use App\Models\TicketCounter;
+
+beforeEach(function () {
+    // Seed channel yang diperlukan untuk FK constraint
+    Channel::create([
+        'id' => 1,
+        'name' => 'Website',
+        'slug' => 'website',
+        'sort_order' => 1,
+        'is_active' => true,
+    ]);
+
+    Ticket::query()->delete();
+    TicketCounter::query()->delete();
+});
+
+it('can submit a pengaduan ticket', function () {
+    $response = $this->post(route('tickets.store'), [
+        'classification' => 'pengaduan',
+        'reporter_name' => 'Ahmad Fauzi',
+        'reporter_email' => 'ahmad@test.com',
+        'reporter_wa' => '08123456789',
+        'content' => 'Jalan rusak parah di daerah kami sudah 3 bulan.',
+        'tanggal_kejadian' => '2026-09-20',
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('ticket_number');
+
+    $this->assertDatabaseCount('tickets', 1);
+
+    $ticket = Ticket::first();
+    expect($ticket->classification)->toBe('pengaduan')
+        ->and($ticket->reporter_name)->toBe('Ahmad Fauzi')
+        ->and($ticket->reporter_email)->toBe('ahmad@test.com')
+        ->and($ticket->status)->toBe('baru')
+        ->and($ticket->is_read)->toBeFalse()
+        ->and($ticket->source_app)->toBe('web')
+        ->and($ticket->ticket_number)->toStartWith('L-1400/');
+});
+
+it('can submit an aspirasi ticket', function () {
+    $response = $this->post(route('tickets.store'), [
+        'classification' => 'aspirasi',
+        'content' => 'Mohon diadakan pelatihan digital untuk UMKM di daerah kami.',
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('ticket_number');
+
+    $ticket = Ticket::first();
+    expect($ticket->classification)->toBe('aspirasi')
+        ->and($ticket->ticket_number)->toStartWith('A-1400/');
+});
+
+it('can submit a permintaan informasi ticket', function () {
+    $response = $this->post(route('tickets.store'), [
+        'classification' => 'permintaan_informasi',
+        'content' => 'Saya ingin mengetahui prosedur pengurusan IMB.',
+    ]);
+
+    $response->assertRedirect();
+
+    $ticket = Ticket::first();
+    expect($ticket->classification)->toBe('permintaan_informasi')
+        ->and($ticket->ticket_number)->toStartWith('I-1400/');
+});
+
+it('generates sequential ticket numbers within same period', function () {
+    $this->post(route('tickets.store'), [
+        'classification' => 'pengaduan',
+        'content' => 'Laporan pertama untuk test nomor urut.',
+        'tanggal_kejadian' => '2026-09-20',
+    ]);
+
+    $this->post(route('tickets.store'), [
+        'classification' => 'aspirasi',
+        'content' => 'Aspirasi kedua untuk test nomor urut.',
+    ]);
+
+    $this->post(route('tickets.store'), [
+        'classification' => 'permintaan_informasi',
+        'content' => 'Permintaan ketiga untuk test nomor urut.',
+    ]);
+
+    $tickets = Ticket::orderBy('sequence')->get();
+    expect($tickets)->toHaveCount(3)
+        ->and($tickets[0]->sequence)->toBe(1)
+        ->and($tickets[1]->sequence)->toBe(2)
+        ->and($tickets[2]->sequence)->toBe(3);
+});
+
+it('validates classification is required', function () {
+    $response = $this->post(route('tickets.store'), [
+        'content' => 'Some content here for validation.',
+    ]);
+
+    $response->assertSessionHasErrors('classification');
+});
+
+it('validates content is required', function () {
+    $response = $this->post(route('tickets.store'), [
+        'classification' => 'pengaduan',
+        'tanggal_kejadian' => '2026-09-20',
+    ]);
+
+    $response->assertSessionHasErrors('content');
+});
+
+it('validates content minimum length', function () {
+    $response = $this->post(route('tickets.store'), [
+        'classification' => 'pengaduan',
+        'content' => 'pendek',
+        'tanggal_kejadian' => '2026-09-20',
+    ]);
+
+    $response->assertSessionHasErrors('content');
+});
+
+it('validates invalid classification is rejected', function () {
+    $response = $this->post(route('tickets.store'), [
+        'classification' => 'invalid_type',
+        'content' => 'Some content for invalid classification test.',
+    ]);
+
+    $response->assertSessionHasErrors('classification');
+});
+
+it('caches ticket data in redis after creation', function () {
+    $this->post(route('tickets.store'), [
+        'classification' => 'pengaduan',
+        'content' => 'Laporan untuk test caching di Redis.',
+        'tanggal_kejadian' => '2026-09-20',
+    ]);
+
+    $ticket = Ticket::first();
+    $cached = cache("ticket:{$ticket->ticket_number}");
+
+    expect($cached)->not->toBeNull()
+        ->and($cached['ticket_number'])->toBe($ticket->ticket_number)
+        ->and($cached['classification'])->toBe('pengaduan')
+        ->and($cached['status'])->toBe('baru');
+});
+
+it('allows optional reporter fields to be empty', function () {
+    $response = $this->post(route('tickets.store'), [
+        'classification' => 'aspirasi',
+        'content' => 'Aspirasi tanpa data pelapor sama sekali.',
+    ]);
+
+    $response->assertRedirect();
+
+    $ticket = Ticket::first();
+    expect($ticket->reporter_name)->toBeNull()
+        ->and($ticket->reporter_email)->toBeNull()
+        ->and($ticket->reporter_wa)->toBeNull();
+});
