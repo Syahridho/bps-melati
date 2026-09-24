@@ -11,17 +11,9 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import { BookOpen, ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, Menu, Search } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutGrid,
-    },
-];
 
 const rightNavItems: NavItem[] = [
     {
@@ -46,6 +38,16 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
     const getInitials = useInitials();
+    const dashboardUrl = auth.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/operator';
+    const mainNavItems: NavItem[] =
+        auth.user.role === 'admin'
+            ? [
+                  { title: 'Dashboard', url: '/dashboard/admin', icon: LayoutGrid },
+                  { title: 'Input Data', url: '/dashboard/admin/input-data', icon: FilePlus2 },
+                  { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox },
+                  { title: 'Laporan Selesai', url: '/dashboard/admin/laporan-selesai', icon: ClipboardList },
+              ]
+            : [{ title: 'Dashboard', url: '/dashboard/operator', icon: LayoutGrid }];
     return (
         <>
             <div className="border-sidebar-border/80 border-b">
@@ -58,7 +60,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                     <Menu className="h-5 w-5" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="flex h-full w-64 flex-col items-stretch justify-between bg-sidebar">
+                            <SheetContent side="left" className="bg-sidebar flex h-full w-64 flex-col items-stretch justify-between">
                                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                                 <SheetHeader className="flex justify-start text-left">
                                     <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />
@@ -94,7 +96,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                         </Sheet>
                     </div>
 
-                    <Link href="/dashboard" prefetch className="flex items-center space-x-2">
+                    <Link href={dashboardUrl} prefetch className="flex items-center space-x-2">
                         <AppLogo />
                     </Link>
 
