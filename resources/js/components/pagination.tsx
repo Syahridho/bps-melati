@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -36,7 +36,6 @@ export function Pagination({
     from,
     to,
     total,
-    currentPage,
     lastPage,
     perPage = 10,
     onPerPageChange,

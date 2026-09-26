@@ -132,7 +132,7 @@ export default function Welcome() {
 
             reset();
         }
-    }, [flash?.ticket_number]);
+    }, [flash?.ticket_number, reset]);
 
     function classificationLabel(value: ClassificationType): string {
         switch (value) {

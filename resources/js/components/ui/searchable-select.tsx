@@ -53,7 +53,7 @@ export function SearchableSelect({
         setSearchQuery('');
     };
 
-    const handleClear = (e: React.MouseEvent) => {
+    const handleClear = (e: React.MouseEvent | React.KeyboardEvent) => {
         e.stopPropagation();
         onChange('');
         setSearchQuery('');
@@ -80,7 +80,7 @@ export function SearchableSelect({
                             onClick={handleClear}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
-                                    handleClear(e as any);
+                                    handleClear(e);
                                 }
                             }}
                             className="rounded-full p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground"

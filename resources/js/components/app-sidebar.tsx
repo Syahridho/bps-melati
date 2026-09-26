@@ -39,6 +39,11 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
         {
+            title: 'Kelola Operator',
+            url: '/dashboard/admin/operator',
+            icon: Users,
+        },
+        {
             title: 'Input Data',
             url: '/dashboard/admin/input-data',
             icon: FilePlus2,
@@ -49,11 +54,13 @@ export function AppSidebar() {
             icon: Inbox,
             badge: unreadCount > 0 ? unreadCount : undefined,
         },
+        
         {
             title: 'Laporan Selesai',
             url: '/dashboard/admin/laporan-selesai',
             icon: ClipboardList,
         },
+       
         {
             title: 'Rekap',
             url: '/dashboard/admin/rekap-bulanan',
@@ -78,11 +85,7 @@ export function AppSidebar() {
             url: '/dashboard/admin/pengaturan',
             icon: Settings,
         },
-        {
-            title: 'Kelola Operator',
-            url: '/dashboard/admin/operator',
-            icon: Users,
-        },
+       
     ];
 
     const mainNavItems = auth.user.role === 'admin' ? adminNavItems : operatorNavItems;

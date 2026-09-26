@@ -219,7 +219,7 @@ export default function Show() {
             const timer = setTimeout(() => setSuccessMessage(null), 5000);
             return () => clearTimeout(timer);
         }
-    }, [flash]);
+    }, [flash, reset]);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) return;
