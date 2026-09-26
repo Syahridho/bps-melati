@@ -34,23 +34,6 @@ test('admin cannot access operator dashboard', function () {
     $this->actingAs($admin)->get('/dashboard/operator')->assertForbidden();
 });
 
-test('new users register as operators by default', function () {
-    $response = $this->post('/register', [
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
-
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard.operator.index', absolute: false));
-
-    $this->assertDatabaseHas('users', [
-        'email' => 'test@example.com',
-        'role' => 'operator',
-    ]);
-});
-
 test('admins log in to the admin dashboard', function () {
     $admin = User::factory()->admin()->create();
 

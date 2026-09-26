@@ -9,11 +9,19 @@ class SettingSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('settings')->insertOrIgnore([
-            'key' => 'nama_penanda_tangan',
-            'value' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $settings = [
+            ['key' => 'nama_penanda_tangan', 'value' => null],
+            ['key' => 'jabatan_penanda_tangan', 'value' => 'KETUA TIM PENGADUAN'],
+            ['key' => 'kota_penanda_tangan', 'value' => 'Pekanbaru'],
+        ];
+
+        foreach ($settings as $setting) {
+            DB::table('settings')->insertOrIgnore([
+                'key' => $setting['key'],
+                'value' => $setting['value'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

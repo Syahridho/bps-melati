@@ -62,7 +62,7 @@ class DashboardTest extends TestCase
     {
         $this->actingAs(User::factory()->operator()->create());
 
-        $this->get(route('dashboard.admin.input-data.create'))->assertForbidden();
+        $this->get(route('dashboard.admin.input-data.index'))->assertForbidden();
         $this->get(route('dashboard.admin.laporan-masuk.index'))->assertForbidden();
         $this->get(route('dashboard.admin.laporan-selesai.index'))->assertForbidden();
         $this->get(route('dashboard.admin.rekap-bulanan.index'))->assertForbidden();
@@ -74,7 +74,7 @@ class DashboardTest extends TestCase
     {
         $this->actingAs(User::factory()->admin()->create());
 
-        $this->get(route('dashboard.admin.input-data.create'))->assertOk();
+        $this->get(route('dashboard.admin.input-data.index'))->assertOk();
         $this->get(route('dashboard.admin.laporan-masuk.index'))->assertOk();
         $this->get(route('dashboard.admin.laporan-selesai.index'))->assertOk();
         $this->get(route('dashboard.admin.rekap-bulanan.index'))->assertOk();

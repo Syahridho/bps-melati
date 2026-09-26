@@ -3,6 +3,7 @@ import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
+    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarMenuSub,
@@ -25,7 +26,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
     const page = usePage();
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupLabel>Menu</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) =>
                     item.items?.length ? (
@@ -61,6 +62,11 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                     <span>{item.title}</span>
                                 </Link>
                             </SidebarMenuButton>
+                            {item.badge != null && item.badge > 0 && (
+                                <SidebarMenuBadge className="bg-black !text-white">
+                                    {item.badge > 99 ? '99+' : item.badge}
+                                </SidebarMenuBadge>
+                            )}
                         </SidebarMenuItem>
                     ),
                 )}

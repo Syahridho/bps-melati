@@ -11,22 +11,11 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
+import { useEchoPublic } from '@laravel/echo-react';
 import { BookOpen, ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, Menu, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
-
-const rightNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        url: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        url: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
-    },
-];
 
 const activeItemStyles = 'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
 
@@ -36,15 +25,26 @@ interface AppHeaderProps {
 
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
-    const { auth } = page.props;
+    const { auth, unread_count } = page.props;
     const getInitials = useInitials();
     const dashboardUrl = auth.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/operator';
+
+    const [unreadCount, setUnreadCount] = useState(unread_count ?? 0);
+
+    useEffect(() => {
+        setUnreadCount(unread_count ?? 0);
+    }, [unread_count]);
+
+    useEchoPublic('admin.notifications', '.ticket.created', () => {
+        setUnreadCount((prev) => prev + 1);
+    });
+
     const mainNavItems: NavItem[] =
         auth.user.role === 'admin'
             ? [
                   { title: 'Dashboard', url: '/dashboard/admin', icon: LayoutGrid },
                   { title: 'Input Data', url: '/dashboard/admin/input-data', icon: FilePlus2 },
-                  { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox },
+                  { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox, badge: unreadCount > 0 ? unreadCount : undefined },
                   { title: 'Laporan Selesai', url: '/dashboard/admin/laporan-selesai', icon: ClipboardList },
               ]
             : [{ title: 'Dashboard', url: '/dashboard/operator', icon: LayoutGrid }];
@@ -72,22 +72,12 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                 <Link key={item.title} href={item.url} className="flex items-center space-x-2 font-medium">
                                                     {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
                                                     <span>{item.title}</span>
+                                                    {item.badge != null && item.badge > 0 && (
+                                                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
+                                                            {item.badge > 99 ? '99+' : item.badge}
+                                                        </span>
+                                                    )}
                                                 </Link>
-                                            ))}
-                                        </div>
-
-                                        <div className="flex flex-col space-y-4">
-                                            {rightNavItems.map((item) => (
-                                                <a
-                                                    key={item.title}
-                                                    href={item.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center space-x-2 font-medium"
-                                                >
-                                                    {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
-                                                    <span>{item.title}</span>
-                                                </a>
                                             ))}
                                         </div>
                                     </div>
@@ -116,6 +106,11 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                         >
                                             {item.icon && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}
                                             {item.title}
+                                            {item.badge != null && item.badge > 0 && (
+                                                <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
+                                                    {item.badge > 99 ? '99+' : item.badge}
+                                                </span>
+                                            )}
                                         </Link>
                                         {page.url === item.url && (
                                             <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
@@ -132,26 +127,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                 <Search className="!size-5 opacity-80 group-hover:opacity-100" />
                             </Button>
                             <div className="hidden lg:flex">
-                                {rightNavItems.map((item) => (
-                                    <TooltipProvider key={item.title} delayDuration={0}>
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                                <a
-                                                    href={item.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="group text-accent-foreground ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring ml-1 inline-flex h-9 w-9 items-center justify-center rounded-md bg-transparent p-0 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
-                                                >
-                                                    <span className="sr-only">{item.title}</span>
-                                                    {item.icon && <Icon iconNode={item.icon} className="size-5 opacity-80 group-hover:opacity-100" />}
-                                                </a>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{item.title}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                ))}
+                                
                             </div>
                         </div>
                         <DropdownMenu>

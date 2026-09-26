@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 
 class Ticket extends Model
@@ -14,6 +15,7 @@ class Ticket extends Model
         'sequence',
         'classification',
         'service_type',
+        'satuan_tugas',
         'channel_id',
         'reporter_name',
         'reporter_email',
@@ -46,6 +48,16 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TicketAttachment::class);
+    }
+
+    public function responses(): HasMany
+    {
+        return $this->hasMany(TicketResponse::class);
+    }
+
     /**
      * Mendapatkan prefix tiket berdasarkan klasifikasi.
      *
@@ -62,7 +74,7 @@ class Ticket extends Model
     }
 
     /**
-     * Generate nomor tiket. Format: P-1400/MM/YYYY/NNNN
+     * Generate nomor tiket. Format: P-1400/MMYYYY/NNNN
      * P = Prefix klasifikasi, MM = bulan, YYYY = tahun, NNNN = nomor urut
      *
      * Menggunakan Redis lock untuk mencegah race condition.
@@ -84,7 +96,7 @@ class Ticket extends Model
             [$year, $month] = explode('-', $period);
 
             $ticketNumber = sprintf(
-                '%s-%s/%s/%s/%04d',
+                '%s-%s/%s%s/%04d',
                 $meta['prefix'],
                 $meta['code'],
                 $month,

@@ -1,14 +1,15 @@
+import { Pagination, type PaginatedData } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
-import { Link } from '@inertiajs/react';
-import { Clock, Inbox, Search } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { Inbox, Search } from 'lucide-react';
 import { useState } from 'react';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
-type Status = 'baru' | 'diproses' | 'selesai';
+type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 
 interface Ticket {
     id: number;
@@ -25,8 +26,24 @@ interface Ticket {
     created_at: string;
 }
 
+type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif';
+
 interface LaporanMasukProps {
-    tickets: Ticket[];
+    tickets: PaginatedData<Ticket>;
+    filters: {
+        search: string;
+        filter: FilterTab;
+        per_page: number;
+    };
+    counts: {
+        semua: number;
+        belum_dibaca: number;
+        pengaduan: number;
+        aspirasi: number;
+        permintaan: number;
+        respon_awal: number;
+        respon_substantif: number;
+    };
 }
 
 function classificationLabel(classification: Classification): string {
@@ -55,8 +72,10 @@ function statusLabel(status: Status): string {
     switch (status) {
         case 'baru':
             return 'Baru';
-        case 'diproses':
-            return 'Diproses';
+        case 'respon_awal':
+            return 'Respon Awal';
+        case 'respon_substantif':
+            return 'Respon Substantif';
         case 'selesai':
             return 'Selesai';
     }
@@ -80,72 +99,68 @@ function formatDate(dateStr: string): string {
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 }
 
-type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan';
-
-export default function LaporanMasuk({ tickets }: LaporanMasukProps) {
+export default function LaporanMasuk({ tickets, filters, counts }: LaporanMasukProps) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeFilter, setActiveFilter] = useState<FilterTab>('semua');
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
 
-    const filteredTickets = tickets.filter((ticket) => {
-        const matchesSearch =
-            searchQuery === '' ||
-            ticket.ticket_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (ticket.reporter_name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            ticket.content.toLowerCase().includes(searchQuery.toLowerCase());
+    const handleSearchChange = (query: string) => {
+        setSearchQuery(query);
+        router.get(
+            route('dashboard.admin.laporan-masuk.index'),
+            { filter: filters.filter, search: query, per_page: filters.per_page, page: 1 },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
 
-        let matchesTab = true;
-        switch (activeFilter) {
-            case 'belum_dibaca':
-                matchesTab = !ticket.is_read;
-                break;
-            case 'pengaduan':
-                matchesTab = ticket.classification === 'pengaduan';
-                break;
-            case 'aspirasi':
-                matchesTab = ticket.classification === 'aspirasi';
-                break;
-            case 'permintaan':
-                matchesTab = ticket.classification === 'permintaan_informasi';
-                break;
-        }
+    const handleFilterChange = (tab: FilterTab) => {
+        router.get(
+            route('dashboard.admin.laporan-masuk.index'),
+            { filter: tab, search: searchQuery, per_page: filters.per_page, page: 1 },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
 
-        return matchesSearch && matchesTab;
-    });
-
-    const unreadCount = tickets.filter((t) => !t.is_read).length;
+    const handlePerPageChange = (newPerPage: number) => {
+        router.get(
+            route('dashboard.admin.laporan-masuk.index'),
+            { filter: filters.filter, search: searchQuery, per_page: newPerPage, page: 1 },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
 
     function toggleSelect(id: number) {
         setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
     }
 
     function toggleSelectAll() {
-        if (selectedIds.length === filteredTickets.length) {
+        if (selectedIds.length === tickets.data.length) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(filteredTickets.map((t) => t.id));
+            setSelectedIds(tickets.data.map((t) => t.id));
         }
     }
 
     const filterTabs: { key: FilterTab; label: string; count?: number }[] = [
-        { key: 'semua', label: 'Semua', count: tickets.length },
-        { key: 'belum_dibaca', label: 'Belum Dibaca', count: unreadCount },
-        { key: 'pengaduan', label: 'Pengaduan' },
-        { key: 'aspirasi', label: 'Aspirasi' },
-        { key: 'permintaan', label: 'Permintaan Info' },
+        { key: 'semua', label: 'Semua', count: counts.semua },
+        { key: 'belum_dibaca', label: 'Belum Dibaca', count: counts.belum_dibaca },
+        { key: 'pengaduan', label: 'Pengaduan', count: counts.pengaduan },
+        { key: 'aspirasi', label: 'Aspirasi', count: counts.aspirasi },
+        { key: 'permintaan', label: 'Permintaan Info', count: counts.permintaan },
+        { key: 'respon_awal', label: 'Respon Awal', count: counts.respon_awal },
+        { key: 'respon_substantif', label: 'Respon Substantif', count: counts.respon_substantif },
     ];
 
     return (
         <AdminPage
             title="Laporan Masuk"
             description="Daftar laporan yang baru masuk dan perlu ditindaklanjuti"
-            breadcrumbs={[{ title: 'Laporan Masuk', href: '/dashboard/admin/laporan-masuk' }]}
+            breadcrumbs={[{ title: 'Laporan Masuk', href: route('dashboard.admin.laporan-masuk.index') }]}
         >
             <div className="overflow-hidden rounded-lg border bg-card">
                 {/* Toolbar */}
                 <div className="flex items-center gap-2 border-b px-4 py-3">
                     <Checkbox
-                        checked={filteredTickets.length > 0 && selectedIds.length === filteredTickets.length}
+                        checked={tickets.data.length > 0 && selectedIds.length === tickets.data.length}
                         onCheckedChange={toggleSelectAll}
                     />
                     <div className="relative flex-1">
@@ -154,7 +169,7 @@ export default function LaporanMasuk({ tickets }: LaporanMasukProps) {
                             placeholder="Cari laporan..."
                             className="pl-9"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => handleSearchChange(e.target.value)}
                         />
                     </div>
                 </div>
@@ -164,10 +179,10 @@ export default function LaporanMasuk({ tickets }: LaporanMasukProps) {
                     {filterTabs.map((tab) => (
                         <button
                             key={tab.key}
-                            onClick={() => setActiveFilter(tab.key)}
+                            onClick={() => handleFilterChange(tab.key)}
                             className={cn(
                                 'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
-                                activeFilter === tab.key
+                                filters.filter === tab.key
                                     ? 'bg-primary text-primary-foreground'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                             )}
@@ -177,7 +192,7 @@ export default function LaporanMasuk({ tickets }: LaporanMasukProps) {
                                 <span
                                     className={cn(
                                         'inline-flex size-5 items-center justify-center rounded-full text-[10px]',
-                                        activeFilter === tab.key ? 'bg-primary-foreground/20' : 'bg-muted-foreground/20',
+                                        filters.filter === tab.key ? 'bg-primary-foreground/20' : 'bg-muted-foreground/20',
                                     )}
                                 >
                                     {tab.count}
@@ -188,15 +203,15 @@ export default function LaporanMasuk({ tickets }: LaporanMasukProps) {
                 </div>
 
                 {/* Ticket list */}
-                <div className="max-h-[calc(100vh-20rem)] overflow-y-auto">
-                    {filteredTickets.length === 0 ? (
+                <div className="divide-y">
+                    {tickets.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                             <Inbox className="mb-3 size-10" />
                             <p className="text-sm">Tidak ada laporan ditemukan</p>
                         </div>
                     ) : (
-                        filteredTickets.map((ticket) => (
-                            <div key={ticket.id} className={cn('group border-b transition-colors hover:bg-muted/50', !ticket.is_read && 'bg-primary/[0.03]')}>
+                        tickets.data.map((ticket) => (
+                            <div key={ticket.id} className={cn('group transition-colors hover:bg-muted/50', !ticket.is_read && 'bg-primary/[0.03]')}>
                                 <div className="flex gap-3 px-4 py-3">
                                     <div className="flex shrink-0 flex-col items-center gap-2 pt-0.5" onClick={(e) => e.stopPropagation()}>
                                         <Checkbox checked={selectedIds.includes(ticket.id)} onCheckedChange={() => toggleSelect(ticket.id)} />
@@ -236,14 +251,17 @@ export default function LaporanMasuk({ tickets }: LaporanMasukProps) {
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center gap-2 border-t px-4 py-2 text-xs text-muted-foreground">
-                    <Clock className="size-3.5" />
-                    <span>
-                        {filteredTickets.length} laporan
-                        {selectedIds.length > 0 && <span className="ml-1">· {selectedIds.length} dipilih</span>}
-                    </span>
-                </div>
+                {/* Pagination Footer */}
+                <Pagination
+                    links={tickets.links}
+                    from={tickets.from}
+                    to={tickets.to}
+                    total={tickets.total}
+                    currentPage={tickets.current_page}
+                    lastPage={tickets.last_page}
+                    perPage={filters.per_page}
+                    onPerPageChange={handlePerPageChange}
+                />
             </div>
         </AdminPage>
     );

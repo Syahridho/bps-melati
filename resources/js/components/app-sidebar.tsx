@@ -1,66 +1,12 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid } from 'lucide-react';
+import { useEchoPublic } from '@laravel/echo-react';
+import { ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, Settings, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        url: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        url: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
-    },
-];
-
-const adminNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        url: '/dashboard/admin',
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Input Data',
-        url: '/dashboard/admin/input-data',
-        icon: FilePlus2,
-    },
-    {
-        title: 'Laporan Masuk',
-        url: '/dashboard/admin/laporan-masuk',
-        icon: Inbox,
-    },
-    {
-        title: 'Laporan Selesai',
-        url: '/dashboard/admin/laporan-selesai',
-        icon: ClipboardList,
-    },
-    {
-        title: 'Rekap',
-        url: '/dashboard/admin/rekap-bulanan',
-        icon: Folder,
-        items: [
-            {
-                title: 'Rekap Bulanan',
-                url: '/dashboard/admin/rekap-bulanan',
-            },
-            {
-                title: 'Rekap Semesteran',
-                url: '/dashboard/admin/rekap-semesteran',
-            },
-            {
-                title: 'Rekap Tahunan',
-                url: '/dashboard/admin/rekap-tahunan',
-            },
-        ],
-    },
-];
 
 const operatorNavItems: NavItem[] = [
     {
@@ -71,8 +17,74 @@ const operatorNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, unread_count } = usePage<SharedData>().props;
     const url = auth.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/operator';
+
+    const [unreadCount, setUnreadCount] = useState(unread_count ?? 0);
+
+    // Sinkronkan state lokal dengan prop Inertia saat navigasi
+    useEffect(() => {
+        setUnreadCount(unread_count ?? 0);
+    }, [unread_count]);
+
+    // Dengarkan event real-time tiket baru
+    useEchoPublic('admin.notifications', '.ticket.created', () => {
+        setUnreadCount((prev) => prev + 1);
+    });
+
+    const adminNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            url: '/dashboard/admin',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Input Data',
+            url: '/dashboard/admin/input-data',
+            icon: FilePlus2,
+        },
+        {
+            title: 'Laporan Masuk',
+            url: '/dashboard/admin/laporan-masuk',
+            icon: Inbox,
+            badge: unreadCount > 0 ? unreadCount : undefined,
+        },
+        {
+            title: 'Laporan Selesai',
+            url: '/dashboard/admin/laporan-selesai',
+            icon: ClipboardList,
+        },
+        {
+            title: 'Rekap',
+            url: '/dashboard/admin/rekap-bulanan',
+            icon: Folder,
+            items: [
+                {
+                    title: 'Rekap Bulanan',
+                    url: '/dashboard/admin/rekap-bulanan',
+                },
+                {
+                    title: 'Rekap Semesteran',
+                    url: '/dashboard/admin/rekap-semesteran',
+                },
+                {
+                    title: 'Rekap Tahunan',
+                    url: '/dashboard/admin/rekap-tahunan',
+                },
+            ],
+        },
+        {
+            title: 'Pengaturan',
+            url: '/dashboard/admin/pengaturan',
+            icon: Settings,
+        },
+        {
+            title: 'Kelola Operator',
+            url: '/dashboard/admin/operator',
+            icon: Users,
+        },
+    ];
+
     const mainNavItems = auth.user.role === 'admin' ? adminNavItems : operatorNavItems;
 
     return (
@@ -94,7 +106,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

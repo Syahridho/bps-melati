@@ -14,14 +14,15 @@ interface LoginForm {
     email: string;
     password: string;
     remember: boolean;
+    [key: string]: any;
 }
 
 interface LoginProps {
     status?: string;
-    canResetPassword: boolean;
+    canResetPassword?: boolean;
 }
 
-export default function Login({ status, canResetPassword }: LoginProps) {
+export default function Login({ status, canResetPassword = false }: LoginProps) {
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
         email: '',
         password: '',
@@ -80,7 +81,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     </div>
 
                     <div className="flex items-center space-x-3">
-                        <Checkbox id="remember" name="remember" tabIndex={3} />
+                        <Checkbox
+                            id="remember"
+                            name="remember"
+                            tabIndex={3}
+                            checked={data.remember}
+                            onCheckedChange={(checked) => setData('remember', !!checked)}
+                        />
                         <Label htmlFor="remember">Remember me</Label>
                     </div>
 
@@ -88,13 +95,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Log in
                     </Button>
-                </div>
-
-                <div className="text-muted-foreground text-center text-sm">
-                    Don't have an account?{' '}
-                    <TextLink href={route('register')} tabIndex={5}>
-                        Sign up
-                    </TextLink>
                 </div>
             </form>
 

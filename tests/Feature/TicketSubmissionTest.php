@@ -5,22 +5,23 @@ use App\Models\Ticket;
 use App\Models\TicketCounter;
 
 beforeEach(function () {
-    // Seed channel yang diperlukan untuk FK constraint
-    Channel::create([
-        'id' => 1,
+    Channel::query()->delete();
+    Ticket::query()->delete();
+    TicketCounter::query()->delete();
+
+    $this->channel = Channel::create([
         'name' => 'Website',
         'slug' => 'website',
         'sort_order' => 1,
         'is_active' => true,
     ]);
-
-    Ticket::query()->delete();
-    TicketCounter::query()->delete();
 });
 
 it('can submit a pengaduan ticket', function () {
     $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'pengaduan',
+        'service_type' => 'pst',
         'reporter_name' => 'Ahmad Fauzi',
         'reporter_email' => 'ahmad@test.com',
         'reporter_wa' => '08123456789',
@@ -35,6 +36,7 @@ it('can submit a pengaduan ticket', function () {
 
     $ticket = Ticket::first();
     expect($ticket->classification)->toBe('pengaduan')
+        ->and($ticket->service_type)->toBe('pst')
         ->and($ticket->reporter_name)->toBe('Ahmad Fauzi')
         ->and($ticket->reporter_email)->toBe('ahmad@test.com')
         ->and($ticket->status)->toBe('baru')
@@ -45,7 +47,9 @@ it('can submit a pengaduan ticket', function () {
 
 it('can submit an aspirasi ticket', function () {
     $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'aspirasi',
+        'satuan_tugas' => 'Bagian Umum',
         'content' => 'Mohon diadakan pelatihan digital untuk UMKM di daerah kami.',
     ]);
 
@@ -54,11 +58,13 @@ it('can submit an aspirasi ticket', function () {
 
     $ticket = Ticket::first();
     expect($ticket->classification)->toBe('aspirasi')
+        ->and($ticket->satuan_tugas)->toBe('Bagian Umum')
         ->and($ticket->ticket_number)->toStartWith('A-1400/');
 });
 
 it('can submit a permintaan informasi ticket', function () {
     $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'permintaan_informasi',
         'content' => 'Saya ingin mengetahui prosedur pengurusan IMB.',
     ]);
@@ -72,17 +78,22 @@ it('can submit a permintaan informasi ticket', function () {
 
 it('generates sequential ticket numbers within same period', function () {
     $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'pengaduan',
+        'service_type' => 'pst',
         'content' => 'Laporan pertama untuk test nomor urut.',
         'tanggal_kejadian' => '2026-09-20',
     ]);
 
     $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'aspirasi',
+        'satuan_tugas' => 'Bagian Umum',
         'content' => 'Aspirasi kedua untuk test nomor urut.',
     ]);
 
     $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'permintaan_informasi',
         'content' => 'Permintaan ketiga untuk test nomor urut.',
     ]);
@@ -96,6 +107,7 @@ it('generates sequential ticket numbers within same period', function () {
 
 it('validates classification is required', function () {
     $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'content' => 'Some content here for validation.',
     ]);
 
@@ -104,7 +116,9 @@ it('validates classification is required', function () {
 
 it('validates content is required', function () {
     $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'pengaduan',
+        'service_type' => 'pst',
         'tanggal_kejadian' => '2026-09-20',
     ]);
 
@@ -113,7 +127,9 @@ it('validates content is required', function () {
 
 it('validates content minimum length', function () {
     $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'pengaduan',
+        'service_type' => 'pst',
         'content' => 'pendek',
         'tanggal_kejadian' => '2026-09-20',
     ]);
@@ -123,6 +139,7 @@ it('validates content minimum length', function () {
 
 it('validates invalid classification is rejected', function () {
     $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'invalid_type',
         'content' => 'Some content for invalid classification test.',
     ]);
@@ -132,7 +149,9 @@ it('validates invalid classification is rejected', function () {
 
 it('caches ticket data in redis after creation', function () {
     $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'pengaduan',
+        'service_type' => 'pst',
         'content' => 'Laporan untuk test caching di Redis.',
         'tanggal_kejadian' => '2026-09-20',
     ]);
@@ -148,7 +167,9 @@ it('caches ticket data in redis after creation', function () {
 
 it('allows optional reporter fields to be empty', function () {
     $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
         'classification' => 'aspirasi',
+        'satuan_tugas' => 'Bagian Umum',
         'content' => 'Aspirasi tanpa data pelapor sama sekali.',
     ]);
 
