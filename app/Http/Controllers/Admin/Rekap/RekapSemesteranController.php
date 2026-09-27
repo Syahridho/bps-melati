@@ -73,7 +73,8 @@ class RekapSemesteranController extends Controller
     }
 
     /**
-     * Bangun payload rekap: header bulan, baris kanal per bulan, total, daftar semester.
+     * Bangun payload rekap: header bulan, baris kanal per bulan (dengan breakdown
+     * 4 kolom klasifikasi), total, daftar semester.
      *
      * @return array<string, mixed>
      */
@@ -98,7 +99,10 @@ class RekapSemesteranController extends Controller
             })
             ->all();
 
-        $totals = array_fill_keys($periods, 0);
+        $totals = [];
+        foreach ($periods as $period) {
+            $totals[$period] = array_fill_keys(RekapReport::COLUMNS, 0);
+        }
         $totals['jumlah'] = 0;
 
         foreach ($rows as $row) {
@@ -124,7 +128,8 @@ class RekapSemesteranController extends Controller
     }
 
     /**
-     * Baris kanal dengan jumlah per periode (6 bulan) dan totalnya.
+     * Baris kanal dengan breakdown 4 kolom klasifikasi per periode (6 bulan)
+     * dan totalnya.
      *
      * @param  array<int, array<string, array<string, int>>>  $counts
      * @param  list<string>  $periods
@@ -136,9 +141,17 @@ class RekapSemesteranController extends Controller
         $jumlah = 0;
 
         foreach ($periods as $period) {
-            $total = array_sum($counts[$channel->id][$period] ?? []);
-            $perPeriod[$period] = $total;
-            $jumlah += $total;
+            $periodCounts = $counts[$channel->id][$period] ?? [];
+
+            $values = [];
+
+            foreach (RekapReport::COLUMNS as $column) {
+                $value = (int) ($periodCounts[$column] ?? 0);
+                $values[$column] = $value;
+                $jumlah += $value;
+            }
+
+            $perPeriod[$period] = $values;
         }
 
         return [
@@ -150,13 +163,15 @@ class RekapSemesteranController extends Controller
     }
 
     /**
-     * @param  array<string, int>  $totals
+     * @param  array<string, array<string, int>|int>  $totals
      * @param  array<string, mixed>  $row
      */
     private function accumulate(array &$totals, array $row): void
     {
-        foreach ($row['perPeriod'] as $period => $value) {
-            $totals[$period] += $value;
+        foreach ($row['perPeriod'] as $period => $values) {
+            foreach ($values as $column => $value) {
+                $totals[$period][$column] = ($totals[$period][$column] ?? 0) + $value;
+            }
         }
 
         $totals['jumlah'] += $row['jumlah'];

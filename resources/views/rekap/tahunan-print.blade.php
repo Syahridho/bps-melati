@@ -74,8 +74,18 @@
 
         tbody td.kanal { text-align: left; font-size: 7px; }
 
-        /* Kanal induk tidak dapat dipilih saat input data sehingga selalu kosong. */
-        tbody tr.induk td { font-weight: 700; background: #d1d5db; color: #4b5563; }
+        /* Kanal induk (nama kanal di kolom kiri) selalu tebal & abu-abu */
+        tbody tr.induk td.kanal { font-weight: 700; background: #d1d5db; color: #4b5563; }
+
+        /* Kanal induk yang BERCABANG (mis. Kunjungan Langsung, Sosial Media):
+           kolom data di sebelah kanan dikosongkan & diberi warna abu-abu,
+           karena datanya ditampilkan di baris anak (children) di bawahnya. */
+        tbody tr.induk-cabang td.angka { background: #d1d5db; }
+
+        /* Kanal induk yang TIDAK bercabang (mis. SP4N-LAPOR!, WBS, Email):
+           tidak punya children, sehingga datanya langsung ditampilkan apa adanya,
+           tidak diabukan/dikosongkan. */
+        tbody tr.induk-tunggal td.angka { background: #ffffff; color: #111827; }
 
         tbody tr.anak td.kanal { padding-left: 10px; font-weight: 400; }
 
@@ -108,6 +118,11 @@
     </style>
 </head>
 <body>
+    @php
+        // Urutan HARUS sama dengan RekapReport::COLUMNS di backend.
+        $classificationColumns = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'];
+    @endphp
+
     <div class="kop">
         <img src="{{ asset('logo-bps.webp') }}" alt="Logo BPS">
         <div class="kop-text">
@@ -153,21 +168,35 @@
 
         <tbody>
             @forelse ($rows as $row)
-                <tr class="induk">
+                @php $hasChildren = count($row['children'] ?? []) > 0; @endphp
+                <tr class="induk {{ $hasChildren ? 'induk-cabang' : 'induk-tunggal' }}">
                     <td class="kanal">{{ $row['channel'] }}</td>
-                    @foreach ($months as $month)
-                        @php $total = $row['perPeriod'][$month['key']] ?? 0; @endphp
-                        <td class="angka" colspan="4">{{ $total }}</td>
-                    @endforeach
-                    <td class="angka">{{ $row['jumlah'] }}</td>
+                    @if ($hasChildren)
+                        {{-- Bercabang: data ada di baris anak, jadi kolom kanan dikosongkan --}}
+                        @foreach ($months as $month)
+                            @foreach ($classificationColumns as $column)
+                                <td class="angka"></td>
+                            @endforeach
+                        @endforeach
+                        <td class="angka"></td>
+                    @else
+                        {{-- Tidak bercabang: tampilkan 4 angka klasifikasi per bulan --}}
+                        @foreach ($months as $month)
+                            @foreach ($classificationColumns as $column)
+                                <td class="angka">{{ $row['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                            @endforeach
+                        @endforeach
+                        <td class="angka">{{ $row['jumlah'] }}</td>
+                    @endif
                 </tr>
 
                 @foreach ($row['children'] as $child)
                     <tr class="anak">
                         <td class="kanal">{{ $child['channel'] }}</td>
                         @foreach ($months as $month)
-                            @php $total = $child['perPeriod'][$month['key']] ?? 0; @endphp
-                            <td class="angka" colspan="4">{{ $total }}</td>
+                            @foreach ($classificationColumns as $column)
+                                <td class="angka">{{ $child['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                            @endforeach
                         @endforeach
                         <td class="angka">{{ $child['jumlah'] }}</td>
                     </tr>
@@ -183,7 +212,9 @@
             <tr>
                 <td class="kanal">Total</td>
                 @foreach ($months as $month)
-                    <td colspan="4">{{ $totals[$month['key']] ?? 0 }}</td>
+                    @foreach ($classificationColumns as $column)
+                        <td>{{ $totals[$month['key']][$column] ?? 0 }}</td>
+                    @endforeach
                 @endforeach
                 <td>{{ $totals['jumlah'] }}</td>
             </tr>

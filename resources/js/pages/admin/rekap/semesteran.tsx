@@ -8,16 +8,26 @@ import { router } from '@inertiajs/react';
 import { Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+/** Urutan kolom klasifikasi harus sama dengan RekapReport::COLUMNS di backend. */
+const COLUMN_ORDER = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'] as const;
+
+type ColumnKey = (typeof COLUMN_ORDER)[number];
+
+/** Jumlah per kolom klasifikasi untuk satu bulan. */
+type PeriodCounts = Record<ColumnKey, number>;
+
 interface RekapRow {
     channel: string;
-    perPeriod: Record<string, number>;
+    /** period (Y-m) -> breakdown 4 kolom klasifikasi */
+    perPeriod: Record<string, PeriodCounts>;
     jumlah: number;
     children: RekapRow[];
 }
 
 interface RekapTotals {
     jumlah: number;
-    [period: string]: number;
+    /** period (Y-m) -> breakdown 4 kolom klasifikasi */
+    [period: string]: PeriodCounts | number;
 }
 
 interface MonthColumn {
@@ -41,16 +51,22 @@ interface RekapSemesteranProps {
 
 const SUB_COLUMNS = ['PST', 'Lain', 'Asp', 'Inf'];
 
+/** Ambil nilai kolom klasifikasi untuk sebuah bulan, default 0 kalau belum ada data. */
+function countFor(perPeriod: Record<string, PeriodCounts> | undefined, periodKey: string, column: ColumnKey): number {
+    return perPeriod?.[periodKey]?.[column] ?? 0;
+}
+
 export default function RekapSemesteran({ rows, totals, months, semester, semesterLabel, semesters }: RekapSemesteranProps) {
     const [exportOpen, setExportOpen] = useState(false);
 
-    const printUrl = useMemo(
-        () => `${route('dashboard.admin.rekap-semesteran.print')}?semester=${encodeURIComponent(semester)}`,
-        [semester],
-    );
+    const printUrl = useMemo(() => `${route('dashboard.admin.rekap-semesteran.print')}?semester=${encodeURIComponent(semester)}`, [semester]);
 
     const handleSemesterChange = (value: string) => {
-        router.get(route('dashboard.admin.rekap-semesteran.index'), { semester: value }, { preserveState: true, preserveScroll: true, replace: true });
+        router.get(
+            route('dashboard.admin.rekap-semesteran.index'),
+            { semester: value },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
     };
 
     const handlePrint = () => {
@@ -88,72 +104,73 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
                     </Button>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border bg-card">
+                <div className="bg-card overflow-hidden rounded-lg border">
                     {/* 26 kolom: tabel digulir dua arah dan kolom Kanal tetap terlihat. */}
                     <div className="max-h-[70vh] overflow-auto">
                         <Table className="min-w-[1100px] border-collapse text-[11px]">
-                        <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                                <TableHead rowSpan={2} className="sticky left-0 z-20 border-r bg-muted">
-                                    Kanal
-                                </TableHead>
-                                {months.map((month) => (
-                                    <TableHead key={month.key} colSpan={4} className="border-r text-center font-semibold">
-                                        {month.label}
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                    <TableHead rowSpan={2} className="bg-muted sticky left-0 z-20 border-r">
+                                        Kanal
                                     </TableHead>
-                                ))}
-                                <TableHead rowSpan={2} className="text-center font-semibold">
-                                    Jumlah
-                                </TableHead>
-                            </TableRow>
-                            <TableRow className="hover:bg-transparent">
-                                {months.map((month) =>
-                                    SUB_COLUMNS.map((sub, index) => (
-                                        <TableHead
-                                            key={`${month.key}-${sub}`}
-                                            className={cn('text-center text-[10px] font-normal text-muted-foreground', index === 3 && 'border-r')}
-                                        >
-                                            {sub}
+                                    {months.map((month) => (
+                                        <TableHead key={month.key} colSpan={4} className="border-r text-center font-semibold">
+                                            {month.label}
                                         </TableHead>
-                                    )),
-                                )}
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-                            {rows.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={months.length * 4 + 2} className="h-24 text-center text-muted-foreground">
-                                        Belum ada data untuk periode ini.
-                                    </TableCell>
+                                    ))}
+                                    <TableHead rowSpan={2} className="text-center font-semibold">
+                                        Jumlah
+                                    </TableHead>
                                 </TableRow>
-                            ) : (
-                                rows.map((row) => <RekapRowFragment key={row.channel} row={row} months={months} />)
-                            )}
-                        </TableBody>
+                                <TableRow className="hover:bg-transparent">
+                                    {months.map((month) =>
+                                        SUB_COLUMNS.map((sub, index) => (
+                                            <TableHead
+                                                key={`${month.key}-${sub}`}
+                                                className={cn('text-muted-foreground text-center text-[10px] font-normal', index === 3 && 'border-r')}
+                                            >
+                                                {sub}
+                                            </TableHead>
+                                        )),
+                                    )}
+                                </TableRow>
+                            </TableHeader>
 
-                        <TableFooter>
-                            <TableRow className="bg-muted/60 hover:bg-muted/60">
-                                <TableCell className="sticky left-0 z-10 border-r bg-muted/60 font-semibold">Total</TableCell>
-                                {months.map((month) => (
-                                    <TableCell
-                                        key={month.key}
-                                        colSpan={4}
-                                        className="border-r text-center font-medium tabular-nums"
-                                    >
-                                        {totals[month.key] ?? 0}
-                                    </TableCell>
-                                ))}
-                                <TableCell className="text-center font-medium tabular-nums">{totals.jumlah}</TableCell>
-                            </TableRow>
-                        </TableFooter>
+                            <TableBody>
+                                {rows.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={months.length * 4 + 2} className="text-muted-foreground h-24 text-center">
+                                            Belum ada data untuk periode ini.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    rows.map((row) => <RekapRowFragment key={row.channel} row={row} months={months} />)
+                                )}
+                            </TableBody>
+
+                            <TableFooter>
+                                <TableRow className="bg-muted/60 hover:bg-muted/60">
+                                    <TableCell className="bg-muted/60 sticky left-0 z-10 border-r font-semibold">Total</TableCell>
+                                    {months.map((month) =>
+                                        COLUMN_ORDER.map((column, index) => (
+                                            <TableCell
+                                                key={`${month.key}-${column}`}
+                                                className={cn('text-center font-medium tabular-nums', index === 3 && 'border-r')}
+                                            >
+                                                {(totals[month.key] as PeriodCounts | undefined)?.[column] ?? 0}
+                                            </TableCell>
+                                        )),
+                                    )}
+                                    <TableCell className="text-center font-medium tabular-nums">{totals.jumlah}</TableCell>
+                                </TableRow>
+                            </TableFooter>
                         </Table>
                     </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground">
-                    PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
-                    Baris kanal induk berwarna abu-abu karena tidak dapat dipilih saat input data.
+                <p className="text-muted-foreground text-xs">
+                    PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi. Baris kanal induk
+                    berwarna abu-abu karena tidak dapat dipilih saat input data.
                 </p>
             </div>
 
@@ -162,8 +179,8 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
                     <DialogHeader>
                         <DialogTitle>Export PDF — Rekap Semesteran {semesterLabel}</DialogTitle>
                         <DialogDescription>
-                            Pratinjau di bawah adalah dokumen berorientasi landscape lengkap dengan kop surat. Gunakan tombol Cetak lalu
-                            pilih &ldquo;Save as PDF&rdquo; pada dialog printer untuk menyimpan berkas.
+                            Pratinjau di bawah adalah dokumen berorientasi landscape lengkap dengan kop surat. Gunakan tombol Cetak lalu pilih
+                            &ldquo;Save as PDF&rdquo; pada dialog printer untuk menyimpan berkas.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -189,31 +206,44 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
 }
 
 function RekapRowFragment({ row, months }: { row: RekapRow; months: MonthColumn[] }) {
+    const hasChildren = row.children && row.children.length > 0;
+    const rightColSpan = months.length * 4 + 1;
+
     return (
         <>
-            {/* Kanal induk tidak bisa dipilih saat input data, jadi barisnya
-                selalu kosong dan ditandai abu-abu agar tidak diisi angka. */}
-            <TableRow className="bg-muted/60 font-semibold text-muted-foreground hover:bg-muted/60">
-                <TableCell className="sticky left-0 z-10 border-r bg-muted/60">{row.channel}</TableCell>
-                {months.map((month) => (
-                    <TableCell key={month.key} colSpan={4} className="border-r text-center tabular-nums">
-                        {row.perPeriod[month.key] ?? 0}
-                    </TableCell>
-                ))}
-                <TableCell className="text-center font-medium tabular-nums">{row.jumlah}</TableCell>
+            <TableRow className={cn(hasChildren ? 'bg-muted/60 hover:bg-muted/60 font-semibold' : 'hover:bg-muted/40')}>
+                <TableCell className={cn('sticky left-0 z-10 border-r', hasChildren ? 'bg-muted/60' : 'bg-card')}>{row.channel}</TableCell>
+
+                {hasChildren ? (
+                    <TableCell colSpan={rightColSpan} className="bg-muted/60" />
+                ) : (
+                    <>
+                        {months.map((month) =>
+                            COLUMN_ORDER.map((column, index) => (
+                                <TableCell key={`${month.key}-${column}`} className={cn('text-center tabular-nums', index === 3 && 'border-r')}>
+                                    {countFor(row.perPeriod, month.key, column)}
+                                </TableCell>
+                            )),
+                        )}
+                        <TableCell className="text-center font-medium tabular-nums">{row.jumlah}</TableCell>
+                    </>
+                )}
             </TableRow>
 
-            {row.children.map((child) => (
-                <TableRow key={`${row.channel}-${child.channel}`} className="hover:bg-muted/40">
-                    <TableCell className="sticky left-0 z-10 border-r bg-card pl-6 text-muted-foreground">{child.channel}</TableCell>
-                    {months.map((month) => (
-                        <TableCell key={month.key} colSpan={4} className="border-r text-center tabular-nums">
-                            {child.perPeriod[month.key] ?? 0}
-                        </TableCell>
-                    ))}
-                    <TableCell className="text-center font-medium tabular-nums">{child.jumlah}</TableCell>
-                </TableRow>
-            ))}
+            {hasChildren &&
+                row.children.map((child) => (
+                    <TableRow key={`${row.channel}-${child.channel}`} className="hover:bg-muted/40">
+                        <TableCell className="bg-card text-muted-foreground sticky left-0 z-10 border-r pl-6">{child.channel}</TableCell>
+                        {months.map((month) =>
+                            COLUMN_ORDER.map((column, index) => (
+                                <TableCell key={`${month.key}-${column}`} className={cn('text-center tabular-nums', index === 3 && 'border-r')}>
+                                    {countFor(child.perPeriod, month.key, column)}
+                                </TableCell>
+                            )),
+                        )}
+                        <TableCell className="text-center font-medium tabular-nums">{child.jumlah}</TableCell>
+                    </TableRow>
+                ))}
         </>
     );
 }

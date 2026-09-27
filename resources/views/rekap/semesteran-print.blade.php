@@ -11,7 +11,7 @@
             padding: 18px;
             font-family: Arial, Helvetica, sans-serif;
             color: #111827;
-            font-size: 10px;
+            font-size: 9px;
             background: #ffffff;
         }
 
@@ -55,36 +55,46 @@
         /* Tabel */
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
-        th, td { border: 1px solid #111827; padding: 2px 1px; }
+        th, td { border: 1px solid #111827; padding: 1px 0; }
 
         thead th {
             background: #e5e7eb;
             text-align: center;
             font-weight: 700;
-            font-size: 8px;
-            line-height: 1.15;
+            font-size: 6px;
+            line-height: 1.1;
             word-break: break-word;
         }
 
-        col.kolom-kanal { width: 26%; }
-        col.kolom-angka { width: 2.6%; }
-        col.kolom-jumlah { width: 5.5%; }
+        col.kolom-kanal { width: 14%; }
+        col.kolom-angka { width: 1.7%; }
+        col.kolom-jumlah { width: 3.4%; }
 
-        tbody td.angka { text-align: center; }
+        tbody td.angka { text-align: center; font-size: 7px; }
 
-        tbody td.kanal { text-align: left; font-size: 9px; }
+        tbody td.kanal { text-align: left; font-size: 7px; }
 
-        /* Kanal induk tidak dapat dipilih saat input data sehingga selalu kosong. */
-        tbody tr.induk td { font-weight: 700; background: #d1d5db; color: #4b5563; }
+        /* Kanal induk (nama kanal di kolom kiri) selalu tebal & abu-abu */
+        tbody tr.induk td.kanal { font-weight: 700; background: #d1d5db; color: #4b5563; }
 
-        tbody tr.anak td.kanal { padding-left: 14px; font-weight: 400; }
+        /* Kanal induk yang BERCABANG (mis. Kunjungan Langsung, Sosial Media):
+           kolom data di sebelah kanan dikosongkan & diberi warna abu-abu,
+           karena datanya ditampilkan di baris anak (children) di bawahnya. */
+        tbody tr.induk-cabang td.angka { background: #d1d5db; }
+
+        /* Kanal induk yang TIDAK bercabang (mis. SP4N-LAPOR!, WBS, Email):
+           tidak punya children, sehingga datanya langsung ditampilkan apa adanya,
+           tidak diabukan/dikosongkan. */
+        tbody tr.induk-tunggal td.angka { background: #ffffff; color: #111827; }
+
+        tbody tr.anak td.kanal { padding-left: 10px; font-weight: 400; }
 
         tfoot td {
             font-weight: 700;
             background: #e5e7eb;
             text-align: center;
             text-transform: uppercase;
-            font-size: 9px;
+            font-size: 7px;
         }
 
         tfoot td.kanal { text-align: left; }
@@ -100,7 +110,7 @@
 
         .ttd-box .nama { margin-top: 52px; text-decoration: underline; }
 
-        @page { size: A4 landscape; margin: 10mm; }
+        @page { size: A4 landscape; margin: 8mm; }
 
         @media print {
             body { padding: 0; }
@@ -108,6 +118,11 @@
     </style>
 </head>
 <body>
+    @php
+        // Urutan HARUS sama dengan RekapReport::COLUMNS di backend.
+        $classificationColumns = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'];
+    @endphp
+
     <div class="kop">
         <img src="{{ asset('logo-bps.webp') }}" alt="Logo BPS">
         <div class="kop-text">
@@ -153,21 +168,35 @@
 
         <tbody>
             @forelse ($rows as $row)
-                <tr class="induk">
+                @php $hasChildren = count($row['children'] ?? []) > 0; @endphp
+                <tr class="induk {{ $hasChildren ? 'induk-cabang' : 'induk-tunggal' }}">
                     <td class="kanal">{{ $row['channel'] }}</td>
-                    @foreach ($months as $month)
-                        @php $total = $row['perPeriod'][$month['key']] ?? 0; @endphp
-                        <td class="angka" colspan="4">{{ $total }}</td>
-                    @endforeach
-                    <td class="angka">{{ $row['jumlah'] }}</td>
+                    @if ($hasChildren)
+                        {{-- Bercabang: data ada di baris anak, jadi kolom kanan dikosongkan --}}
+                        @foreach ($months as $month)
+                            @foreach ($classificationColumns as $column)
+                                <td class="angka"></td>
+                            @endforeach
+                        @endforeach
+                        <td class="angka"></td>
+                    @else
+                        {{-- Tidak bercabang: tampilkan 4 angka klasifikasi per bulan --}}
+                        @foreach ($months as $month)
+                            @foreach ($classificationColumns as $column)
+                                <td class="angka">{{ $row['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                            @endforeach
+                        @endforeach
+                        <td class="angka">{{ $row['jumlah'] }}</td>
+                    @endif
                 </tr>
 
                 @foreach ($row['children'] as $child)
                     <tr class="anak">
                         <td class="kanal">{{ $child['channel'] }}</td>
                         @foreach ($months as $month)
-                            @php $total = $child['perPeriod'][$month['key']] ?? 0; @endphp
-                            <td class="angka" colspan="4">{{ $total }}</td>
+                            @foreach ($classificationColumns as $column)
+                                <td class="angka">{{ $child['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                            @endforeach
                         @endforeach
                         <td class="angka">{{ $child['jumlah'] }}</td>
                     </tr>
@@ -183,7 +212,9 @@
             <tr>
                 <td class="kanal">Total</td>
                 @foreach ($months as $month)
-                    <td colspan="4">{{ $totals[$month['key']] ?? 0 }}</td>
+                    @foreach ($classificationColumns as $column)
+                        <td>{{ $totals[$month['key']][$column] ?? 0 }}</td>
+                    @endforeach
                 @endforeach
                 <td>{{ $totals['jumlah'] }}</td>
             </tr>

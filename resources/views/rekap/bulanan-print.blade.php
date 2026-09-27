@@ -73,10 +73,10 @@
 
         tbody td.kanal { text-align: left; }
 
-        /* Kanal induk tidak dapat dipilih saat input data sehingga selalu kosong. */
-        tbody tr.induk td { font-weight: 700; background: #d1d5db; color: #4b5563; }
+        /* Kanal induk (bercabang) tidak dapat dipilih saat input data sehingga di-merge dan abu-abu. */
+        tbody tr.induk td { font-weight: 700; background: #e5e7eb; color: #4b5563; }
 
-        tbody tr.anak td.kanal { padding-left: 20px; }
+        tbody tr.anak td.kanal { padding-left: 20px; color: #4b5563; }
 
         tfoot td { font-weight: 700; background: #e5e7eb; text-align: center; text-transform: uppercase; }
 
@@ -87,9 +87,9 @@
 
         .ttd-box { width: 260px; font-size: 12px; }
 
-        .ttd-box .nama { margin-top: 68px; text-decoration: underline; }
+        .ttd-box .nama { margin-top: 68px; text-decoration: underline; font-weight: 700; }
 
-        @page { size: A4 landscape; margin: 12mm; }
+        @page { size: A4 portrait; margin: 12mm; }
 
         @media print {
             body { padding: 0; font-size: 11px; }
@@ -130,25 +130,39 @@
 
             <tbody>
                 @forelse ($rows as $row)
-                    <tr class="induk">
+                    @php
+                        // Cek apakah kanal ini benar-benar memiliki cabang
+                        $hasChildren = isset($row['children']) && count($row['children']) > 0;
+                    @endphp
+                    
+                    <tr class="{{ $hasChildren ? 'induk' : '' }}">
                         <td class="kanal">{{ $row['channel'] }}</td>
-                        <td class="angka">{{ $row['pengaduan_pst'] }}</td>
-                        <td class="angka">{{ $row['pengaduan_lainnya'] }}</td>
-                        <td class="angka">{{ $row['aspirasi'] }}</td>
-                        <td class="angka">{{ $row['permintaan_informasi'] }}</td>
-                        <td class="angka">{{ $row['jumlah'] }}</td>
+                        
+                        @if ($hasChildren)
+                            <!-- Jika memiliki cabang, sisa 5 kolom dikanan digabung menjadi 1 dan dikosongkan -->
+                            <td colspan="5"></td>
+                        @else
+                            <!-- Jika tidak memiliki cabang, tampilkan datanya -->
+                            <td class="angka">{{ $row['pengaduan_pst'] }}</td>
+                            <td class="angka">{{ $row['pengaduan_lainnya'] }}</td>
+                            <td class="angka">{{ $row['aspirasi'] }}</td>
+                            <td class="angka">{{ $row['permintaan_informasi'] }}</td>
+                            <td class="angka">{{ $row['jumlah'] }}</td>
+                        @endif
                     </tr>
 
-                    @foreach ($row['children'] as $child)
-                        <tr class="anak">
-                            <td class="kanal">{{ $child['channel'] }}</td>
-                            <td class="angka">{{ $child['pengaduan_pst'] }}</td>
-                            <td class="angka">{{ $child['pengaduan_lainnya'] }}</td>
-                            <td class="angka">{{ $child['aspirasi'] }}</td>
-                            <td class="angka">{{ $child['permintaan_informasi'] }}</td>
-                            <td class="angka">{{ $child['jumlah'] }}</td>
-                        </tr>
-                    @endforeach
+                    @if ($hasChildren)
+                        @foreach ($row['children'] as $child)
+                            <tr class="anak">
+                                <td class="kanal">{{ $child['channel'] }}</td>
+                                <td class="angka">{{ $child['pengaduan_pst'] }}</td>
+                                <td class="angka">{{ $child['pengaduan_lainnya'] }}</td>
+                                <td class="angka">{{ $child['aspirasi'] }}</td>
+                                <td class="angka">{{ $child['permintaan_informasi'] }}</td>
+                                <td class="angka">{{ $child['jumlah'] }}</td>
+                            </tr>
+                        @endforeach
+                    @endif
                 @empty
                     <tr>
                         <td class="kosong" colspan="6">Belum ada data untuk periode ini.</td>

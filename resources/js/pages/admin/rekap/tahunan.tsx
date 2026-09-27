@@ -1,23 +1,32 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { router } from '@inertiajs/react';
 import { Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+/** Urutan kolom klasifikasi harus sama dengan RekapReport::COLUMNS di backend. */
+const COLUMN_ORDER = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'] as const;
+
+type ColumnKey = (typeof COLUMN_ORDER)[number];
+
+/** Jumlah per kolom klasifikasi untuk satu bulan. */
+type PeriodCounts = Record<ColumnKey, number>;
+
 interface RekapRow {
     channel: string;
-    perPeriod: Record<string, number>;
+    /** period (Y-m) -> breakdown 4 kolom klasifikasi */
+    perPeriod: Record<string, PeriodCounts>;
     jumlah: number;
     children: RekapRow[];
 }
 
 interface RekapTotals {
     jumlah: number;
-    [period: string]: number;
+    /** period (Y-m) -> breakdown 4 kolom klasifikasi */
+    [period: string]: PeriodCounts | number;
 }
 
 interface MonthColumn {
@@ -41,13 +50,20 @@ interface RekapTahunanProps {
 
 const SUB_COLUMNS = ['PST', 'Lain', 'Asp', 'Inf'];
 
+/** Lebar kolom tetap (px) supaya tabel tidak "ngambang" melebar acak. */
+const KANAL_COL_WIDTH = 176;
+const DATA_COL_WIDTH = 44;
+const JUMLAH_COL_WIDTH = 68;
+
+/** Ambil nilai kolom klasifikasi untuk sebuah bulan, default 0 kalau belum ada data. */
+function countFor(perPeriod: Record<string, PeriodCounts> | undefined, periodKey: string, column: ColumnKey): number {
+    return perPeriod?.[periodKey]?.[column] ?? 0;
+}
+
 export default function RekapTahunan({ rows, totals, months, year, yearLabel, years }: RekapTahunanProps) {
     const [exportOpen, setExportOpen] = useState(false);
 
-    const printUrl = useMemo(
-        () => `${route('dashboard.admin.rekap-tahunan.print')}?year=${encodeURIComponent(year)}`,
-        [year],
-    );
+    const printUrl = useMemo(() => `${route('dashboard.admin.rekap-tahunan.print')}?year=${encodeURIComponent(year)}`, [year]);
 
     const handleYearChange = (value: string) => {
         router.get(route('dashboard.admin.rekap-tahunan.index'), { year: value }, { preserveState: true, preserveScroll: true, replace: true });
@@ -67,7 +83,7 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
                 { title: 'Tahunan', href: '/dashboard/admin/rekap-tahunan' },
             ]}
         >
-            <div className="flex flex-col gap-4">
+            <div className="flex min-w-0 flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-end gap-2">
                     <Select value={year} onValueChange={handleYearChange}>
                         <SelectTrigger className="w-[220px]">
@@ -88,72 +104,102 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
                     </Button>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border bg-card">
-                    {/* 50 kolom: tabel digulir dua arah dan kolom Kanal tetap terlihat. */}
-                    <div className="max-h-[70vh] overflow-auto">
-                        <Table className="min-w-[1800px] border-collapse text-[11px]">
-                        <TableHeader>
-                            <TableRow className="hover:bg-transparent">
-                                <TableHead rowSpan={2} className="sticky left-0 z-20 border-r bg-muted">
-                                    Kanal
-                                </TableHead>
-                                {months.map((month) => (
-                                    <TableHead key={month.key} colSpan={4} className="border-r text-center font-semibold">
-                                        {month.label}
-                                    </TableHead>
-                                ))}
-                                <TableHead rowSpan={2} className="text-center font-semibold">
-                                    Jumlah
-                                </TableHead>
-                            </TableRow>
-                            <TableRow className="hover:bg-transparent">
+                {/* min-w-0 di setiap level pembungkus mencegah tabel lebar memaksa seluruh
+                    halaman melebar (bug flexbox: item flex defaultnya min-width:auto),
+                    supaya scrollbar horizontal muncul tepat di bawah tabel, bukan di bawah halaman. */}
+                <div className="bg-card min-w-0 overflow-hidden rounded-lg border">
+                    <div className="max-h-[70vh] min-w-0 overflow-auto">
+                        <table className="w-full table-fixed border-separate border-spacing-0 text-[11px]">
+                            <colgroup>
+                                <col style={{ width: KANAL_COL_WIDTH }} />
                                 {months.map((month) =>
-                                    SUB_COLUMNS.map((sub, index) => (
-                                        <TableHead
-                                            key={`${month.key}-${sub}`}
-                                            className={cn('text-center text-[10px] font-normal text-muted-foreground', index === 3 && 'border-r')}
-                                        >
-                                            {sub}
-                                        </TableHead>
-                                    )),
+                                    COLUMN_ORDER.map((column) => <col key={`${month.key}-${column}-col`} style={{ width: DATA_COL_WIDTH }} />),
                                 )}
-                            </TableRow>
-                        </TableHeader>
+                                <col style={{ width: JUMLAH_COL_WIDTH }} />
+                            </colgroup>
 
-                        <TableBody>
-                            {rows.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={months.length * 4 + 2} className="h-24 text-center text-muted-foreground">
-                                        Belum ada data untuk periode ini.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                rows.map((row) => <RekapRowFragment key={row.channel} row={row} months={months} />)
-                            )}
-                        </TableBody>
-
-                        <TableFooter>
-                            <TableRow className="bg-muted/60 hover:bg-muted/60">
-                                <TableCell className="sticky left-0 z-10 border-r bg-muted/60 font-semibold">Total</TableCell>
-                                {months.map((month) => (
-                                    <TableCell
-                                        key={month.key}
-                                        colSpan={4}
-                                        className="border-r text-center font-medium tabular-nums"
+                            <thead className="sticky top-0 z-30">
+                                <tr>
+                                    <th
+                                        rowSpan={2}
+                                        className="bg-muted sticky left-0 z-40 border-r border-b px-2 py-2 text-left align-middle font-semibold"
                                     >
-                                        {totals[month.key] ?? 0}
-                                    </TableCell>
-                                ))}
-                                <TableCell className="text-center font-medium tabular-nums">{totals.jumlah}</TableCell>
-                            </TableRow>
-                        </TableFooter>
-                        </Table>
+                                        Kanal
+                                    </th>
+                                    {months.map((month, monthIndex) => (
+                                        <th
+                                            key={month.key}
+                                            colSpan={4}
+                                            className={cn(
+                                                'bg-muted border-b py-1.5 text-center font-semibold',
+                                                monthIndex % 2 === 1 && 'bg-muted/70',
+                                                'border-r-border border-r-2',
+                                            )}
+                                        >
+                                            {month.label}
+                                        </th>
+                                    ))}
+                                    <th rowSpan={2} className="bg-muted border-b py-2 text-center align-middle font-semibold">
+                                        Jumlah
+                                    </th>
+                                </tr>
+                                <tr>
+                                    {months.map((month, monthIndex) =>
+                                        SUB_COLUMNS.map((sub, subIndex) => (
+                                            <th
+                                                key={`${month.key}-${sub}`}
+                                                className={cn(
+                                                    'text-muted-foreground border-b py-1 text-center text-[10px] font-normal',
+                                                    monthIndex % 2 === 1 ? 'bg-muted/70' : 'bg-muted',
+                                                    subIndex === 3 ? 'border-r-border border-r-2' : 'border-r-border/40 border-r',
+                                                )}
+                                            >
+                                                {sub}
+                                            </th>
+                                        )),
+                                    )}
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {rows.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={months.length * 4 + 2} className="text-muted-foreground h-24 text-center">
+                                            Belum ada data untuk periode ini.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    rows.map((row) => <RekapRowFragment key={row.channel} row={row} months={months} />)
+                                )}
+                            </tbody>
+
+                            <tfoot>
+                                <tr className="bg-muted/80">
+                                    <td className="bg-muted/80 sticky left-0 z-10 border-t border-r px-2 py-2 font-semibold">Total</td>
+                                    {months.map((month, monthIndex) =>
+                                        COLUMN_ORDER.map((column, index) => (
+                                            <td
+                                                key={`${month.key}-${column}`}
+                                                className={cn(
+                                                    'border-t py-1.5 text-center font-medium tabular-nums',
+                                                    index === 3 ? 'border-r-border border-r-2' : 'border-r-border/40 border-r',
+                                                    monthIndex % 2 === 1 && 'bg-muted/70',
+                                                )}
+                                            >
+                                                {(totals[month.key] as PeriodCounts | undefined)?.[column] ?? 0}
+                                            </td>
+                                        )),
+                                    )}
+                                    <td className="border-t py-1.5 text-center font-semibold tabular-nums">{totals.jumlah}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground">
-                    PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
-                    Baris kanal induk berwarna abu-abu karena tidak dapat dipilih saat input data.
+                <p className="text-muted-foreground text-xs">
+                    PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi. Baris kanal induk
+                    berwarna abu-abu karena tidak dapat dipilih saat input data.
                 </p>
             </div>
 
@@ -162,8 +208,8 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
                     <DialogHeader>
                         <DialogTitle>Export PDF — Rekap Tahunan {yearLabel}</DialogTitle>
                         <DialogDescription>
-                            Pratinjau di bawah adalah dokumen berorientasi landscape lengkap dengan kop surat. Gunakan tombol Cetak lalu
-                            pilih &ldquo;Save as PDF&rdquo; pada dialog printer untuk menyimpan berkas.
+                            Pratinjau di bawah adalah dokumen berorientasi landscape lengkap dengan kop surat. Gunakan tombol Cetak lalu pilih
+                            &ldquo;Save as PDF&rdquo; pada dialog printer untuk menyimpan berkas.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -189,31 +235,58 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
 }
 
 function RekapRowFragment({ row, months }: { row: RekapRow; months: MonthColumn[] }) {
+    const hasChildren = row.children && row.children.length > 0;
+    const rightColSpan = months.length * 4 + 1;
+
     return (
         <>
-            {/* Kanal induk tidak bisa dipilih saat input data, jadi barisnya
-                selalu kosong dan ditandai abu-abu agar tidak diisi angka. */}
-            <TableRow className="bg-muted/60 font-semibold text-muted-foreground hover:bg-muted/60">
-                <TableCell className="sticky left-0 z-10 border-r bg-muted/60">{row.channel}</TableCell>
-                {months.map((month) => (
-                    <TableCell key={month.key} colSpan={4} className="border-r text-center tabular-nums">
-                        {row.perPeriod[month.key] ?? 0}
-                    </TableCell>
-                ))}
-                <TableCell className="text-center font-medium tabular-nums">{row.jumlah}</TableCell>
-            </TableRow>
+            <tr className={cn(hasChildren ? 'bg-muted/50 font-semibold' : 'hover:bg-muted/30')}>
+                <td className={cn('sticky left-0 z-10 border-r border-b px-2 py-1.5', hasChildren ? 'bg-muted/50' : 'bg-card')}>{row.channel}</td>
 
-            {row.children.map((child) => (
-                <TableRow key={`${row.channel}-${child.channel}`} className="hover:bg-muted/40">
-                    <TableCell className="sticky left-0 z-10 border-r bg-card pl-6 text-muted-foreground">{child.channel}</TableCell>
-                    {months.map((month) => (
-                        <TableCell key={month.key} colSpan={4} className="border-r text-center tabular-nums">
-                            {child.perPeriod[month.key] ?? 0}
-                        </TableCell>
-                    ))}
-                    <TableCell className="text-center font-medium tabular-nums">{child.jumlah}</TableCell>
-                </TableRow>
-            ))}
+                {hasChildren ? (
+                    <td colSpan={rightColSpan} className="bg-muted/50 border-b" />
+                ) : (
+                    <>
+                        {months.map((month, monthIndex) =>
+                            COLUMN_ORDER.map((column, index) => (
+                                <td
+                                    key={`${month.key}-${column}`}
+                                    className={cn(
+                                        'border-b py-1.5 text-center tabular-nums',
+                                        index === 3 ? 'border-r-border border-r-2' : 'border-r-border/40 border-r',
+                                        monthIndex % 2 === 1 && 'bg-muted/20',
+                                    )}
+                                >
+                                    {countFor(row.perPeriod, month.key, column)}
+                                </td>
+                            )),
+                        )}
+                        <td className="border-b py-1.5 text-center font-medium tabular-nums">{row.jumlah}</td>
+                    </>
+                )}
+            </tr>
+
+            {hasChildren &&
+                row.children.map((child) => (
+                    <tr key={`${row.channel}-${child.channel}`} className="hover:bg-muted/30">
+                        <td className="bg-card text-muted-foreground sticky left-0 z-10 border-r border-b py-1.5 pr-2 pl-6">{child.channel}</td>
+                        {months.map((month, monthIndex) =>
+                            COLUMN_ORDER.map((column, index) => (
+                                <td
+                                    key={`${month.key}-${column}`}
+                                    className={cn(
+                                        'border-b py-1.5 text-center tabular-nums',
+                                        index === 3 ? 'border-r-border border-r-2' : 'border-r-border/40 border-r',
+                                        monthIndex % 2 === 1 && 'bg-muted/20',
+                                    )}
+                                >
+                                    {countFor(child.perPeriod, month.key, column)}
+                                </td>
+                            )),
+                        )}
+                        <td className="border-b py-1.5 text-center font-medium tabular-nums">{child.jumlah}</td>
+                    </tr>
+                ))}
         </>
     );
 }

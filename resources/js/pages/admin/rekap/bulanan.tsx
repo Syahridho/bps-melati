@@ -45,10 +45,7 @@ const COLUMNS: { key: keyof RekapTotals; label: string }[] = [
 export default function RekapBulanan({ rows, totals, period, periodLabel, periods }: RekapBulananProps) {
     const [exportOpen, setExportOpen] = useState(false);
 
-    const printUrl = useMemo(
-        () => `${route('dashboard.admin.rekap-bulanan.print')}?period=${encodeURIComponent(period)}`,
-        [period],
-    );
+    const printUrl = useMemo(() => `${route('dashboard.admin.rekap-bulanan.print')}?period=${encodeURIComponent(period)}`, [period]);
 
     const handlePeriodChange = (value: string) => {
         router.get(route('dashboard.admin.rekap-bulanan.index'), { period: value }, { preserveState: true, preserveScroll: true, replace: true });
@@ -70,8 +67,8 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
         >
             <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm text-muted-foreground">
-                        Periode <span className="font-medium text-foreground">{periodLabel}</span>
+                    <p className="text-muted-foreground text-sm">
+                        Periode <span className="text-foreground font-medium">{periodLabel}</span>
                     </p>
 
                     <div className="flex items-center gap-2">
@@ -95,33 +92,36 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border bg-card">
+                <div className="bg-card overflow-hidden rounded-lg border">
                     <Table className="border-collapse text-xs sm:text-sm">
                         <TableHeader>
                             <TableRow className="hover:bg-transparent">
-                                <TableHead colSpan={COLUMNS.length + 1} className="h-auto bg-muted/60 py-2 text-center font-bold uppercase text-foreground">
+                                <TableHead
+                                    colSpan={COLUMNS.length + 1}
+                                    className="bg-muted/60 text-foreground h-auto py-2 text-center font-bold uppercase"
+                                >
                                     Rekap Pengaduan BPS Provinsi Riau
                                 </TableHead>
                             </TableRow>
                             <TableRow className="hover:bg-transparent">
-                                <TableHead colSpan={COLUMNS.length + 1} className="h-auto py-1 text-center font-semibold uppercase text-foreground">
+                                <TableHead colSpan={COLUMNS.length + 1} className="text-foreground h-auto py-1 text-center font-semibold uppercase">
                                     Bulan : {periodLabel}
                                 </TableHead>
                             </TableRow>
                             <TableRow className="hover:bg-transparent">
-                                <TableHead rowSpan={2} className="w-52 border-r text-center align-middle font-semibold text-foreground">
-                                    Kanal
+                                <TableHead rowSpan={2} className="text-foreground w-52 border-r text-center align-middle font-semibold">
+                                    Sumber Kanal
                                 </TableHead>
-                                <TableHead colSpan={2} className="border-r text-center font-semibold text-foreground">
+                                <TableHead colSpan={2} className="text-foreground border-r text-center font-semibold">
                                     Pengaduan
                                 </TableHead>
-                                <TableHead rowSpan={2} className="border-r text-center align-middle font-semibold text-foreground">
+                                <TableHead rowSpan={2} className="text-foreground border-r text-center align-middle font-semibold">
                                     Aspirasi
                                 </TableHead>
-                                <TableHead rowSpan={2} className="border-r text-center align-middle font-semibold text-foreground">
+                                <TableHead rowSpan={2} className="text-foreground border-r text-center align-middle font-semibold">
                                     Permintaan Informasi
                                 </TableHead>
-                                <TableHead rowSpan={2} className="text-center align-middle font-semibold text-foreground">
+                                <TableHead rowSpan={2} className="text-foreground text-center align-middle font-semibold">
                                     Jumlah
                                 </TableHead>
                             </TableRow>
@@ -137,7 +137,7 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
                         <TableBody>
                             {rows.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={COLUMNS.length + 1} className="py-10 text-center text-muted-foreground">
+                                    <TableCell colSpan={COLUMNS.length + 1} className="text-muted-foreground py-10 text-center">
                                         Belum ada data untuk periode ini.
                                     </TableCell>
                                 </TableRow>
@@ -168,8 +168,8 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
                     <DialogHeader>
                         <DialogTitle>Export PDF — Rekap Bulanan {periodLabel}</DialogTitle>
                         <DialogDescription>
-                            Pratinjau di bawah adalah dokumen yang akan dicetak, lengkap dengan kop surat. Gunakan tombol Cetak lalu pilih
-                            &ldquo;Save as PDF&rdquo; pada dialog printer untuk menyimpan berkas.
+                            Pratinjau di bawah adalah dokumen yang akan dicetak, lengkap dengan kop surat. Gunakan tombol Cetak lalu pilih &ldquo;Save
+                            as PDF&rdquo; pada dialog printer untuk menyimpan berkas.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -195,35 +195,39 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
 }
 
 function RekapRowFragment({ row }: { row: RekapRow }) {
+    // Hanya anggap sebagai parent jika benar-benar memiliki children/cabang
+    const hasChildren = row.children && row.children.length > 0;
+
     return (
         <>
-            {/* Kanal induk tidak bisa dipilih saat input data, jadi barisnya
-                selalu kosong dan ditandai abu-abu agar tidak diisi angka. */}
-            <TableRow className="bg-muted/60 font-semibold text-muted-foreground hover:bg-muted/60">
+            <TableRow className={cn(hasChildren ? 'bg-muted/60 font-semibold' : 'hover:bg-muted/40')}>
                 <TableCell className="border-r">{row.channel}</TableCell>
-                {COLUMNS.map((column) => (
-                    <TableCell
-                        key={column.key}
-                        className={cn('text-center tabular-nums', column.key === 'jumlah' && 'bg-muted/40 font-medium')}
-                    >
-                        {row[column.key]}
-                    </TableCell>
-                ))}
+
+                {hasChildren ? (
+                    <TableCell colSpan={COLUMNS.length} className="bg-muted/60" />
+                ) : (
+                    COLUMNS.map((column) => (
+                        <TableCell key={column.key} className={cn('text-center tabular-nums', column.key === 'jumlah' && 'bg-muted/40 font-medium')}>
+                            {row[column.key]}
+                        </TableCell>
+                    ))
+                )}
             </TableRow>
 
-            {row.children.map((child) => (
-                <TableRow key={`${row.channel}-${child.channel}`} className="hover:bg-muted/40">
-                    <TableCell className="border-r pl-8 text-muted-foreground">{child.channel}</TableCell>
-                    {COLUMNS.map((column) => (
-                        <TableCell
-                            key={column.key}
-                            className={cn('text-center tabular-nums', column.key === 'jumlah' && 'bg-muted/40 font-medium')}
-                        >
-                            {child[column.key]}
-                        </TableCell>
-                    ))}
-                </TableRow>
-            ))}
+            {hasChildren &&
+                row.children.map((child) => (
+                    <TableRow key={`${row.channel}-${child.channel}`} className="hover:bg-muted/40">
+                        <TableCell className="text-muted-foreground border-r pl-8">{child.channel}</TableCell>
+                        {COLUMNS.map((column) => (
+                            <TableCell
+                                key={column.key}
+                                className={cn('text-center tabular-nums', column.key === 'jumlah' && 'bg-muted/40 font-medium')}
+                            >
+                                {child[column.key]}
+                            </TableCell>
+                        ))}
+                    </TableRow>
+                ))}
         </>
     );
 }
