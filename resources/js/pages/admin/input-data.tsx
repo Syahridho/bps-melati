@@ -406,7 +406,6 @@ export default function InputData() {
                         from={tickets.from}
                         to={tickets.to}
                         total={tickets.total}
-                        currentPage={tickets.current_page}
                         lastPage={tickets.last_page}
                         perPage={filters.per_page}
                         onPerPageChange={handlePerPageChange}

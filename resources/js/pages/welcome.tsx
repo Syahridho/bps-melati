@@ -208,8 +208,14 @@ export default function Welcome() {
                 <header className="border-b">
                     <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
                         <h1 className="text-lg font-semibold">Melati</h1>
-                        <nav className="flex items-center gap-4">
+                        <nav className="flex items-center gap-3">
                             <AppearanceToggleDropdown />
+                            <Link
+                                href={route('tickets.check')}
+                                className="inline-block rounded-md border border-input bg-background px-3.5 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                            >
+                                Cek Status Tiket
+                            </Link>
                             {auth.user ? (
                                 <Link
                                     href={auth.user.role === 'admin' ? route('dashboard.admin.index') : route('dashboard.operator.index')}
@@ -499,6 +505,12 @@ export default function Welcome() {
                                                 <span>{formatTicketDate(ticket.created_at)}</span>
                                             </div>
                                         </div>
+                                        <Link
+                                            href={route('tickets.check', { ticket_number: ticket.ticket_number })}
+                                            className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium hover:bg-accent"
+                                        >
+                                            Cek Status
+                                        </Link>
                                     </div>
                                 ))}
                             </div>
@@ -532,6 +544,13 @@ export default function Welcome() {
                             <Copy className="mr-2 size-4" />
                             {copied ? 'Tersalin!' : 'Salin Nomor Tiket'}
                         </Button>
+                        {ticketNumber && (
+                            <Button asChild variant="secondary" className="w-full">
+                                <Link href={route('tickets.check', { ticket_number: ticketNumber })}>
+                                    Cek Status Laporan Ini
+                                </Link>
+                            </Button>
+                        )}
                         <Button onClick={handleDialogClose} className="w-full">
                             Tutup
                         </Button>

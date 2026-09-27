@@ -53,6 +53,9 @@ class TicketResponseController extends Controller
             'completed_at' => $ticket->completed_at ?? now(),
         ]);
 
+        // Clear cache publik /check di Redis agar langsung update
+        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
+
         // Cache response di Redis selama 24 jam
         $cacheKey = "response:{$response->id}";
         Cache::put($cacheKey, [
