@@ -43,7 +43,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
             ? [
                   { title: 'Dashboard', url: '/dashboard/admin', icon: LayoutGrid },
                   { title: 'Input Data', url: '/dashboard/admin/input-data', icon: FilePlus2 },
-                  { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox, badge: unreadCount > 0 ? unreadCount : undefined },
+                  { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox, badge: unreadCount },
                   { title: 'Laporan Selesai', url: '/dashboard/admin/laporan-selesai', icon: ClipboardList },
               ]
             : [{ title: 'Dashboard', url: '/dashboard/operator', icon: LayoutGrid }];

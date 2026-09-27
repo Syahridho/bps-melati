@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Rekap\RekapSemesteranController;
 use App\Http\Controllers\Admin\Rekap\RekapTahunanController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TicketResponseController;
+use App\Http\Controllers\CheckTicketController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\TicketController;
 use App\Models\Channel;
@@ -42,6 +43,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
+Route::get('/check', CheckTicketController::class)->name('tickets.check');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', function (Request $request) {

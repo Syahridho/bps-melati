@@ -2,10 +2,11 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useEchoPublic } from '@laravel/echo-react';
 import { ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, Settings, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import AppLogo from './app-logo';
 
 const operatorNavItems: NavItem[] = [
@@ -27,9 +28,24 @@ export function AppSidebar() {
         setUnreadCount(unread_count ?? 0);
     }, [unread_count]);
 
-    // Dengarkan event real-time tiket baru
-    useEchoPublic('admin.notifications', '.ticket.created', () => {
+    // Dengarkan event real-time tiket baru di posisi mana saja
+    useEchoPublic('admin.notifications', '.ticket.created', (event: { ticket_number?: string }) => {
         setUnreadCount((prev) => prev + 1);
+
+        if (auth.user.role === 'admin') {
+            const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
+            toast.info(`Laporan Masuk Baru${ticketNum}`, {
+                description: 'Ada laporan baru yang perlu ditindaklanjuti.',
+                action: {
+                    label: 'Lihat',
+                    onClick: () => router.visit(route('dashboard.admin.laporan-masuk.index')),
+                },
+            });
+
+            if (window.location.pathname.startsWith('/dashboard/admin/laporan-masuk')) {
+                router.reload({ preserveScroll: true });
+            }
+        }
     });
 
     const adminNavItems: NavItem[] = [
@@ -52,7 +68,7 @@ export function AppSidebar() {
             title: 'Laporan Masuk',
             url: '/dashboard/admin/laporan-masuk',
             icon: Inbox,
-            badge: unreadCount > 0 ? unreadCount : undefined,
+            badge: unreadCount,
         },
         
         {

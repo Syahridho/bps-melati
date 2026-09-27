@@ -25,7 +25,6 @@ interface PaginationProps {
     from: number | null;
     to: number | null;
     total: number;
-    currentPage: number;
     lastPage: number;
     perPage?: number;
     onPerPageChange?: (perPage: number) => void;
