@@ -46,7 +46,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'unread_count' => fn () => $request->user()?->role === 'admin'
+            'unread_count' => fn () => ($request->user()?->isAdmin() || $request->user()?->isOperator())
                 ? Ticket::where('status', 'baru')->count()
                 : 0,
             'flash' => [

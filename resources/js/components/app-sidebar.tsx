@@ -9,13 +9,6 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import AppLogo from './app-logo';
 
-const operatorNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        url: '/dashboard/operator',
-        icon: LayoutGrid,
-    },
-];
 
 export function AppSidebar() {
     const { auth, unread_count } = usePage<SharedData>().props;
@@ -32,19 +25,21 @@ export function AppSidebar() {
     useEchoPublic('admin.notifications', '.ticket.created', (event: { ticket_number?: string }) => {
         setUnreadCount((prev) => prev + 1);
 
-        if (auth.user.role === 'admin') {
+        if (auth.user.role === 'admin' || auth.user.role === 'operator') {
             const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
+            const targetRoute = auth.user.role === 'admin'
+                ? route('dashboard.admin.laporan-masuk.index')
+                : route('dashboard.operator.laporan-masuk.index');
+
             toast.info(`Laporan Masuk Baru${ticketNum}`, {
                 description: 'Ada laporan baru yang perlu ditindaklanjuti.',
                 action: {
                     label: 'Lihat',
-                    onClick: () => router.visit(route('dashboard.admin.laporan-masuk.index')),
+                    onClick: () => router.visit(targetRoute),
                 },
             });
 
-            if (window.location.pathname.startsWith('/dashboard/admin/laporan-masuk')) {
-                router.reload({ preserveScroll: true });
-            }
+            router.reload({ only: ['tickets', 'unread_count'] });
         }
     });
 
@@ -102,6 +97,51 @@ export function AppSidebar() {
             icon: Settings,
         },
        
+    ];
+
+    const operatorNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            url: '/dashboard/operator',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Input Data',
+            url: '/dashboard/operator/input-data',
+            icon: FilePlus2,
+        },
+        {
+            title: 'Laporan Masuk',
+            url: '/dashboard/operator/laporan-masuk',
+            icon: Inbox,
+            badge: unreadCount,
+        },
+        
+        {
+            title: 'Laporan Selesai',
+            url: '/dashboard/operator/laporan-selesai',
+            icon: ClipboardList,
+        },
+       
+        {
+            title: 'Rekap',
+            url: '/dashboard/operator/rekap-bulanan',
+            icon: Folder,
+            items: [
+                {
+                    title: 'Rekap Bulanan',
+                    url: '/dashboard/operator/rekap-bulanan',
+                },
+                {
+                    title: 'Rekap Semesteran',
+                    url: '/dashboard/operator/rekap-semesteran',
+                },
+                {
+                    title: 'Rekap Tahunan',
+                    url: '/dashboard/operator/rekap-tahunan',
+                },
+            ],
+        },
     ];
 
     const mainNavItems = auth.user.role === 'admin' ? adminNavItems : operatorNavItems;

@@ -1,4 +1,5 @@
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
+import FooterSection from '@/components/footer';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,7 @@ import { CheckCircle2, Clock, Copy, Eye, LoaderCircle, Paperclip, Ticket, X } fr
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 const SATUAN_TUGAS_OPTIONS = [
-    'BPS Provinsi Riau (berkedudukan di Pekanbaru)',
+    'BPS Provinsi Riau',
     'BPS Kabupaten Kuantan Singingi',
     'BPS Kabupaten Indragiri Hulu',
     'BPS Kabupaten Indragiri Hilir',
@@ -203,11 +204,16 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Welcome" />
+            <Head title="Selamat Datang" />
             <div className="min-h-screen bg-background text-foreground">
                 <header className="border-b">
                     <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-                        <h1 className="text-lg font-semibold">Melati</h1>
+                        <div className="flex aspect-square size-10 items-center justify-center rounded-md">
+                            <img src="/logo-melati.webp" alt="Logo BPS Melati" className="h-full w-full object-contain" />
+                        </div>
+                        <div className="ml-1 grid flex-1 text-left text-sm">
+                            <img src="/desc-melati.webp" alt="Logo BPS" className="h-[30px] w-[84px] ml-3" />
+                        </div>
                         <nav className="flex items-center gap-3">
                             <AppearanceToggleDropdown />
                             <Link
@@ -235,7 +241,7 @@ export default function Welcome() {
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-5xl px-6 py-12">
+                <main className="mx-auto max-w-5xl px-6 pt-12 ">
                     <h2 className="mb-2 text-xl font-semibold">Pilih Jenis</h2>
                     <p className="mb-6 text-sm text-muted-foreground">Silakan pilih salah satu jenis berikut.</p>
 
@@ -516,6 +522,7 @@ export default function Welcome() {
                             </div>
                         </div>
                     )}
+                    <FooterSection/>
                 </main>
             </div>
 

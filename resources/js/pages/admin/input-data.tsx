@@ -154,7 +154,8 @@ function isPdfFile(file: File): boolean {
 }
 
 export default function InputData() {
-    const { tickets, channels, filters, counts, flash } = usePage<InputDataPageProps>().props;
+    const { auth, tickets, channels, filters, counts, flash } = usePage<InputDataPageProps>().props;
+    const rolePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);

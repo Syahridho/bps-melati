@@ -9,6 +9,12 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
+        <link rel="icon" href="/logo-melati.ico" sizes="any">
+        <link rel="apple-touch-icon" href="/logo-melati.png">
+
+        <link rel="preload" as="image" href="/logo-melati.webp" type="image/webp">
+        <link rel="preload" as="image" href="/desc-melati.webp" type="image/webp">
+
         @routes
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

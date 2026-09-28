@@ -75,6 +75,19 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware('role:operator')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
         Route::get('/', OperatorDashboardController::class)->name('index');
+        Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
+        Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
+        Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
+        Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
+        Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])->name('laporan-masuk.responses.store');
+        Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
+        Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
+        Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
+        Route::get('rekap-bulanan/print', [RekapBulananController::class, 'print'])->name('rekap-bulanan.print');
+        Route::get('rekap-semesteran', RekapSemesteranController::class)->name('rekap-semesteran.index');
+        Route::get('rekap-semesteran/print', [RekapSemesteranController::class, 'print'])->name('rekap-semesteran.print');
+        Route::get('rekap-tahunan', RekapTahunanController::class)->name('rekap-tahunan.index');
+        Route::get('rekap-tahunan/print', [RekapTahunanController::class, 'print'])->name('rekap-tahunan.print');
     });
 });
 
