@@ -10,8 +10,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { type SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Clock, Copy, Eye, LoaderCircle, Paperclip, Ticket, X } from 'lucide-react';
+import { CheckCircle2, Clock, Copy, Eye, LoaderCircle, Paperclip, Ticket, Trash2, X } from 'lucide-react';
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { PublicStatsSection, type PublicStats } from '@/components/public-stats';
+
+interface WelcomePageProps extends SharedData {
+    flash: {
+        ticket_number?: string;
+    };
+    channels: ChannelGroup[];
+    stats: PublicStats;
+}
 
 const SATUAN_TUGAS_OPTIONS = [
     'BPS Provinsi Riau',
@@ -74,7 +83,7 @@ function formatTicketDate(iso: string): string {
 }
 
 export default function Welcome() {
-    const { auth, flash, channels } = usePage<WelcomePageProps>().props;
+    const { auth, flash, channels, stats } = usePage<WelcomePageProps>().props;
     const [showDialog, setShowDialog] = useState(false);
     const [ticketNumber, setTicketNumber] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
@@ -202,6 +211,19 @@ export default function Welcome() {
         setTicketNumber(null);
     }
 
+    const [ticketToDelete, setTicketToDelete] = useState<StoredTicket | null>(null);
+
+    function handleDeleteTicket() {
+        if (!ticketToDelete) {
+            return;
+        }
+
+        const updated = getStoredTickets().filter((t) => t.ticket_number !== ticketToDelete.ticket_number);
+        localStorage.setItem('melati_tickets', JSON.stringify(updated));
+        setTicketHistory(updated);
+        setTicketToDelete(null);
+    }
+
     return (
         <>
             <Head title="Selamat Datang" />
@@ -242,6 +264,7 @@ export default function Welcome() {
                 </header>
 
                 <main className="mx-auto max-w-5xl px-6 pt-12 ">
+
                     <h2 className="mb-2 text-xl font-semibold">Pilih Jenis</h2>
                     <p className="mb-6 text-sm text-muted-foreground">Silakan pilih salah satu jenis berikut.</p>
 
@@ -502,8 +525,8 @@ export default function Welcome() {
                                 <h3 className="text-lg font-semibold">Riwayat Laporan Anda</h3>
                             </div>
                             <div className="divide-y rounded-lg border">
-                                {[...ticketHistory].reverse().map((ticket, index) => (
-                                    <div key={index} className="flex items-center justify-between px-4 py-3">
+                                {[...ticketHistory].reverse().map((ticket) => (
+                                    <div key={`${ticket.ticket_number}-${ticket.created_at}`} className="flex items-center justify-between px-4 py-3">
                                         <div className="min-w-0">
                                             <p className="font-mono text-sm font-semibold">{ticket.ticket_number}</p>
                                             <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
@@ -511,17 +534,31 @@ export default function Welcome() {
                                                 <span>{formatTicketDate(ticket.created_at)}</span>
                                             </div>
                                         </div>
-                                        <Link
-                                            href={route('tickets.check', { ticket_number: ticket.ticket_number })}
-                                            className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium hover:bg-accent"
-                                        >
-                                            Cek Status
-                                        </Link>
+                                        <div className="ml-2 flex shrink-0 items-center gap-1.5">
+                                            <Link
+                                                href={route('tickets.check', { ticket_number: ticket.ticket_number })}
+                                                className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium hover:bg-accent"
+                                            >
+                                                Cek Status
+                                            </Link>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                title="Hapus dari riwayat"
+                                                onClick={() => setTicketToDelete(ticket)}
+                                            >
+                                                <X className="size-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
+                    <PublicStatsSection stats={stats} />
+
                     <FooterSection/>
                 </main>
             </div>
@@ -596,6 +633,32 @@ export default function Welcome() {
                     <DialogFooter>
                         <Button onClick={() => setPreviewFile(null)} className="w-full sm:w-auto">
                             Tutup
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+
+            {/* Dialog konfirmasi hapus riwayat tiket */}
+            <Dialog open={!!ticketToDelete} onOpenChange={(open) => !open && setTicketToDelete(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-destructive/10">
+                            <Trash2 className="size-8 text-destructive" />
+                        </div>
+                        <DialogTitle className="text-center">Hapus dari Riwayat?</DialogTitle>
+                        <DialogDescription className="text-center">
+                            Nomor tiket <span className="font-mono font-semibold text-foreground">{ticketToDelete?.ticket_number}</span> akan dihapus dari
+                            riwayat di perangkat ini. Pastikan Anda sudah menyimpan nomor tiketnya, karena Anda memerlukannya untuk mengecek status laporan.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter className="flex-col gap-2 sm:flex-col">
+                        <Button variant="destructive" className="w-full" onClick={handleDeleteTicket}>
+                            Ya, Hapus
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={() => setTicketToDelete(null)}>
+                            Batal
                         </Button>
                     </DialogFooter>
                 </DialogContent>

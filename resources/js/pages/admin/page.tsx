@@ -5,8 +5,8 @@ import { Head } from '@inertiajs/react';
 import { type ReactNode } from 'react';
 
 interface AdminPageProps {
-    title: string;
-    description: string;
+    title?: string;
+    description?: string;
     breadcrumbs: BreadcrumbItem[];
     children?: ReactNode;
 }
@@ -16,8 +16,13 @@ export default function AdminPage({ title, description, breadcrumbs, children }:
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={title} />
             <div className="px-4 py-6">
-                <Heading title={title} description={description} />
-                {children ?? <p className="text-muted-foreground text-sm">Halaman {title.toLowerCase()} — konten menyusul.</p>}
+                {title && <Heading title={title} description={description} />}
+
+                {children ?? (
+                    <p className="text-sm text-muted-foreground">
+                        Halaman {title?.toLowerCase() ?? 'ini'} — konten menyusul.
+                    </p>
+                )}
             </div>
         </AppLayout>
     );

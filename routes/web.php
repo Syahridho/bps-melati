@@ -14,6 +14,7 @@ use App\Http\Controllers\CheckTicketController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\TicketController;
 use App\Models\Channel;
+use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -37,8 +38,45 @@ Route::get('/', function () {
             ->all();
     });
 
+    // Statistik publik: total seluruh waktu, key ikut versi supaya otomatis segar saat ada tiket berubah
+    $stats = Cache::remember(
+        'welcome:stats:v'.Cache::get('dashboard:admin:version', 0),
+        now()->addMinutes(10),
+        function () {
+            $summary = Ticket::query()
+                ->selectRaw("
+                    COUNT(*) as total,
+                    SUM(classification = 'pengaduan') as pengaduan,
+                    SUM(classification = 'aspirasi') as aspirasi,
+                    SUM(classification = 'permintaan_informasi') as permintaan_informasi
+                ")
+                ->first();
+
+            // Sub-kanal digabung ke kanal induknya
+            $channelCounts = Ticket::query()
+                ->join('channels as c', 'c.id', '=', 'tickets.channel_id')
+                ->leftJoin('channels as p', 'p.id', '=', 'c.parent_id')
+                ->selectRaw('COALESCE(p.slug, c.slug) as root_slug, COUNT(*) as total')
+                ->groupBy('root_slug')
+                ->pluck('total', 'root_slug');
+
+            return [
+                'total' => (int) $summary->total,
+                'pengaduan' => (int) $summary->pengaduan,
+                'aspirasi' => (int) $summary->aspirasi,
+                'permintaan_informasi' => (int) $summary->permintaan_informasi,
+                'span_lapor' => (int) ($channelCounts['sp4n-lapor'] ?? 0),
+                'sosial_media' => (int) ($channelCounts['sosial-media'] ?? 0),
+                'kunjungan_langsung' => (int) ($channelCounts['kunjungan-langsung'] ?? 0),
+                'wbs' => (int) ($channelCounts['wbs'] ?? 0),
+                'email' => (int) ($channelCounts['email'] ?? 0),
+            ];
+        },
+    );
+
     return Inertia::render('welcome', [
         'channels' => $channels,
+        'stats' => $stats,
     ]);
 })->name('home');
 

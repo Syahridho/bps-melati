@@ -12,7 +12,6 @@ import AppLogo from './app-logo';
 
 export function AppSidebar() {
     const { auth, unread_count } = usePage<SharedData>().props;
-    const url = auth.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/operator';
 
     const [unreadCount, setUnreadCount] = useState(unread_count ?? 0);
 
@@ -152,7 +151,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={url} prefetch>
+                            <Link href={"/"} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

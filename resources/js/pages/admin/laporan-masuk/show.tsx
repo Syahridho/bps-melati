@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -249,9 +250,19 @@ export default function Show() {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
+                toast.success('Tanggapan berhasil dikirim', {
+                    description: 'Status laporan diperbarui dan email terkirim ke pelapor.',
+                });
+            },
+            onError: (errors) => {
+                // tampilkan pesan error pertama dari validasi Laravel
+                const firstError = Object.values(errors)[0];
+                toast.error('Gagal mengirim tanggapan', {
+                    description: firstError ?? 'Periksa kembali isian Anda.',
+                });
             },
         });
-    };
+    };    
 
     return (
         <AdminPage

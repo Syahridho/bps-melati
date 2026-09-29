@@ -58,6 +58,17 @@ class Ticket extends Model
         return $this->hasMany(TicketResponse::class);
     }
 
+    protected static function booted(): void
+    {
+        $bump = function () {
+            Cache::add('dashboard:admin:version', 0);
+            Cache::increment('dashboard:admin:version');
+        };
+
+        static::saved($bump);
+        static::deleted($bump);
+    }
+
     /**
      * Mendapatkan prefix tiket berdasarkan klasifikasi.
      *

@@ -19,6 +19,7 @@
   },
   "iconLibrary": "lucide",
   "registries": {
-    "@launchui": "https://www.launchuicomponents.com/r/{name}.json"
+    "@launchui": "https://www.launchuicomponents.com/r/{name}.json",
+    "@magicui": "https://magicui.design/r/{name}"
   }
 }

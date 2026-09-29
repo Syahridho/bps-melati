@@ -14,12 +14,30 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 
+// Halaman utama dashboard harus cocok persis, kalau tidak akan menyala di semua halaman turunannya
+const EXACT_MATCH_URLS = ['/dashboard/admin', '/dashboard/operator'];
+
+function getPath(url: string): string {
+    return url.split('?')[0].split('#')[0];
+}
+
+function isUrlActive(itemUrl: string, currentUrl: string): boolean {
+    const currentPath = getPath(currentUrl);
+    const itemPath = getPath(itemUrl);
+
+    if (EXACT_MATCH_URLS.includes(itemPath)) {
+        return currentPath === itemPath;
+    }
+
+    return currentPath === itemPath || currentPath.startsWith(itemPath + '/');
+}
+
 function isItemActive(item: NavItem, currentUrl: string): boolean {
-    if (item.url === currentUrl) {
+    if (isUrlActive(item.url, currentUrl)) {
         return true;
     }
 
-    return item.items?.some((subItem) => subItem.url === currentUrl) ?? false;
+    return item.items?.some((subItem) => isUrlActive(subItem.url, currentUrl)) ?? false;
 }
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
@@ -43,7 +61,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                     <SidebarMenuSub>
                                         {item.items.map((subItem) => (
                                             <SidebarMenuSubItem key={subItem.title}>
-                                                <SidebarMenuSubButton asChild isActive={subItem.url === page.url}>
+                                                <SidebarMenuSubButton asChild isActive={isUrlActive(subItem.url, page.url)}>
                                                     <Link href={subItem.url} prefetch>
                                                         <span>{subItem.title}</span>
                                                     </Link>
@@ -56,7 +74,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                         </Collapsible>
                     ) : (
                         <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild isActive={item.url === page.url}>
+                            <SidebarMenuButton asChild isActive={isUrlActive(item.url, page.url)}>
                                 <Link href={item.url} prefetch>
                                     {item.icon && <item.icon />}
                                     <span>{item.title}</span>
