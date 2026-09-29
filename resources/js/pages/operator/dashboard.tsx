@@ -1,7 +1,6 @@
 import { ChartAreaLinear, type TrendPoint } from '@/components/chart-area-linear';
 import { ChartPieDonutText } from '@/components/chart-pie-donut-text';
 import { ChartPieLabel } from '@/components/chart-pie-label';
-import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,7 +80,6 @@ const channelCards: {
     card: string;
     iconWrap: string;
     text: string;
-    bar: string;
 }[] = [
     {
         key: 'span_lapor',
@@ -91,7 +89,6 @@ const channelCards: {
         card: 'border-rose-400/25 bg-rose-400/5',
         iconWrap: 'bg-rose-400/15 text-rose-500 dark:text-rose-400',
         text: 'text-rose-500 dark:text-rose-400',
-        bar: 'bg-rose-400',
     },
     {
         key: 'sosial_media',
@@ -101,7 +98,6 @@ const channelCards: {
         card: 'border-violet-400/25 bg-violet-400/5',
         iconWrap: 'bg-violet-400/15 text-violet-500 dark:text-violet-400',
         text: 'text-violet-500 dark:text-violet-400',
-        bar: 'bg-violet-400',
     },
     {
         key: 'kunjungan_langsung',
@@ -111,7 +107,6 @@ const channelCards: {
         card: 'border-emerald-400/25 bg-emerald-400/5',
         iconWrap: 'bg-emerald-400/15 text-emerald-600 dark:text-emerald-400',
         text: 'text-emerald-600 dark:text-emerald-400',
-        bar: 'bg-emerald-400',
     },
     {
         key: 'wbs',
@@ -121,7 +116,6 @@ const channelCards: {
         card: 'border-amber-300/40 bg-amber-300/5',
         iconWrap: 'bg-amber-300/20 text-amber-600 dark:text-amber-300',
         text: 'text-amber-600 dark:text-amber-300',
-        bar: 'bg-amber-300',
     },
     {
         key: 'email',
@@ -131,7 +125,6 @@ const channelCards: {
         card: 'border-sky-400/25 bg-sky-400/5',
         iconWrap: 'bg-sky-400/15 text-sky-500 dark:text-sky-400',
         text: 'text-sky-500 dark:text-sky-400',
-        bar: 'bg-sky-400',
     },
 ];
 
@@ -293,10 +286,8 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
 
                     {/* Kartu kanal */}
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                        {channelCards.map(({ key, label, desc, icon: Icon, card, iconWrap, text, bar }) => {
+                        {channelCards.map(({ key, label, desc, icon: Icon, card, iconWrap, text }) => {
                             const value = stats[key] ?? 0;
-                            const percent = stats.total > 0 ? Math.round((value / stats.total) * 100) : 0;
-
                             return (
                                 <Card key={key} className={cn('border shadow-xs transition-shadow hover:shadow-sm', card)}>
                                     <CardHeader className="flex flex-row items-center justify-between pb-2">
