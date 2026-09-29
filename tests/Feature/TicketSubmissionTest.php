@@ -1,10 +1,15 @@
 <?php
 
+use App\Events\TicketCreated;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\TicketCounter;
+use Illuminate\Support\Facades\Event;
 
 beforeEach(function () {
+    // Cegah broadcast sungguhan ke Reverb/Pusher (localhost:8080) saat test
+    Event::fake([TicketCreated::class]);
+
     Channel::query()->delete();
     Ticket::query()->delete();
     TicketCounter::query()->delete();
@@ -43,6 +48,8 @@ it('can submit a pengaduan ticket', function () {
         ->and($ticket->is_read)->toBeFalse()
         ->and($ticket->source_app)->toBe('web')
         ->and($ticket->ticket_number)->toStartWith('L-1400/');
+
+    Event::assertDispatched(TicketCreated::class);
 });
 
 it('can submit an aspirasi ticket', function () {
@@ -83,20 +90,20 @@ it('generates sequential ticket numbers within same period', function () {
         'service_type' => 'pst',
         'content' => 'Laporan pertama untuk test nomor urut.',
         'tanggal_kejadian' => '2026-09-20',
-    ]);
+    ])->assertRedirect();
 
     $this->post(route('tickets.store'), [
         'channel_id' => $this->channel->id,
         'classification' => 'aspirasi',
         'satuan_tugas' => 'Bagian Umum',
         'content' => 'Aspirasi kedua untuk test nomor urut.',
-    ]);
+    ])->assertRedirect();
 
     $this->post(route('tickets.store'), [
         'channel_id' => $this->channel->id,
         'classification' => 'permintaan_informasi',
         'content' => 'Permintaan ketiga untuk test nomor urut.',
-    ]);
+    ])->assertRedirect();
 
     $tickets = Ticket::orderBy('sequence')->get();
     expect($tickets)->toHaveCount(3)
@@ -154,7 +161,7 @@ it('caches ticket data in redis after creation', function () {
         'service_type' => 'pst',
         'content' => 'Laporan untuk test caching di Redis.',
         'tanggal_kejadian' => '2026-09-20',
-    ]);
+    ])->assertRedirect();
 
     $ticket = Ticket::first();
     $cached = cache("ticket:{$ticket->ticket_number}");
