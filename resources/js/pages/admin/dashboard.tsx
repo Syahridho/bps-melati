@@ -18,19 +18,14 @@ import {
     FileText,
     HelpCircle,
     Lightbulb,
-    Mail,
-    Megaphone,
     MessageSquare,
-    Share2,
-    ShieldAlert,
-    Users,
 } from 'lucide-react';
 import { useState } from 'react';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 type Range = 'today' | '7d' | '30d';
-type ChannelKey = 'span_lapor' | 'sosial_media' | 'kunjungan_langsung' | 'wbs' | 'email';
+type ChannelKey = 'span_lapor' | 'sosial_media' | 'kunjungan_langsung' | 'wbs' | 'email' | 'website';
 
 interface DashboardStats {
     total: number;
@@ -42,6 +37,7 @@ interface DashboardStats {
     kunjungan_langsung: number;
     wbs: number;
     email: number;
+    website: number;
     baru: number;
     respon_awal: number;
     respon_substantif: number;
@@ -75,55 +71,43 @@ const rangeOptions: { value: Range; label: string }[] = [
 const channelCards: {
     key: ChannelKey;
     label: string;
-    desc: string;
-    icon: React.ElementType;
     card: string;
-    iconWrap: string;
     text: string;
 }[] = [
     {
         key: 'span_lapor',
         label: 'SP4N-LAPOR!',
-        desc: 'Layanan aspirasi nasional',
-        icon: Megaphone,
-        card: 'border-rose-400/25 bg-rose-400/5',
-        iconWrap: 'bg-rose-400/15 text-rose-500 dark:text-rose-400',
-        text: 'text-rose-500 dark:text-rose-400',
+        card: 'border-violet-400/30 bg-violet-400/5',
+        text: 'text-violet-600 dark:text-violet-400',
     },
     {
         key: 'sosial_media',
         label: 'Sosial Media',
-        desc: 'IG, Facebook, YouTube, WhatsApp',
-        icon: Share2,
-        card: 'border-violet-400/25 bg-violet-400/5',
-        iconWrap: 'bg-violet-400/15 text-violet-500 dark:text-violet-400',
-        text: 'text-violet-500 dark:text-violet-400',
+        card: 'border-pink-400/30 bg-pink-400/5',
+        text: 'text-pink-500 dark:text-pink-400',
     },
     {
         key: 'kunjungan_langsung',
         label: 'Kunjungan Langsung',
-        desc: 'Pelayanan & kotak saran',
-        icon: Users,
-        card: 'border-emerald-400/25 bg-emerald-400/5',
-        iconWrap: 'bg-emerald-400/15 text-emerald-600 dark:text-emerald-400',
-        text: 'text-emerald-600 dark:text-emerald-400',
+        card: 'border-lime-500/30 bg-lime-500/5',
+        text: 'text-lime-600 dark:text-lime-400',
     },
     {
         key: 'wbs',
         label: 'WBS',
-        desc: 'Whistleblowing system',
-        icon: ShieldAlert,
-        card: 'border-amber-300/40 bg-amber-300/5',
-        iconWrap: 'bg-amber-300/20 text-amber-600 dark:text-amber-300',
-        text: 'text-amber-600 dark:text-amber-300',
+        card: 'border-orange-400/30 bg-orange-400/5',
+        text: 'text-orange-600 dark:text-orange-400',
     },
     {
         key: 'email',
         label: 'Email',
-        desc: 'Laporan via surel',
-        icon: Mail,
-        card: 'border-sky-400/25 bg-sky-400/5',
-        iconWrap: 'bg-sky-400/15 text-sky-500 dark:text-sky-400',
+        card: 'border-teal-400/30 bg-teal-400/5',
+        text: 'text-teal-600 dark:text-teal-400',
+    },
+    {
+        key: 'website',
+        label: 'Website',
+        card: 'border-sky-400/30 bg-sky-400/5',
         text: 'text-sky-500 dark:text-sky-400',
     },
 ];
@@ -139,14 +123,14 @@ function classificationLabel(classification: Classification): string {
     }
 }
 
-function classificationBadgeVariant(classification: Classification): 'default' | 'secondary' | 'destructive' | 'outline' {
+function classificationBadgeClass(classification: Classification): string {
     switch (classification) {
         case 'pengaduan':
-            return 'destructive';
+            return 'border-transparent bg-red-500 text-white hover:bg-red-500';
         case 'aspirasi':
-            return 'default';
+            return 'border-transparent bg-yellow-500 text-yellow-950 hover:bg-yellow-500';
         case 'permintaan_informasi':
-            return 'secondary';
+            return 'border-transparent bg-indigo-500 text-white hover:bg-indigo-500';
     }
 }
 
@@ -206,16 +190,14 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
     };
 
     return (
-        <AdminPage
-            // title="Dashboard Admin"
-            // description="Ringkasan rekapitulasi penanganan pengaduan, aspirasi, dan konsultasi BPS Provinsi Riau"
-            breadcrumbs={[{ title: 'Dashboard Admin', href: route('dashboard.admin.index') }]}
-        >
-            <div className="space-y-6">
+        <AdminPage breadcrumbs={[{ title: 'Dashboard Admin', href: route('dashboard.admin.index') }]}>
+            <div className="w-full max-w-full min-w-0 space-y-6">
                 {/* Filter periode */}
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 className="text-base font-semibold">PENANGANAN KONSULTASI PENGADUAN BPS PROVINSI RIAU </h2>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                        <h2 className="text-sm leading-snug font-semibold break-words sm:text-base">
+                            PENANGANAN KONSULTASI PENGADUAN BPS PROVINSI RIAU
+                        </h2>
                         <p className="text-xs text-muted-foreground">Menampilkan data: {rangeLabel}</p>
                     </div>
                     <Select value={range} onValueChange={handleRangeChange}>
@@ -233,54 +215,69 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                     </Select>
                 </div>
 
-                <div className={cn('space-y-6 transition-opacity', loading && 'pointer-events-none opacity-60')}>
-                    {/* Kartu klasifikasi */}CardFooter
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <Card className="border shadow-xs transition-shadow hover:shadow-sm">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">Jumlah Total</CardTitle>
-                                <FileText className="h-5 w-5 text-primary" />
+                <div className={cn('min-w-0 space-y-6 transition-opacity', loading && 'pointer-events-none opacity-60')}>
+                    {/* Kartu klasifikasi */}
+                    <p className="text-xs font-semibold mb-2">Klasifikasi Laporan</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+                        {/* Jumlah Total - Slate */}
+                        <Card className="min-w-0 border border-slate-400/30 bg-slate-400/5 shadow-xs transition-shadow hover:shadow-sm">
+                            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+                                <CardTitle className="text-sm leading-tight font-medium text-slate-600 dark:text-slate-300">
+                                    Jumlah Total
+                                </CardTitle>
+                                <FileText className="h-5 w-5 shrink-0 text-slate-600 dark:text-slate-300" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold">{stats.total}</div>
+                                <div className="text-3xl font-bold text-slate-700 dark:text-slate-200">{stats.total}</div>
                                 <p className="mt-1 text-xs text-muted-foreground">Keseluruhan laporan yang diterima</p>
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-destructive/20 bg-destructive/5 shadow-xs transition-shadow hover:shadow-sm">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-destructive">Pengaduan</CardTitle>
-                                <AlertCircle className="h-5 w-5 text-destructive" />
+                        {/* Pengaduan - Red */}
+                        <Card className="min-w-0 border border-red-400/30 bg-red-400/5 shadow-xs transition-shadow hover:shadow-sm">
+                            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+                                <CardTitle className="text-sm leading-tight font-medium text-red-600 dark:text-red-400">
+                                    Pengaduan
+                                </CardTitle>
+                                <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-destructive">{stats.pengaduan}</div>
-                                <Badge variant="destructive" className="mt-1 px-1.5 py-0 text-[10px]">
+                                <div className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.pengaduan}</div>
+                                <Badge className="mt-1 border-transparent bg-red-500 px-1.5 py-0 text-[10px] text-white hover:bg-red-500">
                                     Laporan Masalah
                                 </Badge>
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-primary/20 bg-primary/5 shadow-xs transition-shadow hover:shadow-sm">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-primary">Aspirasi</CardTitle>
-                                <Lightbulb className="h-5 w-5 text-primary" />
+                        {/* Aspirasi - Yellow */}
+                        <Card className="min-w-0 border border-yellow-400/40 bg-yellow-400/5 shadow-xs transition-shadow hover:shadow-sm">
+                            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+                                <CardTitle className="text-sm leading-tight font-medium text-yellow-700 dark:text-yellow-400">
+                                    Aspirasi
+                                </CardTitle>
+                                <Lightbulb className="h-5 w-5 shrink-0 text-yellow-600 dark:text-yellow-400" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-primary">{stats.aspirasi}</div>
-                                <Badge variant="default" className="mt-1 px-1.5 py-0 text-[10px]">
+                                <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-400">{stats.aspirasi}</div>
+                                <Badge className="mt-1 border-transparent bg-yellow-500 px-1.5 py-0 text-[10px] text-yellow-950 hover:bg-yellow-500">
                                     Saran & Masukan
                                 </Badge>
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-indigo-500/20 bg-indigo-500/5 shadow-xs transition-shadow hover:shadow-sm">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Permintaan Informasi</CardTitle>
-                                <HelpCircle className="h-5 w-5 text-indigo-500" />
+                        {/* Permintaan Informasi - Indigo */}
+                        <Card className="min-w-0 border border-indigo-400/30 bg-indigo-400/5 shadow-xs transition-shadow hover:shadow-sm">
+                            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+                                <CardTitle className="text-sm leading-tight font-medium text-indigo-600 dark:text-indigo-400">
+                                    Permintaan Informasi
+                                </CardTitle>
+                                <HelpCircle className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{stats.permintaan_informasi}</div>
-                                <Badge variant="secondary" className="mt-1 px-1.5 py-0 text-[10px]">
+                                <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                                    {stats.permintaan_informasi}
+                                </div>
+                                <Badge className="mt-1 border-transparent bg-indigo-500 px-1.5 py-0 text-[10px] text-white hover:bg-indigo-500">
                                     Permohonan Data
                                 </Badge>
                             </CardContent>
@@ -288,21 +285,18 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                     </div>
 
                     {/* Kartu kanal */}
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                        {channelCards.map(({ key, label, desc, icon: Icon, card, iconWrap, text }) => {
+                    <p className="text-xs font-semibold mb-2">Sumber kanal</p>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
+                        {channelCards.map(({ key, label, card, text }) => {
                             const value = stats[key] ?? 0;
 
                             return (
-                                <Card key={key} className={cn('border shadow-xs transition-shadow hover:shadow-sm', card)}>
-                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                        <CardTitle className={cn('text-sm font-medium', text)}>{label}</CardTitle>
-                                        <div className={cn('flex h-9 w-9 items-center justify-center rounded-full', iconWrap)}>
-                                            <Icon className="h-5 w-5" />
-                                        </div>
+                                <Card key={key} className={cn('min-w-0 border shadow-xs transition-shadow hover:shadow-sm', card)}>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className={cn('text-xs leading-tight font-medium', text)}>{label}</CardTitle>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="!pb-2">
                                         <div className={cn('text-3xl font-bold', text)}>{value}</div>
-                                        <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
                                     </CardContent>
                                 </Card>
                             );
@@ -310,40 +304,42 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                     </div>
 
                     {/* Pie charts */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         <ChartPieDonutText stats={stats} />
                         <ChartPieLabel stats={stats} />
                     </div>
 
                     {/* Status */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <Card className="border border-amber-500/30 bg-amber-500/5">
-                            <CardContent className="flex items-center justify-between p-4">
-                                <div className="space-y-0.5">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+                        <Card className="min-w-0 border border-amber-500/30 bg-amber-500/5">
+                            <CardContent className="flex items-center justify-between gap-2 p-4">
+                                <div className="min-w-0 space-y-0.5">
                                     <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Belum Dibalas (Baru)</p>
                                     <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{stats.baru}</p>
                                 </div>
-                                <Clock className="h-8 w-8 text-amber-500 opacity-80" />
+                                <Clock className="h-8 w-8 shrink-0 text-amber-500 opacity-80" />
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-blue-500/30 bg-blue-500/5">
-                            <CardContent className="flex items-center justify-between p-4">
-                                <div className="space-y-0.5">
+                        <Card className="min-w-0 border border-blue-500/30 bg-blue-500/5">
+                            <CardContent className="flex items-center justify-between gap-2 p-4">
+                                <div className="min-w-0 space-y-0.5">
                                     <p className="text-xs font-medium text-blue-600 dark:text-blue-400">Dalam Proses Respon</p>
-                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.respon_awal + stats.respon_substantif}</p>
+                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                                        {stats.respon_awal + stats.respon_substantif}
+                                    </p>
                                 </div>
-                                <MessageSquare className="h-8 w-8 text-blue-500 opacity-80" />
+                                <MessageSquare className="h-8 w-8 shrink-0 text-blue-500 opacity-80" />
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-emerald-500/30 bg-emerald-500/5">
-                            <CardContent className="flex items-center justify-between p-4">
-                                <div className="space-y-0.5">
+                        <Card className="min-w-0 border border-emerald-500/30 bg-emerald-500/5">
+                            <CardContent className="flex items-center justify-between gap-2 p-4">
+                                <div className="min-w-0 space-y-0.5">
                                     <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Telah Selesai</p>
                                     <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{stats.selesai}</p>
                                 </div>
-                                <CheckCircle2 className="h-8 w-8 text-emerald-500 opacity-80" />
+                                <CheckCircle2 className="h-8 w-8 shrink-0 text-emerald-500 opacity-80" />
                             </CardContent>
                         </Card>
                     </div>
@@ -352,8 +348,8 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                     <ChartAreaLinear data={trend} periodLabel={rangeLabel} />
 
                     {/* Laporan terbaru */}
-                    <Card className="border shadow-xs">
-                        <CardHeader className="flex flex-row items-center justify-between border-b pb-3">
+                    <Card className="min-w-0 overflow-hidden border shadow-xs">
+                        <CardHeader className="flex flex-col items-start gap-2 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <CardTitle className="text-base font-bold">Laporan Terbaru Masuk</CardTitle>
                                 <CardDescription className="text-xs">
@@ -371,48 +367,113 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                             {recentTickets.length === 0 ? (
                                 <div className="py-8 text-center text-xs text-muted-foreground">Belum ada laporan pada periode ini.</div>
                             ) : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="hover:bg-transparent">
-                                            <TableHead className="w-[180px]">Kode Tiket</TableHead>
-                                            <TableHead>Pelapor</TableHead>
-                                            <TableHead>Klasifikasi</TableHead>
-                                            <TableHead>Saluran</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead className="text-right">Waktu Masuk</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
+                                <>
+                                    {/* Mobile: daftar kartu */}
+                                    <div className="divide-y md:hidden">
                                         {recentTickets.map((ticket) => {
                                             const sBadge = statusBadge(ticket.status);
                                             return (
-                                                <TableRow key={ticket.id}>
-                                                    <TableCell className="font-mono text-xs font-medium">
+                                                <div key={ticket.id} className="space-y-2 p-4">
+                                                    <div className="flex items-start justify-between gap-2">
                                                         <Link
-                                                            href={route('dashboard.admin.laporan-masuk.show', { ticketNumber: ticket.ticket_number })}
-                                                            className="text-primary hover:underline"
+                                                            href={route('dashboard.admin.laporan-masuk.show', {
+                                                                ticketNumber: ticket.ticket_number,
+                                                            })}
+                                                            className="font-mono text-xs font-medium break-all text-primary hover:underline"
                                                         >
                                                             {ticket.ticket_number}
                                                         </Link>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs font-medium">{ticket.reporter_name || 'Anonim'}</TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={classificationBadgeVariant(ticket.classification)} className="px-1.5 py-0 text-[10px]">
-                                                            {classificationLabel(ticket.classification)}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">{ticket.channel}</TableCell>
-                                                    <TableCell>
-                                                        <span className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold', sBadge.className)}>
+                                                        <span
+                                                            className={cn(
+                                                                'inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+                                                                sBadge.className,
+                                                            )}
+                                                        >
                                                             {sBadge.label}
                                                         </span>
-                                                    </TableCell>
-                                                    <TableCell className="text-right text-xs text-muted-foreground">{formatDate(ticket.created_at)}</TableCell>
-                                                </TableRow>
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <Badge
+                                                            className={cn(
+                                                                'px-1.5 py-0 text-[10px]',
+                                                                classificationBadgeClass(ticket.classification),
+                                                            )}
+                                                        >
+                                                            {classificationLabel(ticket.classification)}
+                                                        </Badge>
+                                                        <span className="text-xs text-muted-foreground">{ticket.channel}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between gap-2 text-xs">
+                                                        <span className="font-medium">{ticket.reporter_name || 'Anonim'}</span>
+                                                        <span className="text-muted-foreground">{formatDate(ticket.created_at)}</span>
+                                                    </div>
+                                                </div>
                                             );
                                         })}
-                                    </TableBody>
-                                </Table>
+                                    </div>
+
+                                    {/* Desktop: tabel */}
+                                    <div className="hidden md:block">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="hover:bg-transparent">
+                                                    <TableHead className="w-[180px]">Kode Tiket</TableHead>
+                                                    <TableHead>Pelapor</TableHead>
+                                                    <TableHead>Klasifikasi</TableHead>
+                                                    <TableHead>Saluran</TableHead>
+                                                    <TableHead>Status</TableHead>
+                                                    <TableHead className="text-right">Waktu Masuk</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {recentTickets.map((ticket) => {
+                                                    const sBadge = statusBadge(ticket.status);
+                                                    return (
+                                                        <TableRow key={ticket.id}>
+                                                            <TableCell className="font-mono text-xs font-medium">
+                                                                <Link
+                                                                    href={route('dashboard.admin.laporan-masuk.show', {
+                                                                        ticketNumber: ticket.ticket_number,
+                                                                    })}
+                                                                    className="text-primary hover:underline"
+                                                                >
+                                                                    {ticket.ticket_number}
+                                                                </Link>
+                                                            </TableCell>
+                                                            <TableCell className="text-xs font-medium">
+                                                                {ticket.reporter_name || 'Anonim'}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Badge
+                                                                    className={cn(
+                                                                        'px-1.5 py-0 text-[10px]',
+                                                                        classificationBadgeClass(ticket.classification),
+                                                                    )}
+                                                                >
+                                                                    {classificationLabel(ticket.classification)}
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell className="text-xs text-muted-foreground">{ticket.channel}</TableCell>
+                                                            <TableCell>
+                                                                <span
+                                                                    className={cn(
+                                                                        'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+                                                                        sBadge.className,
+                                                                    )}
+                                                                >
+                                                                    {sBadge.label}
+                                                                </span>
+                                                            </TableCell>
+                                                            <TableCell className="text-right text-xs text-muted-foreground">
+                                                                {formatDate(ticket.created_at)}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </>
                             )}
                         </CardContent>
                     </Card>

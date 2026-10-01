@@ -15,6 +15,7 @@ class ChannelSeeder extends Seeder
             'Kunjungan Langsung' => ['Pelayanan Pengaduan', 'Kotak Saran/Pengaduan'],
             'WBS' => [],
             'Email' => [],
+            'Website' => [],
         ];
 
         $order = 0;

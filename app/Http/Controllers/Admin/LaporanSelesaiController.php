@@ -23,26 +23,42 @@ class LaporanSelesaiController extends Controller
      */
     public function index(Request $request): Response
     {
-        $search = $request->query('search');
-        $filter = $request->query('filter', 'semua');
+        $search = trim((string) $request->query('search', ''));
+        $filter = (string) $request->query('filter', 'semua');
         $perPage = (int) $request->query('per_page', 10);
 
+        // Whitelist filter
+        $allowedFilters = ['semua', 'respon_awal', 'respon_substantif', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
+        if (! in_array($filter, $allowedFilters, true)) {
+            $filter = 'semua';
+        }
+
+        // Whitelist per_page
         if (! in_array($perPage, [10, 20, 50, 100], true)) {
             $perPage = 10;
         }
 
-        $ticketsQuery = Ticket::with('channel')
-            ->whereIn('status', self::COMPLETED_STATUSES)
-            ->when($search, function ($query, $search) {
+        $frontendFilterKey = ($filter === 'permintaan_informasi') ? 'permintaan' : $filter;
+
+        // Callback pencarian kata kunci
+        $searchQueryClosure = function ($query) use ($search) {
+            if ($search !== '') {
                 $query->where(function ($q) use ($search) {
                     $q->where('ticket_number', 'like', "%{$search}%")
+                        ->orWhere('title', 'like', "%{$search}%")
                         ->orWhere('reporter_name', 'like', "%{$search}%")
                         ->orWhere('reporter_email', 'like', "%{$search}%")
                         ->orWhere('reporter_wa', 'like', "%{$search}%")
                         ->orWhere('content', 'like', "%{$search}%");
                 });
-            })
-            ->when($filter && $filter !== 'semua', function ($query, $filter) {
+            }
+        };
+
+        // Query utama daftar tiket laporan selesai
+        $ticketsQuery = Ticket::with('channel')
+            ->whereIn('status', self::COMPLETED_STATUSES)
+            ->tap($searchQueryClosure)
+            ->when($filter !== 'semua', function ($query) use ($filter) {
                 if ($filter === 'respon_awal') {
                     $query->where('status', 'respon_awal');
                 } elseif ($filter === 'respon_substantif') {
@@ -51,7 +67,7 @@ class LaporanSelesaiController extends Controller
                     $query->where('classification', 'pengaduan');
                 } elseif ($filter === 'aspirasi') {
                     $query->where('classification', 'aspirasi');
-                } elseif ($filter === 'permintaan') {
+                } elseif ($filter === 'permintaan' || $filter === 'permintaan_informasi') {
                     $query->where('classification', 'permintaan_informasi');
                 }
             });
@@ -64,6 +80,7 @@ class LaporanSelesaiController extends Controller
                 'id' => $ticket->id,
                 'ticket_number' => $ticket->ticket_number,
                 'classification' => $ticket->classification,
+                'title' => $ticket->title,
                 'service_type' => $ticket->service_type,
                 'satuan_tugas' => $ticket->satuan_tugas,
                 'reporter_name' => $ticket->reporter_name,
@@ -73,24 +90,27 @@ class LaporanSelesaiController extends Controller
                 'status' => $ticket->status,
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
-                'completed_at' => $ticket->completed_at?->toDateTimeString(),
-                'created_at' => $ticket->created_at->toDateTimeString(),
+                'completed_at' => $ticket->completed_at?->toIso8601String(),
+                'created_at' => $ticket->created_at->toIso8601String(),
             ]);
 
+        // Base query untuk counts (mengikuti pencarian, tanpa filter tab)
+        $countBaseQuery = Ticket::whereIn('status', self::COMPLETED_STATUSES)->tap($searchQueryClosure);
+
         $counts = [
-            'semua' => Ticket::whereIn('status', self::COMPLETED_STATUSES)->count(),
-            'respon_awal' => Ticket::where('status', 'respon_awal')->count(),
-            'respon_substantif' => Ticket::where('status', 'respon_substantif')->count(),
-            'pengaduan' => Ticket::whereIn('status', self::COMPLETED_STATUSES)->where('classification', 'pengaduan')->count(),
-            'aspirasi' => Ticket::whereIn('status', self::COMPLETED_STATUSES)->where('classification', 'aspirasi')->count(),
-            'permintaan' => Ticket::whereIn('status', self::COMPLETED_STATUSES)->where('classification', 'permintaan_informasi')->count(),
+            'semua' => (clone $countBaseQuery)->count(),
+            'respon_awal' => (clone $countBaseQuery)->where('status', 'respon_awal')->count(),
+            'respon_substantif' => (clone $countBaseQuery)->where('status', 'respon_substantif')->count(),
+            'pengaduan' => (clone $countBaseQuery)->where('classification', 'pengaduan')->count(),
+            'aspirasi' => (clone $countBaseQuery)->where('classification', 'aspirasi')->count(),
+            'permintaan' => (clone $countBaseQuery)->where('classification', 'permintaan_informasi')->count(),
         ];
 
         return Inertia::render('admin/laporan-selesai', [
             'tickets' => $tickets,
             'filters' => [
-                'search' => $search ?? '',
-                'filter' => $filter,
+                'search' => $search,
+                'filter' => $frontendFilterKey,
                 'per_page' => $perPage,
             ],
             'counts' => $counts,
@@ -114,6 +134,7 @@ class LaporanSelesaiController extends Controller
                 'period' => $ticket->period,
                 'sequence' => $ticket->sequence,
                 'classification' => $ticket->classification,
+                'title' => $ticket->title,
                 'service_type' => $ticket->service_type,
                 'satuan_tugas' => $ticket->satuan_tugas,
                 'reporter_name' => $ticket->reporter_name,
@@ -121,13 +142,12 @@ class LaporanSelesaiController extends Controller
                 'reporter_wa' => $ticket->reporter_wa,
                 'content' => $ticket->content,
                 'status' => $ticket->status,
-                'is_read' => $ticket->is_read,
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'created_by_name' => $ticket->creator?->name,
-                'completed_at' => $ticket->completed_at?->toDateTimeString(),
-                'created_at' => $ticket->created_at->toDateTimeString(),
-                'updated_at' => $ticket->updated_at->toDateTimeString(),
+                'completed_at' => $ticket->completed_at?->toIso8601String(),
+                'created_at' => $ticket->created_at->toIso8601String(),
+                'updated_at' => $ticket->updated_at->toIso8601String(),
                 'attachments' => $ticket->attachments->map(fn ($attachment) => [
                     'id' => $attachment->id,
                     'original_name' => $attachment->original_name,
@@ -135,21 +155,28 @@ class LaporanSelesaiController extends Controller
                     'size' => $attachment->size,
                     'url' => Storage::url($attachment->path),
                 ]),
-                'responses' => $ticket->responses->sortByDesc('created_at')->values()->map(fn ($response) => [
-                    'id' => $response->id,
-                    'type' => $response->type,
-                    'message' => $response->message,
-                    'user_name' => $response->user?->name ?? '-',
-                    'sent_at' => $response->sent_at?->toDateTimeString(),
-                    'created_at' => $response->created_at->toDateTimeString(),
-                    'attachments' => $response->attachments->map(fn ($att) => [
-                        'id' => $att->id,
-                        'original_name' => $att->original_name,
-                        'mime_type' => $att->mime_type,
-                        'size' => $att->size,
-                        'url' => Storage::url($att->path),
-                    ]),
-                ]),
+                'responses' => $ticket->responses->sortByDesc('created_at')->values()->map(function ($response) use ($ticket) {
+                    $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
+                    $userName = $isReporter
+                        ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
+                        : ($response->user?->name ?? '-');
+
+                    return [
+                        'id' => $response->id,
+                        'user_name' => $userName,
+                        'is_reporter' => $isReporter,
+                        'type' => $response->type,
+                        'message' => $response->message,
+                        'sent_at' => $response->sent_at->toIso8601String(),
+                        'attachments' => $response->attachments->map(fn ($attachment) => [
+                            'id' => $attachment->id,
+                            'original_name' => $attachment->original_name,
+                            'mime_type' => $attachment->mime_type,
+                            'size' => $attachment->size,
+                            'url' => Storage::url($attachment->path),
+                        ]),
+                    ];
+                }),
             ],
         ]);
     }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureApiKeyIsValid;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
+            'api.key' => EnsureApiKeyIsValid::class,
         ]);
 
         $middleware->web(append: [

@@ -4,9 +4,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
-import { Link, router } from '@inertiajs/react';
+import { type SharedData } from '@/types';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Inbox, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
@@ -15,6 +16,7 @@ interface Ticket {
     id: number;
     ticket_number: string;
     classification: Classification;
+    title?: string | null;
     reporter_name: string | null;
     reporter_email: string | null;
     reporter_wa: string | null;
@@ -28,7 +30,7 @@ interface Ticket {
 
 type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif';
 
-interface LaporanMasukProps {
+interface LaporanMasukProps extends SharedData {
     tickets: PaginatedData<Ticket>;
     filters: {
         search: string;
@@ -99,32 +101,77 @@ function formatDate(dateStr: string): string {
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 }
 
-export default function LaporanMasuk({ tickets, filters, counts }: LaporanMasukProps) {
+function getTicketDisplayTitle(ticket: Ticket): string {
+    if (ticket.title && ticket.title.trim().length > 0) {
+        return ticket.title;
+    }
+    if (ticket.content && ticket.content.trim().length > 0) {
+        const content = ticket.content.trim();
+        return content.length > 60 ? content.slice(0, 60) + '...' : content;
+    }
+    return ticket.ticket_number;
+}
+
+export default function LaporanMasuk() {
+    const { auth, tickets, filters, counts } = usePage<LaporanMasukProps>().props;
+    const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSearchChange = (query: string) => {
-        setSearchQuery(query);
-        router.get(
-            route('dashboard.admin.laporan-masuk.index'),
-            { filter: filters.filter, search: query, per_page: filters.per_page, page: 1 },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
-    };
+    useEffect(() => {
+        setSearchQuery(filters.search || '');
+    }, [filters.search]);
+
+    // Debounce search input (300 ms)
+    useEffect(() => {
+        if (searchQuery === (filters.search || '')) {
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                route(`${routePrefix}.laporan-masuk.index`),
+                { filter: filters.filter, search: searchQuery, per_page: filters.per_page, page: 1 },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    onStart: () => setIsLoading(true),
+                    onFinish: () => setIsLoading(false),
+                },
+            );
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, filters.filter, filters.per_page, filters.search, routePrefix]);
 
     const handleFilterChange = (tab: FilterTab) => {
         router.get(
-            route('dashboard.admin.laporan-masuk.index'),
+            route(`${routePrefix}.laporan-masuk.index`),
             { filter: tab, search: searchQuery, per_page: filters.per_page, page: 1 },
-            { preserveState: true, preserveScroll: true, replace: true },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onStart: () => setIsLoading(true),
+                onFinish: () => setIsLoading(false),
+            },
         );
     };
 
     const handlePerPageChange = (newPerPage: number) => {
         router.get(
-            route('dashboard.admin.laporan-masuk.index'),
+            route(`${routePrefix}.laporan-masuk.index`),
             { filter: filters.filter, search: searchQuery, per_page: newPerPage, page: 1 },
-            { preserveState: true, preserveScroll: true, replace: true },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onStart: () => setIsLoading(true),
+                onFinish: () => setIsLoading(false),
+            },
         );
     };
 
@@ -154,7 +201,7 @@ export default function LaporanMasuk({ tickets, filters, counts }: LaporanMasukP
         <AdminPage
             title="Laporan Masuk"
             description="Daftar laporan yang baru masuk dan perlu ditindaklanjuti"
-            breadcrumbs={[{ title: 'Laporan Masuk', href: route('dashboard.admin.laporan-masuk.index') }]}
+            breadcrumbs={[{ title: 'Laporan Masuk', href: route(`${routePrefix}.laporan-masuk.index`) }]}
         >
             <div className="overflow-hidden rounded-lg border bg-card">
                 {/* Toolbar */}
@@ -169,7 +216,7 @@ export default function LaporanMasuk({ tickets, filters, counts }: LaporanMasukP
                             placeholder="Cari laporan..."
                             className="pl-9"
                             value={searchQuery}
-                            onChange={(e) => handleSearchChange(e.target.value)}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
                 </div>
@@ -203,7 +250,7 @@ export default function LaporanMasuk({ tickets, filters, counts }: LaporanMasukP
                 </div>
 
                 {/* Ticket list */}
-                <div className="divide-y">
+                <div className={cn('divide-y transition-opacity duration-200', isLoading && 'pointer-events-none opacity-50')}>
                     {tickets.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                             <Inbox className="mb-3 size-10" />
@@ -217,20 +264,24 @@ export default function LaporanMasuk({ tickets, filters, counts }: LaporanMasukP
                                         <Checkbox checked={selectedIds.includes(ticket.id)} onCheckedChange={() => toggleSelect(ticket.id)} />
                                     </div>
                                     <Link
-                                        href={route('dashboard.admin.laporan-masuk.show', { ticketNumber: ticket.ticket_number })}
+                                        href={route(`${routePrefix}.laporan-masuk.show`, { ticketNumber: ticket.ticket_number })}
                                         className="min-w-0 flex-1"
                                     >
                                         <div className="mb-1 flex items-center justify-between gap-2">
-                                            <span className={cn('truncate text-sm', !ticket.is_read ? 'font-semibold' : 'font-medium text-foreground')}>
-                                                {ticket.reporter_name ?? 'Anonim'}
+                                            <span className={cn('truncate text-sm', !ticket.is_read ? 'font-semibold text-foreground' : 'font-medium text-foreground')}>
+                                                {getTicketDisplayTitle(ticket)}
                                             </span>
                                             <span className="shrink-0 text-xs text-muted-foreground">{formatDate(ticket.created_at)}</span>
                                         </div>
-                                        <div className="mb-1 flex items-center gap-2">
+                                        <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
                                             {!ticket.is_read && <span className="inline-block size-2 shrink-0 rounded-full bg-blue-500" />}
-                                            <span className={cn('truncate text-sm', !ticket.is_read ? 'font-medium text-foreground' : 'text-foreground')}>
-                                                {ticket.ticket_number}
-                                            </span>
+                                            <span className={cn('font-medium text-foreground')}>{ticket.ticket_number}</span>
+                                            {ticket.reporter_name && (
+                                                <>
+                                                    <span>•</span>
+                                                    <span>{ticket.reporter_name}</span>
+                                                </>
+                                            )}
                                         </div>
                                         <p className="mb-2 truncate text-xs text-muted-foreground">{ticket.content}</p>
                                         <div className="flex items-center gap-1.5">

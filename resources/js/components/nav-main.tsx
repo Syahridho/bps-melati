@@ -81,7 +81,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                 </Link>
                             </SidebarMenuButton>
                             {item.badge != null && item.badge > 0 && (
-                                <SidebarMenuBadge className="bg-black !text-white">
+                                <SidebarMenuBadge className="bg-primary text-primary-foreground dark:bg-blue-500 dark:text-white">
                                     {item.badge > 99 ? '99+' : item.badge}
                                 </SidebarMenuBadge>
                             )}

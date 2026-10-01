@@ -106,6 +106,14 @@ export default function KelolaOperator() {
         );
     };
 
+    const handlePerPageChange = (perPage: number) => {
+        router.get(
+            route('dashboard.admin.operator.index'),
+            { search, per_page: perPage },
+            { preserveState: true, replace: true },
+        );
+    };
+
     // Form Submit: Tambah Operator/User
     const handleCreateSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -281,7 +289,15 @@ export default function KelolaOperator() {
                         </div>
 
                         {/* Pagination */}
-                        <Pagination data={operators} />
+                        <Pagination
+                            links={operators.links}
+                            from={operators.from}
+                            to={operators.to}
+                            total={operators.total}
+                            lastPage={operators.last_page}
+                            perPage={operators.per_page}
+                            onPerPageChange={handlePerPageChange}
+                        />
                     </CardContent>
                 </Card>
             </div>
@@ -435,7 +451,7 @@ export default function KelolaOperator() {
 
                         <div className="space-y-2">
                             <Label htmlFor="edit_password" className="flex items-center gap-1">
-                                <KeyRound className="h-3.5 w-3.5" /> Password Baru (Opsional)
+                                Password Baru (Opsional)
                             </Label>
                             <Input
                                 id="edit_password"

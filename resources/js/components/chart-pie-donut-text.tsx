@@ -32,15 +32,15 @@ const chartConfig = {
   },
   pengaduan: {
     label: "Pengaduan",
-    color: "#fb7185", // rose-400
+    color: "#f87171", // red-400
   },
   aspirasi: {
     label: "Aspirasi",
-    color: "#60a5fa", // blue-400
+    color: "#facc15", // yellow-400
   },
   permintaan_informasi: {
     label: "Permintaan Informasi",
-    color: "#a78bfa", // violet-400
+    color: "#818cf8", // indigo-400
   },
 } satisfies ChartConfig
 

@@ -44,6 +44,9 @@ test('admin can update signatory settings and update redis cache', function () {
             'nama_penanda_tangan' => 'Dr. Budi Santoso, M.Si',
             'jabatan_penanda_tangan' => 'KEPALA BPS PROVINSI',
             'kota_penanda_tangan' => 'Pekanbaru',
+            'auto_close_pengaduan_days' => 4,
+            'auto_close_aspirasi_days' => 2,
+            'auto_close_permintaan_informasi_days' => 7,
         ])
         ->assertRedirect()
         ->assertSessionHas('flash.success');
@@ -53,6 +56,14 @@ test('admin can update signatory settings and update redis cache', function () {
         'value' => 'Dr. Budi Santoso, M.Si',
     ]);
 
+    $this->assertDatabaseHas('settings', [
+        'key' => 'auto_close_pengaduan_days',
+        'value' => '4',
+    ]);
+
     expect(Setting::get('nama_penanda_tangan'))->toBe('Dr. Budi Santoso, M.Si')
+        ->and(Setting::get('auto_close_pengaduan_days'))->toBe('4')
+        ->and(Setting::get('auto_close_aspirasi_days'))->toBe('2')
+        ->and(Setting::get('auto_close_permintaan_informasi_days'))->toBe('7')
         ->and(Cache::get('setting:nama_penanda_tangan'))->toBe('Dr. Budi Santoso, M.Si');
 });

@@ -141,11 +141,12 @@ class DashboardController extends Controller
                 'id' => $t->id,
                 'ticket_number' => $t->ticket_number,
                 'classification' => $t->classification,
+                'title' => $t->title,
                 'reporter_name' => $t->reporter_name,
                 'content' => $t->content,
                 'status' => $t->status,
                 'channel' => $t->channel?->name ?? '-',
-                'created_at' => $t->created_at->toDateTimeString(),
+                'created_at' => $t->created_at->toIso8601String(),
             ])
             ->all();
     }

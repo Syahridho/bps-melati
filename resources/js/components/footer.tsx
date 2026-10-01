@@ -37,9 +37,9 @@ export default function FooterSection({
     {
       title: "Menu",
       links: [
-        { text: "Cek Laporan", href: "https://www.launchuicomponents.com/" },
-        { text: "Masuk", href: "https://www.launchuicomponents.com/" },
-      ],
+        { text: "Cek Laporan", href: route('tickets.check') },
+        { text: "Masuk", href: route('login') },
+    ],
     },
   ],
   copyright = "©2026 Melati. All rights reserved. Power By BPS Provinsi Riau",

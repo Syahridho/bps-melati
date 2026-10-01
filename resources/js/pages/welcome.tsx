@@ -1,18 +1,30 @@
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import FooterSection from '@/components/footer';
+import { PublicStatsSection, type PublicStats } from '@/components/public-stats';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Clock, Copy, Eye, LoaderCircle, Paperclip, Ticket, Trash2, X } from 'lucide-react';
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { PublicStatsSection, type PublicStats } from '@/components/public-stats';
+import { AlertCircle, CheckCircle2, Circle, Clock, Copy, Eye, HelpCircle, Lightbulb, LoaderCircle, Paperclip, Ticket, Trash2, X } from 'lucide-react';
+import { type ChangeEvent, type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+
+interface ChannelChild {
+    id: number;
+    name: string;
+}
+
+interface ChannelGroup {
+    id: number;
+    name: string;
+    children: ChannelChild[];
+}
 
 interface WelcomePageProps extends SharedData {
     flash: {
@@ -20,6 +32,13 @@ interface WelcomePageProps extends SharedData {
     };
     channels: ChannelGroup[];
     stats: PublicStats;
+}
+
+type ClassificationType = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
+
+interface StoredTicket {
+    ticket_number: string;
+    created_at: string;
 }
 
 const SATUAN_TUGAS_OPTIONS = [
@@ -38,30 +57,36 @@ const SATUAN_TUGAS_OPTIONS = [
     'BPS Kota Dumai',
 ];
 
-type ClassificationType = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
-
-interface StoredTicket {
-    ticket_number: string;
-    created_at: string;
-}
-
-interface ChannelChild {
-    id: number;
-    name: string;
-}
-
-interface ChannelGroup {
-    id: number;
-    name: string;
-    children: ChannelChild[];
-}
-
-interface WelcomePageProps extends SharedData {
-    flash: {
-        ticket_number?: string;
-    };
-    channels: ChannelGroup[];
-}
+// Warna ikon mengikuti warna kategori di dashboard admin agar konsisten.
+const CLASSIFICATIONS: {
+    value: ClassificationType;
+    label: string;
+    description: string;
+    icon: React.ElementType;
+    iconClass: string;
+}[] = [
+    {
+        value: 'pengaduan',
+        label: 'Pengaduan',
+        description: 'Laporkan masalah atau ketidakpuasan terhadap layanan.',
+        icon: AlertCircle,
+        iconClass: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    },
+    {
+        value: 'aspirasi',
+        label: 'Aspirasi',
+        description: 'Sampaikan saran, masukan, atau ide perbaikan.',
+        icon: Lightbulb,
+        iconClass: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+    },
+    {
+        value: 'permintaan_informasi',
+        label: 'Permintaan Informasi',
+        description: 'Ajukan permohonan data atau informasi.',
+        icon: HelpCircle,
+        iconClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+    },
+];
 
 function getStoredTickets(): StoredTicket[] {
     try {
@@ -82,13 +107,30 @@ function formatTicketDate(iso: string): string {
     });
 }
 
+function SectionTitle({ title, description }: { title: ReactNode; description?: string }) {
+    return (
+        <div className="space-y-0.5">
+            <h3 className="text-sm font-semibold">{title}</h3>
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </div>
+    );
+}
+
+function FieldError({ message }: { message?: string }) {
+    if (!message) {
+        return null;
+    }
+    return <p className="text-sm text-destructive">{message}</p>;
+}
+
 export default function Welcome() {
-    const { auth, flash, channels, stats } = usePage<WelcomePageProps>().props;
+    const { auth, flash, stats } = usePage<WelcomePageProps>().props;
     const [showDialog, setShowDialog] = useState(false);
     const [ticketNumber, setTicketNumber] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [ticketHistory, setTicketHistory] = useState<StoredTicket[]>([]);
     const [previewFile, setPreviewFile] = useState<File | null>(null);
+    const [ticketToDelete, setTicketToDelete] = useState<StoredTicket | null>(null);
 
     const previewUrl = useMemo(() => {
         if (!previewFile) {
@@ -112,6 +154,7 @@ export default function Welcome() {
         reporter_name: '',
         reporter_email: '',
         reporter_wa: '',
+        title: '',
         content: '',
         service_type: '',
         tanggal_kejadian: '',
@@ -144,16 +187,8 @@ export default function Welcome() {
         }
     }, [flash?.ticket_number, reset]);
 
-    function classificationLabel(value: ClassificationType): string {
-        switch (value) {
-            case 'pengaduan':
-                return 'Pengaduan';
-            case 'aspirasi':
-                return 'Aspirasi';
-            case 'permintaan_informasi':
-                return 'Permintaan Informasi';
-        }
-    }
+    const selectedLabel = CLASSIFICATIONS.find((c) => c.value === data.classification)?.label;
+    const fieldErrors = errors as Record<string, string | undefined>;
 
     function handleSubmit(e: FormEvent) {
         e.preventDefault();
@@ -211,8 +246,6 @@ export default function Welcome() {
         setTicketNumber(null);
     }
 
-    const [ticketToDelete, setTicketToDelete] = useState<StoredTicket | null>(null);
-
     function handleDeleteTicket() {
         if (!ticketToDelete) {
             return;
@@ -227,339 +260,306 @@ export default function Welcome() {
     return (
         <>
             <Head title="Selamat Datang" />
-            <div className="min-h-screen bg-background text-foreground">
-                <header className="border-b">
-                    <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-                        <div className="flex aspect-square size-10 items-center justify-center rounded-md">
-                            <img src="/logo-melati.webp" alt="Logo BPS Melati" className="h-full w-full object-contain" />
-                        </div>
-                        <div className="ml-1 grid flex-1 text-left text-sm">
-                            <img src="/desc-melati.webp" alt="Logo BPS" className="h-[30px] w-[84px] ml-3" />
-                        </div>
-                        <nav className="flex items-center gap-3">
+            <div className="min-h-screen overflow-x-clip bg-muted/30 text-foreground">
+                {/* Header */}
+                <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+                    <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6">
+                        <img src="/logo-melati.webp" alt="Logo BPS Melati" className="size-9 shrink-0 object-contain sm:size-10" />
+                        <img src="/desc-melati.webp" alt="Logo BPS" className="h-[26px] w-[74px] shrink-0 object-contain sm:h-[30px] sm:w-[84px]" />
+
+                        <nav className="ml-auto flex items-center gap-1.5 sm:gap-2">
                             <AppearanceToggleDropdown />
-                            <Link
-                                href={route('tickets.check')}
-                                className="inline-block rounded-md border border-input bg-background px-3.5 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-                            >
-                                Cek Status Tiket
-                            </Link>
-                            {auth.user ? (
-                                <Link
-                                    href={auth.user.role === 'admin' ? route('dashboard.admin.index') : route('dashboard.operator.index')}
-                                    className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                                >
-                                    Dashboard
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={route('tickets.check')}>
+                                    <span className="sm:hidden">Cek Tiket</span>
+                                    <span className="hidden sm:inline">Cek Status Tiket</span>
                                 </Link>
-                            ) : (
-                                <Link
-                                    href={route('login')}
-                                    className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                                >
-                                    Login
-                                </Link>
+                            </Button>
+                            {auth.user && (
+                                <Button asChild size="sm">
+                                    <Link href={auth.user.role === 'admin' ? route('dashboard.admin.index') : route('dashboard.operator.index')}>
+                                        Dashboard
+                                    </Link>
+                                </Button>
                             )}
                         </nav>
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-5xl px-6 pt-12 ">
+                <main className="mx-auto max-w-5xl px-4 pt-8 pb-0 sm:px-6 sm:pt-12">
+                    {/* Pengantar */}
+                    <div className="mx-auto mb-6 max-w-2xl space-y-3 text-center sm:mb-8">
+                        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Sampaikan Laporan Anda</h1>
+                        <p className="text-sm text-muted-foreground sm:text-base">
+                            Layanan pengaduan, aspirasi, dan permintaan informasi. Anda akan mendapat nomor tiket untuk memantau tindak lanjutnya.
+                        </p>
+                    </div>
 
-                    <h2 className="mb-2 text-xl font-semibold">Pilih Jenis</h2>
-                    <p className="mb-6 text-sm text-muted-foreground">Silakan pilih salah satu jenis berikut.</p>
+                    {/* Formulir */}
+                    <form onSubmit={handleSubmit} className="mx-auto w-full max-w-2xl min-w-0">
+                        <Card className="shadow-xs">
+                            <CardHeader>
+                                <CardTitle>Formulir Laporan</CardTitle>
+                                <CardDescription>Pilih jenis laporan, lalu lengkapi detailnya.</CardDescription>
+                            </CardHeader>
 
-                    <form onSubmit={handleSubmit}>
-                        {/* Button group pilihan jenis */}
-                        <ToggleGroup
-                            type="single"
-                            value={data.classification}
-                            onValueChange={(value) => setData('classification', value as ClassificationType | '')}
-                            className="mb-2 w-full justify-start gap-0"
-                        >
-                            <ToggleGroupItem
-                                value="pengaduan"
-                                variant="outline"
-                                className="h-14 flex-1 rounded-r-none border-r-0 px-8 text-base font-semibold tracking-wide data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                            >
-                                PENGADUAN
-                            </ToggleGroupItem>
-                            <ToggleGroupItem
-                                value="aspirasi"
-                                variant="outline"
-                                className="h-14 flex-1 rounded-none border-r-0 px-8 text-base font-semibold tracking-wide data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                            >
-                                ASPIRASI
-                            </ToggleGroupItem>
-                            <ToggleGroupItem
-                                value="permintaan_informasi"
-                                variant="outline"
-                                className="h-14 flex-1 rounded-l-none px-8 text-base font-semibold tracking-wide data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                            >
-                                PERMINTAAN INFORMASI
-                            </ToggleGroupItem>
-                        </ToggleGroup>
-                        {errors.classification && <p className="mb-6 text-sm text-destructive">{errors.classification}</p>}
-                        {!errors.classification && <div className="mb-8" />}
-
-                        {/* Input Nama, Email, WA (opsional) */}
-                        <div className="mb-8 space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="nama">Nama (opsional)</Label>
-                                <Input
-                                    id="nama"
-                                    placeholder="Masukkan nama"
-                                    value={data.reporter_name}
-                                    onChange={(e) => setData('reporter_name', e.target.value)}
-                                />
-                                {errors.reporter_name && <p className="text-sm text-destructive">{errors.reporter_name}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email (opsional)</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="Masukkan email"
-                                    value={data.reporter_email}
-                                    onChange={(e) => setData('reporter_email', e.target.value)}
-                                />
-                                {errors.reporter_email && <p className="text-sm text-destructive">{errors.reporter_email}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="wa">WhatsApp (opsional)</Label>
-                                <Input
-                                    id="wa"
-                                    type="tel"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    placeholder="Masukkan nomor WA (contoh: 08123456789)"
-                                    value={data.reporter_wa}
-                                    onChange={(e) => setData('reporter_wa', e.target.value.replace(/\D/g, ''))}
-                                />
-                                {errors.reporter_wa && <p className="text-sm text-destructive">{errors.reporter_wa}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="channel">Sumber Kanal</Label>
-                                <Select
-                                    value={data.channel_id}
-                                    onValueChange={(value) => setData('channel_id', value)}
-                                >
-                                    <SelectTrigger id="channel">
-                                        <SelectValue placeholder="Pilih sumber kanal" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {channels.map((group, index) => (
-                                            <div key={group.id}>
-                                                {index > 0 && <SelectSeparator />}
-                                                {group.children.length > 0 ? (
-                                                    <SelectGroup>
-                                                        <SelectLabel>{group.name}</SelectLabel>
-                                                        {group.children.map((child) => (
-                                                            <SelectItem key={child.id} value={String(child.id)}>
-                                                                {child.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectGroup>
-                                                ) : (
-                                                    <SelectItem value={String(group.id)}>{group.name}</SelectItem>
+                            <CardContent className="space-y-8">
+                                {/* Jenis laporan */}
+                                <div role="radiogroup" aria-labelledby="jenis-label" className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                                    {CLASSIFICATIONS.map((option) => {
+                                        const selected = data.classification === option.value;
+                                        return (
+                                            <button
+                                                key={option.value}
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={selected}
+                                                onClick={() => setData('classification', option.value)}
+                                                className={cn(
+                                                    'flex h-12 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                                                    selected ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary' : 'bg-card hover:bg-accent',
                                                 )}
-                                            </div>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.channel_id && <p className="text-sm text-destructive">{errors.channel_id}</p>}
-                            </div>
-                        </div>
-
-                        {/* Field khusus berdasarkan jenis */}
-                        {data.classification === 'pengaduan' && (
-                            <>
-                                <div className="mb-4 space-y-2">
-                                    <Label htmlFor="service-type">Jenis Layanan</Label>
-                                    <Select
-                                        value={data.service_type}
-                                        onValueChange={(value) => setData('service_type', value)}
-                                    >
-                                        <SelectTrigger id="service-type" className="max-w-xs">
-                                            <SelectValue placeholder="Pilih jenis layanan" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="pst">Layanan PST</SelectItem>
-                                            <SelectItem value="lainnya">Layanan Lainnya</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.service_type && <p className="text-sm text-destructive">{errors.service_type}</p>}
+                                            >
+                                                {selected ? (
+                                                    <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                                                ) : (
+                                                    <Circle className="size-4 shrink-0 text-muted-foreground" />
+                                                )}
+                                                {option.label}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
-                                <div className="mb-4 space-y-2">
-                                    <Label htmlFor="tanggal">Tanggal Kejadian</Label>
-                                    <Input
-                                        id="tanggal"
-                                        type="date"
-                                        className="max-w-xs"
-                                        value={data.tanggal_kejadian}
-                                        onChange={(e) => setData('tanggal_kejadian', e.target.value)}
+
+                                <div className="border-t" />
+
+                                <div className="space-y-4 !mb-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="nama">Nama</Label>
+                                        <Input
+                                            id="nama"
+                                            placeholder="Masukkan nama"
+                                            value={data.reporter_name}
+                                            onChange={(e) => setData('reporter_name', e.target.value)}
+                                        />
+                                        <FieldError message={errors.reporter_name} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="nama@email.com"
+                                            value={data.reporter_email}
+                                            onChange={(e) => setData('reporter_email', e.target.value)}
+                                        />
+                                        <FieldError message={errors.reporter_email} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="wa">WhatsApp</Label>
+                                        <Input
+                                            id="wa"
+                                            type="tel"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            placeholder="08123456789"
+                                            value={data.reporter_wa}
+                                            onChange={(e) => setData('reporter_wa', e.target.value.replace(/\D/g, ''))}
+                                        />
+                                        <FieldError message={errors.reporter_wa} />
+                                    </div>
+                                </div>
+
+                                {/* Detail laporan */}
+                                <div className="space-y-4">
+                                    {!data.classification ? (
+                                        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                                            Pilih jenis laporan terlebih dahulu untuk mengisi detailnya.
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {data.classification === 'pengaduan' && (
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="tanggal">Tanggal kejadian (opsional)</Label>
+                                                    <Input
+                                                        id="tanggal"
+                                                        type="date"
+                                                        className="w-full"
+                                                        value={data.tanggal_kejadian}
+                                                        onChange={(e) => setData('tanggal_kejadian', e.target.value)}
+                                                    />
+                                                    <FieldError message={errors.tanggal_kejadian} />
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="judul">
+                                                    Judul {selectedLabel?.toLowerCase()} <span className="text-destructive">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="judul"
+                                                    placeholder={`Tuliskan judul ${selectedLabel?.toLowerCase()} Anda`}
+                                                    value={data.title}
+                                                    onChange={(e) => setData('title', e.target.value)}
+                                                    required
+                                                />
+                                                <FieldError message={errors.title} />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="isi">
+                                                    Isi {selectedLabel?.toLowerCase()} <span className="text-destructive">*</span>
+                                                </Label>
+                                                <Textarea
+                                                    id="isi"
+                                                    placeholder={`Tuliskan isi ${selectedLabel?.toLowerCase()} Anda`}
+                                                    rows={6}
+                                                    value={data.content}
+                                                    onChange={(e) => setData('content', e.target.value)}
+                                                />
+                                                <FieldError message={errors.content} />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                <div className="border-t" />
+
+                                {/* Lampiran */}
+                                <div className="space-y-3">
+                                    <SectionTitle
+                                        title="Lampiran (opsional)"
+                                        description="Format JPG, PNG, atau PDF. Maksimal 2 MB per file dan 3 file."
                                     />
-                                    {errors.tanggal_kejadian && <p className="text-sm text-destructive">{errors.tanggal_kejadian}</p>}
-                                </div>
-                            </>
-                        )}
 
-                        {data.classification === 'aspirasi' && (
-                            <div className="mb-4 space-y-2">
-                                <Label htmlFor="satuan-tugas">Satuan Tugas</Label>
-                                <SearchableSelect
-                                    options={SATUAN_TUGAS_OPTIONS}
-                                    value={data.satuan_tugas}
-                                    onChange={(value) => setData('satuan_tugas', value)}
-                                    placeholder="Pilih satuan tugas"
-                                    searchPlaceholder="Cari satuan tugas..."
-                                    error={!!errors.satuan_tugas}
-                                />
-                                {errors.satuan_tugas && <p className="text-sm text-destructive">{errors.satuan_tugas}</p>}
-                            </div>
-                        )}
+                                    {data.attachments.length < 3 && (
+                                        <div>
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                multiple
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                                id="file-input"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full sm:w-auto"
+                                                onClick={() => fileInputRef.current?.click()}
+                                            >
+                                                <Paperclip className="size-4" />
+                                                Pilih file
+                                            </Button>
+                                        </div>
+                                    )}
 
-                        {/* Textbox isi */}
-                        {data.classification && (
-                            <div className="mb-8 space-y-2">
-                                <Label htmlFor="isi">Isi {classificationLabel(data.classification)}</Label>
-                                <Textarea
-                                    id="isi"
-                                    placeholder={`Tuliskan isi ${classificationLabel(data.classification).toLowerCase()} Anda di sini...`}
-                                    rows={6}
-                                    value={data.content}
-                                    onChange={(e) => setData('content', e.target.value)}
-                                />
-                                {errors.content && <p className="text-sm text-destructive">{errors.content}</p>}
-                            </div>
-                        )}
-
-                        {/* Lampiran */}
-                        <div className="mb-8 space-y-3">
-                            <Label>Lampiran (opsional)</Label>
-                            <p className="text-xs text-muted-foreground">Format: JPG, PNG, PDF. Maksimal 2MB per file, maksimal 3 file.</p>
-
-                            {data.attachments.length < 3 && (
-                                <div>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept=".jpg,.jpeg,.png,.pdf"
-                                        multiple
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        id="file-input"
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        <Paperclip className="mr-2 size-4" />
-                                        Pilih File
-                                    </Button>
-                                </div>
-                            )}
-
-                            {data.attachments.length > 0 && (
-                                <ul className="space-y-2">
-                                    {data.attachments.map((file, index) => (
-                                        <li
-                                            key={`${file.name}-${index}`}
-                                            className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                                        >
-                                            <div className="flex min-w-0 items-center gap-2">
-                                                <Paperclip className="size-4 shrink-0 text-muted-foreground" />
-                                                <span className="truncate">{file.name}</span>
-                                                <span className="shrink-0 text-xs text-muted-foreground">
-                                                    ({formatFileSize(file.size)})
-                                                </span>
-                                            </div>
-                                            <div className="ml-2 flex shrink-0 items-center gap-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setPreviewFile(file)}
-                                                    className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                                                    title="Lihat"
+                                    {data.attachments.length > 0 && (
+                                        <ul className="space-y-2">
+                                            {data.attachments.map((file, index) => (
+                                                <li
+                                                    key={`${file.name}-${index}`}
+                                                    className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm"
                                                 >
-                                                    <Eye className="size-4" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeFile(index)}
-                                                    className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                                                    title="Hapus"
-                                                >
-                                                    <X className="size-4" />
-                                                </button>
-                                            </div>
-                                        </li>
+                                                    <div className="flex min-w-0 items-center gap-2">
+                                                        <Paperclip className="size-4 shrink-0 text-muted-foreground" />
+                                                        <span className="truncate">{file.name}</span>
+                                                        <span className="shrink-0 text-xs text-muted-foreground">({formatFileSize(file.size)})</span>
+                                                    </div>
+                                                    <div className="flex shrink-0 items-center gap-1">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-7 text-muted-foreground"
+                                                            title="Lihat"
+                                                            onClick={() => setPreviewFile(file)}
+                                                        >
+                                                            <Eye className="size-4" />
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-7 text-muted-foreground"
+                                                            title="Hapus"
+                                                            onClick={() => removeFile(index)}
+                                                        >
+                                                            <X className="size-4" />
+                                                        </Button>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+
+                                    <FieldError message={errors.attachments} />
+                                    {['attachments.0', 'attachments.1', 'attachments.2'].map((key) => (
+                                        <FieldError key={key} message={fieldErrors[key]} />
                                     ))}
-                                </ul>
-                            )}
+                                </div>
+                            </CardContent>
 
-                            {errors.attachments && <p className="text-sm text-destructive">{errors.attachments}</p>}
-                            {(errors as Record<string, string>)['attachments.0'] && (
-                                <p className="text-sm text-destructive">{(errors as Record<string, string>)['attachments.0']}</p>
-                            )}
-                            {(errors as Record<string, string>)['attachments.1'] && (
-                                <p className="text-sm text-destructive">{(errors as Record<string, string>)['attachments.1']}</p>
-                            )}
-                            {(errors as Record<string, string>)['attachments.2'] && (
-                                <p className="text-sm text-destructive">{(errors as Record<string, string>)['attachments.2']}</p>
-                            )}
-                        </div>
-
-                        {/* Tombol Kirim */}
-                        <Button type="submit" size="lg" disabled={processing || !data.classification}>
-                            {processing && <LoaderCircle className="mr-2 size-4 animate-spin" />}
-                            Kirim
-                        </Button>
+                            <CardFooter className="border-t pt-6">
+                                <Button type="submit" size="lg" className="w-full sm:ml-auto sm:w-auto sm:px-10" disabled={processing || !data.classification}>
+                                    {processing && <LoaderCircle className="size-4 animate-spin" />}
+                                    Kirim laporan
+                                </Button>
+                            </CardFooter>
+                        </Card>
                     </form>
 
                     {/* Riwayat tiket dari localStorage */}
                     {ticketHistory.length > 0 && (
-                        <div className="mt-12">
-                            <div className="mb-4 flex items-center gap-2">
-                                <Ticket className="size-5 text-muted-foreground" />
-                                <h3 className="text-lg font-semibold">Riwayat Laporan Anda</h3>
-                            </div>
-                            <div className="divide-y rounded-lg border">
-                                {[...ticketHistory].reverse().map((ticket) => (
-                                    <div key={`${ticket.ticket_number}-${ticket.created_at}`} className="flex items-center justify-between px-4 py-3">
-                                        <div className="min-w-0">
-                                            <p className="font-mono text-sm font-semibold">{ticket.ticket_number}</p>
-                                            <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                                                <Clock className="size-3" />
-                                                <span>{formatTicketDate(ticket.created_at)}</span>
+                        <Card className="mx-auto mt-8 max-w-2xl shadow-xs">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <Ticket className="size-5 text-muted-foreground" />
+                                    Riwayat laporan Anda
+                                </CardTitle>
+                                <CardDescription>Tersimpan di perangkat ini.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                <div className="divide-y border-t">
+                                    {[...ticketHistory].reverse().map((ticket) => (
+                                        <div
+                                            key={`${ticket.ticket_number}-${ticket.created_at}`}
+                                            className="flex items-center justify-between gap-2 px-4 py-3 sm:px-6"
+                                        >
+                                            <div className="min-w-0">
+                                                <p className="font-mono text-sm font-semibold break-all">{ticket.ticket_number}</p>
+                                                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                                    <Clock className="size-3 shrink-0" />
+                                                    <span>{formatTicketDate(ticket.created_at)}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex shrink-0 items-center gap-1.5">
+                                                <Button asChild variant="outline" size="sm">
+                                                    <Link href={route('tickets.check', { ticket_number: ticket.ticket_number })}>Cek status</Link>
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                    title="Hapus dari riwayat"
+                                                    onClick={() => setTicketToDelete(ticket)}
+                                                >
+                                                    <X className="size-4" />
+                                                </Button>
                                             </div>
                                         </div>
-                                        <div className="ml-2 flex shrink-0 items-center gap-1.5">
-                                            <Link
-                                                href={route('tickets.check', { ticket_number: ticket.ticket_number })}
-                                                className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium hover:bg-accent"
-                                            >
-                                                Cek Status
-                                            </Link>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                                title="Hapus dari riwayat"
-                                                onClick={() => setTicketToDelete(ticket)}
-                                            >
-                                                <X className="size-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
+
                     <PublicStatsSection stats={stats} />
 
-                    <FooterSection/>
+                    <FooterSection />
                 </main>
             </div>
 
@@ -570,7 +570,7 @@ export default function Welcome() {
                         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
                             <CheckCircle2 className="size-8 text-green-600 dark:text-green-400" />
                         </div>
-                        <DialogTitle className="text-center">Laporan Berhasil Dikirim!</DialogTitle>
+                        <DialogTitle className="text-center">Laporan berhasil dikirim</DialogTitle>
                         <DialogDescription className="text-center">
                             Simpan nomor tiket berikut untuk memantau status laporan Anda.
                         </DialogDescription>
@@ -578,21 +578,19 @@ export default function Welcome() {
 
                     {ticketNumber && (
                         <div className="rounded-lg border bg-muted/50 p-4">
-                            <p className="mb-1 text-xs font-medium text-muted-foreground">Nomor Tiket</p>
-                            <p className="text-lg font-bold tracking-wide">{ticketNumber}</p>
+                            <p className="mb-1 text-xs font-medium text-muted-foreground">Nomor tiket</p>
+                            <p className="text-lg font-bold tracking-wide break-all">{ticketNumber}</p>
                         </div>
                     )}
 
                     <DialogFooter className="flex-col gap-2 sm:flex-col">
                         <Button onClick={handleCopy} variant="outline" className="w-full">
-                            <Copy className="mr-2 size-4" />
-                            {copied ? 'Tersalin!' : 'Salin Nomor Tiket'}
+                            <Copy className="size-4" />
+                            {copied ? 'Tersalin' : 'Salin nomor tiket'}
                         </Button>
                         {ticketNumber && (
                             <Button asChild variant="secondary" className="w-full">
-                                <Link href={route('tickets.check', { ticket_number: ticketNumber })}>
-                                    Cek Status Laporan Ini
-                                </Link>
+                                <Link href={route('tickets.check', { ticket_number: ticketNumber })}>Cek status laporan ini</Link>
                             </Button>
                         )}
                         <Button onClick={handleDialogClose} className="w-full">
@@ -606,27 +604,17 @@ export default function Welcome() {
             <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
                 <DialogContent className="max-h-[90vh] sm:max-w-3xl">
                     <DialogHeader>
-                        <DialogTitle className="truncate">{previewFile?.name}</DialogTitle>
-                        <DialogDescription>
-                            {previewFile && formatFileSize(previewFile.size)}
-                        </DialogDescription>
+                        <DialogTitle className="truncate pr-6">{previewFile?.name}</DialogTitle>
+                        <DialogDescription>{previewFile && formatFileSize(previewFile.size)}</DialogDescription>
                     </DialogHeader>
 
                     <div className="max-h-[70vh] overflow-auto">
                         {previewFile && previewUrl && isImageFile(previewFile) && (
-                            <img
-                                src={previewUrl}
-                                alt={previewFile.name}
-                                className="mx-auto max-h-[65vh] rounded-md object-contain"
-                            />
+                            <img src={previewUrl} alt={previewFile.name} className="mx-auto max-h-[65vh] rounded-md object-contain" />
                         )}
 
                         {previewFile && previewUrl && isPdfFile(previewFile) && (
-                            <iframe
-                                src={previewUrl}
-                                title={previewFile.name}
-                                className="h-[65vh] w-full rounded-md border-0"
-                            />
+                            <iframe src={previewUrl} title={previewFile.name} className="h-[65vh] w-full rounded-md border-0" />
                         )}
                     </div>
 
@@ -638,7 +626,6 @@ export default function Welcome() {
                 </DialogContent>
             </Dialog>
 
-
             {/* Dialog konfirmasi hapus riwayat tiket */}
             <Dialog open={!!ticketToDelete} onOpenChange={(open) => !open && setTicketToDelete(null)}>
                 <DialogContent className="sm:max-w-md">
@@ -646,16 +633,17 @@ export default function Welcome() {
                         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-destructive/10">
                             <Trash2 className="size-8 text-destructive" />
                         </div>
-                        <DialogTitle className="text-center">Hapus dari Riwayat?</DialogTitle>
+                        <DialogTitle className="text-center">Hapus dari riwayat?</DialogTitle>
                         <DialogDescription className="text-center">
-                            Nomor tiket <span className="font-mono font-semibold text-foreground">{ticketToDelete?.ticket_number}</span> akan dihapus dari
-                            riwayat di perangkat ini. Pastikan Anda sudah menyimpan nomor tiketnya, karena Anda memerlukannya untuk mengecek status laporan.
+                            Nomor tiket <span className="font-mono font-semibold break-all text-foreground">{ticketToDelete?.ticket_number}</span> akan
+                            dihapus dari riwayat di perangkat ini. Pastikan Anda sudah menyimpan nomor tiketnya, karena Anda memerlukannya untuk
+                            mengecek status laporan.
                         </DialogDescription>
                     </DialogHeader>
 
                     <DialogFooter className="flex-col gap-2 sm:flex-col">
                         <Button variant="destructive" className="w-full" onClick={handleDeleteTicket}>
-                            Ya, Hapus
+                            Ya, hapus
                         </Button>
                         <Button variant="outline" className="w-full" onClick={() => setTicketToDelete(null)}>
                             Batal

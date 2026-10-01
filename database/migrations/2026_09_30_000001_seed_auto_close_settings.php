@@ -1,18 +1,13 @@
 <?php
 
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-class SettingSeeder extends Seeder
+return new class extends Migration
 {
-    public function run(): void
+    public function up(): void
     {
         $settings = [
-            ['key' => 'nama_penanda_tangan', 'value' => null],
-            ['key' => 'jabatan_penanda_tangan', 'value' => 'KETUA TIM PENGADUAN'],
-            ['key' => 'kota_penanda_tangan', 'value' => 'Pekanbaru'],
             ['key' => 'auto_close_pengaduan_days', 'value' => '3'],
             ['key' => 'auto_close_aspirasi_days', 'value' => '1'],
             ['key' => 'auto_close_permintaan_informasi_days', 'value' => '5'],
@@ -27,4 +22,13 @@ class SettingSeeder extends Seeder
             ]);
         }
     }
-}
+
+    public function down(): void
+    {
+        DB::table('settings')->whereIn('key', [
+            'auto_close_pengaduan_days',
+            'auto_close_aspirasi_days',
+            'auto_close_permintaan_informasi_days',
+        ])->delete();
+    }
+};

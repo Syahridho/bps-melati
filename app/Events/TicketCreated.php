@@ -39,7 +39,7 @@ class TicketCreated implements ShouldBroadcastNow
             'id' => $this->ticket->id,
             'ticket_number' => $this->ticket->ticket_number,
             'classification' => $this->ticket->classification,
-            'created_at' => $this->ticket->created_at->toDateTimeString(),
+            'created_at' => $this->ticket->created_at->toIso8601String(),
         ];
     }
 }

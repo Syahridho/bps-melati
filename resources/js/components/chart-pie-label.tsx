@@ -32,22 +32,26 @@ const chartConfig = {
   },
   span_lapor: {
     label: "SP4N-LAPOR!",
-    color: "#fb7185", // rose-400
+    color: "#a78bfa", // violet-400
   },
   sosial_media: {
     label: "Sosial Media",
-    color: "#a78bfa", // violet-400
+    color: "#f472b6", // pink-400
   },
   kunjungan_langsung: {
     label: "Kunjungan Langsung",
-    color: "#34d399", // emerald-400
+    color: "#a3e635", // lime-400
   },
   wbs: {
     label: "WBS",
-    color: "#fcd34d", // amber-300
+    color: "#fb923c", // orange-400
   },
   email: {
     label: "Email",
+    color: "#2dd4bf", // teal-400
+  },
+  website: {
+    label: "Website",
     color: "#38bdf8", // sky-400
   },
 } satisfies ChartConfig

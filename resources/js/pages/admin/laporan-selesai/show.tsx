@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
-import { Link } from '@inertiajs/react';
+import { type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Calendar,
@@ -50,6 +51,7 @@ interface TicketDetail {
     period: string;
     sequence: number;
     classification: Classification;
+    title?: string | null;
     service_type: string | null;
     satuan_tugas: string | null;
     reporter_name: string | null;
@@ -68,7 +70,7 @@ interface TicketDetail {
     responses: TicketResponseItem[];
 }
 
-interface ShowProps {
+interface ShowProps extends SharedData {
     ticket: TicketDetail;
 }
 
@@ -100,12 +102,15 @@ function responseTypeLabel(type: string): string {
             return 'Respon Awal';
         case 'respon_substantif':
             return 'Respon Substantif';
+        case 'balasan_pelapor':
+            return 'Balasan Pelapor';
         default:
             return type;
     }
 }
 
-function responseTypeVariant(type: string): 'default' | 'secondary' {
+function responseTypeVariant(type: string): 'default' | 'secondary' | 'outline' {
+    if (type === 'balasan_pelapor') return 'outline';
     return type === 'respon_awal' ? 'secondary' : 'default';
 }
 
@@ -149,7 +154,9 @@ function isPdfMime(mimeType: string, fileName: string): boolean {
     return mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
 }
 
-export default function Show({ ticket }: ShowProps) {
+export default function Show() {
+    const { auth, ticket } = usePage<ShowProps>().props;
+    const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
     const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
 
     return (
@@ -157,7 +164,7 @@ export default function Show({ ticket }: ShowProps) {
             title={ticket.ticket_number}
             description="Detail laporan selesai"
             breadcrumbs={[
-                { title: 'Laporan Selesai', href: route('dashboard.admin.laporan-selesai.index') },
+                { title: 'Laporan Selesai', href: route(`${routePrefix}.laporan-selesai.index`) },
                 { title: ticket.ticket_number, href: '#' },
             ]}
         >
@@ -165,7 +172,7 @@ export default function Show({ ticket }: ShowProps) {
                 {/* Back button */}
                 <div className="flex items-center justify-between">
                     <Link
-                        href={route('dashboard.admin.laporan-selesai.index')}
+                        href={route(`${routePrefix}.laporan-selesai.index`)}
                         className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                         <ArrowLeft className="size-4" />
@@ -301,11 +308,19 @@ export default function Show({ ticket }: ShowProps) {
 
                     <Separator />
 
-                    {/* Isi laporan */}
-                    <div className="px-6 py-5">
-                        <h3 className="mb-3 text-sm font-semibold">Isi Laporan</h3>
-                        <div className="prose prose-sm max-w-none rounded-lg bg-muted/50 p-4 dark:prose-invert">
-                            <p className="whitespace-pre-wrap leading-relaxed">{ticket.content}</p>
+                    {/* Judul & Isi laporan */}
+                    <div className="px-6 py-5 space-y-3">
+                        {ticket.title && (
+                            <div>
+                                <h4 className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-1">Judul Laporan</h4>
+                                <p className="text-base font-bold text-foreground">{ticket.title}</p>
+                            </div>
+                        )}
+                        <div>
+                            <h4 className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2">Isi Laporan</h4>
+                            <div className="prose prose-sm max-w-none rounded-lg bg-muted/50 p-4 dark:prose-invert">
+                                <p className="whitespace-pre-wrap leading-relaxed">{ticket.content}</p>
+                            </div>
                         </div>
                     </div>
 

@@ -89,6 +89,7 @@ class DashboardController extends Controller
             'kunjungan_langsung' => (int) ($channels['kunjungan-langsung'] ?? 0),
             'wbs' => (int) ($channels['wbs'] ?? 0),
             'email' => (int) ($channels['email'] ?? 0),
+            'website' => (int) ($channels['website'] ?? 0),
             'baru' => (int) $summary->baru,
             'respon_awal' => (int) $summary->respon_awal,
             'respon_substantif' => (int) $summary->respon_substantif,
@@ -142,11 +143,12 @@ class DashboardController extends Controller
                 'id' => $t->id,
                 'ticket_number' => $t->ticket_number,
                 'classification' => $t->classification,
+                'title' => $t->title,
                 'reporter_name' => $t->reporter_name,
                 'content' => $t->content,
                 'status' => $t->status,
                 'channel' => $t->channel?->name ?? '-',
-                'created_at' => $t->created_at->toDateTimeString(),
+                'created_at' => $t->created_at->toIso8601String(),
             ])
             ->all();
     }

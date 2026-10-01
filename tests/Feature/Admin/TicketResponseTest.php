@@ -15,12 +15,14 @@ use function Pest\Laravel\actingAs;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->channel = Channel::create([
-        'name' => 'Website',
-        'slug' => 'website',
-        'sort_order' => 1,
-        'is_active' => true,
-    ]);
+    $this->channel = Channel::firstOrCreate(
+        ['slug' => 'website'],
+        [
+            'name' => 'Website',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]
+    );
 
     $this->admin = User::factory()->create(['role' => 'admin']);
 });

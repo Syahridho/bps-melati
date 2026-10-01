@@ -64,7 +64,7 @@ class TicketResponseController extends Controller
             'type' => $response->type,
             'message' => $response->message,
             'user' => auth()->user()->name,
-            'sent_at' => $response->sent_at->toDateTimeString(),
+            'sent_at' => $response->sent_at->toIso8601String(),
         ], now()->addHours(24));
 
         // Kirim email tanggapan ke pelapor via SMTP jika alamat email tersedia

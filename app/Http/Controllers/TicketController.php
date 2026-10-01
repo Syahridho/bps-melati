@@ -27,6 +27,7 @@ class TicketController extends Controller
             'period' => $period,
             'sequence' => $generated['sequence'],
             'classification' => $validated['classification'],
+            'title' => $validated['title'],
             'service_type' => $validated['service_type'] ?? null,
             'satuan_tugas' => $validated['satuan_tugas'] ?? null,
             'channel_id' => $validated['channel_id'],
@@ -63,7 +64,7 @@ class TicketController extends Controller
             'satuan_tugas' => $ticket->satuan_tugas,
             'reporter_name' => $ticket->reporter_name,
             'status' => $ticket->status,
-            'created_at' => $ticket->created_at->toDateTimeString(),
+            'created_at' => $ticket->created_at->toIso8601String(),
         ], now()->addHours(24));
 
         // Dispatch event real-time broadcasting ke admin
