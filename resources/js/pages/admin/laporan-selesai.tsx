@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Inbox, MessageCircle, Search } from 'lucide-react';
+import { CheckCircle2, Inbox, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';

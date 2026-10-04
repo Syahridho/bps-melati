@@ -1,13 +1,11 @@
 import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import FooterSection from '@/components/footer';
 import { PublicStatsSection, type PublicStats } from '@/components/public-stats';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
@@ -41,21 +39,6 @@ interface StoredTicket {
     created_at: string;
 }
 
-const SATUAN_TUGAS_OPTIONS = [
-    'BPS Provinsi Riau',
-    'BPS Kabupaten Kuantan Singingi',
-    'BPS Kabupaten Indragiri Hulu',
-    'BPS Kabupaten Indragiri Hilir',
-    'BPS Kabupaten Pelalawan',
-    'BPS Kabupaten Siak',
-    'BPS Kabupaten Kampar',
-    'BPS Kabupaten Rokan Hulu',
-    'BPS Kabupaten Bengkalis',
-    'BPS Kabupaten Rokan Hilir',
-    'BPS Kabupaten Kepulauan Meranti',
-    'BPS Kota Pekanbaru',
-    'BPS Kota Dumai',
-];
 
 // Warna ikon mengikuti warna kategori di dashboard admin agar konsisten.
 const CLASSIFICATIONS: {
