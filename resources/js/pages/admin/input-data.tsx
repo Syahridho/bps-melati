@@ -1,7 +1,8 @@
 import { Pagination, type PaginatedData } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -11,9 +12,9 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { type SharedData } from '@/types';
-import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Eye, FileText, Image as ImageIcon, Inbox, Paperclip, Plus, Search } from 'lucide-react';
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { CheckCircle2, Eye, FileText, Image as ImageIcon, Inbox, LoaderCircle, Paperclip, Plus, Search, Send } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 
 const SATUAN_TUGAS_OPTIONS = [
     'BPS Provinsi Riau (berkedudukan di Pekanbaru)',
@@ -106,6 +107,19 @@ function classificationVariant(classification: ClassificationType): 'default' | 
     }
 }
 
+function statusLabel(status: StatusType): string {
+    switch (status) {
+        case 'baru':
+            return 'Baru';
+        case 'respon_awal':
+            return 'Respon Awal';
+        case 'respon_substantif':
+            return 'Respon Substantif';
+        case 'selesai':
+            return 'Selesai';
+    }
+}
+
 function formatDate(dateStr: string): string {
     const date = new Date(dateStr);
     const now = new Date();
@@ -157,12 +171,13 @@ export default function InputData() {
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [showResponsePanel, setShowResponsePanel] = useState(false);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [isLoading, setIsLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     // Form state untuk modal tambah data
-    const { data, setData, post, reset, errors } = useForm({
+    const { data, setData, post, reset, errors, processing } = useForm({
         classification: '' as ClassificationType | '',
         channel_id: '',
         reporter_name: '',
@@ -176,9 +191,11 @@ export default function InputData() {
         response_type: 'respon_awal',
         response_message: '',
         attachments: [] as File[],
+        response_attachments: [] as File[],
     });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const responseFileInputRef = useRef<HTMLInputElement>(null);
 
     // Attachment Preview State inside modal
     const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -284,11 +301,30 @@ export default function InputData() {
         }
     };
 
+    const handleResponseFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const newFiles = Array.from(e.target.files);
+
+        const validFiles = newFiles.filter((file) => {
+            const isLt2MB = file.size <= 2 * 1024 * 1024;
+            const isValidType = isImageFile(file) || isPdfFile(file);
+            return isLt2MB && isValidType;
+        });
+
+        const updated = [...data.response_attachments, ...validFiles].slice(0, 3);
+        setData('response_attachments', updated);
+
+        if (responseFileInputRef.current) {
+            responseFileInputRef.current.value = '';
+        }
+    };
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         post(route(`${routePrefix}.input-data.store`), {
             onSuccess: () => {
                 reset();
+                setShowResponsePanel(false);
                 setIsAddDialogOpen(false);
             },
         });
@@ -296,6 +332,7 @@ export default function InputData() {
 
     return (
         <AdminPage breadcrumbs={[{ title: 'Input Data', href: route(`${routePrefix}.input-data.index`) }]}>
+            <Head title="Input Data" />
             <div className="space-y-6">
                 {/* Header & Success Alert */}
                 {successMessage && (
@@ -308,9 +345,7 @@ export default function InputData() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-xl font-bold tracking-tight">Input Data</h2>
-                        <p className="text-sm text-muted-foreground">
-                            Kelola dan tambahkan laporan, aspirasi, atau permintaan informasi baru.
-                        </p>
+                        <p className="text-muted-foreground text-sm">Kelola dan tambahkan laporan, aspirasi, atau permintaan informasi baru.</p>
                     </div>
                     <Button onClick={() => setIsAddDialogOpen(true)} className="shrink-0 gap-2">
                         <Plus className="h-4 w-4" />
@@ -319,11 +354,11 @@ export default function InputData() {
                 </div>
 
                 {/* Inbox Card Layout */}
-                <div className="overflow-hidden rounded-lg border bg-card">
+                <div className="bg-card overflow-hidden rounded-lg border">
                     {/* Toolbar */}
                     <div className="flex items-center gap-2 border-b px-4 py-3">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
                             <Input
                                 placeholder="Cari laporan..."
                                 className="pl-9"
@@ -364,39 +399,63 @@ export default function InputData() {
                     {/* Ticket list with lightweight loading state */}
                     <div className={cn('divide-y transition-opacity duration-200', isLoading && 'pointer-events-none opacity-50')}>
                         {tickets.data.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                            <div className="text-muted-foreground flex flex-col items-center justify-center py-16">
                                 <Inbox className="mb-3 size-10" />
                                 <p className="text-sm">Tidak ada laporan ditemukan</p>
                             </div>
                         ) : (
                             tickets.data.map((ticket) => (
-                                <div key={ticket.id} className="group transition-colors hover:bg-muted/50">
+                                <div
+                                    key={ticket.id}
+                                    className={cn('group hover:bg-muted/50 transition-colors', ticket.is_read === false && 'bg-primary/[0.03]')}
+                                >
                                     <div className="flex gap-3 px-4 py-3">
                                         <Link
-                                            href={route(`${routePrefix}.laporan-masuk.show`, { ticketNumber: ticket.ticket_number })}
+                                            href={route(`${routePrefix}.input-data.show`, { ticketNumber: ticket.ticket_number })}
                                             className="min-w-0 flex-1"
                                         >
                                             <div className="mb-1 flex items-center justify-between gap-2">
-                                                <span className="truncate text-sm font-medium text-foreground">
+                                                <span
+                                                    className={cn(
+                                                        'truncate text-sm',
+                                                        ticket.is_read === false ? 'text-foreground font-semibold' : 'text-foreground font-medium',
+                                                    )}
+                                                >
                                                     {getTicketDisplayTitle(ticket)}
                                                 </span>
-                                                <span className="shrink-0 text-xs text-muted-foreground">{formatDate(ticket.created_at)}</span>
+                                                <span className="text-muted-foreground shrink-0 text-xs">{formatDate(ticket.created_at)}</span>
                                             </div>
-
-                                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                                <Badge variant={classificationVariant(ticket.classification)}>
-                                                    {classificationLabel(ticket.classification)}
-                                                </Badge>
-                                                <span>•</span>
-                                                <span>{ticket.ticket_number}</span>
+                                            <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs">
+                                                {ticket.is_read === false && (
+                                                    <span className="inline-block size-2 shrink-0 rounded-full bg-blue-500" />
+                                                )}
+                                                <span className="text-foreground font-medium">{ticket.ticket_number}</span>
                                                 {ticket.reporter_name && (
                                                     <>
                                                         <span>•</span>
                                                         <span>{ticket.reporter_name}</span>
                                                     </>
                                                 )}
-                                                <span>•</span>
-                                                <span>{ticket.channel}</span>
+                                            </div>
+                                            <p className="text-muted-foreground mb-2 truncate text-xs">{ticket.content}</p>
+                                            <div className="flex items-center gap-1.5">
+                                                <Badge variant={classificationVariant(ticket.classification)} className="text-[10px]">
+                                                    {classificationLabel(ticket.classification)}
+                                                </Badge>
+                                                {ticket.status === 'selesai' ? (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600"
+                                                    >
+                                                        <CheckCircle2 className="size-3" />
+                                                        Selesai
+                                                    </Badge>
+                                                ) : ticket.status !== 'baru' ? (
+                                                    <Badge variant="outline" className="text-[10px]">
+                                                        {statusLabel(ticket.status)}
+                                                    </Badge>
+                                                ) : null}
+                                                <span className="text-muted-foreground text-[10px]">{ticket.channel}</span>
                                             </div>
                                         </Link>
                                     </div>
@@ -419,8 +478,21 @@ export default function InputData() {
             </div>
 
             {/* Modal Dialog Tambah Data Baru */}
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+            <Dialog
+                open={isAddDialogOpen}
+                onOpenChange={(open) => {
+                    setIsAddDialogOpen(open);
+                    if (!open) {
+                        setShowResponsePanel(false);
+                    }
+                }}
+            >
+                <DialogContent
+                    className={cn(
+                        'max-h-[90vh] overflow-y-auto transition-all duration-300',
+                        showResponsePanel ? 'sm:max-w-5xl md:max-w-5xl' : 'sm:max-w-2xl',
+                    )}
+                >
                     <DialogHeader>
                         <DialogTitle>Tambah Data Baru</DialogTitle>
                         <DialogDescription>
@@ -429,240 +501,400 @@ export default function InputData() {
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit} className="space-y-4 py-2">
-                        {/* 1. Klasifikasi */}
-                        <div className="space-y-2">
-                            <Label>
-                                Jenis Laporan <span className="text-destructive">*</span>
-                            </Label>
-                            <ToggleGroup
-                                type="single"
-                                value={data.classification}
-                                onValueChange={(val) => {
-                                    if (val) setData('classification', val as ClassificationType);
-                                }}
-                                className="justify-start gap-2"
-                            >
-                                <ToggleGroupItem value="pengaduan" variant="outline" className="px-4 py-2 text-xs font-medium">
-                                    Pengaduan
-                                </ToggleGroupItem>
-                                <ToggleGroupItem value="aspirasi" variant="outline" className="px-4 py-2 text-xs font-medium">
-                                    Aspirasi
-                                </ToggleGroupItem>
-                                <ToggleGroupItem value="permintaan_informasi" variant="outline" className="px-4 py-2 text-xs font-medium">
-                                    Permintaan Informasi
-                                </ToggleGroupItem>
-                            </ToggleGroup>
-                            {errors.classification && <p className="text-xs text-destructive">{errors.classification}</p>}
-                        </div>
+                        <div className={cn(showResponsePanel && 'grid grid-cols-1 items-start gap-6 md:grid-cols-2')}>
+                            {/* Panel Kiri: Form Input Data Tiket */}
+                            <div className="space-y-4">
+                                {showResponsePanel && (
+                                    <div className="border-b pb-2">
+                                        <h3 className="text-sm font-semibold">Data Tiket / Laporan</h3>
+                                        <p className="text-muted-foreground text-xs">Informasi utama laporan yang dimasukkan.</p>
+                                    </div>
+                                )}
 
-                        {/* 2. Pelapor (Nama, Email, WA) */}
-                        <div className="grid gap-4 sm:grid-cols-3">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Nama Pelapor (opsional)</Label>
-                                <Input
-                                    id="name"
-                                    placeholder="Masukkan nama"
-                                    value={data.reporter_name}
-                                    onChange={(e) => setData('reporter_name', e.target.value)}
-                                />
-                                {errors.reporter_name && <p className="text-xs text-destructive">{errors.reporter_name}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email (opsional)</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="contoh@domain.com"
-                                    value={data.reporter_email}
-                                    onChange={(e) => setData('reporter_email', e.target.value)}
-                                />
-                                {errors.reporter_email && <p className="text-xs text-destructive">{errors.reporter_email}</p>}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="wa">WhatsApp (opsional)</Label>
-                                <Input
-                                    id="wa"
-                                    type="tel"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    placeholder="08123456789"
-                                    value={data.reporter_wa}
-                                    onChange={(e) => setData('reporter_wa', e.target.value.replace(/\D/g, ''))}
-                                />
-                                {errors.reporter_wa && <p className="text-xs text-destructive">{errors.reporter_wa}</p>}
-                            </div>
-                        </div>
-
-                        {/* 3. Sumber Kanal */}
-                        <div className="space-y-2">
-                            <Label htmlFor="channel">
-                                Sumber Kanal <span className="text-destructive">*</span>
-                            </Label>
-                            <Select value={data.channel_id} onValueChange={(value) => setData('channel_id', value)}>
-                                <SelectTrigger id="channel">
-                                    <SelectValue placeholder="Pilih sumber kanal" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {channels.map((group, index) => (
-                                        <div key={group.id}>
-                                            {index > 0 && <SelectSeparator />}
-                                            {group.children.length > 0 ? (
-                                                <SelectGroup>
-                                                    <SelectLabel>{group.name}</SelectLabel>
-                                                    {group.children.map((child) => (
-                                                        <SelectItem key={child.id} value={String(child.id)}>
-                                                            {child.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            ) : (
-                                                <SelectItem value={String(group.id)}>{group.name}</SelectItem>
-                                            )}
-                                        </div>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.channel_id && <p className="text-xs text-destructive">{errors.channel_id}</p>}
-                        </div>
-
-                        {/* 4. Field khusus berdasarkan jenis */}
-                        {data.classification === 'pengaduan' && (
-                            <div className="grid gap-4 sm:grid-cols-2">
+                                {/* 1. Klasifikasi */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="service-type">
-                                        Jenis Layanan <span className="text-destructive">*</span>
+                                    <Label>
+                                        Jenis Laporan <span className="text-destructive">*</span>
                                     </Label>
-                                    <Select value={data.service_type} onValueChange={(value) => setData('service_type', value)}>
-                                        <SelectTrigger id="service-type">
-                                            <SelectValue placeholder="Pilih jenis layanan" />
+                                    <ToggleGroup
+                                        type="single"
+                                        value={data.classification}
+                                        onValueChange={(val) => {
+                                            if (val) setData('classification', val as ClassificationType);
+                                        }}
+                                        className="justify-start gap-2"
+                                    >
+                                        <ToggleGroupItem value="pengaduan" variant="outline" className="px-4 py-2 text-xs font-medium">
+                                            Pengaduan
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem value="aspirasi" variant="outline" className="px-4 py-2 text-xs font-medium">
+                                            Aspirasi
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem value="permintaan_informasi" variant="outline" className="px-4 py-2 text-xs font-medium">
+                                            Permintaan Informasi
+                                        </ToggleGroupItem>
+                                    </ToggleGroup>
+                                    {errors.classification && <p className="text-destructive text-xs">{errors.classification}</p>}
+                                </div>
+
+                                {/* 2. Pelapor (Nama, Email, WA) */}
+                                <div className="grid gap-4 sm:grid-cols-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="name">Nama Pelapor (opsional)</Label>
+                                        <Input
+                                            id="name"
+                                            placeholder="Masukkan nama"
+                                            value={data.reporter_name}
+                                            onChange={(e) => setData('reporter_name', e.target.value)}
+                                        />
+                                        {errors.reporter_name && <p className="text-destructive text-xs">{errors.reporter_name}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email (opsional)</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="contoh@domain.com"
+                                            value={data.reporter_email}
+                                            onChange={(e) => setData('reporter_email', e.target.value)}
+                                        />
+                                        {errors.reporter_email && <p className="text-destructive text-xs">{errors.reporter_email}</p>}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="wa">WhatsApp (opsional)</Label>
+                                        <Input
+                                            id="wa"
+                                            type="tel"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            placeholder="08123456789"
+                                            value={data.reporter_wa}
+                                            onChange={(e) => setData('reporter_wa', e.target.value.replace(/\D/g, ''))}
+                                        />
+                                        {errors.reporter_wa && <p className="text-destructive text-xs">{errors.reporter_wa}</p>}
+                                    </div>
+                                </div>
+
+                                {/* 3. Sumber Kanal */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="channel">
+                                        Sumber Kanal <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Select value={data.channel_id} onValueChange={(value) => setData('channel_id', value)}>
+                                        <SelectTrigger id="channel">
+                                            <SelectValue placeholder="Pilih sumber kanal" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="pst">Layanan PST</SelectItem>
-                                            <SelectItem value="lainnya">Layanan Lainnya</SelectItem>
+                                            {channels.map((group, index) => (
+                                                <div key={group.id}>
+                                                    {index > 0 && <SelectSeparator />}
+                                                    {group.children.length > 0 ? (
+                                                        <SelectGroup>
+                                                            <SelectLabel>{group.name}</SelectLabel>
+                                                            {group.children.map((child) => (
+                                                                <SelectItem key={child.id} value={String(child.id)}>
+                                                                    {child.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectGroup>
+                                                    ) : (
+                                                        <SelectItem value={String(group.id)}>{group.name}</SelectItem>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.service_type && <p className="text-xs text-destructive">{errors.service_type}</p>}
+                                    {errors.channel_id && <p className="text-destructive text-xs">{errors.channel_id}</p>}
                                 </div>
+
+                                {/* 4. Field khusus berdasarkan jenis */}
+                                {data.classification === 'pengaduan' && (
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="service-type">
+                                                Jenis Layanan <span className="text-destructive">*</span>
+                                            </Label>
+                                            <Select value={data.service_type} onValueChange={(value) => setData('service_type', value)}>
+                                                <SelectTrigger id="service-type">
+                                                    <SelectValue placeholder="Pilih jenis layanan" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="pst">Layanan PST</SelectItem>
+                                                    <SelectItem value="lainnya">Layanan Lainnya</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.service_type && <p className="text-destructive text-xs">{errors.service_type}</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="tanggal">
+                                                Tanggal Kejadian <span className="text-destructive">*</span>
+                                            </Label>
+                                            <Input
+                                                id="tanggal"
+                                                type="date"
+                                                value={data.tanggal_kejadian}
+                                                onChange={(e) => setData('tanggal_kejadian', e.target.value)}
+                                            />
+                                            {errors.tanggal_kejadian && <p className="text-destructive text-xs">{errors.tanggal_kejadian}</p>}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {data.classification === 'aspirasi' && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="satuan-tugas">
+                                            Satuan Tugas <span className="text-destructive">*</span>
+                                        </Label>
+                                        <SearchableSelect
+                                            options={SATUAN_TUGAS_OPTIONS}
+                                            value={data.satuan_tugas}
+                                            onChange={(value) => setData('satuan_tugas', value)}
+                                            placeholder="Pilih satuan tugas"
+                                            searchPlaceholder="Cari satuan tugas..."
+                                            error={!!errors.satuan_tugas}
+                                        />
+                                        {errors.satuan_tugas && <p className="text-destructive text-xs">{errors.satuan_tugas}</p>}
+                                    </div>
+                                )}
+
+                                {/* 5. Judul & Isi Laporan */}
+                                {data.classification && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="judul">
+                                                Judul {classificationLabel(data.classification)} <span className="text-destructive">*</span>
+                                            </Label>
+                                            <Input
+                                                id="judul"
+                                                placeholder={`Tuliskan judul ${classificationLabel(data.classification).toLowerCase()} di sini...`}
+                                                value={data.title}
+                                                onChange={(e) => setData('title', e.target.value)}
+                                                required
+                                            />
+                                            {errors.title && <p className="text-destructive text-xs">{errors.title}</p>}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="isi">
+                                                Isi {classificationLabel(data.classification)} <span className="text-destructive">*</span>
+                                            </Label>
+                                            <Textarea
+                                                id="isi"
+                                                placeholder={`Tuliskan isi ${classificationLabel(data.classification).toLowerCase()} di sini...`}
+                                                rows={4}
+                                                value={data.content}
+                                                onChange={(e) => setData('content', e.target.value)}
+                                            />
+                                            {errors.content && <p className="text-destructive text-xs">{errors.content}</p>}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* 6. Lampiran */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="tanggal">
-                                        Tanggal Kejadian <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Input
-                                        id="tanggal"
-                                        type="date"
-                                        value={data.tanggal_kejadian}
-                                        onChange={(e) => setData('tanggal_kejadian', e.target.value)}
+                                    <Label>Lampiran (opsional)</Label>
+                                    <p className="text-muted-foreground text-xs">Format: JPG, PNG, PDF. Maksimal 2MB per file, maksimal 3 file.</p>
+
+                                    {data.attachments.length < 3 && (
+                                        <div>
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                multiple
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                                id="modal-file-input"
+                                            />
+                                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                                <Paperclip className="mr-2 h-4 w-4" />
+                                                Pilih File
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    {data.attachments.length > 0 && (
+                                        <div className="space-y-2 pt-2">
+                                            {data.attachments.map((file, index) => (
+                                                <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        {isImageFile(file) ? (
+                                                            <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
+                                                        ) : (
+                                                            <FileText className="h-4 w-4 shrink-0 text-red-500" />
+                                                        )}
+                                                        <span className="truncate font-medium">{file.name}</span>
+                                                        <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-6 w-6"
+                                                            onClick={() => setPreviewFile(file)}
+                                                            title="Lihat Pratinjau"
+                                                        >
+                                                            <Eye className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Checkbox Toggle Modal Bersebelahan Kanan (Forward / Jawab Laporan) */}
+                                <div className="flex items-center space-x-2 border-t pt-3">
+                                    <Checkbox
+                                        id="forward-jawab-check"
+                                        checked={showResponsePanel}
+                                        onCheckedChange={(checked) => {
+                                            const isChecked = Boolean(checked);
+                                            setShowResponsePanel(isChecked);
+                                            if (!isChecked) {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    response_message: '',
+                                                    response_attachments: [],
+                                                }));
+                                            }
+                                        }}
                                     />
-                                    {errors.tanggal_kejadian && <p className="text-xs text-destructive">{errors.tanggal_kejadian}</p>}
+                                    <Label htmlFor="forward-jawab-check" className="cursor-pointer text-sm font-medium">
+                                        Forward / Jawab Laporan Langsung
+                                    </Label>
                                 </div>
                             </div>
-                        )}
 
-                        {data.classification === 'aspirasi' && (
-                            <div className="space-y-2">
-                                <Label htmlFor="satuan-tugas">
-                                    Satuan Tugas <span className="text-destructive">*</span>
-                                </Label>
-                                <SearchableSelect
-                                    options={SATUAN_TUGAS_OPTIONS}
-                                    value={data.satuan_tugas}
-                                    onChange={(value) => setData('satuan_tugas', value)}
-                                    placeholder="Pilih satuan tugas"
-                                    searchPlaceholder="Cari satuan tugas..."
-                                    error={!!errors.satuan_tugas}
-                                />
-                                {errors.satuan_tugas && <p className="text-xs text-destructive">{errors.satuan_tugas}</p>}
-                            </div>
-                        )}
+                            {/* Panel Kanan: Modal Bersebelahan Tanggapan / Forward */}
+                            {showResponsePanel && (
+                                <div className="bg-muted/30 space-y-4 rounded-lg border p-4">
+                                    <div className="border-b pb-2">
+                                        <h3 className="text-sm font-semibold">Forward / Jawab Laporan</h3>
+                                        <p className="text-muted-foreground text-xs">
+                                            Isi tanggapan atau instruksi forward yang akan disimpan bersama laporan ini.
+                                        </p>
+                                    </div>
 
-                        {/* 5. Judul & Isi Laporan */}
-                        {data.classification && (
-                            <>
-                                <div className="space-y-2">
-                                    <Label htmlFor="judul">
-                                        Judul {classificationLabel(data.classification)} <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Input
-                                        id="judul"
-                                        placeholder={`Tuliskan judul ${classificationLabel(data.classification).toLowerCase()} di sini...`}
-                                        value={data.title}
-                                        onChange={(e) => setData('title', e.target.value)}
-                                        required
-                                    />
-                                    {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
-                                </div>
+                                    {/* Jenis Tanggapan */}
+                                    <div className="space-y-2">
+                                        <Label>
+                                            Jenis Tanggapan <span className="text-destructive">*</span>
+                                        </Label>
+                                        <ToggleGroup
+                                            type="single"
+                                            value={data.response_type}
+                                            onValueChange={(val) => {
+                                                if (val) setData('response_type', val);
+                                            }}
+                                            className="justify-start gap-2"
+                                        >
+                                            <ToggleGroupItem value="respon_awal" variant="outline" className="px-3 py-1.5 text-xs font-medium">
+                                                Respon Awal
+                                            </ToggleGroupItem>
+                                            <ToggleGroupItem value="respon_substantif" variant="outline" className="px-3 py-1.5 text-xs font-medium">
+                                                Respon Substantif
+                                            </ToggleGroupItem>
+                                        </ToggleGroup>
+                                        {errors.response_type && <p className="text-destructive text-xs">{errors.response_type}</p>}
+                                    </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="isi">
-                                        Isi {classificationLabel(data.classification)} <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Textarea
-                                        id="isi"
-                                        placeholder={`Tuliskan isi ${classificationLabel(data.classification).toLowerCase()} di sini...`}
-                                        rows={4}
-                                        value={data.content}
-                                        onChange={(e) => setData('content', e.target.value)}
-                                    />
-                                    {errors.content && <p className="text-xs text-destructive">{errors.content}</p>}
-                                </div>
-                            </>
-                        )}
+                                    {/* Pesan Tanggapan */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="response-message">
+                                            Pesan Tanggapan / Forward <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Textarea
+                                            id="response-message"
+                                            placeholder="Tuliskan isi balasan langsung, tanggapan, atau instruksi forward laporan di sini..."
+                                            rows={6}
+                                            value={data.response_message}
+                                            onChange={(e) => setData('response_message', e.target.value)}
+                                            required={showResponsePanel}
+                                        />
+                                        {errors.response_message && <p className="text-destructive text-xs">{errors.response_message}</p>}
+                                    </div>
 
-                        {/* 6. Lampiran */}
-                        <div className="space-y-2">
-                            <Label>Lampiran (opsional)</Label>
-                            <p className="text-xs text-muted-foreground">Format: JPG, PNG, PDF. Maksimal 2MB per file, maksimal 3 file.</p>
+                                    {/* Lampiran Tanggapan / Forward */}
+                                    <div className="space-y-2">
+                                        <Label>Lampiran Tanggapan / Forward (opsional)</Label>
+                                        <p className="text-muted-foreground text-xs">
+                                            Format: JPG, PNG, PDF. Maksimal 2MB per file, maksimal 3 file.
+                                        </p>
 
-                            {data.attachments.length < 3 && (
-                                <div>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept=".jpg,.jpeg,.png,.pdf"
-                                        multiple
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        id="modal-file-input"
-                                    />
-                                    <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                        <Paperclip className="mr-2 h-4 w-4" />
-                                        Pilih File
-                                    </Button>
-                                </div>
-                            )}
-
-                            {data.attachments.length > 0 && (
-                                <div className="space-y-2 pt-2">
-                                    {data.attachments.map((file, index) => (
-                                        <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
-                                            <div className="flex items-center gap-2 truncate">
-                                                {isImageFile(file) ? (
-                                                    <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
-                                                ) : (
-                                                    <FileText className="h-4 w-4 shrink-0 text-red-500" />
-                                                )}
-                                                <span className="truncate font-medium">{file.name}</span>
-                                                <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
+                                        {data.response_attachments.length < 3 && (
+                                            <div>
+                                                <input
+                                                    ref={responseFileInputRef}
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.pdf"
+                                                    multiple
+                                                    onChange={handleResponseFileChange}
+                                                    className="hidden"
+                                                    id="response-modal-file-input"
+                                                />
                                                 <Button
                                                     type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6"
-                                                    onClick={() => setPreviewFile(file)}
-                                                    title="Lihat Pratinjau"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => responseFileInputRef.current?.click()}
                                                 >
-                                                    <Eye className="h-3.5 w-3.5" />
+                                                    <Paperclip className="mr-2 h-4 w-4" />
+                                                    Pilih File Tanggapan
                                                 </Button>
                                             </div>
-                                        </div>
-                                    ))}
+                                        )}
+
+                                        {data.response_attachments.length > 0 && (
+                                            <div className="space-y-2 pt-2">
+                                                {data.response_attachments.map((file, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="bg-background flex items-center justify-between rounded-md border px-3 py-2 text-xs"
+                                                    >
+                                                        <div className="flex items-center gap-2 truncate">
+                                                            {isImageFile(file) ? (
+                                                                <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
+                                                            ) : (
+                                                                <FileText className="h-4 w-4 shrink-0 text-red-500" />
+                                                            )}
+                                                            <span className="truncate font-medium">{file.name}</span>
+                                                            <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6"
+                                                                onClick={() => setPreviewFile(file)}
+                                                                title="Lihat Pratinjau"
+                                                            >
+                                                                <Eye className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {errors.response_attachments && <p className="text-destructive text-xs">{errors.response_attachments}</p>}
+                                    </div>
                                 </div>
                             )}
                         </div>
+
+                        <DialogFooter className="mt-6 border-t pt-2">
+                            <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                                Batal
+                            </Button>
+                            <Button type="submit" disabled={processing} className="gap-2">
+                                {processing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                {showResponsePanel ? 'Simpan & Jawab' : 'Kirim'}
+                            </Button>
+                        </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>

@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { router } from '@inertiajs/react';
-import { Printer } from 'lucide-react';
+import { ChevronDown, Download, FileSpreadsheet, FileText, Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 /** Urutan kolom klasifikasi harus sama dengan RekapReport::COLUMNS di backend. */
@@ -63,10 +64,18 @@ function countFor(perPeriod: Record<string, PeriodCounts> | undefined, periodKey
 export default function RekapTahunan({ rows, totals, months, year, yearLabel, years }: RekapTahunanProps) {
     const [exportOpen, setExportOpen] = useState(false);
 
-    const printUrl = useMemo(() => `${route('dashboard.admin.rekap-tahunan.print')}?year=${encodeURIComponent(year)}`, [year]);
+    const rolePrefix = useMemo(() => {
+        return typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard/operator')
+            ? 'dashboard.operator.'
+            : 'dashboard.admin.';
+    }, []);
+
+    const printUrl = useMemo(() => `${route(`${rolePrefix}rekap-tahunan.print`)}?year=${encodeURIComponent(year)}`, [rolePrefix, year]);
+
+    const excelUrl = useMemo(() => `${route(`${rolePrefix}rekap-tahunan.excel`)}?year=${encodeURIComponent(year)}`, [rolePrefix, year]);
 
     const handleYearChange = (value: string) => {
-        router.get(route('dashboard.admin.rekap-tahunan.index'), { year: value }, { preserveState: true, preserveScroll: true, replace: true });
+        router.get(route(`${rolePrefix}rekap-tahunan.index`), { year: value }, { preserveState: true, preserveScroll: true, replace: true });
     };
 
     const handlePrint = () => {
@@ -79,8 +88,8 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
             title="Rekap Tahunan"
             description="Rekapitulasi laporan per tahun (12 bulan)"
             breadcrumbs={[
-                { title: 'Rekap', href: '/dashboard/admin/rekap-tahunan' },
-                { title: 'Tahunan', href: '/dashboard/admin/rekap-tahunan' },
+                { title: 'Rekap', href: route(`${rolePrefix}rekap-tahunan.index`) },
+                { title: 'Tahunan', href: route(`${rolePrefix}rekap-tahunan.index`) },
             ]}
         >
             <div className="flex min-w-0 flex-col gap-4">
@@ -98,10 +107,27 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
                         </SelectContent>
                     </Select>
 
-                    <Button onClick={() => setExportOpen(true)}>
-                        <Printer />
-                        Export PDF
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button>
+                                <Download className="mr-1.5 h-4 w-4" />
+                                Export
+                                <ChevronDown className="ml-1.5 h-4 w-4 opacity-70" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onClick={() => setExportOpen(true)}>
+                                <FileText className="mr-2 h-4 w-4 text-red-500" />
+                                Export PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <a href={excelUrl} download>
+                                    <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-600" />
+                                    Export Excel
+                                </a>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 {/* min-w-0 di setiap level pembungkus mencegah tabel lebar memaksa seluruh

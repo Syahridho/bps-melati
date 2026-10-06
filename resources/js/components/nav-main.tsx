@@ -29,6 +29,10 @@ function isUrlActive(itemUrl: string, currentUrl: string): boolean {
         return currentPath === itemPath;
     }
 
+    if ((itemPath === '/dashboard/admin/pengaturan' || itemPath === '/dashboard/operator/pengaturan') && currentPath.startsWith('/settings')) {
+        return true;
+    }
+
     return currentPath === itemPath || currentPath.startsWith(itemPath + '/');
 }
 
@@ -81,7 +85,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                 </Link>
                             </SidebarMenuButton>
                             {item.badge != null && item.badge > 0 && (
-                                <SidebarMenuBadge className="bg-primary text-primary-foreground dark:bg-blue-500 dark:text-white">
+                                <SidebarMenuBadge className="bg-primary text-white peer-hover/menu-button:text-white peer-data-[active=true]/menu-button:text-white dark:bg-blue-500 dark:text-white">
                                     {item.badge > 99 ? '99+' : item.badge}
                                 </SidebarMenuBadge>
                             )}

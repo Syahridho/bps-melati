@@ -76,6 +76,14 @@ it('blocks operators from the monthly recap', function () {
         ->assertForbidden();
 });
 
+it('exports the monthly recap as an excel spreadsheet', function () {
+    actingAs(User::factory()->admin()->create())
+        ->get(route('dashboard.admin.rekap-bulanan.excel'))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
+        ->assertHeader('Content-Disposition', 'attachment; filename="rekap-bulanan-'.now()->format('Y-m').'.xls"');
+});
+
 it('splits pengaduan by service type and counts every classification', function () {
     $channel = seedChannelTree()['child'];
 

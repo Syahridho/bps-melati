@@ -18,11 +18,7 @@ export default function AdminPage({ title, description, breadcrumbs, children }:
             <div className="px-4 py-6">
                 {title && <Heading title={title} description={description} />}
 
-                {children ?? (
-                    <p className="text-sm text-muted-foreground">
-                        Halaman {title?.toLowerCase() ?? 'ini'} — konten menyusul.
-                    </p>
-                )}
+                {children ?? <p className="text-muted-foreground text-sm">Halaman {title?.toLowerCase() ?? 'ini'} — konten menyusul.</p>}
             </div>
         </AppLayout>
     );

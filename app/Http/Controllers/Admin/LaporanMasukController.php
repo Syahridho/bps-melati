@@ -51,8 +51,9 @@ class LaporanMasukController extends Controller
             }
         };
 
-        // Query utama daftar tiket laporan masuk
+        // Query utama daftar tiket laporan masuk (kecuali tiket yang diinput manual dari admin)
         $ticketsQuery = Ticket::with('channel')
+            ->where('source_app', '!=', 'admin')
             ->tap($searchQueryClosure)
             ->when($filter !== 'semua', function ($query) use ($filter) {
                 if ($filter === 'belum_dibaca') {
@@ -93,7 +94,7 @@ class LaporanMasukController extends Controller
             ]);
 
         // Base query untuk counts (mengikuti pencarian, tanpa filter tab)
-        $countBaseQuery = Ticket::query()->tap($searchQueryClosure);
+        $countBaseQuery = Ticket::query()->where('source_app', '!=', 'admin')->tap($searchQueryClosure);
 
         $counts = [
             'semua' => (clone $countBaseQuery)->count(),

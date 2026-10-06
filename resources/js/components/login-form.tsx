@@ -32,17 +32,17 @@ export default function LoginForm({ status }: LoginProps) {
     };
 
     return (
-        <div className="bg-muted flex flex-col items-center justify-center p-6 md:p-10">
+        <div className="flex flex-col items-center justify-center p-6 md:p-10">
             <Head title="Log in" />
 
             <div className="w-full max-w-sm md:max-w-3xl">
                 <Card className="overflow-hidden p-0">
                     <CardContent className="grid p-0 md:grid-cols-2">
-                        <div className="bg-muted relative hidden md:flex md:items-center md:justify-center">
-                            <img src="/logo-melati.webp" alt="Logo" className="h-44 w-44 dark:brightness-[0.2] dark:grayscale" />
+                        <div className="from-primary/10 via-primary/5 dark:from-primary/20 dark:via-primary/10 relative hidden bg-gradient-to-br to-transparent md:flex md:items-center md:justify-center dark:to-transparent">
+                            <img src="/logo-melati.webp" alt="Logo" className="h-44 w-44 drop-shadow-lg dark:brightness-90" />
                         </div>
                         <form className="p-6 md:p-8" onSubmit={submit}>
-                            <div className="flex min-h-[400px] flex-col justify-center gap-6">
+                            <div className="flex min-h-[350px] flex-col justify-center gap-6">
                                 <div className="flex flex-col items-center text-center">
                                     <h1 className="text-2xl font-bold">Selamat Datang</h1>
                                     <p className="text-muted-foreground text-balance">Masuk ke akun melati Anda</p>

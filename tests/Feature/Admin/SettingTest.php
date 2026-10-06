@@ -67,3 +67,15 @@ test('admin can update signatory settings and update redis cache', function () {
         ->and(Setting::get('auto_close_permintaan_informasi_days'))->toBe('7')
         ->and(Cache::get('setting:nama_penanda_tangan'))->toBe('Dr. Budi Santoso, M.Si');
 });
+
+test('operator can access operator settings page', function () {
+    $operator = User::factory()->create(['role' => 'operator']);
+
+    actingAs($operator)
+        ->get(route('dashboard.operator.pengaturan.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/pengaturan')
+            ->has('settings')
+        );
+});

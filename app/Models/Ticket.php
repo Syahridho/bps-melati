@@ -195,7 +195,7 @@ class Ticket extends Model
         return $lock->block(5, function () use ($meta, $period) {
             $counter = TicketCounter::firstOrCreate(
                 ['period' => $period],
-                ['last_number' => 0]
+                ['last_number' => (int) Ticket::where('period', $period)->max('sequence')]
             );
 
             $counter->increment('last_number');
@@ -220,6 +220,39 @@ class Ticket extends Model
                 $randomLetters,
                 $seqFormatted
             );
+
+            return [
+                'ticket_number' => $ticketNumber,
+                'sequence' => $sequence,
+            ];
+        });
+    }
+
+    /**
+     * Generate nomor tiket khusus input data oleh admin/operator.
+     * Format: NamaPembuat/DDMMYYYY/Sequence (misal: Administrator/06102026/01)
+     * Menggunakan Redis lock & TicketCounter agar (period, sequence) selalu unik.
+     *
+     * @return array{ticket_number: string, sequence: int}
+     */
+    public static function generateAdminTicketNumber(string $creatorName, string $period, ?string $dateFormatted = null): array
+    {
+        $dateStr = $dateFormatted ?? now()->format('dmY');
+        $lock = Cache::lock("ticket_counter:{$period}", 10);
+
+        return $lock->block(5, function () use ($creatorName, $period, $dateStr) {
+            $counter = TicketCounter::firstOrCreate(
+                ['period' => $period],
+                ['last_number' => (int) Ticket::where('period', $period)->max('sequence')]
+            );
+
+            $counter->increment('last_number');
+            $sequence = $counter->last_number;
+
+            Cache::put("ticket_sequence:{$period}", $sequence, now()->addDays(30));
+
+            $seqFormatted = sprintf('%02d', $sequence);
+            $ticketNumber = sprintf('%s/%s/%s', $creatorName, $dateStr, $seqFormatted);
 
             return [
                 'ticket_number' => $ticketNumber,

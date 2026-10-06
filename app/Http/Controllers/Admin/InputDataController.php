@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -54,8 +55,9 @@ class InputDataController extends Controller
             }
         };
 
-        // Query utama daftar tiket
+        // Query utama daftar tiket (hanya tiket yang diinput manual oleh admin/operator)
         $ticketsQuery = Ticket::with('channel')
+            ->where('source_app', 'admin')
             ->tap($searchQueryClosure)
             ->when($filter !== 'semua', function ($query) use ($filter) {
                 if ($filter === 'pengaduan') {
@@ -90,7 +92,7 @@ class InputDataController extends Controller
             ]);
 
         // Base query untuk counts (mengikuti pencarian, tanpa filter tab)
-        $countBaseQuery = Ticket::query()->tap($searchQueryClosure);
+        $countBaseQuery = Ticket::query()->where('source_app', 'admin')->tap($searchQueryClosure);
 
         $counts = [
             'semua' => (clone $countBaseQuery)->count(),
@@ -129,6 +131,79 @@ class InputDataController extends Controller
     }
 
     /**
+     * Detail tiket input-data — edit & delete selalu diperbolehkan.
+     */
+    public function show(Request $request, string $ticketNumber): Response
+    {
+        $ticket = Ticket::with(['channel', 'creator', 'attachments', 'responses.user', 'responses.attachments'])
+            ->where('ticket_number', $ticketNumber)
+            ->where('source_app', 'admin')
+            ->firstOrFail();
+
+        if (! $ticket->is_read) {
+            $ticket->update(['is_read' => true]);
+        }
+
+        return Inertia::render('admin/laporan-masuk/show', [
+            'can' => [
+                'edit' => true,
+                'delete' => true,
+            ],
+            'ticket' => [
+                'id' => $ticket->id,
+                'ticket_number' => $ticket->ticket_number,
+                'period' => $ticket->period,
+                'sequence' => $ticket->sequence,
+                'classification' => $ticket->classification,
+                'title' => $ticket->title,
+                'service_type' => $ticket->service_type,
+                'satuan_tugas' => $ticket->satuan_tugas,
+                'reporter_name' => $ticket->reporter_name,
+                'reporter_email' => $ticket->reporter_email,
+                'reporter_wa' => $ticket->reporter_wa,
+                'content' => $ticket->content,
+                'status' => $ticket->status,
+                'is_read' => $ticket->is_read,
+                'source_app' => $ticket->source_app,
+                'channel' => $ticket->channel?->name ?? '-',
+                'created_by_name' => $ticket->creator?->name,
+                'completed_at' => $ticket->completed_at?->toIso8601String(),
+                'created_at' => $ticket->created_at->toIso8601String(),
+                'updated_at' => $ticket->updated_at->toIso8601String(),
+                'attachments' => $ticket->attachments->map(fn ($attachment) => [
+                    'id' => $attachment->id,
+                    'original_name' => $attachment->original_name,
+                    'mime_type' => $attachment->mime_type,
+                    'size' => $attachment->size,
+                    'url' => Storage::url($attachment->path),
+                ]),
+                'responses' => $ticket->responses->sortByDesc('created_at')->values()->map(function ($response) use ($ticket) {
+                    $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
+                    $userName = $isReporter
+                        ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
+                        : ($response->user?->name ?? '-');
+
+                    return [
+                        'id' => $response->id,
+                        'user_name' => $userName,
+                        'is_reporter' => $isReporter,
+                        'type' => $response->type,
+                        'message' => $response->message,
+                        'sent_at' => $response->sent_at->toIso8601String(),
+                        'attachments' => $response->attachments->map(fn ($attachment) => [
+                            'id' => $attachment->id,
+                            'original_name' => $attachment->original_name,
+                            'mime_type' => $attachment->mime_type,
+                            'size' => $attachment->size,
+                            'url' => Storage::url($attachment->path),
+                        ]),
+                    ];
+                }),
+            ],
+        ]);
+    }
+
+    /**
      * Simpan data tiket baru yang diinput oleh admin.
      */
     public function store(StoreTicketRequest $request): RedirectResponse
@@ -139,19 +214,13 @@ class InputDataController extends Controller
         $creator = auth()->user();
         $creatorName = $creator?->name ?? 'Admin';
 
-        // Untuk input-data admin/operator, tiket tidak pakai nomor tiket standar melainkan nama si pembuat
-        $existingCount = Ticket::where('ticket_number', 'like', "{$creatorName}%")->count();
-        if ($existingCount === 0) {
-            $ticketNumber = $creatorName;
-        } else {
-            $seqFormatted = sprintf('%02d', $existingCount);
-            $ticketNumber = "{$creatorName} ({$seqFormatted})";
-        }
+        // Untuk input-data admin/operator, nomor tiket dibuat menggunakan nama pembuat + tanggal + urutan periodik unik
+        $generated = Ticket::generateAdminTicketNumber($creatorName, $period);
 
         $ticket = Ticket::create([
-            'ticket_number' => $ticketNumber,
+            'ticket_number' => $generated['ticket_number'],
             'period' => $period,
-            'sequence' => $existingCount + 1,
+            'sequence' => $generated['sequence'],
             'classification' => $validated['classification'],
             'title' => $validated['title'],
             'service_type' => $validated['service_type'] ?? null,
@@ -191,8 +260,21 @@ class InputDataController extends Controller
                 'sent_at' => now(),
             ]);
 
+            if ($request->hasFile('response_attachments')) {
+                foreach ($request->file('response_attachments') as $file) {
+                    $path = $file->store("response_attachments/{$response->id}", 'public');
+
+                    $response->attachments()->create([
+                        'path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getClientMimeType(),
+                        'size' => $file->getSize(),
+                    ]);
+                }
+            }
+
             $ticket->update([
-                'status' => $responseType,
+                'status' => 'selesai',
                 'completed_at' => now(),
             ]);
 
@@ -209,7 +291,7 @@ class InputDataController extends Controller
             if (! empty($ticket->reporter_email)) {
                 try {
                     Mail::to($ticket->reporter_email)
-                        ->send(new TicketResponseSubmitted($ticket, $response));
+                        ->send(new TicketResponseSubmitted($ticket, $response->load('attachments')));
                     $response->update(['email_sent_at' => now()]);
                 } catch (\Throwable $e) {
                     Log::error("Gagal mengirim email tanggapan: {$e->getMessage()}");

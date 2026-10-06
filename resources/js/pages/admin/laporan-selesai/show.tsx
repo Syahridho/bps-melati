@@ -173,7 +173,7 @@ export default function Show() {
                 <div className="flex items-center justify-between">
                     <Link
                         href={route(`${routePrefix}.laporan-selesai.index`)}
-                        className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
                     >
                         <ArrowLeft className="size-4" />
                         Kembali ke Laporan Selesai
@@ -181,15 +181,13 @@ export default function Show() {
                 </div>
 
                 {/* Main card */}
-                <div className="rounded-lg border bg-card">
+                <div className="bg-card rounded-lg border">
                     {/* Header */}
                     <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0 space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
                                 <h2 className="text-xl font-bold">{ticket.ticket_number}</h2>
-                                <Badge variant={classificationVariant(ticket.classification)}>
-                                    {classificationLabel(ticket.classification)}
-                                </Badge>
+                                <Badge variant={classificationVariant(ticket.classification)}>{classificationLabel(ticket.classification)}</Badge>
                                 <Badge
                                     variant="outline"
                                     className={cn(
@@ -202,18 +200,20 @@ export default function Show() {
                                     {statusLabel(ticket.status)}
                                 </Badge>
                             </div>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                            <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
                                 <span className="inline-flex items-center gap-1.5">
                                     <Clock className="size-3.5" />
                                     Diterima {formatFullDate(ticket.created_at)}
                                 </span>
                                 {ticket.completed_at && (
-                                    <span className={cn(
-                                        'inline-flex items-center gap-1.5',
-                                        ticket.status === 'respon_substantif'
-                                            ? 'text-emerald-600 dark:text-emerald-400'
-                                            : 'text-amber-600 dark:text-amber-400',
-                                    )}>
+                                    <span
+                                        className={cn(
+                                            'inline-flex items-center gap-1.5',
+                                            ticket.status === 'respon_substantif'
+                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                : 'text-amber-600 dark:text-amber-400',
+                                        )}
+                                    >
                                         <CheckCircle2 className="size-3.5" />
                                         {statusLabel(ticket.status)} {formatFullDate(ticket.completed_at)}
                                     </span>
@@ -227,80 +227,80 @@ export default function Show() {
                     {/* Info pelapor & meta */}
                     <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <User className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <User className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Pelapor</p>
+                                <p className="text-muted-foreground text-xs">Pelapor</p>
                                 <p className="text-sm font-medium">{ticket.reporter_name ?? 'Anonim'}</p>
                             </div>
                         </div>
                         {ticket.reporter_email && (
                             <div className="flex items-start gap-3">
-                                <div className="rounded-md bg-muted p-2">
-                                    <Mail className="size-4 text-muted-foreground" />
+                                <div className="bg-muted rounded-md p-2">
+                                    <Mail className="text-muted-foreground size-4" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">Email</p>
+                                    <p className="text-muted-foreground text-xs">Email</p>
                                     <p className="text-sm font-medium">{ticket.reporter_email}</p>
                                 </div>
                             </div>
                         )}
                         {ticket.reporter_wa && (
                             <div className="flex items-start gap-3">
-                                <div className="rounded-md bg-muted p-2">
-                                    <Phone className="size-4 text-muted-foreground" />
+                                <div className="bg-muted rounded-md p-2">
+                                    <Phone className="text-muted-foreground size-4" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">WhatsApp</p>
+                                    <p className="text-muted-foreground text-xs">WhatsApp</p>
                                     <p className="text-sm font-medium">{ticket.reporter_wa}</p>
                                 </div>
                             </div>
                         )}
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <Globe className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <Globe className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Sumber</p>
+                                <p className="text-muted-foreground text-xs">Sumber</p>
                                 <p className="text-sm font-medium capitalize">{ticket.source_app}</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <Layers className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <Layers className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Channel</p>
+                                <p className="text-muted-foreground text-xs">Channel</p>
                                 <p className="text-sm font-medium">{ticket.channel}</p>
                             </div>
                         </div>
                         {ticket.satuan_tugas && (
                             <div className="flex items-start gap-3">
-                                <div className="rounded-md bg-muted p-2">
-                                    <Layers className="size-4 text-muted-foreground" />
+                                <div className="bg-muted rounded-md p-2">
+                                    <Layers className="text-muted-foreground size-4" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">Satuan Tugas</p>
+                                    <p className="text-muted-foreground text-xs">Satuan Tugas</p>
                                     <p className="text-sm font-medium">{ticket.satuan_tugas}</p>
                                 </div>
                             </div>
                         )}
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <Calendar className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <Calendar className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Periode</p>
+                                <p className="text-muted-foreground text-xs">Periode</p>
                                 <p className="text-sm font-medium">{ticket.period}</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <MessageSquare className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <MessageSquare className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Nomor Urut</p>
+                                <p className="text-muted-foreground text-xs">Nomor Urut</p>
                                 <p className="text-sm font-medium">#{ticket.sequence}</p>
                             </div>
                         </div>
@@ -309,17 +309,17 @@ export default function Show() {
                     <Separator />
 
                     {/* Judul & Isi laporan */}
-                    <div className="px-6 py-5 space-y-3">
+                    <div className="space-y-3 px-6 py-5">
                         {ticket.title && (
                             <div>
-                                <h4 className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-1">Judul Laporan</h4>
-                                <p className="text-base font-bold text-foreground">{ticket.title}</p>
+                                <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wider uppercase">Judul Laporan</h4>
+                                <p className="text-foreground text-base font-bold">{ticket.title}</p>
                             </div>
                         )}
                         <div>
-                            <h4 className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2">Isi Laporan</h4>
-                            <div className="prose prose-sm max-w-none rounded-lg bg-muted/50 p-4 dark:prose-invert">
-                                <p className="whitespace-pre-wrap leading-relaxed">{ticket.content}</p>
+                            <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Isi Laporan</h4>
+                            <div className="prose prose-sm bg-muted/50 dark:prose-invert max-w-none rounded-lg p-4">
+                                <p className="leading-relaxed whitespace-pre-wrap">{ticket.content}</p>
                             </div>
                         </div>
                     </div>
@@ -337,10 +337,10 @@ export default function Show() {
                                     {ticket.attachments.map((attachment) => (
                                         <div
                                             key={attachment.id}
-                                            className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-xs"
+                                            className="bg-card flex items-center justify-between gap-3 rounded-lg border p-3 shadow-xs"
                                         >
                                             <div className="flex min-w-0 items-center gap-3">
-                                                <div className="shrink-0 rounded-md bg-muted p-2">
+                                                <div className="bg-muted shrink-0 rounded-md p-2">
                                                     {isImageMime(attachment.mime_type, attachment.original_name) ? (
                                                         <ImageIcon className="size-4 text-blue-500" />
                                                     ) : (
@@ -349,7 +349,7 @@ export default function Show() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="truncate text-sm font-medium">{attachment.original_name}</p>
-                                                    <p className="text-xs text-muted-foreground">{formatFileSize(attachment.size)}</p>
+                                                    <p className="text-muted-foreground text-xs">{formatFileSize(attachment.size)}</p>
                                                 </div>
                                             </div>
                                             <Button
@@ -380,19 +380,19 @@ export default function Show() {
                                 </h3>
                                 <div className="space-y-4">
                                     {ticket.responses.map((resp) => (
-                                        <div key={resp.id} className="rounded-lg border bg-muted/30 p-4">
+                                        <div key={resp.id} className="bg-muted/30 rounded-lg border p-4">
                                             <div className="mb-2 flex items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant={responseTypeVariant(resp.type)} className="text-[10px]">
                                                         {responseTypeLabel(resp.type)}
                                                     </Badge>
-                                                    <span className="text-xs font-medium text-foreground">{resp.user_name}</span>
+                                                    <span className="text-foreground text-xs font-medium">{resp.user_name}</span>
                                                 </div>
-                                                <span className="text-xs text-muted-foreground">
+                                                <span className="text-muted-foreground text-xs">
                                                     {formatFullDate(resp.sent_at ?? resp.created_at)}
                                                 </span>
                                             </div>
-                                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{resp.message}</p>
+                                            <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">{resp.message}</p>
 
                                             {/* Response attachments */}
                                             {resp.attachments && resp.attachments.length > 0 && (
@@ -400,7 +400,7 @@ export default function Show() {
                                                     {resp.attachments.map((att) => (
                                                         <div
                                                             key={att.id}
-                                                            className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2 text-xs"
+                                                            className="bg-background flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs"
                                                         >
                                                             <div className="flex min-w-0 items-center gap-2">
                                                                 {isImageMime(att.mime_type, att.original_name) ? (
@@ -463,7 +463,7 @@ export default function Show() {
                             href={previewAttachment?.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center text-xs text-muted-foreground hover:underline"
+                            className="text-muted-foreground inline-flex items-center text-xs hover:underline"
                         >
                             Buka di tab baru
                         </a>

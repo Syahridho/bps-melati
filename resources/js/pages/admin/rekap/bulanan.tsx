@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { router } from '@inertiajs/react';
-import { Download, Printer } from 'lucide-react';
+import { ChevronDown, Download, FileSpreadsheet, FileText, Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 interface RekapRow {
@@ -45,10 +46,18 @@ const COLUMNS: { key: keyof RekapTotals; label: string }[] = [
 export default function RekapBulanan({ rows, totals, period, periodLabel, periods }: RekapBulananProps) {
     const [exportOpen, setExportOpen] = useState(false);
 
-    const printUrl = useMemo(() => `${route('dashboard.admin.rekap-bulanan.print')}?period=${encodeURIComponent(period)}`, [period]);
+    const rolePrefix = useMemo(() => {
+        return typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard/operator')
+            ? 'dashboard.operator.'
+            : 'dashboard.admin.';
+    }, []);
+
+    const printUrl = useMemo(() => `${route(`${rolePrefix}rekap-bulanan.print`)}?period=${encodeURIComponent(period)}`, [rolePrefix, period]);
+
+    const excelUrl = useMemo(() => `${route(`${rolePrefix}rekap-bulanan.excel`)}?period=${encodeURIComponent(period)}`, [rolePrefix, period]);
 
     const handlePeriodChange = (value: string) => {
-        router.get(route('dashboard.admin.rekap-bulanan.index'), { period: value }, { preserveState: true, preserveScroll: true, replace: true });
+        router.get(route(`${rolePrefix}rekap-bulanan.index`), { period: value }, { preserveState: true, preserveScroll: true, replace: true });
     };
 
     const handlePrint = () => {
@@ -61,8 +70,8 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
             title="Rekap Bulanan"
             description="Rekapitulasi laporan per bulan"
             breadcrumbs={[
-                { title: 'Rekap', href: route('dashboard.admin.rekap-bulanan.index') },
-                { title: 'Bulanan', href: route('dashboard.admin.rekap-bulanan.index') },
+                { title: 'Rekap', href: route(`${rolePrefix}rekap-bulanan.index`) },
+                { title: 'Bulanan', href: route(`${rolePrefix}rekap-bulanan.index`) },
             ]}
         >
             <div className="flex flex-col gap-4">
@@ -85,10 +94,27 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
                             </SelectContent>
                         </Select>
 
-                        <Button onClick={() => setExportOpen(true)}>
-                            <Download />
-                            Export PDF
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button>
+                                    <Download className="mr-1.5 h-4 w-4" />
+                                    Export
+                                    <ChevronDown className="ml-1.5 h-4 w-4 opacity-70" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => setExportOpen(true)}>
+                                    <FileText className="mr-2 h-4 w-4 text-red-500" />
+                                    Export PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <a href={excelUrl} download>
+                                        <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-600" />
+                                        Export Excel
+                                    </a>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 

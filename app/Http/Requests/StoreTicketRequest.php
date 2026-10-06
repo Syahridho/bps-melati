@@ -46,6 +46,8 @@ class StoreTicketRequest extends FormRequest
             'satuan_tugas' => ['nullable', 'string', 'max:255', $isWebsite ? 'nullable' : 'required_if:classification,aspirasi'],
             'response_message' => ['nullable', 'string'],
             'response_type' => ['nullable', 'in:respon_awal,respon_substantif'],
+            'response_attachments' => ['nullable', 'array', 'max:3'],
+            'response_attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ];

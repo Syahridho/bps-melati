@@ -213,11 +213,11 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-base font-semibold">Ringkasan Laporan</h2>
-                        <p className="text-xs text-muted-foreground">Menampilkan data: {rangeLabel}</p>
+                        <p className="text-muted-foreground text-xs">Menampilkan data: {rangeLabel}</p>
                     </div>
                     <Select value={range} onValueChange={handleRangeChange}>
                         <SelectTrigger className="w-full sm:w-[200px]">
-                            <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <CalendarDays className="text-muted-foreground mr-2 h-4 w-4" />
                             <SelectValue placeholder="Pilih periode" />
                         </SelectTrigger>
                         <SelectContent>
@@ -235,35 +235,35 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <Card className="border shadow-xs transition-shadow hover:shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-muted-foreground">Jumlah Total</CardTitle>
-                                <FileText className="h-5 w-5 text-primary" />
+                                <CardTitle className="text-muted-foreground text-sm font-medium">Jumlah Total</CardTitle>
+                                <FileText className="text-primary h-5 w-5" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-bold">{stats.total}</div>
-                                <p className="mt-1 text-xs text-muted-foreground">Keseluruhan laporan yang diterima</p>
+                                <p className="text-muted-foreground mt-1 text-xs">Keseluruhan laporan yang diterima</p>
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-destructive/20 bg-destructive/5 shadow-xs transition-shadow hover:shadow-sm">
+                        <Card className="border-destructive/20 bg-destructive/5 border shadow-xs transition-shadow hover:shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-destructive">Pengaduan</CardTitle>
-                                <AlertCircle className="h-5 w-5 text-destructive" />
+                                <CardTitle className="text-destructive text-sm font-medium">Pengaduan</CardTitle>
+                                <AlertCircle className="text-destructive h-5 w-5" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-destructive">{stats.pengaduan}</div>
+                                <div className="text-destructive text-3xl font-bold">{stats.pengaduan}</div>
                                 <Badge variant="destructive" className="mt-1 px-1.5 py-0 text-[10px]">
                                     Laporan Masalah
                                 </Badge>
                             </CardContent>
                         </Card>
 
-                        <Card className="border border-primary/20 bg-primary/5 shadow-xs transition-shadow hover:shadow-sm">
+                        <Card className="border-primary/20 bg-primary/5 border shadow-xs transition-shadow hover:shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium text-primary">Aspirasi</CardTitle>
-                                <Lightbulb className="h-5 w-5 text-primary" />
+                                <CardTitle className="text-primary text-sm font-medium">Aspirasi</CardTitle>
+                                <Lightbulb className="text-primary h-5 w-5" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-primary">{stats.aspirasi}</div>
+                                <div className="text-primary text-3xl font-bold">{stats.aspirasi}</div>
                                 <Badge variant="default" className="mt-1 px-1.5 py-0 text-[10px]">
                                     Saran & Masukan
                                 </Badge>
@@ -298,7 +298,7 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                                     </CardHeader>
                                     <CardContent>
                                         <div className={cn('text-3xl font-bold', text)}>{value}</div>
-                                        <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
+                                        <p className="text-muted-foreground mt-1 text-xs">{desc}</p>
                                     </CardContent>
                                 </Card>
                             );
@@ -327,7 +327,9 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                             <CardContent className="flex items-center justify-between p-4">
                                 <div className="space-y-0.5">
                                     <p className="text-xs font-medium text-blue-600 dark:text-blue-400">Dalam Proses Respon</p>
-                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.respon_awal + stats.respon_substantif}</p>
+                                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                                        {stats.respon_awal + stats.respon_substantif}
+                                    </p>
                                 </div>
                                 <MessageSquare className="h-8 w-8 text-blue-500 opacity-80" />
                             </CardContent>
@@ -365,7 +367,7 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                         </CardHeader>
                         <CardContent className="p-0">
                             {recentTickets.length === 0 ? (
-                                <div className="py-8 text-center text-xs text-muted-foreground">Belum ada laporan pada periode ini.</div>
+                                <div className="text-muted-foreground py-8 text-center text-xs">Belum ada laporan pada periode ini.</div>
                             ) : (
                                 <Table>
                                     <TableHeader>
@@ -385,7 +387,9 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                                                 <TableRow key={ticket.id}>
                                                     <TableCell className="font-mono text-xs font-medium">
                                                         <Link
-                                                            href={route('dashboard.operator.laporan-masuk.show', { ticketNumber: ticket.ticket_number })}
+                                                            href={route('dashboard.operator.laporan-masuk.show', {
+                                                                ticketNumber: ticket.ticket_number,
+                                                            })}
                                                             className="text-primary hover:underline"
                                                         >
                                                             {ticket.ticket_number}
@@ -393,17 +397,27 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                                                     </TableCell>
                                                     <TableCell className="text-xs font-medium">{ticket.reporter_name || 'Anonim'}</TableCell>
                                                     <TableCell>
-                                                        <Badge variant={classificationBadgeVariant(ticket.classification)} className="px-1.5 py-0 text-[10px]">
+                                                        <Badge
+                                                            variant={classificationBadgeVariant(ticket.classification)}
+                                                            className="px-1.5 py-0 text-[10px]"
+                                                        >
                                                             {classificationLabel(ticket.classification)}
                                                         </Badge>
                                                     </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">{ticket.channel}</TableCell>
+                                                    <TableCell className="text-muted-foreground text-xs">{ticket.channel}</TableCell>
                                                     <TableCell>
-                                                        <span className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold', sBadge.className)}>
+                                                        <span
+                                                            className={cn(
+                                                                'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+                                                                sBadge.className,
+                                                            )}
+                                                        >
                                                             {sBadge.label}
                                                         </span>
                                                     </TableCell>
-                                                    <TableCell className="text-right text-xs text-muted-foreground">{formatDate(ticket.created_at)}</TableCell>
+                                                    <TableCell className="text-muted-foreground text-right text-xs">
+                                                        {formatDate(ticket.created_at)}
+                                                    </TableCell>
                                                 </TableRow>
                                             );
                                         })}

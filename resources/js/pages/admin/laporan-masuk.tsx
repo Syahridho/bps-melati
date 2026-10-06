@@ -1,12 +1,11 @@
 import { Pagination, type PaginatedData } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Inbox, Search } from 'lucide-react';
+import { CheckCircle2, Inbox, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
@@ -116,7 +115,6 @@ export default function LaporanMasuk() {
     const { auth, tickets, filters, counts } = usePage<LaporanMasukProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -175,18 +173,6 @@ export default function LaporanMasuk() {
         );
     };
 
-    function toggleSelect(id: number) {
-        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
-    }
-
-    function toggleSelectAll() {
-        if (selectedIds.length === tickets.data.length) {
-            setSelectedIds([]);
-        } else {
-            setSelectedIds(tickets.data.map((t) => t.id));
-        }
-    }
-
     const filterTabs: { key: FilterTab; label: string; count?: number }[] = [
         { key: 'semua', label: 'Semua', count: counts.semua },
         { key: 'belum_dibaca', label: 'Belum Dibaca', count: counts.belum_dibaca },
@@ -203,21 +189,12 @@ export default function LaporanMasuk() {
             description="Daftar laporan yang baru masuk dan perlu ditindaklanjuti"
             breadcrumbs={[{ title: 'Laporan Masuk', href: route(`${routePrefix}.laporan-masuk.index`) }]}
         >
-            <div className="overflow-hidden rounded-lg border bg-card">
+            <div className="bg-card overflow-hidden rounded-lg border">
                 {/* Toolbar */}
                 <div className="flex items-center gap-2 border-b px-4 py-3">
-                    <Checkbox
-                        checked={tickets.data.length > 0 && selectedIds.length === tickets.data.length}
-                        onCheckedChange={toggleSelectAll}
-                    />
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Cari laporan..."
-                            className="pl-9"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+                        <Input placeholder="Cari laporan..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
                 </div>
 
@@ -252,30 +229,32 @@ export default function LaporanMasuk() {
                 {/* Ticket list */}
                 <div className={cn('divide-y transition-opacity duration-200', isLoading && 'pointer-events-none opacity-50')}>
                     {tickets.data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                        <div className="text-muted-foreground flex flex-col items-center justify-center py-16">
                             <Inbox className="mb-3 size-10" />
                             <p className="text-sm">Tidak ada laporan ditemukan</p>
                         </div>
                     ) : (
                         tickets.data.map((ticket) => (
-                            <div key={ticket.id} className={cn('group transition-colors hover:bg-muted/50', !ticket.is_read && 'bg-primary/[0.03]')}>
+                            <div key={ticket.id} className={cn('group hover:bg-muted/50 transition-colors', !ticket.is_read && 'bg-primary/[0.03]')}>
                                 <div className="flex gap-3 px-4 py-3">
-                                    <div className="flex shrink-0 flex-col items-center gap-2 pt-0.5" onClick={(e) => e.stopPropagation()}>
-                                        <Checkbox checked={selectedIds.includes(ticket.id)} onCheckedChange={() => toggleSelect(ticket.id)} />
-                                    </div>
                                     <Link
                                         href={route(`${routePrefix}.laporan-masuk.show`, { ticketNumber: ticket.ticket_number })}
                                         className="min-w-0 flex-1"
                                     >
                                         <div className="mb-1 flex items-center justify-between gap-2">
-                                            <span className={cn('truncate text-sm', !ticket.is_read ? 'font-semibold text-foreground' : 'font-medium text-foreground')}>
+                                            <span
+                                                className={cn(
+                                                    'truncate text-sm',
+                                                    !ticket.is_read ? 'text-foreground font-semibold' : 'text-foreground font-medium',
+                                                )}
+                                            >
                                                 {getTicketDisplayTitle(ticket)}
                                             </span>
-                                            <span className="shrink-0 text-xs text-muted-foreground">{formatDate(ticket.created_at)}</span>
+                                            <span className="text-muted-foreground shrink-0 text-xs">{formatDate(ticket.created_at)}</span>
                                         </div>
-                                        <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
+                                        <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs">
                                             {!ticket.is_read && <span className="inline-block size-2 shrink-0 rounded-full bg-blue-500" />}
-                                            <span className={cn('font-medium text-foreground')}>{ticket.ticket_number}</span>
+                                            <span className={cn('text-foreground font-medium')}>{ticket.ticket_number}</span>
                                             {ticket.reporter_name && (
                                                 <>
                                                     <span>•</span>
@@ -283,17 +262,25 @@ export default function LaporanMasuk() {
                                                 </>
                                             )}
                                         </div>
-                                        <p className="mb-2 truncate text-xs text-muted-foreground">{ticket.content}</p>
+                                        <p className="text-muted-foreground mb-2 truncate text-xs">{ticket.content}</p>
                                         <div className="flex items-center gap-1.5">
                                             <Badge variant={classificationVariant(ticket.classification)} className="text-[10px]">
                                                 {classificationLabel(ticket.classification)}
                                             </Badge>
-                                            {ticket.status !== 'baru' && (
+                                            {ticket.status === 'selesai' ? (
+                                                <Badge
+                                                    variant="outline"
+                                                    className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600"
+                                                >
+                                                    <CheckCircle2 className="size-3" />
+                                                    Selesai
+                                                </Badge>
+                                            ) : ticket.status !== 'baru' ? (
                                                 <Badge variant="outline" className="text-[10px]">
                                                     {statusLabel(ticket.status)}
                                                 </Badge>
-                                            )}
-                                            <span className="text-[10px] text-muted-foreground">{ticket.channel}</span>
+                                            ) : null}
+                                            <span className="text-muted-foreground text-[10px]">{ticket.channel}</span>
                                         </div>
                                     </Link>
                                 </div>

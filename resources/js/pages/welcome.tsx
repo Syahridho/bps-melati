@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, Circle, Clock, Copy, Eye, HelpCircle, Lightbulb, LoaderCircle, Paperclip, Ticket, Trash2, X } from 'lucide-react';
-import { type ChangeEvent, type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 
 interface ChannelChild {
     id: number;
@@ -38,7 +38,6 @@ interface StoredTicket {
     ticket_number: string;
     created_at: string;
 }
-
 
 // Warna ikon mengikuti warna kategori di dashboard admin agar konsisten.
 const CLASSIFICATIONS: {
@@ -94,7 +93,7 @@ function SectionTitle({ title, description }: { title: ReactNode; description?: 
     return (
         <div className="space-y-0.5">
             <h3 className="text-sm font-semibold">{title}</h3>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+            {description && <p className="text-muted-foreground text-xs">{description}</p>}
         </div>
     );
 }
@@ -103,7 +102,7 @@ function FieldError({ message }: { message?: string }) {
     if (!message) {
         return null;
     }
-    return <p className="text-sm text-destructive">{message}</p>;
+    return <p className="text-destructive text-sm">{message}</p>;
 }
 
 export default function Welcome() {
@@ -243,9 +242,9 @@ export default function Welcome() {
     return (
         <>
             <Head title="Selamat Datang" />
-            <div className="min-h-screen overflow-x-clip bg-muted/30 text-foreground">
+            <div className="bg-muted/30 text-foreground min-h-screen overflow-x-clip">
                 {/* Header */}
-                <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+                <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-30 border-b backdrop-blur">
                     <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6">
                         <img src="/logo-melati.webp" alt="Logo BPS Melati" className="size-9 shrink-0 object-contain sm:size-10" />
                         <img src="/desc-melati.webp" alt="Logo BPS" className="h-[26px] w-[74px] shrink-0 object-contain sm:h-[30px] sm:w-[84px]" />
@@ -273,7 +272,7 @@ export default function Welcome() {
                     {/* Pengantar */}
                     <div className="mx-auto mb-6 max-w-2xl space-y-3 text-center sm:mb-8">
                         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Sampaikan Laporan Anda</h1>
-                        <p className="text-sm text-muted-foreground sm:text-base">
+                        <p className="text-muted-foreground text-sm sm:text-base">
                             Layanan pengaduan, aspirasi, dan permintaan informasi. Anda akan mendapat nomor tiket untuk memantau tindak lanjutnya.
                         </p>
                     </div>
@@ -299,14 +298,16 @@ export default function Welcome() {
                                                 aria-checked={selected}
                                                 onClick={() => setData('classification', option.value)}
                                                 className={cn(
-                                                    'flex h-12 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                                                    selected ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary' : 'bg-card hover:bg-accent',
+                                                    'focus-visible:ring-ring/50 flex h-12 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px]',
+                                                    selected
+                                                        ? 'border-primary bg-primary/5 text-primary ring-primary ring-1'
+                                                        : 'bg-card hover:bg-accent',
                                                 )}
                                             >
                                                 {selected ? (
-                                                    <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                                                    <CheckCircle2 className="text-primary size-4 shrink-0" />
                                                 ) : (
-                                                    <Circle className="size-4 shrink-0 text-muted-foreground" />
+                                                    <Circle className="text-muted-foreground size-4 shrink-0" />
                                                 )}
                                                 {option.label}
                                             </button>
@@ -316,7 +317,7 @@ export default function Welcome() {
 
                                 <div className="border-t" />
 
-                                <div className="space-y-4 !mb-4">
+                                <div className="!mb-4 space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="nama">Nama</Label>
                                         <Input
@@ -356,7 +357,7 @@ export default function Welcome() {
                                 {/* Detail laporan */}
                                 <div className="space-y-4">
                                     {!data.classification ? (
-                                        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                                        <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
                                             Pilih jenis laporan terlebih dahulu untuk mengisi detailnya.
                                         </div>
                                     ) : (
@@ -444,19 +445,19 @@ export default function Welcome() {
                                             {data.attachments.map((file, index) => (
                                                 <li
                                                     key={`${file.name}-${index}`}
-                                                    className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm"
+                                                    className="bg-muted/40 flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
                                                 >
                                                     <div className="flex min-w-0 items-center gap-2">
-                                                        <Paperclip className="size-4 shrink-0 text-muted-foreground" />
+                                                        <Paperclip className="text-muted-foreground size-4 shrink-0" />
                                                         <span className="truncate">{file.name}</span>
-                                                        <span className="shrink-0 text-xs text-muted-foreground">({formatFileSize(file.size)})</span>
+                                                        <span className="text-muted-foreground shrink-0 text-xs">({formatFileSize(file.size)})</span>
                                                     </div>
                                                     <div className="flex shrink-0 items-center gap-1">
                                                         <Button
                                                             type="button"
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="size-7 text-muted-foreground"
+                                                            className="text-muted-foreground size-7"
                                                             title="Lihat"
                                                             onClick={() => setPreviewFile(file)}
                                                         >
@@ -466,7 +467,7 @@ export default function Welcome() {
                                                             type="button"
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="size-7 text-muted-foreground"
+                                                            className="text-muted-foreground size-7"
                                                             title="Hapus"
                                                             onClick={() => removeFile(index)}
                                                         >
@@ -486,7 +487,12 @@ export default function Welcome() {
                             </CardContent>
 
                             <CardFooter className="border-t pt-6">
-                                <Button type="submit" size="lg" className="w-full sm:ml-auto sm:w-auto sm:px-10" disabled={processing || !data.classification}>
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    className="w-full sm:ml-auto sm:w-auto sm:px-10"
+                                    disabled={processing || !data.classification}
+                                >
                                     {processing && <LoaderCircle className="size-4 animate-spin" />}
                                     Kirim laporan
                                 </Button>
@@ -499,7 +505,7 @@ export default function Welcome() {
                         <Card className="mx-auto mt-8 max-w-2xl shadow-xs">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-base">
-                                    <Ticket className="size-5 text-muted-foreground" />
+                                    <Ticket className="text-muted-foreground size-5" />
                                     Riwayat laporan Anda
                                 </CardTitle>
                                 <CardDescription>Tersimpan di perangkat ini.</CardDescription>
@@ -513,7 +519,7 @@ export default function Welcome() {
                                         >
                                             <div className="min-w-0">
                                                 <p className="font-mono text-sm font-semibold break-all">{ticket.ticket_number}</p>
-                                                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                                <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
                                                     <Clock className="size-3 shrink-0" />
                                                     <span>{formatTicketDate(ticket.created_at)}</span>
                                                 </div>
@@ -526,7 +532,7 @@ export default function Welcome() {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8"
                                                     title="Hapus dari riwayat"
                                                     onClick={() => setTicketToDelete(ticket)}
                                                 >
@@ -554,14 +560,12 @@ export default function Welcome() {
                             <CheckCircle2 className="size-8 text-green-600 dark:text-green-400" />
                         </div>
                         <DialogTitle className="text-center">Laporan berhasil dikirim</DialogTitle>
-                        <DialogDescription className="text-center">
-                            Simpan nomor tiket berikut untuk memantau status laporan Anda.
-                        </DialogDescription>
+                        <DialogDescription className="text-center">Simpan nomor tiket berikut untuk memantau status laporan Anda.</DialogDescription>
                     </DialogHeader>
 
                     {ticketNumber && (
-                        <div className="rounded-lg border bg-muted/50 p-4">
-                            <p className="mb-1 text-xs font-medium text-muted-foreground">Nomor tiket</p>
+                        <div className="bg-muted/50 rounded-lg border p-4">
+                            <p className="text-muted-foreground mb-1 text-xs font-medium">Nomor tiket</p>
                             <p className="text-lg font-bold tracking-wide break-all">{ticketNumber}</p>
                         </div>
                     )}
@@ -613,13 +617,13 @@ export default function Welcome() {
             <Dialog open={!!ticketToDelete} onOpenChange={(open) => !open && setTicketToDelete(null)}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-destructive/10">
-                            <Trash2 className="size-8 text-destructive" />
+                        <div className="bg-destructive/10 mx-auto mb-4 flex size-16 items-center justify-center rounded-full">
+                            <Trash2 className="text-destructive size-8" />
                         </div>
                         <DialogTitle className="text-center">Hapus dari riwayat?</DialogTitle>
                         <DialogDescription className="text-center">
-                            Nomor tiket <span className="font-mono font-semibold break-all text-foreground">{ticketToDelete?.ticket_number}</span> akan
-                            dihapus dari riwayat di perangkat ini. Pastikan Anda sudah menyimpan nomor tiketnya, karena Anda memerlukannya untuk
+                            Nomor tiket <span className="text-foreground font-mono font-semibold break-all">{ticketToDelete?.ticket_number}</span>{' '}
+                            akan dihapus dari riwayat di perangkat ini. Pastikan Anda sudah menyimpan nomor tiketnya, karena Anda memerlukannya untuk
                             mengecek status laporan.
                         </DialogDescription>
                     </DialogHeader>

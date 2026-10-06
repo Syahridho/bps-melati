@@ -72,6 +72,14 @@ it('blocks operators from the semester recap', function () {
         ->assertForbidden();
 });
 
+it('exports the semester recap as an excel spreadsheet', function () {
+    actingAs(User::factory()->admin()->create())
+        ->get(route('dashboard.admin.rekap-semesteran.excel', ['semester' => '2026-1']))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
+        ->assertHeader('Content-Disposition', 'attachment; filename="rekap-semesteran-2026-1.xls"');
+});
+
 it('labels the six months of the second semester', function () {
     actingAs(User::factory()->admin()->create())
         ->get(semesterUrl(['semester' => '2026-2']))

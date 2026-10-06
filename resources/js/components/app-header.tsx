@@ -72,7 +72,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                     {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
                                                     <span>{item.title}</span>
                                                     {item.badge != null && item.badge > 0 && (
-                                                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
+                                                        <span className="bg-destructive text-destructive-foreground ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium">
                                                             {item.badge > 99 ? '99+' : item.badge}
                                                         </span>
                                                     )}
@@ -106,7 +106,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                             {item.icon && <Icon iconNode={item.icon} className="mr-2 h-4 w-4" />}
                                             {item.title}
                                             {item.badge != null && item.badge > 0 && (
-                                                <span className="ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-medium text-destructive-foreground">
+                                                <span className="bg-destructive text-destructive-foreground ml-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium">
                                                     {item.badge > 99 ? '99+' : item.badge}
                                                 </span>
                                             )}
@@ -125,9 +125,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                             <Button variant="ghost" size="icon" className="group h-9 w-9 cursor-pointer">
                                 <Search className="!size-5 opacity-80 group-hover:opacity-100" />
                             </Button>
-                            <div className="hidden lg:flex">
-                                
-                            </div>
+                            <div className="hidden lg:flex"></div>
                         </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

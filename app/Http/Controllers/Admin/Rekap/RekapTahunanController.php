@@ -46,6 +46,19 @@ class RekapTahunanController extends Controller
     }
 
     /**
+     * Export rekap tahunan ke Excel (.xls).
+     */
+    public function excel(Request $request): \Illuminate\Http\Response
+    {
+        $year = $this->resolveYear($request->query('year'));
+
+        return response()
+            ->view('rekap.tahunan-excel', $this->payload($year))
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
+            ->header('Content-Disposition', 'attachment; filename="rekap-tahunan-'.$year.'.xls"');
+    }
+
+    /**
      * Payload rekap dari cache (dibuat sekali per tahun).
      *
      * @return array<string, mixed>

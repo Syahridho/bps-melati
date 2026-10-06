@@ -34,6 +34,19 @@ class RekapBulananController extends Controller
     }
 
     /**
+     * Export rekap bulanan ke Excel (.xls).
+     */
+    public function excel(Request $request): \Illuminate\Http\Response
+    {
+        $period = $this->resolvePeriod($request->query('period'));
+
+        return response()
+            ->view('rekap.bulanan-excel', $this->payload($period))
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
+            ->header('Content-Disposition', 'attachment; filename="rekap-bulanan-'.$period.'.xls"');
+    }
+
+    /**
      * Payload rekap dari cache (dibuat sekali per periode).
      *
      * @return array<string, mixed>

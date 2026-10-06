@@ -195,11 +195,7 @@ export default function CheckTicket() {
         const trimmed = inputQuery.trim();
         if (!trimmed) return;
 
-        router.get(
-            route('tickets.check'),
-            { ticket_number: trimmed },
-            { preserveState: true, preserveScroll: true },
-        );
+        router.get(route('tickets.check'), { ticket_number: trimmed }, { preserveState: true, preserveScroll: true });
     }
 
     function handleCopy(text: string) {
@@ -260,14 +256,14 @@ export default function CheckTicket() {
     return (
         <>
             <Head title="Cek Status Laporan / Tiket" />
-            <div className="min-h-screen bg-background text-foreground">
+            <div className="bg-background text-foreground min-h-screen">
                 {/* Header Navigation */}
                 <header className="border-b">
                     <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
                         <div className="flex items-center gap-3">
                             <Link
                                 href={route('home')}
-                                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+                                className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium"
                             >
                                 <ArrowLeft className="h-4 w-4" />
                                 Beranda
@@ -280,14 +276,14 @@ export default function CheckTicket() {
                             {auth.user ? (
                                 <Link
                                     href={auth.user.role === 'admin' ? route('dashboard.admin.index') : route('dashboard.operator.index')}
-                                    className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                                    className="bg-primary text-primary-foreground hover:bg-primary/90 inline-block rounded-md px-4 py-2 text-sm font-medium"
                                 >
                                     Dashboard
                                 </Link>
                             ) : (
                                 <Link
                                     href={route('login')}
-                                    className="inline-block rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                                    className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-block rounded-md border px-4 py-2 text-sm font-medium"
                                 >
                                     Log in
                                 </Link>
@@ -296,29 +292,27 @@ export default function CheckTicket() {
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-4xl px-6 py-10 space-y-8">
+                <main className="mx-auto max-w-4xl space-y-8 px-6 py-10">
                     {/* Hero & Search Card */}
                     <Card className="border shadow-sm">
-                        <CardHeader className="text-center pb-4">
+                        <CardHeader className="pb-4 text-center">
                             <CardTitle className="text-2xl font-bold">Lacak & Cek Status Laporan</CardTitle>
-                            <CardDescription className="text-sm">
-                                Masukkan kode tiket laporan Anda
-                            </CardDescription>
+                            <CardDescription className="text-sm">Masukkan kode tiket laporan Anda</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-3">
-                                <div className="relative flex-1 w-full">
-                                    <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <form onSubmit={handleSearch} className="flex flex-col items-center gap-3 sm:flex-row">
+                                <div className="relative w-full flex-1">
+                                    <Search className="text-muted-foreground absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
                                     <Input
                                         type="text"
                                         placeholder="Masukkan kode tiket..."
-                                        className="pl-10 h-11 text-base uppercase font-mono"
+                                        className="h-11 pl-10 font-mono text-base uppercase"
                                         value={inputQuery}
                                         onChange={(e) => setInputQuery(e.target.value)}
                                         required
                                     />
                                 </div>
-                                <Button type="submit" size="lg" className="w-full sm:w-auto h-11 px-6 font-medium">
+                                <Button type="submit" size="lg" className="h-11 w-full px-6 font-medium sm:w-auto">
                                     Cek Status
                                 </Button>
                             </form>
@@ -334,7 +328,7 @@ export default function CheckTicket() {
                     )}
 
                     {pageErrors?.message && (
-                        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                        <div className="border-destructive/30 bg-destructive/10 text-destructive flex items-center gap-2 rounded-lg border px-4 py-3 text-sm">
                             <AlertCircle className="h-5 w-5 shrink-0" />
                             <span>{pageErrors.message}</span>
                         </div>
@@ -342,13 +336,14 @@ export default function CheckTicket() {
 
                     {/* Result Section */}
                     {searched && !ticket && (
-                        <Card className="border border-destructive/30 bg-destructive/5 text-destructive">
+                        <Card className="border-destructive/30 bg-destructive/5 text-destructive border">
                             <CardContent className="flex items-start gap-4 p-6">
-                                <AlertCircle className="h-6 w-6 shrink-0 mt-0.5" />
+                                <AlertCircle className="mt-0.5 h-6 w-6 shrink-0" />
                                 <div className="space-y-1">
-                                    <h3 className="font-semibold text-base">Tiket Tidak Ditemukan</h3>
+                                    <h3 className="text-base font-semibold">Tiket Tidak Ditemukan</h3>
                                     <p className="text-sm opacity-90">
-                                        Nomor tiket <strong className="font-mono">{ticketNumber}</strong> tidak ditemukan di sistem. Harap periksa kembali penulisan nomor tiket Anda.
+                                        Nomor tiket <strong className="font-mono">{ticketNumber}</strong> tidak ditemukan di sistem. Harap periksa
+                                        kembali penulisan nomor tiket Anda.
                                     </p>
                                 </div>
                             </CardContent>
@@ -359,22 +354,22 @@ export default function CheckTicket() {
                         <div className="space-y-6">
                             {/* Ticket Summary Card */}
                             <Card className="border shadow-sm">
-                                <CardHeader className="border-b bg-muted/30 pb-4">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <CardHeader className="bg-muted/30 border-b pb-4">
+                                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                                         <div className="space-y-1">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Kode Tiket</span>
+                                                <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">Kode Tiket</span>
                                                 <Badge variant={classificationBadgeVariant(ticket.classification)}>
                                                     {classificationLabel(ticket.classification)}
                                                 </Badge>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xl sm:text-2xl font-mono font-bold">{ticket.ticket_number}</span>
+                                                <span className="font-mono text-xl font-bold sm:text-2xl">{ticket.ticket_number}</span>
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                    className="text-muted-foreground hover:text-foreground h-8 w-8"
                                                     onClick={() => handleCopy(ticket.ticket_number)}
                                                     title="Salin Kode Tiket"
                                                 >
@@ -388,7 +383,9 @@ export default function CheckTicket() {
                                                 const statusInfo = statusConfig(ticket.status);
                                                 const StatusIcon = statusInfo.icon;
                                                 return (
-                                                    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${statusInfo.colorClass}`}>
+                                                    <div
+                                                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${statusInfo.colorClass}`}
+                                                    >
                                                         <StatusIcon className="h-4 w-4" />
                                                         <span>{statusInfo.label}</span>
                                                     </div>
@@ -398,39 +395,41 @@ export default function CheckTicket() {
                                     </div>
                                 </CardHeader>
 
-                                <CardContent className="pt-6 space-y-6">
+                                <CardContent className="space-y-6 pt-6">
                                     {/* Metadata Grid */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 rounded-lg border bg-card p-4 text-sm">
+                                    <div className="bg-card grid grid-cols-1 gap-4 rounded-lg border p-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
                                         <div className="flex items-center gap-3">
-                                            <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                                            <Calendar className="text-muted-foreground h-4 w-4 shrink-0" />
                                             <div>
-                                                <p className="text-xs text-muted-foreground">Tanggal Pengajuan</p>
+                                                <p className="text-muted-foreground text-xs">Tanggal Pengajuan</p>
                                                 <p className="font-medium">{formatDateTime(ticket.created_at)}</p>
                                             </div>
                                         </div>
 
                                         <div className="flex items-center gap-3">
-                                            <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                                            <User className="text-muted-foreground h-4 w-4 shrink-0" />
                                             <div>
-                                                <p className="text-xs text-muted-foreground">Pelapor</p>
+                                                <p className="text-muted-foreground text-xs">Pelapor</p>
                                                 <p className="font-medium">{ticket.reporter_name || 'Anonim'}</p>
                                             </div>
                                         </div>
 
                                         <div className="flex items-center gap-3">
-                                            <Inbox className="h-4 w-4 text-muted-foreground shrink-0" />
+                                            <Inbox className="text-muted-foreground h-4 w-4 shrink-0" />
                                             <div>
-                                                <p className="text-xs text-muted-foreground">Saluran Pengaduan</p>
+                                                <p className="text-muted-foreground text-xs">Saluran Pengaduan</p>
                                                 <p className="font-medium">{ticket.channel}</p>
                                             </div>
                                         </div>
 
                                         {ticket.service_type && (
-                                            <div className="flex items-center gap-3 sm:col-span-2 lg:col-span-3 border-t pt-3">
-                                                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                                            <div className="flex items-center gap-3 border-t pt-3 sm:col-span-2 lg:col-span-3">
+                                                <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
                                                 <div>
-                                                    <p className="text-xs text-muted-foreground">Jenis Layanan / Satuan Tugas</p>
-                                                    <p className="font-medium">{ticket.service_type} {ticket.satuan_tugas ? `(${ticket.satuan_tugas})` : ''}</p>
+                                                    <p className="text-muted-foreground text-xs">Jenis Layanan / Satuan Tugas</p>
+                                                    <p className="font-medium">
+                                                        {ticket.service_type} {ticket.satuan_tugas ? `(${ticket.satuan_tugas})` : ''}
+                                                    </p>
                                                 </div>
                                             </div>
                                         )}
@@ -439,14 +438,18 @@ export default function CheckTicket() {
                                     {/* Content Section */}
                                     {ticket.title && (
                                         <div className="space-y-1">
-                                            <Label className="text-xs uppercase font-semibold text-muted-foreground tracking-wider">Judul Laporan</Label>
-                                            <h3 className="text-base font-semibold text-foreground">{ticket.title}</h3>
+                                            <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                                                Judul Laporan
+                                            </Label>
+                                            <h3 className="text-foreground text-base font-semibold">{ticket.title}</h3>
                                         </div>
                                     )}
 
                                     <div className="space-y-2">
-                                        <Label className="text-xs uppercase font-semibold text-muted-foreground tracking-wider">Isi Laporan / Pesan Awal</Label>
-                                        <div className="rounded-lg border bg-muted/20 p-4 text-sm whitespace-pre-wrap leading-relaxed">
+                                        <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                                            Isi Laporan / Pesan Awal
+                                        </Label>
+                                        <div className="bg-muted/20 rounded-lg border p-4 text-sm leading-relaxed whitespace-pre-wrap">
                                             {ticket.content}
                                         </div>
                                     </div>
@@ -454,7 +457,9 @@ export default function CheckTicket() {
                                     {/* Report Attachments */}
                                     {ticket.attachments.length > 0 && (
                                         <div className="space-y-2">
-                                            <Label className="text-xs uppercase font-semibold text-muted-foreground tracking-wider">Lampiran Pelapor</Label>
+                                            <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                                                Lampiran Pelapor
+                                            </Label>
                                             <div className="flex flex-wrap gap-2">
                                                 {ticket.attachments.map((att) => (
                                                     <a
@@ -462,12 +467,12 @@ export default function CheckTicket() {
                                                         href={att.url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-xs font-medium hover:bg-accent transition-colors"
+                                                        className="bg-card hover:bg-accent inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors"
                                                     >
-                                                        <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                                                        <Paperclip className="text-muted-foreground h-3.5 w-3.5" />
                                                         <span className="max-w-[200px] truncate">{att.original_name}</span>
                                                         <span className="text-muted-foreground">({formatFileSize(att.size)})</span>
-                                                        <Download className="h-3.5 w-3.5 text-muted-foreground ml-1" />
+                                                        <Download className="text-muted-foreground ml-1 h-3.5 w-3.5" />
                                                     </a>
                                                 ))}
                                             </div>
@@ -478,10 +483,10 @@ export default function CheckTicket() {
 
                             {/* Responses & Conversation Section */}
                             <Card className="border shadow-sm">
-                                <CardHeader className="border-b bg-muted/30 pb-4">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <CardHeader className="bg-muted/30 border-b pb-4">
+                                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                                         <div className="flex items-center gap-2">
-                                            <MessageSquare className="h-5 w-5 text-primary" />
+                                            <MessageSquare className="text-primary h-5 w-5" />
                                             <CardTitle className="text-lg font-bold">Diskusi & Tanggapan Petugas</CardTitle>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -493,7 +498,7 @@ export default function CheckTicket() {
                                                     size="sm"
                                                     disabled={completing}
                                                     onClick={handleComplete}
-                                                    className="border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5"
+                                                    className="gap-1.5 border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
                                                 >
                                                     {completing ? (
                                                         <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -506,13 +511,14 @@ export default function CheckTicket() {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="pt-6 space-y-6">
+                                <CardContent className="space-y-6 pt-6">
                                     {ticket.responses.length === 0 ? (
-                                        <div className="text-center py-8 text-muted-foreground space-y-2">
-                                            <Clock className="h-10 w-10 mx-auto opacity-40" />
+                                        <div className="text-muted-foreground space-y-2 py-8 text-center">
+                                            <Clock className="mx-auto h-10 w-10 opacity-40" />
                                             <p className="font-medium">Belum Ada Tanggapan</p>
-                                            <p className="text-xs max-w-md mx-auto opacity-80">
-                                                Laporan Anda telah diterima dan sedang diproses oleh tim kami. Tanggapan akan ditampilkan di halaman ini setelah ditanggapi oleh petugas.
+                                            <p className="mx-auto max-w-md text-xs opacity-80">
+                                                Laporan Anda telah diterima dan sedang diproses oleh tim kami. Tanggapan akan ditampilkan di halaman
+                                                ini setelah ditanggapi oleh petugas.
                                             </p>
                                         </div>
                                     ) : (
@@ -522,49 +528,57 @@ export default function CheckTicket() {
                                                 return (
                                                     <div
                                                         key={res.id}
-                                                        className={`relative pl-6 pb-6 border-l-2 ${
+                                                        className={`relative border-l-2 pb-6 pl-6 ${
                                                             isReporter ? 'border-blue-500/30' : 'border-primary/30'
                                                         } last:border-l-0 last:pb-0`}
                                                     >
                                                         <span
-                                                            className={`absolute -left-[9px] top-0 flex h-4 w-4 items-center justify-center rounded-full ${
+                                                            className={`absolute top-0 -left-[9px] flex h-4 w-4 items-center justify-center rounded-full ${
                                                                 isReporter ? 'bg-blue-600' : 'bg-primary'
-                                                            } ring-4 ring-background`}
+                                                            } ring-background ring-4`}
                                                         >
                                                             {isReporter ? (
                                                                 <User className="h-2.5 w-2.5 text-white" />
                                                             ) : (
-                                                                <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                                                                <CheckCircle2 className="text-primary-foreground h-3 w-3" />
                                                             )}
                                                         </span>
 
                                                         <div
-                                                            className={`rounded-lg border p-4 space-y-3 shadow-xs ${
-                                                                isReporter ? 'bg-blue-50/30 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40' : 'bg-card'
+                                                            className={`space-y-3 rounded-lg border p-4 shadow-xs ${
+                                                                isReporter
+                                                                    ? 'border-blue-200 bg-blue-50/30 dark:border-blue-900/40 dark:bg-blue-950/20'
+                                                                    : 'bg-card'
                                                             }`}
                                                         >
                                                             <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
                                                                 <div className="flex items-center gap-2">
                                                                     <Badge
-                                                                        variant={isReporter ? 'secondary' : res.type === 'respon_substantif' ? 'default' : 'outline'}
+                                                                        variant={
+                                                                            isReporter
+                                                                                ? 'secondary'
+                                                                                : res.type === 'respon_substantif'
+                                                                                  ? 'default'
+                                                                                  : 'outline'
+                                                                        }
                                                                         className="text-[11px]"
                                                                     >
                                                                         {responseTypeLabel(res.type)}
                                                                     </Badge>
                                                                     <span className="text-xs font-semibold">{res.user_name}</span>
                                                                 </div>
-                                                                <span className="text-xs text-muted-foreground">
+                                                                <span className="text-muted-foreground text-xs">
                                                                     {res.sent_at ? formatDateTime(res.sent_at) : formatDateTime(res.created_at)}
                                                                 </span>
                                                             </div>
 
-                                                            <div className="text-sm whitespace-pre-wrap leading-relaxed text-foreground">
+                                                            <div className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
                                                                 {res.message}
                                                             </div>
 
                                                             {res.attachments.length > 0 && (
-                                                                <div className="pt-2 border-t space-y-1.5">
-                                                                    <span className="text-xs font-medium text-muted-foreground">Lampiran:</span>
+                                                                <div className="space-y-1.5 border-t pt-2">
+                                                                    <span className="text-muted-foreground text-xs font-medium">Lampiran:</span>
                                                                     <div className="flex flex-wrap gap-2">
                                                                         {res.attachments.map((att) => (
                                                                             <a
@@ -572,11 +586,11 @@ export default function CheckTicket() {
                                                                                 href={att.url}
                                                                                 target="_blank"
                                                                                 rel="noopener noreferrer"
-                                                                                className="inline-flex items-center gap-2 rounded-md border bg-muted/50 px-2.5 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
+                                                                                className="bg-muted/50 hover:bg-accent inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors"
                                                                             >
-                                                                                <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                                <Paperclip className="text-muted-foreground h-3.5 w-3.5" />
                                                                                 <span className="max-w-[180px] truncate">{att.original_name}</span>
-                                                                                <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                                <Download className="text-muted-foreground h-3.5 w-3.5" />
                                                                             </a>
                                                                         ))}
                                                                     </div>
@@ -591,22 +605,26 @@ export default function CheckTicket() {
 
                                     {/* Action Area for Reporter when ticket is active */}
                                     {ticket.status !== 'selesai' && (
-                                        <div className="border-t pt-6 space-y-4">
+                                        <div className="space-y-4 border-t pt-6">
                                             {!showReplyForm ? (
-                                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-muted/30 rounded-lg p-4 border">
-                                                    <p className="text-xs sm:text-sm text-muted-foreground">
+                                                <div className="bg-muted/30 flex flex-col items-center justify-between gap-3 rounded-lg border p-4 sm:flex-row">
+                                                    <p className="text-muted-foreground text-xs sm:text-sm">
                                                         Ada yang ingin ditanyakan lagi atau perlu tanggapan tambahan?
                                                     </p>
-                                                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                    <div className="flex w-full items-center gap-2 sm:w-auto">
                                                         <Button
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={handleComplete}
                                                             disabled={completing}
-                                                            className="flex-1 sm:flex-initial text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                                                            className="flex-1 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 sm:flex-initial dark:text-emerald-400"
                                                         >
-                                                            {completing ? <LoaderCircle className="h-4 w-4 animate-spin mr-1.5" /> : <CheckCircle2 className="h-4 w-4 mr-1.5" />}
+                                                            {completing ? (
+                                                                <LoaderCircle className="mr-1.5 h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                                                            )}
                                                             Selesai
                                                         </Button>
                                                         <Button
@@ -615,16 +633,16 @@ export default function CheckTicket() {
                                                             onClick={() => setShowReplyForm(true)}
                                                             className="flex-1 sm:flex-initial"
                                                         >
-                                                            <Send className="h-4 w-4 mr-1.5" />
+                                                            <Send className="mr-1.5 h-4 w-4" />
                                                             Balas Laporan
                                                         </Button>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <form onSubmit={handleSendReply} className="space-y-4 rounded-lg border bg-card p-4 shadow-xs">
+                                                <form onSubmit={handleSendReply} className="bg-card space-y-4 rounded-lg border p-4 shadow-xs">
                                                     <div className="flex items-center justify-between border-b pb-3">
-                                                        <h4 className="font-semibold text-sm flex items-center gap-2">
-                                                            <Send className="h-4 w-4 text-primary" />
+                                                        <h4 className="flex items-center gap-2 text-sm font-semibold">
+                                                            <Send className="text-primary h-4 w-4" />
                                                             Kirim Balasan Pelapor
                                                         </h4>
                                                         <Button
@@ -632,14 +650,16 @@ export default function CheckTicket() {
                                                             variant="ghost"
                                                             size="sm"
                                                             onClick={() => setShowReplyForm(false)}
-                                                            className="h-7 w-7 p-0 text-muted-foreground"
+                                                            className="text-muted-foreground h-7 w-7 p-0"
                                                         >
                                                             <X className="h-4 w-4" />
                                                         </Button>
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="reply-message">Pesan Balasan <span className="text-destructive">*</span></Label>
+                                                        <Label htmlFor="reply-message">
+                                                            Pesan Balasan <span className="text-destructive">*</span>
+                                                        </Label>
                                                         <Textarea
                                                             id="reply-message"
                                                             placeholder="Tulis balasan atau penjelasan tambahan Anda untuk petugas BPS..."
@@ -648,15 +668,13 @@ export default function CheckTicket() {
                                                             onChange={(e) => setData('message', e.target.value)}
                                                             required
                                                         />
-                                                        {errors.message && (
-                                                            <p className="text-xs text-destructive">{errors.message}</p>
-                                                        )}
+                                                        {errors.message && <p className="text-destructive text-xs">{errors.message}</p>}
                                                     </div>
 
                                                     {/* File Upload */}
                                                     <div className="space-y-2">
                                                         <Label>Lampiran Balasan (opsional)</Label>
-                                                        <p className="text-xs text-muted-foreground">
+                                                        <p className="text-muted-foreground text-xs">
                                                             Format: JPG, PNG, PDF. Maksimal 2MB per file, maksimal 3 file.
                                                         </p>
 
@@ -696,13 +714,15 @@ export default function CheckTicket() {
                                                                                 <FileText className="h-4 w-4 shrink-0 text-red-500" />
                                                                             )}
                                                                             <span className="truncate font-medium">{file.name}</span>
-                                                                            <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                                                                            <span className="text-muted-foreground">
+                                                                                ({formatFileSize(file.size)})
+                                                                            </span>
                                                                         </div>
                                                                         <Button
                                                                             type="button"
                                                                             variant="ghost"
                                                                             size="icon"
-                                                                            className="h-6 w-6 text-destructive"
+                                                                            className="text-destructive h-6 w-6"
                                                                             onClick={() => handleRemoveFile(index)}
                                                                         >
                                                                             <X className="h-3.5 w-3.5" />
@@ -713,24 +733,15 @@ export default function CheckTicket() {
                                                         )}
                                                     </div>
 
-                                                    <div className="flex items-center justify-end gap-2 pt-2 border-t">
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => setShowReplyForm(false)}
-                                                        >
+                                                    <div className="flex items-center justify-end gap-2 border-t pt-2">
+                                                        <Button type="button" variant="ghost" size="sm" onClick={() => setShowReplyForm(false)}>
                                                             Batal
                                                         </Button>
-                                                        <Button
-                                                            type="submit"
-                                                            size="sm"
-                                                            disabled={processing || !data.message.trim()}
-                                                        >
+                                                        <Button type="submit" size="sm" disabled={processing || !data.message.trim()}>
                                                             {processing ? (
-                                                                <LoaderCircle className="h-4 w-4 animate-spin mr-1.5" />
+                                                                <LoaderCircle className="mr-1.5 h-4 w-4 animate-spin" />
                                                             ) : (
-                                                                <Send className="h-4 w-4 mr-1.5" />
+                                                                <Send className="mr-1.5 h-4 w-4" />
                                                             )}
                                                             Kirim Balasan
                                                         </Button>

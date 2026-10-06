@@ -1,44 +1,17 @@
+import { Pagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination } from '@/components/pagination';
 import AdminPage from '@/pages/admin/page';
 import { type PaginatedData, type SharedData } from '@/types';
 import { router, useForm, usePage } from '@inertiajs/react';
-import {
-    CheckCircle2,
-    Edit,
-    LoaderCircle,
-    MoreHorizontal,
-    Search,
-    Trash2,
-    UserPlus,
-    Users,
-} from 'lucide-react';
+import { CheckCircle2, Edit, LoaderCircle, MoreHorizontal, Search, Trash2, UserPlus, Users } from 'lucide-react';
 import { type FormEvent, useEffect, useState } from 'react';
 
 interface Operator {
@@ -98,19 +71,11 @@ export default function KelolaOperator() {
     // Live search handler
     const handleSearchChange = (value: string) => {
         setSearch(value);
-        router.get(
-            route('dashboard.admin.operator.index'),
-            { search: value, per_page: filters.per_page },
-            { preserveState: true, replace: true }
-        );
+        router.get(route('dashboard.admin.operator.index'), { search: value, per_page: filters.per_page }, { preserveState: true, replace: true });
     };
 
     const handlePerPageChange = (perPage: number) => {
-        router.get(
-            route('dashboard.admin.operator.index'),
-            { search, per_page: perPage },
-            { preserveState: true, replace: true },
-        );
+        router.get(route('dashboard.admin.operator.index'), { search, per_page: perPage }, { preserveState: true, replace: true });
     };
 
     // Form Submit: Tambah Operator/User
@@ -179,12 +144,10 @@ export default function KelolaOperator() {
                     <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle className="flex items-center gap-2 text-lg font-bold">
-                                <Users className="h-5 w-5 text-primary" />
+                                <Users className="text-primary h-5 w-5" />
                                 Daftar Akun Pengguna
                             </CardTitle>
-                            <CardDescription>
-                                Total {operators.total} akun terdaftar dalam sistem
-                            </CardDescription>
+                            <CardDescription>Total {operators.total} akun terdaftar dalam sistem</CardDescription>
                         </div>
                         <Button
                             onClick={() => {
@@ -201,8 +164,8 @@ export default function KelolaOperator() {
                     <CardContent className="space-y-4">
                         {/* Search Bar */}
                         <div className="flex items-center gap-2">
-                            <div className="relative flex-1 max-w-sm">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <div className="relative max-w-sm flex-1">
+                                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                                 <Input
                                     placeholder="Cari berdasarkan nama atau email..."
                                     value={search}
@@ -228,7 +191,7 @@ export default function KelolaOperator() {
                                 <TableBody>
                                     {operators.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                            <TableCell colSpan={6} className="text-muted-foreground h-24 text-center">
                                                 Tidak ada data pengguna ditemukan.
                                             </TableCell>
                                         </TableRow>
@@ -238,15 +201,10 @@ export default function KelolaOperator() {
                                                 <TableCell className="font-medium">
                                                     {(operators.current_page - 1) * operators.per_page + idx + 1}
                                                 </TableCell>
-                                                <TableCell className="font-semibold text-foreground">
-                                                    {op.name}
-                                                </TableCell>
+                                                <TableCell className="text-foreground font-semibold">{op.name}</TableCell>
                                                 <TableCell>{op.email}</TableCell>
                                                 <TableCell>
-                                                    <Badge
-                                                        variant={op.role === 'admin' ? 'default' : 'secondary'}
-                                                        className="capitalize"
-                                                    >
+                                                    <Badge variant={op.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
                                                         {op.role}
                                                     </Badge>
                                                 </TableCell>
@@ -306,12 +264,10 @@ export default function KelolaOperator() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <UserPlus className="h-5 w-5 text-primary" />
+                            <UserPlus className="text-primary h-5 w-5" />
                             Tambah Pengguna Baru
                         </DialogTitle>
-                        <DialogDescription>
-                            Isi formulir di bawah ini untuk membuat akun Admin atau Operator baru.
-                        </DialogDescription>
+                        <DialogDescription>Isi formulir di bawah ini untuk membuat akun Admin atau Operator baru.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleCreateSubmit} className="space-y-4">
                         <div className="space-y-2">
@@ -322,18 +278,13 @@ export default function KelolaOperator() {
                                 value={createForm.data.name}
                                 onChange={(e) => createForm.setData('name', e.target.value)}
                             />
-                            {createForm.errors.name && (
-                                <p className="text-xs text-destructive">{createForm.errors.name}</p>
-                            )}
+                            {createForm.errors.name && <p className="text-destructive text-xs">{createForm.errors.name}</p>}
                         </div>
 
                         {/* Dropdown Role pengguna di bawah Nama Lengkap */}
                         <div className="space-y-2">
                             <Label htmlFor="create_role">Role Pengguna</Label>
-                            <Select
-                                value={createForm.data.role}
-                                onValueChange={(value) => createForm.setData('role', value)}
-                            >
+                            <Select value={createForm.data.role} onValueChange={(value) => createForm.setData('role', value)}>
                                 <SelectTrigger id="create_role">
                                     <SelectValue placeholder="Pilih Role" />
                                 </SelectTrigger>
@@ -342,9 +293,7 @@ export default function KelolaOperator() {
                                     <SelectItem value="admin">Admin</SelectItem>
                                 </SelectContent>
                             </Select>
-                            {createForm.errors.role && (
-                                <p className="text-xs text-destructive">{createForm.errors.role}</p>
-                            )}
+                            {createForm.errors.role && <p className="text-destructive text-xs">{createForm.errors.role}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -356,9 +305,7 @@ export default function KelolaOperator() {
                                 value={createForm.data.email}
                                 onChange={(e) => createForm.setData('email', e.target.value)}
                             />
-                            {createForm.errors.email && (
-                                <p className="text-xs text-destructive">{createForm.errors.email}</p>
-                            )}
+                            {createForm.errors.email && <p className="text-destructive text-xs">{createForm.errors.email}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -370,9 +317,7 @@ export default function KelolaOperator() {
                                 value={createForm.data.password}
                                 onChange={(e) => createForm.setData('password', e.target.value)}
                             />
-                            {createForm.errors.password && (
-                                <p className="text-xs text-destructive">{createForm.errors.password}</p>
-                            )}
+                            {createForm.errors.password && <p className="text-destructive text-xs">{createForm.errors.password}</p>}
                         </div>
 
                         <DialogFooter className="mt-6">
@@ -393,12 +338,10 @@ export default function KelolaOperator() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Edit className="h-5 w-5 text-primary" />
+                            <Edit className="text-primary h-5 w-5" />
                             Edit Data Pengguna
                         </DialogTitle>
-                        <DialogDescription>
-                            Perbarui informasi nama, role (Admin/Operator), email, atau atur ulang password.
-                        </DialogDescription>
+                        <DialogDescription>Perbarui informasi nama, role (Admin/Operator), email, atau atur ulang password.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleEditSubmit} className="space-y-4">
                         <div className="space-y-2">
@@ -409,18 +352,13 @@ export default function KelolaOperator() {
                                 value={editForm.data.name}
                                 onChange={(e) => editForm.setData('name', e.target.value)}
                             />
-                            {editForm.errors.name && (
-                                <p className="text-xs text-destructive">{editForm.errors.name}</p>
-                            )}
+                            {editForm.errors.name && <p className="text-destructive text-xs">{editForm.errors.name}</p>}
                         </div>
 
                         {/* Dropdown Role pengguna di bawah Nama Lengkap */}
                         <div className="space-y-2">
                             <Label htmlFor="edit_role">Role Pengguna</Label>
-                            <Select
-                                value={editForm.data.role}
-                                onValueChange={(value) => editForm.setData('role', value)}
-                            >
+                            <Select value={editForm.data.role} onValueChange={(value) => editForm.setData('role', value)}>
                                 <SelectTrigger id="edit_role">
                                     <SelectValue placeholder="Pilih Role" />
                                 </SelectTrigger>
@@ -429,9 +367,7 @@ export default function KelolaOperator() {
                                     <SelectItem value="admin">Admin</SelectItem>
                                 </SelectContent>
                             </Select>
-                            {editForm.errors.role && (
-                                <p className="text-xs text-destructive">{editForm.errors.role}</p>
-                            )}
+                            {editForm.errors.role && <p className="text-destructive text-xs">{editForm.errors.role}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -443,9 +379,7 @@ export default function KelolaOperator() {
                                 value={editForm.data.email}
                                 onChange={(e) => editForm.setData('email', e.target.value)}
                             />
-                            {editForm.errors.email && (
-                                <p className="text-xs text-destructive">{editForm.errors.email}</p>
-                            )}
+                            {editForm.errors.email && <p className="text-destructive text-xs">{editForm.errors.email}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -459,9 +393,7 @@ export default function KelolaOperator() {
                                 value={editForm.data.password}
                                 onChange={(e) => editForm.setData('password', e.target.value)}
                             />
-                            {editForm.errors.password && (
-                                <p className="text-xs text-destructive">{editForm.errors.password}</p>
-                            )}
+                            {editForm.errors.password && <p className="text-destructive text-xs">{editForm.errors.password}</p>}
                         </div>
 
                         <DialogFooter className="mt-6">
@@ -481,14 +413,13 @@ export default function KelolaOperator() {
             <Dialog open={!!deletingOperator} onOpenChange={(open) => !open && setDeletingOperator(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                        <DialogTitle className="text-destructive flex items-center gap-2">
                             <Trash2 className="h-5 w-5" />
                             Konfirmasi Hapus Pengguna
                         </DialogTitle>
                         <DialogDescription>
-                            Apakah Anda yakin ingin menghapus pengguna{' '}
-                            <strong className="text-foreground">{deletingOperator?.name}</strong> ({deletingOperator?.email})?
-                            Tindakan ini tidak dapat dibatalkan.
+                            Apakah Anda yakin ingin menghapus pengguna <strong className="text-foreground">{deletingOperator?.name}</strong> (
+                            {deletingOperator?.email})? Tindakan ini tidak dapat dibatalkan.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-4">

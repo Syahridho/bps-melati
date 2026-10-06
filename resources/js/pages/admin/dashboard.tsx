@@ -8,18 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
-import { Link, router } from '@inertiajs/react';
-import {
-    AlertCircle,
-    ArrowRight,
-    CalendarDays,
-    CheckCircle2,
-    Clock,
-    FileText,
-    HelpCircle,
-    Lightbulb,
-    MessageSquare,
-} from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { AlertCircle, ArrowRight, CalendarDays, CheckCircle2, Clock, FileText, HelpCircle, Lightbulb, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
@@ -191,6 +181,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
 
     return (
         <AdminPage breadcrumbs={[{ title: 'Dashboard Admin', href: route('dashboard.admin.index') }]}>
+            <Head title="Dashboard Admin" />
             <div className="w-full max-w-full min-w-0 space-y-6">
                 {/* Filter periode */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -198,11 +189,11 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                         <h2 className="text-sm leading-snug font-semibold break-words sm:text-base">
                             PENANGANAN KONSULTASI PENGADUAN BPS PROVINSI RIAU
                         </h2>
-                        <p className="text-xs text-muted-foreground">Menampilkan data: {rangeLabel}</p>
+                        <p className="text-muted-foreground text-xs">Menampilkan data: {rangeLabel}</p>
                     </div>
                     <Select value={range} onValueChange={handleRangeChange}>
                         <SelectTrigger className="w-full sm:w-[200px]">
-                            <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <CalendarDays className="text-muted-foreground mr-2 h-4 w-4" />
                             <SelectValue placeholder="Pilih periode" />
                         </SelectTrigger>
                         <SelectContent>
@@ -217,28 +208,24 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
 
                 <div className={cn('min-w-0 space-y-6 transition-opacity', loading && 'pointer-events-none opacity-60')}>
                     {/* Kartu klasifikasi */}
-                    <p className="text-xs font-semibold mb-2">Klasifikasi Laporan</p>
+                    <p className="mb-2 text-xs font-semibold">Klasifikasi Laporan</p>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
                         {/* Jumlah Total - Slate */}
                         <Card className="min-w-0 border border-slate-400/30 bg-slate-400/5 shadow-xs transition-shadow hover:shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                                <CardTitle className="text-sm leading-tight font-medium text-slate-600 dark:text-slate-300">
-                                    Jumlah Total
-                                </CardTitle>
+                                <CardTitle className="text-sm leading-tight font-medium text-slate-600 dark:text-slate-300">Jumlah Total</CardTitle>
                                 <FileText className="h-5 w-5 shrink-0 text-slate-600 dark:text-slate-300" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-bold text-slate-700 dark:text-slate-200">{stats.total}</div>
-                                <p className="mt-1 text-xs text-muted-foreground">Keseluruhan laporan yang diterima</p>
+                                <p className="text-muted-foreground mt-1 text-xs">Keseluruhan laporan yang diterima</p>
                             </CardContent>
                         </Card>
 
                         {/* Pengaduan - Red */}
                         <Card className="min-w-0 border border-red-400/30 bg-red-400/5 shadow-xs transition-shadow hover:shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                                <CardTitle className="text-sm leading-tight font-medium text-red-600 dark:text-red-400">
-                                    Pengaduan
-                                </CardTitle>
+                                <CardTitle className="text-sm leading-tight font-medium text-red-600 dark:text-red-400">Pengaduan</CardTitle>
                                 <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
                             </CardHeader>
                             <CardContent>
@@ -252,9 +239,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                         {/* Aspirasi - Yellow */}
                         <Card className="min-w-0 border border-yellow-400/40 bg-yellow-400/5 shadow-xs transition-shadow hover:shadow-sm">
                             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                                <CardTitle className="text-sm leading-tight font-medium text-yellow-700 dark:text-yellow-400">
-                                    Aspirasi
-                                </CardTitle>
+                                <CardTitle className="text-sm leading-tight font-medium text-yellow-700 dark:text-yellow-400">Aspirasi</CardTitle>
                                 <Lightbulb className="h-5 w-5 shrink-0 text-yellow-600 dark:text-yellow-400" />
                             </CardHeader>
                             <CardContent>
@@ -274,9 +259,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                                 <HelpCircle className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-                                    {stats.permintaan_informasi}
-                                </div>
+                                <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{stats.permintaan_informasi}</div>
                                 <Badge className="mt-1 border-transparent bg-indigo-500 px-1.5 py-0 text-[10px] text-white hover:bg-indigo-500">
                                     Permohonan Data
                                 </Badge>
@@ -285,7 +268,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                     </div>
 
                     {/* Kartu kanal */}
-                    <p className="text-xs font-semibold mb-2">Sumber kanal</p>
+                    <p className="mb-2 text-xs font-semibold">Sumber kanal</p>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
                         {channelCards.map(({ key, label, card, text }) => {
                             const value = stats[key] ?? 0;
@@ -365,7 +348,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                         </CardHeader>
                         <CardContent className="p-0">
                             {recentTickets.length === 0 ? (
-                                <div className="py-8 text-center text-xs text-muted-foreground">Belum ada laporan pada periode ini.</div>
+                                <div className="text-muted-foreground py-8 text-center text-xs">Belum ada laporan pada periode ini.</div>
                             ) : (
                                 <>
                                     {/* Mobile: daftar kartu */}
@@ -379,7 +362,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                                                             href={route('dashboard.admin.laporan-masuk.show', {
                                                                 ticketNumber: ticket.ticket_number,
                                                             })}
-                                                            className="font-mono text-xs font-medium break-all text-primary hover:underline"
+                                                            className="text-primary font-mono text-xs font-medium break-all hover:underline"
                                                         >
                                                             {ticket.ticket_number}
                                                         </Link>
@@ -394,14 +377,11 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                                                     </div>
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <Badge
-                                                            className={cn(
-                                                                'px-1.5 py-0 text-[10px]',
-                                                                classificationBadgeClass(ticket.classification),
-                                                            )}
+                                                            className={cn('px-1.5 py-0 text-[10px]', classificationBadgeClass(ticket.classification))}
                                                         >
                                                             {classificationLabel(ticket.classification)}
                                                         </Badge>
-                                                        <span className="text-xs text-muted-foreground">{ticket.channel}</span>
+                                                        <span className="text-muted-foreground text-xs">{ticket.channel}</span>
                                                     </div>
                                                     <div className="flex items-center justify-between gap-2 text-xs">
                                                         <span className="font-medium">{ticket.reporter_name || 'Anonim'}</span>
@@ -440,9 +420,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                                                                     {ticket.ticket_number}
                                                                 </Link>
                                                             </TableCell>
-                                                            <TableCell className="text-xs font-medium">
-                                                                {ticket.reporter_name || 'Anonim'}
-                                                            </TableCell>
+                                                            <TableCell className="text-xs font-medium">{ticket.reporter_name || 'Anonim'}</TableCell>
                                                             <TableCell>
                                                                 <Badge
                                                                     className={cn(
@@ -453,7 +431,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                                                                     {classificationLabel(ticket.classification)}
                                                                 </Badge>
                                                             </TableCell>
-                                                            <TableCell className="text-xs text-muted-foreground">{ticket.channel}</TableCell>
+                                                            <TableCell className="text-muted-foreground text-xs">{ticket.channel}</TableCell>
                                                             <TableCell>
                                                                 <span
                                                                     className={cn(
@@ -464,7 +442,7 @@ export default function AdminDashboard({ range, stats, trend, recentTickets }: A
                                                                     {sBadge.label}
                                                                 </span>
                                                             </TableCell>
-                                                            <TableCell className="text-right text-xs text-muted-foreground">
+                                                            <TableCell className="text-muted-foreground text-right text-xs">
                                                                 {formatDate(ticket.created_at)}
                                                             </TableCell>
                                                         </TableRow>

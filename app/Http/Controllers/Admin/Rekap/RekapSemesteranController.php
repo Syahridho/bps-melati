@@ -47,6 +47,19 @@ class RekapSemesteranController extends Controller
     }
 
     /**
+     * Export rekap semesteran ke Excel (.xls).
+     */
+    public function excel(Request $request): \Illuminate\Http\Response
+    {
+        $semester = $this->resolveSemester($request->query('semester'));
+
+        return response()
+            ->view('rekap.semesteran-excel', $this->payload($semester))
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
+            ->header('Content-Disposition', 'attachment; filename="rekap-semesteran-'.$semester.'.xls"');
+    }
+
+    /**
      * Payload rekap dari cache (dibuat sekali per semester).
      *
      * @return array<string, mixed>

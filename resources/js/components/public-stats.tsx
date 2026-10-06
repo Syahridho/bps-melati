@@ -1,5 +1,5 @@
-import { NumberTicker } from '@/components/ui/number-ticker';
 import { Card, CardContent } from '@/components/ui/card';
+import { NumberTicker } from '@/components/ui/number-ticker';
 import { cn } from '@/lib/utils';
 import { AlertCircle, HelpCircle, Lightbulb, Mail, Megaphone, Share2, ShieldAlert, Users } from 'lucide-react';
 
@@ -103,11 +103,8 @@ function StatCard({ item, value, compact = false }: { item: StatItem; value: num
                 <div className={cn('flex items-center justify-center rounded-full', item.iconWrap, compact ? 'size-9' : 'size-11')}>
                     <Icon className={compact ? 'size-4' : 'size-5'} />
                 </div>
-                <NumberTicker
-                    value={value}
-                    className={cn('font-bold tracking-tight', item.text, compact ? 'text-3xl' : 'text-4xl')}
-                />
-                <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
+                <NumberTicker value={value} className={cn('font-bold tracking-tight', item.text, compact ? 'text-3xl' : 'text-4xl')} />
+                <p className="text-muted-foreground text-sm font-medium">{item.label}</p>
             </CardContent>
         </Card>
     );
@@ -117,14 +114,11 @@ export function PublicStatsSection({ stats }: { stats: PublicStats }) {
     return (
         <section className="mb-14 space-y-6">
             {/* Total */}
-            <Card className="shadow-none mt-6">
+            <Card className="mt-6 shadow-none">
                 <CardContent className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-                    <p className="text-sm font-semibold tracking-widest text-muted-foreground uppercase">Jumlah Laporan Sekarang</p>
-                    <NumberTicker
-                        value={stats.total}
-                        className="text-6xl font-extrabold tracking-tight text-primary dark:text-primary sm:text-7xl"
-                    />
-                    <p className="text-sm text-muted-foreground">Seluruh pengaduan, aspirasi, dan permintaan informasi yang diterima</p>
+                    <p className="text-muted-foreground text-sm font-semibold tracking-widest uppercase">Jumlah Laporan Sekarang</p>
+                    <NumberTicker value={stats.total} className="text-primary dark:text-primary text-6xl font-extrabold tracking-tight sm:text-7xl" />
+                    <p className="text-muted-foreground text-sm">Seluruh pengaduan, aspirasi, dan permintaan informasi yang diterima</p>
                 </CardContent>
             </Card>
 
@@ -137,7 +131,7 @@ export function PublicStatsSection({ stats }: { stats: PublicStats }) {
 
             {/* Sumber kanal */}
             <div>
-                <h3 className="mb-3 text-center text-sm font-semibold tracking-widest text-muted-foreground uppercase">Sumber Kanal</h3>
+                <h3 className="text-muted-foreground mb-3 text-center text-sm font-semibold tracking-widest uppercase">Sumber Kanal</h3>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                     {channelItems.map((item) => (
                         <StatCard key={item.key} item={item} value={stats[item.key]} compact />

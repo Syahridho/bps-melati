@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { router } from '@inertiajs/react';
-import { Printer } from 'lucide-react';
+import { ChevronDown, Download, FileSpreadsheet, FileText, Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 /** Urutan kolom klasifikasi harus sama dengan RekapReport::COLUMNS di backend. */
@@ -59,14 +60,24 @@ function countFor(perPeriod: Record<string, PeriodCounts> | undefined, periodKey
 export default function RekapSemesteran({ rows, totals, months, semester, semesterLabel, semesters }: RekapSemesteranProps) {
     const [exportOpen, setExportOpen] = useState(false);
 
-    const printUrl = useMemo(() => `${route('dashboard.admin.rekap-semesteran.print')}?semester=${encodeURIComponent(semester)}`, [semester]);
+    const rolePrefix = useMemo(() => {
+        return typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard/operator')
+            ? 'dashboard.operator.'
+            : 'dashboard.admin.';
+    }, []);
+
+    const printUrl = useMemo(
+        () => `${route(`${rolePrefix}rekap-semesteran.print`)}?semester=${encodeURIComponent(semester)}`,
+        [rolePrefix, semester],
+    );
+
+    const excelUrl = useMemo(
+        () => `${route(`${rolePrefix}rekap-semesteran.excel`)}?semester=${encodeURIComponent(semester)}`,
+        [rolePrefix, semester],
+    );
 
     const handleSemesterChange = (value: string) => {
-        router.get(
-            route('dashboard.admin.rekap-semesteran.index'),
-            { semester: value },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
+        router.get(route(`${rolePrefix}rekap-semesteran.index`), { semester: value }, { preserveState: true, preserveScroll: true, replace: true });
     };
 
     const handlePrint = () => {
@@ -79,8 +90,8 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
             title="Rekap Semesteran"
             description="Rekapitulasi laporan per semester (6 bulan)"
             breadcrumbs={[
-                { title: 'Rekap', href: '/dashboard/admin/rekap-semesteran' },
-                { title: 'Semesteran', href: '/dashboard/admin/rekap-semesteran' },
+                { title: 'Rekap', href: route(`${rolePrefix}rekap-semesteran.index`) },
+                { title: 'Semesteran', href: route(`${rolePrefix}rekap-semesteran.index`) },
             ]}
         >
             <div className="flex flex-col gap-4">
@@ -98,10 +109,27 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
                         </SelectContent>
                     </Select>
 
-                    <Button onClick={() => setExportOpen(true)}>
-                        <Printer />
-                        Export PDF
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button>
+                                <Download className="mr-1.5 h-4 w-4" />
+                                Export
+                                <ChevronDown className="ml-1.5 h-4 w-4 opacity-70" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onClick={() => setExportOpen(true)}>
+                                <FileText className="mr-2 h-4 w-4 text-red-500" />
+                                Export PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <a href={excelUrl} download>
+                                    <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-600" />
+                                    Export Excel
+                                </a>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 <div className="bg-card overflow-hidden rounded-lg border">

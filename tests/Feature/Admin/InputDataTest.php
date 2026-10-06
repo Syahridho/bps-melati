@@ -4,6 +4,8 @@ use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
@@ -24,7 +26,7 @@ function createTestTicket(array $overrides = []): Ticket
         'channel_id' => $channel->id,
         'content' => 'Isi laporan tiket test',
         'status' => 'baru',
-        'source_app' => 'web',
+        'source_app' => 'admin',
     ], $overrides));
 }
 
@@ -110,4 +112,64 @@ test('invalid filter defaults to semua', function () {
             ->where('filters.filter', 'semua')
             ->has('tickets.data', 2)
         );
+});
+
+test('admin can store ticket via input-data and unique constraint is preserved', function () {
+    $admin = User::factory()->create(['name' => 'Administrator', 'role' => 'admin']);
+    $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true]);
+
+    // Pre-create a ticket with sequence 1 for current period to test duplicate key prevention
+    createTestTicket([
+        'sequence' => 1,
+        'period' => now()->format('Y-m'),
+    ]);
+
+    actingAs($admin)
+        ->post(route('dashboard.admin.input-data.store'), [
+            'classification' => 'pengaduan',
+            'title' => 'Input Manual Oleh Admin',
+            'channel_id' => $channel->id,
+            'content' => 'Isi pengaduan manual dari admin yang panjang',
+            'service_type' => 'pst',
+            'tanggal_kejadian' => now()->format('Y-m-d'),
+        ])
+        ->assertRedirect();
+
+    $todayStr = now()->format('dmY');
+    $this->assertDatabaseHas('tickets', [
+        'title' => 'Input Manual Oleh Admin',
+        'ticket_number' => "Administrator/{$todayStr}/02",
+        'created_by' => $admin->id,
+    ]);
+});
+
+test('admin can store ticket with direct response and response attachments', function () {
+    Storage::fake('public');
+    $admin = User::factory()->create(['name' => 'Administrator', 'role' => 'admin']);
+    $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true]);
+
+    $file = UploadedFile::fake()->create('response_doc.pdf', 500, 'application/pdf');
+
+    actingAs($admin)
+        ->post(route('dashboard.admin.input-data.store'), [
+            'classification' => 'pengaduan',
+            'title' => 'Input Tiket dengan Tanggapan',
+            'channel_id' => $channel->id,
+            'content' => 'Isi laporan pengaduan beserta tanggapan',
+            'service_type' => 'pst',
+            'tanggal_kejadian' => now()->format('Y-m-d'),
+            'response_type' => 'respon_substantif',
+            'response_message' => 'Laporan telah ditindaklanjuti secara substantif.',
+            'response_attachments' => [$file],
+        ])
+        ->assertRedirect();
+
+    $ticket = Ticket::where('title', 'Input Tiket dengan Tanggapan')->first();
+    expect($ticket)->not->toBeNull()
+        ->and($ticket->status)->toBe('selesai');
+
+    $response = $ticket->responses()->first();
+    expect($response)->not->toBeNull()
+        ->and($response->message)->toBe('Laporan telah ditindaklanjuti secara substantif.')
+        ->and($response->attachments)->toHaveCount(1);
 });

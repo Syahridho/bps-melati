@@ -94,6 +94,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', AdminDashboardController::class)->name('index');
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
+        Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');
         Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
@@ -103,10 +104,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
         Route::get('rekap-bulanan/print', [RekapBulananController::class, 'print'])->name('rekap-bulanan.print');
+        Route::get('rekap-bulanan/excel', [RekapBulananController::class, 'excel'])->name('rekap-bulanan.excel');
         Route::get('rekap-semesteran', RekapSemesteranController::class)->name('rekap-semesteran.index');
         Route::get('rekap-semesteran/print', [RekapSemesteranController::class, 'print'])->name('rekap-semesteran.print');
+        Route::get('rekap-semesteran/excel', [RekapSemesteranController::class, 'excel'])->name('rekap-semesteran.excel');
         Route::get('rekap-tahunan', RekapTahunanController::class)->name('rekap-tahunan.index');
         Route::get('rekap-tahunan/print', [RekapTahunanController::class, 'print'])->name('rekap-tahunan.print');
+        Route::get('rekap-tahunan/excel', [RekapTahunanController::class, 'excel'])->name('rekap-tahunan.excel');
         Route::get('pengaturan', [SettingController::class, 'index'])->name('pengaturan.index');
         Route::post('pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
         Route::get('operator', [OperatorController::class, 'index'])->name('operator.index');
@@ -119,6 +123,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', OperatorDashboardController::class)->name('index');
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
+        Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');
         Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
@@ -128,10 +133,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
         Route::get('rekap-bulanan/print', [RekapBulananController::class, 'print'])->name('rekap-bulanan.print');
+        Route::get('rekap-bulanan/excel', [RekapBulananController::class, 'excel'])->name('rekap-bulanan.excel');
         Route::get('rekap-semesteran', RekapSemesteranController::class)->name('rekap-semesteran.index');
         Route::get('rekap-semesteran/print', [RekapSemesteranController::class, 'print'])->name('rekap-semesteran.print');
+        Route::get('rekap-semesteran/excel', [RekapSemesteranController::class, 'excel'])->name('rekap-semesteran.excel');
         Route::get('rekap-tahunan', RekapTahunanController::class)->name('rekap-tahunan.index');
         Route::get('rekap-tahunan/print', [RekapTahunanController::class, 'print'])->name('rekap-tahunan.print');
+        Route::get('rekap-tahunan/excel', [RekapTahunanController::class, 'excel'])->name('rekap-tahunan.excel');
+        Route::get('pengaturan', [SettingController::class, 'index'])->name('pengaturan.index');
+        Route::post('pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
     });
 });
 

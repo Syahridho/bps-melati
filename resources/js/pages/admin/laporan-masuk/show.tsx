@@ -1,4 +1,3 @@
-import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -34,6 +33,7 @@ import {
     X,
 } from 'lucide-react';
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
@@ -197,8 +197,8 @@ export default function Show() {
     const { auth, ticket, can, flash } = usePage<ShowProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
-    const canEdit = can?.edit ?? (auth.user.role === 'admin');
-    const canDelete = can?.delete ?? (auth.user.role === 'admin');
+    const canEdit = can?.edit ?? auth.user.role === 'admin';
+    const canDelete = can?.delete ?? auth.user.role === 'admin';
 
     const [showForward, setShowForward] = useState(false);
     const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
@@ -360,7 +360,7 @@ export default function Show() {
                 <div className="flex items-center justify-between">
                     <Link
                         href={route(`${routePrefix}.laporan-masuk.index`)}
-                        className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
                     >
                         <ArrowLeft className="size-4" />
                         Kembali ke Laporan Masuk
@@ -368,18 +368,16 @@ export default function Show() {
                 </div>
 
                 {/* Main card */}
-                <div className="rounded-lg border bg-card">
+                <div className="bg-card rounded-lg border">
                     {/* Header */}
                     <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0 space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
                                 <h2 className="text-xl font-bold">{ticket.ticket_number}</h2>
-                                <Badge variant={classificationVariant(ticket.classification)}>
-                                    {classificationLabel(ticket.classification)}
-                                </Badge>
+                                <Badge variant={classificationVariant(ticket.classification)}>{classificationLabel(ticket.classification)}</Badge>
                                 <Badge variant={statusVariant(ticket.status)}>{statusLabel(ticket.status)}</Badge>
                             </div>
-                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
                                 <Clock className="size-3.5" />
                                 <span>Diterima {formatFullDate(ticket.created_at)}</span>
                             </div>
@@ -414,79 +412,79 @@ export default function Show() {
                     {/* Info pelapor & meta */}
                     <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <User className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <User className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Pelapor</p>
+                                <p className="text-muted-foreground text-xs">Pelapor</p>
                                 <p className="text-sm font-medium">{ticket.reporter_name ?? 'Anonim'}</p>
                             </div>
                         </div>
                         {ticket.reporter_email && (
                             <div className="flex items-start gap-3">
-                                <div className="rounded-md bg-muted p-2">
-                                    <Mail className="size-4 text-muted-foreground" />
+                                <div className="bg-muted rounded-md p-2">
+                                    <Mail className="text-muted-foreground size-4" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">Email</p>
+                                    <p className="text-muted-foreground text-xs">Email</p>
                                     <p className="text-sm font-medium">{ticket.reporter_email}</p>
                                 </div>
                             </div>
                         )}
                         {ticket.reporter_wa && (
                             <div className="flex items-start gap-3">
-                                <div className="rounded-md bg-muted p-2">
-                                    <Phone className="size-4 text-muted-foreground" />
+                                <div className="bg-muted rounded-md p-2">
+                                    <Phone className="text-muted-foreground size-4" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">WhatsApp</p>
+                                    <p className="text-muted-foreground text-xs">WhatsApp</p>
                                     <p className="text-sm font-medium">{ticket.reporter_wa}</p>
                                 </div>
                             </div>
                         )}
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <Globe className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <Globe className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Sumber / Aplikasi</p>
+                                <p className="text-muted-foreground text-xs">Sumber / Aplikasi</p>
                                 <p className="text-sm font-medium capitalize">{ticket.source_app}</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <Layers className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <Layers className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Channel</p>
+                                <p className="text-muted-foreground text-xs">Channel</p>
                                 <p className="text-sm font-medium">{ticket.channel}</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <Calendar className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <Calendar className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Periode</p>
+                                <p className="text-muted-foreground text-xs">Periode</p>
                                 <p className="text-sm font-medium">{ticket.period}</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
-                            <div className="rounded-md bg-muted p-2">
-                                <FileText className="size-4 text-muted-foreground" />
+                            <div className="bg-muted rounded-md p-2">
+                                <FileText className="text-muted-foreground size-4" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Nomor Urut</p>
+                                <p className="text-muted-foreground text-xs">Nomor Urut</p>
                                 <p className="text-sm font-medium">{ticket.sequence}</p>
                             </div>
                         </div>
                         {ticket.created_by_name && (
                             <div className="flex items-start gap-3">
-                                <div className="rounded-md bg-muted p-2">
-                                    <User className="size-4 text-muted-foreground" />
+                                <div className="bg-muted rounded-md p-2">
+                                    <User className="text-muted-foreground size-4" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">Dibuat Oleh</p>
+                                    <p className="text-muted-foreground text-xs">Dibuat Oleh</p>
                                     <p className="text-sm font-medium">{ticket.created_by_name}</p>
                                 </div>
                             </div>
@@ -499,48 +497,38 @@ export default function Show() {
                     <div className="space-y-4 px-6 py-5">
                         {ticket.title && (
                             <div>
-                                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Judul Laporan</h3>
-                                <p className="mt-1 text-base font-semibold text-foreground">{ticket.title}</p>
+                                <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Judul Laporan</h3>
+                                <p className="text-foreground mt-1 text-base font-semibold">{ticket.title}</p>
                             </div>
                         )}
                         <div>
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Isi Laporan</h3>
-                            <div className="mt-2 rounded-lg bg-muted/40 p-4 text-sm whitespace-pre-wrap text-foreground">
-                                {ticket.content}
-                            </div>
+                            <h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Isi Laporan</h3>
+                            <div className="bg-muted/40 text-foreground mt-2 rounded-lg p-4 text-sm whitespace-pre-wrap">{ticket.content}</div>
                         </div>
 
                         {/* Lampiran pelapor */}
                         {ticket.attachments && ticket.attachments.length > 0 && (
                             <div>
-                                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
                                     Lampiran ({ticket.attachments.length})
                                 </h3>
                                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                     {ticket.attachments.map((att) => (
-                                        <div
-                                            key={att.id}
-                                            className="flex items-center justify-between rounded-lg border bg-muted/20 p-3 text-xs"
-                                        >
+                                        <div key={att.id} className="bg-muted/20 flex items-center justify-between rounded-lg border p-3 text-xs">
                                             <div className="flex items-center gap-2 truncate">
                                                 {isImageMime(att.mime_type, att.original_name) ? (
                                                     <ImageIcon className="size-4 shrink-0 text-blue-500" />
                                                 ) : isPdfMime(att.mime_type, att.original_name) ? (
                                                     <FileText className="size-4 shrink-0 text-red-500" />
                                                 ) : (
-                                                    <Paperclip className="size-4 shrink-0 text-muted-foreground" />
+                                                    <Paperclip className="text-muted-foreground size-4 shrink-0" />
                                                 )}
                                                 <div className="truncate">
                                                     <p className="truncate font-medium">{att.original_name}</p>
-                                                    <p className="text-[10px] text-muted-foreground">{formatFileSize(att.size)}</p>
+                                                    <p className="text-muted-foreground text-[10px]">{formatFileSize(att.size)}</p>
                                                 </div>
                                             </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="size-7 shrink-0"
-                                                onClick={() => setPreviewAttachment(att)}
-                                            >
+                                            <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => setPreviewAttachment(att)}>
                                                 <Eye className="size-3.5" />
                                             </Button>
                                         </div>
@@ -553,7 +541,7 @@ export default function Show() {
 
                 {/* Form Forward / Balas (Collapsible) */}
                 {showForward && (
-                    <div className="rounded-lg border bg-card p-6">
+                    <div className="bg-card rounded-lg border p-6">
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="font-semibold">Forward / Tindak Lanjut Laporan</h3>
                             <Button variant="ghost" size="icon" className="size-7" onClick={() => setShowForward(false)}>
@@ -571,12 +559,10 @@ export default function Show() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="respon_awal">Respon Awal (Informasi telah diterima & diproses)</SelectItem>
-                                        <SelectItem value="respon_substantif">
-                                            Respon Substantif (Jawaban lengkap / penyelesaian)
-                                        </SelectItem>
+                                        <SelectItem value="respon_substantif">Respon Substantif (Jawaban lengkap / penyelesaian)</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                {errors.type && <p className="mt-1 text-xs text-destructive">{errors.type}</p>}
+                                {errors.type && <p className="text-destructive mt-1 text-xs">{errors.type}</p>}
                             </div>
 
                             <div>
@@ -590,7 +576,7 @@ export default function Show() {
                                     value={data.message}
                                     onChange={(e) => setData('message', e.target.value)}
                                 />
-                                {errors.message && <p className="mt-1 text-xs text-destructive">{errors.message}</p>}
+                                {errors.message && <p className="text-destructive mt-1 text-xs">{errors.message}</p>}
                             </div>
 
                             {/* Attachments */}
@@ -605,12 +591,7 @@ export default function Show() {
                                         className="hidden"
                                         onChange={handleFileChange}
                                     />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
+                                    <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                                         <Paperclip className="mr-2 h-4 w-4" />
                                         Pilih File
                                     </Button>
@@ -619,10 +600,7 @@ export default function Show() {
                                 {data.attachments.length > 0 && (
                                     <div className="mt-2 space-y-2">
                                         {data.attachments.map((file, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center justify-between rounded-md border px-3 py-2 text-xs"
-                                            >
+                                            <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
                                                 <div className="flex items-center gap-2 truncate">
                                                     {isImageFile(file) ? (
                                                         <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
@@ -646,7 +624,7 @@ export default function Show() {
                                                         type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-6 w-6 text-destructive"
+                                                        className="text-destructive h-6 w-6"
                                                         onClick={() => handleRemoveFile(index)}
                                                     >
                                                         <X className="h-3.5 w-3.5" />
@@ -682,36 +660,34 @@ export default function Show() {
 
                 {/* Riwayat Tanggapan */}
                 {ticket.responses && ticket.responses.length > 0 && (
-                    <div className="rounded-lg border bg-card p-6">
+                    <div className="bg-card rounded-lg border p-6">
                         <h3 className="mb-4 flex items-center gap-2 font-semibold">
                             <MessageSquare className="size-4" />
                             Riwayat Tanggapan ({ticket.responses.length})
                         </h3>
                         <div className="space-y-4">
                             {ticket.responses.map((resp) => (
-                                <div key={resp.id} className="rounded-lg border bg-muted/20 p-4 space-y-2">
+                                <div key={resp.id} className="bg-muted/20 space-y-2 rounded-lg border p-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <span className="font-medium text-sm">{resp.user_name}</span>
+                                            <span className="text-sm font-medium">{resp.user_name}</span>
                                             <Badge variant={responseTypeVariant(resp.type)} className="text-[10px]">
                                                 {responseTypeLabel(resp.type)}
                                             </Badge>
                                         </div>
-                                        <span className="text-xs text-muted-foreground">
-                                            {formatFullDate(resp.sent_at || resp.created_at)}
-                                        </span>
+                                        <span className="text-muted-foreground text-xs">{formatFullDate(resp.sent_at || resp.created_at)}</span>
                                     </div>
                                     <p className="text-sm whitespace-pre-wrap">{resp.message}</p>
                                     {resp.attachments && resp.attachments.length > 0 && (
                                         <div className="pt-2">
-                                            <p className="text-xs font-medium text-muted-foreground mb-1">Lampiran:</p>
+                                            <p className="text-muted-foreground mb-1 text-xs font-medium">Lampiran:</p>
                                             <div className="flex flex-wrap gap-2">
                                                 {resp.attachments.map((att) => (
                                                     <Button
                                                         key={att.id}
                                                         variant="outline"
                                                         size="sm"
-                                                        className="text-xs gap-1.5 h-7"
+                                                        className="h-7 gap-1.5 text-xs"
                                                         onClick={() => setPreviewAttachment(att)}
                                                     >
                                                         <Paperclip className="size-3" />
@@ -734,27 +710,27 @@ export default function Show() {
                     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2 text-lg">
-                                <Pencil className="size-5 text-primary" />
+                                <Pencil className="text-primary size-5" />
                                 Edit Laporan
                             </DialogTitle>
-                            <DialogDescription>
-                                Perbarui data informasi pelapor, judul, dan isi laporan.
-                            </DialogDescription>
+                            <DialogDescription>Perbarui data informasi pelapor, judul, dan isi laporan.</DialogDescription>
                         </DialogHeader>
 
                         {/* Readonly info header */}
-                        <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-1">
+                        <div className="bg-muted/40 space-y-1 rounded-md border p-3 text-xs">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Nomor Tiket:</span>
-                                <span className="font-semibold text-foreground">{ticket.ticket_number}</span>
+                                <span className="text-foreground font-semibold">{ticket.ticket_number}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Klasifikasi:</span>
-                                <span className="font-medium text-foreground">{classificationLabel(ticket.classification)}</span>
+                                <span className="text-foreground font-medium">{classificationLabel(ticket.classification)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Periode & Urut:</span>
-                                <span className="font-medium text-foreground">{ticket.period} (Urut #{ticket.sequence})</span>
+                                <span className="text-foreground font-medium">
+                                    {ticket.period} (Urut #{ticket.sequence})
+                                </span>
                             </div>
                         </div>
 
@@ -769,9 +745,7 @@ export default function Show() {
                                     value={editForm.data.reporter_name}
                                     onChange={(e) => editForm.setData('reporter_name', e.target.value)}
                                 />
-                                {editForm.errors.reporter_name && (
-                                    <p className="mt-1 text-xs text-destructive">{editForm.errors.reporter_name}</p>
-                                )}
+                                {editForm.errors.reporter_name && <p className="text-destructive mt-1 text-xs">{editForm.errors.reporter_name}</p>}
                             </div>
 
                             <div className="grid gap-3 sm:grid-cols-2">
@@ -787,7 +761,7 @@ export default function Show() {
                                         onChange={(e) => editForm.setData('reporter_email', e.target.value)}
                                     />
                                     {editForm.errors.reporter_email && (
-                                        <p className="mt-1 text-xs text-destructive">{editForm.errors.reporter_email}</p>
+                                        <p className="text-destructive mt-1 text-xs">{editForm.errors.reporter_email}</p>
                                     )}
                                 </div>
                                 <div>
@@ -803,9 +777,7 @@ export default function Show() {
                                             editForm.setData('reporter_wa', val);
                                         }}
                                     />
-                                    {editForm.errors.reporter_wa && (
-                                        <p className="mt-1 text-xs text-destructive">{editForm.errors.reporter_wa}</p>
-                                    )}
+                                    {editForm.errors.reporter_wa && <p className="text-destructive mt-1 text-xs">{editForm.errors.reporter_wa}</p>}
                                 </div>
                             </div>
 
@@ -819,9 +791,7 @@ export default function Show() {
                                     value={editForm.data.title}
                                     onChange={(e) => editForm.setData('title', e.target.value)}
                                 />
-                                {editForm.errors.title && (
-                                    <p className="mt-1 text-xs text-destructive">{editForm.errors.title}</p>
-                                )}
+                                {editForm.errors.title && <p className="text-destructive mt-1 text-xs">{editForm.errors.title}</p>}
                             </div>
 
                             <div>
@@ -835,12 +805,10 @@ export default function Show() {
                                     value={editForm.data.content}
                                     onChange={(e) => editForm.setData('content', e.target.value)}
                                 />
-                                {editForm.errors.content && (
-                                    <p className="mt-1 text-xs text-destructive">{editForm.errors.content}</p>
-                                )}
+                                {editForm.errors.content && <p className="text-destructive mt-1 text-xs">{editForm.errors.content}</p>}
                             </div>
 
-                            <DialogFooter className="gap-2 sm:gap-0 pt-2">
+                            <DialogFooter className="gap-2 pt-2 sm:gap-0">
                                 <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
                                     Batal
                                 </Button>
@@ -865,36 +833,30 @@ export default function Show() {
                 <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2 text-lg text-destructive">
+                            <DialogTitle className="text-destructive flex items-center gap-2 text-lg">
                                 <AlertTriangle className="size-5" />
                                 Hapus Laporan?
                             </DialogTitle>
-                            <DialogDescription className="pt-2 space-y-2">
+                            <DialogDescription className="space-y-2 pt-2">
                                 <p>
                                     Apakah Anda yakin ingin menghapus laporan dengan nomor tiket{' '}
                                     <strong className="text-foreground">{ticket.ticket_number}</strong>?
                                 </p>
                                 {ticket.title && (
-                                    <p className="rounded-md bg-muted p-2 text-xs text-foreground font-medium truncate">
-                                        "{ticket.title}"
-                                    </p>
+                                    <p className="bg-muted text-foreground truncate rounded-md p-2 text-xs font-medium">"{ticket.title}"</p>
                                 )}
-                                <p className="text-xs text-destructive">
-                                    Tindakan ini permanen dan tidak dapat dibatalkan. Seluruh data terkait (termasuk lampiran dan riwayat balasan) akan terhapus dari sistem.
+                                <p className="text-destructive text-xs">
+                                    Tindakan ini permanen dan tidak dapat dibatalkan. Seluruh data terkait (termasuk lampiran dan riwayat balasan)
+                                    akan terhapus dari sistem.
                                 </p>
                             </DialogDescription>
                         </DialogHeader>
 
-                        <DialogFooter className="gap-2 sm:gap-0 pt-3">
+                        <DialogFooter className="gap-2 pt-3 sm:gap-0">
                             <Button type="button" variant="outline" onClick={() => setIsDeleteOpen(false)} disabled={isDeleting}>
                                 Batal
                             </Button>
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                onClick={handleDeleteSubmit}
-                                disabled={isDeleting}
-                            >
+                            <Button type="button" variant="destructive" onClick={handleDeleteSubmit} disabled={isDeleting}>
                                 {isDeleting ? (
                                     <>
                                         <LoaderCircle className="mr-2 size-4 animate-spin" />
@@ -939,7 +901,7 @@ export default function Show() {
                             href={previewAttachment?.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center text-xs text-muted-foreground hover:underline"
+                            className="text-muted-foreground inline-flex items-center text-xs hover:underline"
                         >
                             Buka di tab baru
                         </a>

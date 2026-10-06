@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import AppLogo from './app-logo';
 
-
 export function AppSidebar() {
     const { auth, unread_count } = usePage<SharedData>().props;
 
@@ -26,9 +25,8 @@ export function AppSidebar() {
 
         if (auth.user.role === 'admin' || auth.user.role === 'operator') {
             const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
-            const targetRoute = auth.user.role === 'admin'
-                ? route('dashboard.admin.laporan-masuk.index')
-                : route('dashboard.operator.laporan-masuk.index');
+            const targetRoute =
+                auth.user.role === 'admin' ? route('dashboard.admin.laporan-masuk.index') : route('dashboard.operator.laporan-masuk.index');
 
             toast.info(`Laporan Masuk Baru${ticketNum}`, {
                 description: 'Ada laporan baru yang perlu ditindaklanjuti.',
@@ -36,6 +34,7 @@ export function AppSidebar() {
                     label: 'Lihat',
                     onClick: () => router.visit(targetRoute),
                 },
+                position: 'bottom-right',
             });
 
             router.reload({ only: ['tickets', 'unread_count'] });
@@ -64,13 +63,13 @@ export function AppSidebar() {
             icon: Inbox,
             badge: unreadCount,
         },
-        
+
         {
             title: 'Laporan Selesai',
             url: '/dashboard/admin/laporan-selesai',
             icon: ClipboardList,
         },
-       
+
         {
             title: 'Rekap',
             url: '/dashboard/admin/rekap-bulanan',
@@ -95,7 +94,6 @@ export function AppSidebar() {
             url: '/dashboard/admin/pengaturan',
             icon: Settings,
         },
-       
     ];
 
     const operatorNavItems: NavItem[] = [
@@ -115,13 +113,13 @@ export function AppSidebar() {
             icon: Inbox,
             badge: unreadCount,
         },
-        
+
         {
             title: 'Laporan Selesai',
             url: '/dashboard/operator/laporan-selesai',
             icon: ClipboardList,
         },
-       
+
         {
             title: 'Rekap',
             url: '/dashboard/operator/rekap-bulanan',
@@ -141,6 +139,11 @@ export function AppSidebar() {
                 },
             ],
         },
+        {
+            title: 'Pengaturan',
+            url: '/dashboard/operator/pengaturan',
+            icon: Settings,
+        },
     ];
 
     const mainNavItems = auth.user.role === 'admin' ? adminNavItems : operatorNavItems;
@@ -151,7 +154,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={"/"} prefetch>
+                            <Link href={'/'} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
