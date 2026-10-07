@@ -346,7 +346,7 @@ export default function Welcome() {
                                             type="tel"
                                             inputMode="numeric"
                                             pattern="[0-9]*"
-                                            placeholder="08123456789"
+                                            placeholder="08********"
                                             value={data.reporter_wa}
                                             onChange={(e) => setData('reporter_wa', e.target.value.replace(/\D/g, ''))}
                                         />

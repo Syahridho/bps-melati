@@ -134,12 +134,10 @@ class LaporanMasukController extends Controller
             $ticket->update(['is_read' => true]);
         }
 
-        $user = $request->user();
-
         return Inertia::render('admin/laporan-masuk/show', [
             'can' => [
-                'edit' => $user?->isAdmin() ?? false,
-                'delete' => $user?->isAdmin() ?? false,
+                'edit' => false,
+                'delete' => false,
             ],
             'ticket' => [
                 'id' => $ticket->id,
