@@ -6,8 +6,8 @@ import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 
 export default function SettingsLayout({
-    title = 'Settings',
-    description = 'Manage your profile and account settings',
+    title = 'Pengaturan',
+    description = 'Kelola profil dan pengaturan akun Anda',
     children,
 }: {
     title?: string;
@@ -32,12 +32,12 @@ export default function SettingsLayout({
               ]
             : []),
         {
-            title: 'Password',
+            title: 'Kata Sandi',
             url: '/settings/password',
             icon: null,
         },
         {
-            title: 'Appearance',
+            title: 'Tema',
             url: '/settings/appearance',
             icon: null,
         },
