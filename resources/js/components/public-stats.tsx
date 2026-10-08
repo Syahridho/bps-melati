@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { cn } from '@/lib/utils';
-import { AlertCircle, HelpCircle, Lightbulb, Mail, Megaphone, Share2, ShieldAlert, Users } from 'lucide-react';
+import { AlertCircle, HelpCircle, Lightbulb, Mail, Megaphone, Share2, ShieldAlert, Users, Globe } from 'lucide-react';
 
 export interface PublicStats {
     total: number;
@@ -13,6 +13,7 @@ export interface PublicStats {
     kunjungan_langsung: number;
     wbs: number;
     email: number;
+    website: number;
 }
 
 type StatItem = {
@@ -92,6 +93,14 @@ const channelItems: StatItem[] = [
         iconWrap: '',
         text: 'text-sky-500 dark:text-sky-400',
     },
+    {
+        key: 'website',
+        label: 'Website',
+        icon: Globe,
+        card: '',
+        iconWrap: '',
+        text: 'text-sky-500 dark:text-sky-400',
+    },
 ];
 
 function StatCard({ item, value, compact = false }: { item: StatItem; value: number; compact?: boolean }) {
@@ -104,7 +113,7 @@ function StatCard({ item, value, compact = false }: { item: StatItem; value: num
                     <Icon className={compact ? 'size-4' : 'size-5'} />
                 </div>
                 <NumberTicker value={value} className={cn('font-bold tracking-tight', item.text, compact ? 'text-3xl' : 'text-4xl')} />
-                <p className="text-muted-foreground text-sm font-medium">{item.label}</p>
+                <p className="text-muted-foreground text-xs font-medium">{item.label}</p>
             </CardContent>
         </Card>
     );
@@ -132,7 +141,7 @@ export function PublicStatsSection({ stats }: { stats: PublicStats }) {
             {/* Sumber kanal */}
             <div>
                 <h3 className="text-muted-foreground mb-3 text-center text-sm font-semibold tracking-widest uppercase">Sumber Kanal</h3>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                     {channelItems.map((item) => (
                         <StatCard key={item.key} item={item} value={stats[item.key]} compact />
                     ))}

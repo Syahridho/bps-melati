@@ -238,7 +238,7 @@ export default function Welcome() {
         setTicketHistory(updated);
         setTicketToDelete(null);
     }
-
+    console.log(stats);
     return (
         <>
             <Head title="Selamat Datang" />
@@ -250,13 +250,14 @@ export default function Welcome() {
                         <img src="/desc-melati.webp" alt="Logo BPS" className="h-[26px] w-[74px] shrink-0 object-contain sm:h-[30px] sm:w-[84px]" />
 
                         <nav className="ml-auto flex items-center gap-1.5 sm:gap-2">
-                            <AppearanceToggleDropdown />
+                            
                             <Button asChild variant="outline" size="sm">
                                 <Link href={route('tickets.check')}>
                                     <span className="sm:hidden">Cek Tiket</span>
                                     <span className="hidden sm:inline">Cek Status Tiket</span>
                                 </Link>
                             </Button>
+                            
                             {auth.user && (
                                 <Button asChild size="sm">
                                     <Link href={auth.user.role === 'admin' ? route('dashboard.admin.index') : route('dashboard.operator.index')}>
@@ -264,6 +265,7 @@ export default function Welcome() {
                                     </Link>
                                 </Button>
                             )}
+                            <AppearanceToggleDropdown />
                         </nav>
                     </div>
                 </header>
@@ -575,11 +577,11 @@ export default function Welcome() {
                             <Copy className="size-4" />
                             {copied ? 'Tersalin' : 'Salin nomor tiket'}
                         </Button>
-                        {ticketNumber && (
+                        {/* {ticketNumber && (
                             <Button asChild variant="secondary" className="w-full">
                                 <Link href={route('tickets.check', { ticket_number: ticketNumber })}>Cek status laporan ini</Link>
                             </Button>
-                        )}
+                        )} */}
                         <Button onClick={handleDialogClose} className="w-full">
                             Tutup
                         </Button>

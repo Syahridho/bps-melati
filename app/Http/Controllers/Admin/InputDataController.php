@@ -145,6 +145,7 @@ class InputDataController extends Controller
         }
 
         return Inertia::render('admin/laporan-masuk/show', [
+            'from' => 'input-data',
             'can' => [
                 'edit' => true,
                 'delete' => true,

@@ -38,8 +38,18 @@ export default function LoginForm({ status }: LoginProps) {
             <div className="w-full max-w-sm md:max-w-3xl">
                 <Card className="overflow-hidden p-0">
                     <CardContent className="grid p-0 md:grid-cols-2">
-                        <div className="from-primary/10 via-primary/5 dark:from-primary/20 dark:via-primary/10 relative hidden bg-gradient-to-br to-transparent md:flex md:items-center md:justify-center dark:to-transparent">
-                            <img src="/logo-melati.webp" alt="Logo" className="h-44 w-44 drop-shadow-lg dark:brightness-90" />
+                       <div className="from-primary/10 via-primary/5 dark:from-primary/20 dark:via-primary/10 relative hidden bg-gradient-to-br to-transparent md:flex md:flex-col md:items-center md:justify-center dark:to-transparent">
+                            <div className="relative flex flex-col items-center justify-center">
+                                {/* Logo utama di tengah */}
+                                <img src="/melati_big.webp" alt="Logo" className="-mt-16 h-44 w-44 drop-shadow-lg dark:brightness-90 object-contain" />
+                                
+                                {/* Logo teks di bawahnya dengan absolute yang terukur */}
+                                <img 
+                                    src="/desc-melati.webp" 
+                                    alt="Logo Desc" 
+                                    className="absolute -bottom-20 h-28 w-auto drop-shadow-md dark:brightness-90 object-contain" 
+                                />
+                            </div>
                         </div>
                         <form className="p-6 md:p-8" onSubmit={submit}>
                             <div className="flex min-h-[350px] flex-col justify-center gap-6">

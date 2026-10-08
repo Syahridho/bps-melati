@@ -68,6 +68,7 @@ Route::get('/', function () {
                 'span_lapor' => (int) ($channelCounts['sp4n-lapor'] ?? 0),
                 'sosial_media' => (int) ($channelCounts['sosial-media'] ?? 0),
                 'kunjungan_langsung' => (int) ($channelCounts['kunjungan-langsung'] ?? 0),
+                'website' => (int) ($channelCounts['website'] ?? 0),
                 'wbs' => (int) ($channelCounts['wbs'] ?? 0),
                 'email' => (int) ($channelCounts['email'] ?? 0),
             ];

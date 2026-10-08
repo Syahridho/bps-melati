@@ -135,6 +135,7 @@ class LaporanMasukController extends Controller
         }
 
         return Inertia::render('admin/laporan-masuk/show', [
+            'from' => 'laporan-masuk',
             'can' => [
                 'edit' => false,
                 'delete' => false,

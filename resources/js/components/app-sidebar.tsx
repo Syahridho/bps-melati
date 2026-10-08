@@ -28,13 +28,18 @@ export function AppSidebar() {
             const targetRoute =
                 auth.user.role === 'admin' ? route('dashboard.admin.laporan-masuk.index') : route('dashboard.operator.laporan-masuk.index');
 
-            toast.info(`Laporan Masuk Baru${ticketNum}`, {
+            toast(`Laporan Masuk Baru${ticketNum}`, {
                 description: 'Ada laporan baru yang perlu ditindaklanjuti.',
                 action: {
                     label: 'Lihat',
                     onClick: () => router.visit(targetRoute),
                 },
+                actionButtonStyle: {
+                    background: '#ffffff',
+                    color: '#005fb6',
+                },
                 position: 'bottom-right',
+                className: '!bg-[#005fb6] !text-white !border-none !dark:bg-[#004a91] !dark:text-slate-100',
             });
 
             router.reload({ only: ['tickets', 'unread_count'] });

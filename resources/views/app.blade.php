@@ -14,6 +14,7 @@
 
         <link rel="preload" as="image" href="/logo-melati.webp" type="image/webp">
         <link rel="preload" as="image" href="/desc-melati.webp" type="image/webp">
+        <link rel="preload" as="image" href="/melati_big.webp" type="image/webp">
 
         @routes
         @viteReactRefresh

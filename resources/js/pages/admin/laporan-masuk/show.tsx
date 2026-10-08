@@ -87,6 +87,7 @@ interface ShowProps extends SharedData {
         edit: boolean;
         delete: boolean;
     };
+    from?: 'input-data' | 'laporan-masuk';
     flash: {
         success?: string;
     };
@@ -194,8 +195,12 @@ function isPdfFile(file: File): boolean {
 }
 
 export default function Show() {
-    const { auth, ticket, can, flash } = usePage<ShowProps>().props;
+    const { auth, ticket, can, from, flash } = usePage<ShowProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+
+    const isInputData = from === 'input-data' || ticket.source_app === 'admin';
+    const backRouteName = isInputData ? `${routePrefix}.input-data.index` : `${routePrefix}.laporan-masuk.index`;
+    const backLabel = isInputData ? 'Input Data' : 'Laporan Masuk';
 
     const canEdit = can?.edit ?? auth.user.role === 'admin';
     const canDelete = can?.delete ?? auth.user.role === 'admin';
@@ -343,7 +348,7 @@ export default function Show() {
             title={ticket.ticket_number}
             description="Detail laporan"
             breadcrumbs={[
-                { title: 'Laporan Masuk', href: route(`${routePrefix}.laporan-masuk.index`) },
+                { title: backLabel, href: route(backRouteName) },
                 { title: ticket.ticket_number, href: '#' },
             ]}
         >
@@ -359,11 +364,11 @@ export default function Show() {
                 {/* Back button & header */}
                 <div className="flex items-center justify-between">
                     <Link
-                        href={route(`${routePrefix}.laporan-masuk.index`)}
+                        href={route(backRouteName)}
                         className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
                     >
                         <ArrowLeft className="size-4" />
-                        Kembali ke Laporan Masuk
+                        Kembali ke {backLabel}
                     </Link>
                 </div>
 
