@@ -178,8 +178,6 @@ class TicketApiController extends Controller
             'service_type' => $ticket->service_type,
             'satuan_tugas' => $ticket->satuan_tugas,
             'reporter_name' => $ticket->reporter_name,
-            'reporter_email' => $ticket->reporter_email,
-            'reporter_wa' => $ticket->reporter_wa,
             'content' => $ticket->content,
             'status' => $ticket->status,
             'channel' => $ticket->channel?->name ?? '-',

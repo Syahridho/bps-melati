@@ -133,7 +133,7 @@ it('renders a landscape print view with the letterhead, month header and signato
     actingAs(User::factory()->admin()->create())
         ->get(route('dashboard.admin.rekap-semesteran.print', ['semester' => '2026-2'], absolute: false))
         ->assertOk()
-        ->assertSee('logo-bps.webp')
+        ->assertSee('logo-bps.svg')
         ->assertSee('Badan Pusat Statistik')
         ->assertSee('Provinsi Riau')
         ->assertSee('A4 landscape')

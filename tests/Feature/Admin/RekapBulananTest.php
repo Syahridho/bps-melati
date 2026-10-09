@@ -128,7 +128,7 @@ it('renders the print view with the letterhead and signatory from settings', fun
     actingAs(User::factory()->admin()->create())
         ->get(route('dashboard.admin.rekap-bulanan.print', absolute: false))
         ->assertOk()
-        ->assertSee('logo-bps.webp')
+        ->assertSee('logo-bps.svg')
         ->assertSee('Badan Pusat Statistik')
         ->assertSee('Provinsi Riau')
         ->assertSee('KETUA TIM PENGADUAN')

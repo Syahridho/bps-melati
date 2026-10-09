@@ -477,7 +477,7 @@ export default function CheckTicket() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Badge variant="outline">{ticket.responses.length} Tanggapan</Badge>
-                                            {ticket.status !== 'selesai' && (
+                                            {/* {ticket.status !== 'selesai' && (
                                                 <Button
                                                     type="button"
                                                     variant="outline"
@@ -493,7 +493,7 @@ export default function CheckTicket() {
                                                     )}
                                                     Tandai Selesai
                                                 </Button>
-                                            )}
+                                            )} */}
                                         </div>
                                     </div>
                                 </CardHeader>

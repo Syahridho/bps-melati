@@ -25,7 +25,7 @@ class DashboardController extends Controller
                 'stats' => $this->buildStats($from),
                 'trend' => $this->buildTrend($from),
                 'recentTickets' => $this->buildRecentTickets($from),
-                'periodLabel' => 'Bulan Ini (' . now()->locale('id')->translatedFormat('F Y') . ')',
+                'periodLabel' => 'Bulan Ini ('.now()->locale('id')->translatedFormat('F Y').')',
             ];
         });
 
