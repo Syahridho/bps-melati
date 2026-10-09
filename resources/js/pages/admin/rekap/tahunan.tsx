@@ -150,7 +150,7 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
                                         rowSpan={2}
                                         className="bg-muted sticky left-0 z-40 border-r border-b px-2 py-2 text-left align-middle font-semibold"
                                     >
-                                        Kanal
+                                        Sumber Kanal
                                     </th>
                                     {months.map((month, monthIndex) => (
                                         <th
@@ -201,7 +201,7 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
 
                             <tfoot>
                                 <tr className="bg-muted/80">
-                                    <td className="bg-muted/80 sticky left-0 z-10 border-t border-r px-2 py-2 font-semibold">Total</td>
+                                    <td className="bg-muted sticky left-0 z-10 border-r font-semibold">Total</td>
                                     {months.map((month, monthIndex) =>
                                         COLUMN_ORDER.map((column, index) => (
                                             <td

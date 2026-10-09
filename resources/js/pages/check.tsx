@@ -132,9 +132,9 @@ function statusConfig(status: Status): { label: string; colorClass: string; icon
 function responseTypeLabel(type: string): string {
     switch (type) {
         case 'respon_awal':
-            return 'Respon Awal Petugas';
+            return 'Respon Petugas';
         case 'respon_substantif':
-            return 'Respon Substantif / Jawaban Akhir';
+            return 'Respon Petugas';
         case 'balasan_pelapor':
             return 'Balasan Pelapor';
         default:
@@ -273,21 +273,7 @@ export default function CheckTicket() {
                         </div>
                         <nav className="flex items-center gap-4">
                             <AppearanceToggleDropdown />
-                            {auth.user ? (
-                                <Link
-                                    href={auth.user.role === 'admin' ? route('dashboard.admin.index') : route('dashboard.operator.index')}
-                                    className="bg-primary text-primary-foreground hover:bg-primary/90 inline-block rounded-md px-4 py-2 text-sm font-medium"
-                                >
-                                    Dashboard
-                                </Link>
-                            ) : (
-                                <Link
-                                    href={route('login')}
-                                    className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-block rounded-md border px-4 py-2 text-sm font-medium"
-                                >
-                                    Log in
-                                </Link>
-                            )}
+                           
                         </nav>
                     </div>
                 </header>
@@ -565,7 +551,9 @@ export default function CheckTicket() {
                                                                     >
                                                                         {responseTypeLabel(res.type)}
                                                                     </Badge>
-                                                                    <span className="text-xs font-semibold">{res.user_name}</span>
+                                                                    {res.user_name !== "Operator" && res.user_name !== "Admin" && (
+                                                                        <span className="text-xs font-semibold">{res.user_name}</span>
+                                                                        )}
                                                                 </div>
                                                                 <span className="text-muted-foreground text-xs">
                                                                     {res.sent_at ? formatDateTime(res.sent_at) : formatDateTime(res.created_at)}
@@ -759,3 +747,4 @@ export default function CheckTicket() {
         </>
     );
 }
+

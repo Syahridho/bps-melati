@@ -81,10 +81,10 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
-Route::get('/check', CheckTicketController::class)->name('tickets.check');
-Route::post('/check/{ticketNumber}/reply', [CheckTicketController::class, 'reply'])->name('tickets.check.reply')->where('ticketNumber', '.*');
-Route::post('/check/{ticketNumber}/complete', [CheckTicketController::class, 'complete'])->name('tickets.check.complete')->where('ticketNumber', '.*');
+Route::post('/tickets', [TicketController::class, 'store'])->middleware('throttle:ticket-store')->name('tickets.store');
+Route::get('/check', CheckTicketController::class)->middleware('throttle:ticket-check')->name('tickets.check');
+Route::post('/check/{ticketNumber}/reply', [CheckTicketController::class, 'reply'])->middleware('throttle:ticket-reply')->name('tickets.check.reply')->where('ticketNumber', '.*');
+Route::post('/check/{ticketNumber}/complete', [CheckTicketController::class, 'complete'])->middleware('throttle:ticket-reply')->name('tickets.check.complete')->where('ticketNumber', '.*');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', function (Request $request) {

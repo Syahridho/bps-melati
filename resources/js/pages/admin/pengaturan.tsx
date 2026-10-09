@@ -92,7 +92,7 @@ export default function Pengaturan() {
                                     required
                                 />
                                 <InputError message={errors.auto_close_pengaduan_days} />
-                                <p className="text-muted-foreground text-xs">Default: 3 hari</p>
+                               
                             </div>
 
                             <div className="grid gap-2">
@@ -109,7 +109,7 @@ export default function Pengaturan() {
                                     required
                                 />
                                 <InputError message={errors.auto_close_aspirasi_days} />
-                                <p className="text-muted-foreground text-xs">Default: 1 hari</p>
+                               
                             </div>
 
                             <div className="grid gap-2">
@@ -126,7 +126,7 @@ export default function Pengaturan() {
                                     required
                                 />
                                 <InputError message={errors.auto_close_permintaan_informasi_days} />
-                                <p className="text-muted-foreground text-xs">Default: 5 hari</p>
+                                
                             </div>
                         </div>
                     </div>

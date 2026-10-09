@@ -4,15 +4,13 @@ import { ChartPieLabel } from '@/components/chart-pie-label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowRight,
-    CalendarDays,
     CheckCircle2,
     Clock,
     FileText,
@@ -25,11 +23,9 @@ import {
     ShieldAlert,
     Users,
 } from 'lucide-react';
-import { useState } from 'react';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
-type Range = 'today' | '7d' | '30d';
 type ChannelKey = 'span_lapor' | 'sosial_media' | 'kunjungan_langsung' | 'wbs' | 'email';
 
 interface DashboardStats {
@@ -60,17 +56,11 @@ interface TicketSummary {
 }
 
 interface OperatorDashboardProps {
-    range: Range;
     stats: DashboardStats;
     trend: TrendPoint[];
     recentTickets: TicketSummary[];
+    periodLabel: string;
 }
-
-const rangeOptions: { value: Range; label: string }[] = [
-    { value: 'today', label: 'Hari Ini' },
-    { value: '7d', label: '7 Hari Terakhir' },
-    { value: '30d', label: '1 Bulan Terakhir' },
-];
 
 const channelCards: {
     key: ChannelKey;
@@ -186,51 +176,18 @@ function formatDate(dateStr: string): string {
     });
 }
 
-export default function OperatorDashboard({ range, stats, trend, recentTickets }: OperatorDashboardProps) {
-    const [loading, setLoading] = useState(false);
-    const rangeLabel = rangeOptions.find((o) => o.value === range)?.label ?? '';
-
-    const handleRangeChange = (value: string) => {
-        router.get(
-            route('dashboard.operator.index'),
-            { range: value },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-                only: ['range', 'stats', 'trend', 'recentTickets'],
-                onStart: () => setLoading(true),
-                onFinish: () => setLoading(false),
-            },
-        );
-    };
-
+export default function OperatorDashboard({ stats, trend, recentTickets, periodLabel }: OperatorDashboardProps) {
     return (
         <AppLayout breadcrumbs={[{ title: 'Dashboard Operator', href: route('dashboard.operator.index') }]}>
             <Head title="Dashboard Operator" />
             <div className="space-y-6 px-4 py-6">
-                {/* Filter periode */}
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 className="text-base font-semibold">Ringkasan Laporan</h2>
-                        <p className="text-muted-foreground text-xs">Menampilkan data: {rangeLabel}</p>
-                    </div>
-                    <Select value={range} onValueChange={handleRangeChange}>
-                        <SelectTrigger className="w-full sm:w-[200px]">
-                            <CalendarDays className="text-muted-foreground mr-2 h-4 w-4" />
-                            <SelectValue placeholder="Pilih periode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {rangeOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                {/* Header periode */}
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-base font-semibold">Ringkasan Laporan</h2>
+                    <p className="text-muted-foreground text-xs">Menampilkan data: {periodLabel}</p>
                 </div>
 
-                <div className={cn('space-y-6 transition-opacity', loading && 'pointer-events-none opacity-60')}>
+                <div className="space-y-6">
                     {/* Kartu klasifikasi */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <Card className="border shadow-xs transition-shadow hover:shadow-sm">
@@ -347,7 +304,7 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                     </div>
 
                     {/* Tren */}
-                    <ChartAreaLinear data={trend} periodLabel={rangeLabel} />
+                    <ChartAreaLinear data={trend} periodLabel={periodLabel} />
 
                     {/* Laporan terbaru */}
                     <Card className="border shadow-xs">
@@ -355,7 +312,7 @@ export default function OperatorDashboard({ range, stats, trend, recentTickets }
                             <div>
                                 <CardTitle className="text-base font-bold">Laporan Terbaru Masuk</CardTitle>
                                 <CardDescription className="text-xs">
-                                    Daftar 7 laporan atau konsultasi terbaru pada periode: {rangeLabel}
+                                    Daftar 7 laporan atau konsultasi terbaru pada periode: {periodLabel}
                                 </CardDescription>
                             </div>
                             <Button asChild variant="ghost" size="sm" className="gap-1 text-xs font-medium">

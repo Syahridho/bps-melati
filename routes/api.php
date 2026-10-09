@@ -8,10 +8,10 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::middleware(['api.key', 'throttle:30,1'])->group(function () {
-    Route::post('/tickets', [TicketApiController::class, 'store']);
-    Route::get('/check', [TicketApiController::class, 'check']);
-    Route::get('/check/{ticketNumber}', [TicketApiController::class, 'check'])->where('ticketNumber', '.*');
-    Route::post('/check/{ticketNumber}/reply', [TicketApiController::class, 'reply'])->where('ticketNumber', '.*');
-    Route::post('/check/{ticketNumber}/complete', [TicketApiController::class, 'complete'])->where('ticketNumber', '.*');
+Route::middleware(['api.key'])->group(function () {
+    Route::post('/tickets', [TicketApiController::class, 'store'])->middleware('throttle:ticket-store');
+    Route::get('/check', [TicketApiController::class, 'check'])->middleware('throttle:ticket-check');
+    Route::get('/check/{ticketNumber}', [TicketApiController::class, 'check'])->middleware('throttle:ticket-check')->where('ticketNumber', '.*');
+    Route::post('/check/{ticketNumber}/reply', [TicketApiController::class, 'reply'])->middleware('throttle:ticket-reply')->where('ticketNumber', '.*');
+    Route::post('/check/{ticketNumber}/complete', [TicketApiController::class, 'complete'])->middleware('throttle:ticket-reply')->where('ticketNumber', '.*');
 });

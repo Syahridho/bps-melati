@@ -124,11 +124,11 @@
     @endphp
 
     <div class="kop">
-        <img src="{{ asset('logo-bps.webp') }}" alt="Logo BPS">
+        <img src="{{ asset('logo-bps.svg') }}" alt="Logo BPS">
         <div class="kop-text">
             <div class="instansi">Badan Pusat Statistik</div>
             <div class="provinsi">Provinsi Riau</div>
-            <div class="alamat">Jl. Sultan Syarif Kasim No. 46, Pekanbaru, Riau</div>
+            <div class="alamat">Jl. Pattimura No.12, Cinta Raja, Kecamatan Sail, Kota Pekanbaru, Riau 28131</div>
         </div>
     </div>
 
@@ -150,7 +150,7 @@
 
         <thead>
             <tr>
-                <th rowspan="2">Kanal</th>
+                <th rowspan="2">Sumber Kanal</th>
                 @foreach ($months as $month)
                     <th colspan="4">{{ $month['label'] }}</th>
                 @endforeach

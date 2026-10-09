@@ -13,44 +13,28 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    private const RANGES = ['today', '7d', '30d'];
-
     public function __invoke(Request $request): Response
     {
-        $range = $request->query('range', '7d');
-        if (! in_array($range, self::RANGES, true)) {
-            $range = '7d';
-        }
-
-        // Versi cache naik setiap ada tiket berubah, sehingga key lama otomatis tidak terpakai
         $version = Cache::get('dashboard:admin:version', 0);
-        $key = "dashboard:admin:v{$version}:{$range}";
+        $key = "dashboard:admin:v{$version}:month";
 
-        $data = Cache::remember($key, now()->addMinutes(5), function () use ($range) {
-            $from = $this->resolveFrom($range);
+        $data = Cache::remember($key, now()->addMinutes(5), function () {
+            $from = now()->startOfMonth();
 
             return [
                 'stats' => $this->buildStats($from),
-                'trend' => $this->buildTrend($range, $from),
+                'trend' => $this->buildTrend($from),
                 'recentTickets' => $this->buildRecentTickets($from),
+                'periodLabel' => 'Bulan Ini (' . now()->locale('id')->translatedFormat('F Y') . ')',
             ];
         });
 
         return Inertia::render('admin/dashboard', [
-            'range' => $range,
             'stats' => $data['stats'],
             'trend' => $data['trend'],
             'recentTickets' => $data['recentTickets'],
+            'periodLabel' => $data['periodLabel'],
         ]);
-    }
-
-    private function resolveFrom(string $range): Carbon
-    {
-        return match ($range) {
-            'today' => now()->startOfDay(),
-            '30d' => now()->subDays(29)->startOfDay(),
-            default => now()->subDays(6)->startOfDay(),
-        };
     }
 
     private function buildStats(Carbon $from): array
@@ -97,24 +81,8 @@ class DashboardController extends Controller
         ];
     }
 
-    private function buildTrend(string $range, Carbon $from): array
+    private function buildTrend(Carbon $from): array
     {
-        // Hari ini: per jam. Lainnya: per hari.
-        if ($range === 'today') {
-            $rows = Ticket::query()
-                ->where('created_at', '>=', $from)
-                ->selectRaw('HOUR(created_at) as bucket, COUNT(*) as total')
-                ->groupBy('bucket')
-                ->pluck('total', 'bucket');
-
-            return collect(range(0, 23))
-                ->map(fn (int $h) => [
-                    'label' => sprintf('%02d:00', $h),
-                    'total' => (int) ($rows[$h] ?? 0),
-                ])
-                ->all();
-        }
-
         $rows = Ticket::query()
             ->where('created_at', '>=', $from)
             ->selectRaw('DATE(created_at) as bucket, COUNT(*) as total')

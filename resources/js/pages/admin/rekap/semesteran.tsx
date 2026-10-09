@@ -138,8 +138,8 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
                         <Table className="min-w-[1100px] border-collapse text-[11px]">
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent">
-                                    <TableHead rowSpan={2} className="bg-muted sticky left-0 z-20 border-r">
-                                        Kanal
+                                    <TableHead rowSpan={2} className="bg-muted sticky left-0 z-20 border-r after:bg-border after:absolute after:top-0 after:right-0 after:h-full after:w-px">
+                                       Sumber Kanal
                                     </TableHead>
                                     {months.map((month) => (
                                         <TableHead key={month.key} colSpan={4} className="border-r text-center font-semibold">
@@ -155,7 +155,7 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
                                         SUB_COLUMNS.map((sub, index) => (
                                             <TableHead
                                                 key={`${month.key}-${sub}`}
-                                                className={cn('text-muted-foreground text-center text-[10px] font-normal', index === 3 && 'border-r')}
+                                                className={cn('text-muted-foreground text-center text-[10px] font-normal after:bg-border after:absolute after:top-0 after:right-0 after:h-full after:w-px', index === 3 && 'border-r')}
                                             >
                                                 {sub}
                                             </TableHead>
@@ -178,7 +178,7 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
 
                             <TableFooter>
                                 <TableRow className="bg-muted/60 hover:bg-muted/60">
-                                    <TableCell className="bg-muted/60 sticky left-0 z-10 border-r font-semibold">Total</TableCell>
+                                    <TableCell className="bg-muted sticky left-0 z-10 border-r font-semibold">Total</TableCell>
                                     {months.map((month) =>
                                         COLUMN_ORDER.map((column, index) => (
                                             <TableCell
@@ -240,7 +240,7 @@ function RekapRowFragment({ row, months }: { row: RekapRow; months: MonthColumn[
     return (
         <>
             <TableRow className={cn(hasChildren ? 'bg-muted/60 hover:bg-muted/60 font-semibold' : 'hover:bg-muted/40')}>
-                <TableCell className={cn('sticky left-0 z-10 border-r', hasChildren ? 'bg-muted/60' : 'bg-card')}>{row.channel}</TableCell>
+                <TableCell className={cn('sticky left-0 z-10 border-r', hasChildren ? 'bg-muted' : 'bg-card')}>{row.channel}</TableCell>
 
                 {hasChildren ? (
                     <TableCell colSpan={rightColSpan} className="bg-muted/60" />

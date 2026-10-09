@@ -144,11 +144,7 @@ export function AppSidebar() {
                 },
             ],
         },
-        {
-            title: 'Pengaturan',
-            url: '/dashboard/operator/pengaturan',
-            icon: Settings,
-        },
+       
     ];
 
     const mainNavItems = auth.user.role === 'admin' ? adminNavItems : operatorNavItems;

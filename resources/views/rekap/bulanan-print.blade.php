@@ -100,11 +100,11 @@
 <body>
     <div class="sheet">
         <div class="kop">
-            <img src="{{ asset('logo-bps.webp') }}" alt="Logo BPS">
+            <img src="{{ asset('logo-bps.svg') }}" alt="Logo BPS">
             <div class="kop-text">
                 <div class="instansi">Badan Pusat Statistik</div>
                 <div class="provinsi">Provinsi Riau</div>
-                <div class="alamat">Jl. Sultan Syarif Kasim No. 46, Pekanbaru, Riau</div>
+                <div class="alamat">Jl. Pattimura No.12, Cinta Raja, Kecamatan Sail, Kota Pekanbaru, Riau 28131</div>
             </div>
         </div>
 
@@ -116,7 +116,7 @@
         <table>
             <thead>
                 <tr>
-                    <th class="kolom-kanal" rowspan="2">Kanal</th>
+                    <th class="kolom-kanal" rowspan="2">Sumber Kanal</th>
                     <th colspan="2">Pengaduan</th>
                     <th rowspan="2">Aspirasi</th>
                     <th rowspan="2">Permintaan Informasi</th>

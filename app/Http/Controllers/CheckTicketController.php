@@ -58,29 +58,32 @@ class CheckTicketController extends Controller
                         'size' => $attachment->size,
                         'url' => Storage::url($attachment->path),
                     ])->values()->all(),
-                    'responses' => $t->responses->sortByDesc('created_at')->values()->map(function ($response) use ($t) {
-                        $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
-                        $userName = $isReporter
-                            ? ($t->reporter_name ? $t->reporter_name.' (Pelapor)' : 'Pelapor')
-                            : ($response->user?->name ?? 'Petugas BPS');
+                    'responses' => $t->responses
+                        ->sortBy(fn ($response) => ($response->sent_at ?? $response->created_at)->getTimestamp())
+                        ->values()
+                        ->map(function ($response) use ($t) {
+                            $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
+                            $userName = $isReporter
+                                ? ($t->reporter_name ? $t->reporter_name.' (Pelapor)' : 'Pelapor')
+                                : ($response->user?->name ?? 'Petugas BPS');
 
-                        return [
-                            'id' => $response->id,
-                            'type' => $response->type,
-                            'message' => $response->message,
-                            'user_name' => $userName,
-                            'is_reporter' => $isReporter,
-                            'sent_at' => $response->sent_at?->toIso8601String(),
-                            'created_at' => $response->created_at->toIso8601String(),
-                            'attachments' => $response->attachments->map(fn ($att) => [
-                                'id' => $att->id,
-                                'original_name' => $att->original_name,
-                                'mime_type' => $att->mime_type,
-                                'size' => $att->size,
-                                'url' => Storage::url($att->path),
-                            ])->values()->all(),
-                        ];
-                    })->values()->all(),
+                            return [
+                                'id' => $response->id,
+                                'type' => $response->type,
+                                'message' => $response->message,
+                                'user_name' => $userName,
+                                'is_reporter' => $isReporter,
+                                'sent_at' => $response->sent_at?->toIso8601String(),
+                                'created_at' => $response->created_at->toIso8601String(),
+                                'attachments' => $response->attachments->map(fn ($att) => [
+                                    'id' => $att->id,
+                                    'original_name' => $att->original_name,
+                                    'mime_type' => $att->mime_type,
+                                    'size' => $att->size,
+                                    'url' => Storage::url($att->path),
+                                ])->values()->all(),
+                            ];
+                        })->values()->all(),
                 ];
             });
         }
