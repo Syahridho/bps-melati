@@ -62,26 +62,33 @@ class RekapTahunanController extends Controller
     }
 
     /**
-     * Payload rekap + mode tampilan.
+     * Payload rekap + mode tampilan + penanda tangan.
      *
-     * Mode disisipkan DI LUAR hasil cache supaya isi cache tetap sama untuk
-     * kedua mode (kunci cache tidak perlu menambah `tampilan`).
+     * Mode dan penanda tangan disisipkan DI LUAR hasil cache supaya isi cache
+     * tetap sama untuk kedua mode dan supaya perubahan penanda tangan di
+     * Pengaturan langsung terlihat tanpa menunggu TTL cache.
+     *
+     * array_merge (bukan operator +) dipakai karena `+` tidak menimpa key
+     * yang sudah ada: entri cache lama masih memuat `penandaTangan` basi.
      *
      * @return array<string, mixed>
      */
     private function payloadWithMode(string $year, string $tampilan): array
     {
         $payload = $this->payload($year);
+        $extra = [
+            'tampilan' => $tampilan,
+            'penandaTangan' => RekapReport::signatory(),
+        ];
 
         if ($tampilan !== RekapReport::VIEW_MODE_RINGKAS) {
-            return $payload + ['tampilan' => $tampilan];
+            return array_merge($payload, $extra);
         }
 
-        return $payload + [
-            'tampilan' => $tampilan,
+        return array_merge($payload, $extra, [
             'ringkasRows' => RekapReport::summaryRows($payload['rows']),
             'ringkasTotals' => RekapReport::summaryTotals($payload['totals']),
-        ];
+        ]);
     }
 
     /**
@@ -169,7 +176,6 @@ class RekapTahunanController extends Controller
             'year' => $year,
             'yearLabel' => $this->yearLabel($year),
             'years' => $this->availableYears($year),
-            'penandaTangan' => RekapReport::signatory(),
         ];
     }
 

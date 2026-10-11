@@ -1,4 +1,3 @@
-import { LoginAlert } from '@/components/login-alert';
 import { SessionConflictCard, type SessionConflictInfo } from '@/components/session-conflict-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -136,7 +135,7 @@ export default function LoginForm({ status, noticeReason, throttleSeconds, sessi
                                     <p className="text-muted-foreground text-balance">Masuk ke akun melati Anda</p>
                                 </div>
 
-                                <div ref={alertRef} tabIndex={-1} className="space-y-3 focus:outline-none">
+                                {/* <div ref={alertRef} tabIndex={-1} className="space-y-3 focus:outline-none">
                                     {status && <p className="text-center text-sm font-medium text-emerald-600 dark:text-emerald-400">{status}</p>}
 
                                     {noticeMessage && (
@@ -159,7 +158,7 @@ export default function LoginForm({ status, noticeReason, throttleSeconds, sessi
                                     {!isThrottled && conflict === null && !errors.email && generalError && (
                                         <LoginAlert id="login-error" tone="error" message={generalError} />
                                     )}
-                                </div>
+                                </div> */}
 
                                 {conflict !== null ? (
                                     <SessionConflictCard

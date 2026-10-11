@@ -20,7 +20,7 @@ class RekapBulananController extends Controller
     {
         $period = $this->resolvePeriod($request->query('period'));
 
-        return Inertia::render('admin/rekap/bulanan', $this->payload($period));
+        return Inertia::render('admin/rekap/bulanan', $this->render($period));
     }
 
     /**
@@ -30,7 +30,7 @@ class RekapBulananController extends Controller
     {
         $period = $this->resolvePeriod($request->query('period'));
 
-        return view('rekap.bulanan-print', $this->payload($period));
+        return view('rekap.bulanan-print', $this->render($period));
     }
 
     /**
@@ -41,9 +41,26 @@ class RekapBulananController extends Controller
         $period = $this->resolvePeriod($request->query('period'));
 
         return response()
-            ->view('rekap.bulanan-excel', $this->payload($period))
+            ->view('rekap.bulanan-excel', $this->render($period))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="rekap-bulanan-'.$period.'.xls"');
+    }
+
+    /**
+     * Payload rekap + penanda tangan.
+     *
+     * Penanda tangan DISISIPKAN DI LUAR cache. Kalau ikut di-cache bersama
+     * baris rekap, nama yang baru diubah di Pengaturan tidak muncul sampai
+     * versi rekap berputar atau TTL habis.
+     *
+     * array_merge (bukan operator +) dipakai karena `+` tidak menimpa key
+     * yang sudah ada: entri cache lama masih memuat `penandaTangan` basi.
+     *
+     * @return array<string, mixed>
+     */
+    private function render(string $period): array
+    {
+        return array_merge($this->payload($period), ['penandaTangan' => RekapReport::signatory()]);
     }
 
     /**
@@ -73,7 +90,7 @@ class RekapBulananController extends Controller
     }
 
     /**
-     * Bangun payload rekap: baris kanal, total kolom, daftar periode, penanda tangan.
+     * Bangun payload rekap: baris kanal, total kolom, daftar periode.
      *
      * @return array<string, mixed>
      */
@@ -98,7 +115,6 @@ class RekapBulananController extends Controller
                 'value' => $value,
                 'label' => RekapReport::formatPeriod($value, 'F Y'),
             ], $periods),
-            'penandaTangan' => RekapReport::signatory(),
         ];
     }
 }
