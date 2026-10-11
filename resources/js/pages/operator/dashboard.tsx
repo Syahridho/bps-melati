@@ -1,5 +1,5 @@
+import DashboardTemplate from '@/layouts/app/dashboard-template';
 import { DASHBOARD_CHANNEL_CARDS } from '@/lib/dashboard-constants';
-import DashboardTemplate from '@/pages/dashboard-template';
 import { type DashboardProps } from '@/types/dashboard';
 
 export default function OperatorDashboard(props: DashboardProps) {
