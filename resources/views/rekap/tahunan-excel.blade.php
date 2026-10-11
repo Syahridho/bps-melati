@@ -32,7 +32,12 @@
 <body>
     @php
         $classificationColumns = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'];
-        $totalCols = count($months) * 4 + 2;
+
+        $ringkas = ($tampilan ?? 'detail') === 'ringkas';
+        $tableRows = $ringkas ? ($ringkasRows ?? $rows) : $rows;
+        $tableTotals = $ringkas ? ($ringkasTotals ?? $totals) : $totals;
+        $columnsPerMonth = $ringkas ? 1 : 4;
+        $totalCols = count($months) * $columnsPerMonth + 2;
     @endphp
     <table>
         <tr>
@@ -46,38 +51,48 @@
         </tr>
         <thead>
             <tr>
-                <th rowspan="2" class="header">Kanal</th>
+                <th @if(! $ringkas) rowspan="2" @endif class="header">Kanal</th>
                 @foreach ($months as $month)
-                    <th colspan="4" class="header">{{ $month['label'] }}</th>
+                    <th @if(! $ringkas) colspan="4" @endif class="header">{{ $month['label'] }}</th>
                 @endforeach
-                <th rowspan="2" class="header">Jumlah</th>
+                <th @if(! $ringkas) rowspan="2" @endif class="header">Jumlah</th>
             </tr>
-            <tr>
-                @foreach ($months as $month)
-                    <th class="header">PST</th>
-                    <th class="header">Lain</th>
-                    <th class="header">Asp</th>
-                    <th class="header">Inf</th>
-                @endforeach
-            </tr>
+            @unless($ringkas)
+                <tr>
+                    @foreach ($months as $month)
+                        <th class="header">PST</th>
+                        <th class="header">Lain</th>
+                        <th class="header">Asp</th>
+                        <th class="header">Inf</th>
+                    @endforeach
+                </tr>
+            @endunless
         </thead>
         <tbody>
-            @forelse ($rows as $row)
+            @forelse ($tableRows as $row)
                 @php $hasChildren = count($row['children'] ?? []) > 0; @endphp
                 <tr class="{{ $hasChildren ? 'induk' : '' }}">
                     <td class="kanal">{{ $row['channel'] }}</td>
                     @if ($hasChildren)
                         @foreach ($months as $month)
-                            @foreach ($classificationColumns as $column)
+                            @if ($ringkas)
                                 <td class="angka"></td>
-                            @endforeach
+                            @else
+                                @foreach ($classificationColumns as $column)
+                                    <td class="angka"></td>
+                                @endforeach
+                            @endif
                         @endforeach
                         <td class="angka"></td>
                     @else
                         @foreach ($months as $month)
-                            @foreach ($classificationColumns as $column)
-                                <td class="angka">{{ $row['perPeriod'][$month['key']][$column] ?? 0 }}</td>
-                            @endforeach
+                            @if ($ringkas)
+                                <td class="angka">{{ $row['perPeriod'][$month['key']] ?? 0 }}</td>
+                            @else
+                                @foreach ($classificationColumns as $column)
+                                    <td class="angka">{{ $row['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                                @endforeach
+                            @endif
                         @endforeach
                         <td class="angka">{{ $row['jumlah'] }}</td>
                     @endif
@@ -87,9 +102,13 @@
                     <tr>
                         <td class="kanal">&nbsp;&nbsp;&nbsp;&nbsp;{{ $child['channel'] }}</td>
                         @foreach ($months as $month)
-                            @foreach ($classificationColumns as $column)
-                                <td class="angka">{{ $child['perPeriod'][$month['key']][$column] ?? 0 }}</td>
-                            @endforeach
+                            @if ($ringkas)
+                                <td class="angka">{{ $child['perPeriod'][$month['key']] ?? 0 }}</td>
+                            @else
+                                @foreach ($classificationColumns as $column)
+                                    <td class="angka">{{ $child['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                                @endforeach
+                            @endif
                         @endforeach
                         <td class="angka">{{ $child['jumlah'] }}</td>
                     </tr>
@@ -104,18 +123,26 @@
             <tr class="total">
                 <td class="kanal">TOTAL</td>
                 @foreach ($months as $month)
-                    @foreach ($classificationColumns as $column)
-                        <td class="angka">{{ $totals[$month['key']][$column] ?? 0 }}</td>
-                    @endforeach
+                    @if ($ringkas)
+                        <td class="angka">{{ $tableTotals[$month['key']] ?? 0 }}</td>
+                    @else
+                        @foreach ($classificationColumns as $column)
+                            <td class="angka">{{ $tableTotals[$month['key']][$column] ?? 0 }}</td>
+                        @endforeach
+                    @endif
                 @endforeach
-                <td class="angka">{{ $totals['jumlah'] }}</td>
+                <td class="angka">{{ $tableTotals['jumlah'] }}</td>
             </tr>
         </tfoot>
     </table>
 
     <br/>
     <div>
-        Keterangan: PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
+        @if ($ringkas)
+            Keterangan: Angka menunjukkan jumlah PST + Lain + Asp + Inf.
+        @else
+            Keterangan: PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
+        @endif
     </div>
 
     <br/><br/>

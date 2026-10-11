@@ -66,6 +66,11 @@ export function useTicketRealtime({
     const handlers = useRef({ onResponse, onStatusChange, onCompleted });
     handlers.current = { onResponse, onStatusChange, onCompleted };
 
+    // Satu balasan di-broadcast dua kali di kanal presence: `.ticket.updated`
+    // dan `.ticket.response.created` membawa response yang sama. Efek samping
+    // (toast, scroll otomatis, sorotan) harus jalan sekali saja per balasan.
+    const seenResponseIds = useRef(new Set<number>());
+
     const { channel } = useEchoPresence<TicketBroadcastEvent>(
         `ticket.${ticketId}`,
         ['.ticket.response.created', '.ticket.updated'],
@@ -80,6 +85,19 @@ export function useTicketRealtime({
             if (!event.response) {
                 return;
             }
+
+            const responseId = event.response.id;
+
+            if (seenResponseIds.current.has(responseId)) {
+                return;
+            }
+
+            // Batas aman untuk satu sesi; jangan biarkan membengkak pada tab yang lama terbuka.
+            if (seenResponseIds.current.size >= 500) {
+                seenResponseIds.current.clear();
+            }
+
+            seenResponseIds.current.add(responseId);
 
             const shouldScroll = isNearBottom();
             handlers.current.onResponse(event.response);

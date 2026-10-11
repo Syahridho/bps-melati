@@ -11,6 +11,7 @@ use App\Jobs\SendTicketResponseNotification;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
+use App\Support\SafeBroadcast;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -171,9 +172,12 @@ class ReplyToTicket
         SendTicketResponseNotification::dispatch($response)->afterCommit();
 
         // Broadcast ke kanal publik ticket (halaman /check pelapor) dan kanal staff.
-        TicketUpdated::dispatch($ticket, $response);
-        TicketResponseCreated::dispatch($ticket, $response, $actor);
-        InboxUpdated::dispatch($ticket, $actor->name, $actor);
+        // Balasan sudah tersimpan dan tidak boleh gagal gara-gara broadcaster.
+        $context = ['ticket_id' => $ticket->id, 'ticket_number' => $ticket->ticket_number, 'response_id' => $response->id];
+
+        SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket, $response), $context);
+        SafeBroadcast::send('TicketResponseCreated', fn () => TicketResponseCreated::dispatch($ticket, $response, $actor), $context);
+        SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, $actor->name, $actor), $context);
     }
 
     private function findByKey(int $ticketId, ?string $idempotencyKey): ?TicketResponse

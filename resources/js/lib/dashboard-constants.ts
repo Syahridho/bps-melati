@@ -1,7 +1,6 @@
 import { type Classification, type DashboardChannelCardConfig, type Status } from '@/types/dashboard';
-import { Mail, Megaphone, Share2, ShieldAlert, Users } from 'lucide-react';
 
-export const ADMIN_CHANNEL_CARDS: DashboardChannelCardConfig[] = [
+export const DASHBOARD_CHANNEL_CARDS: DashboardChannelCardConfig[] = [
     {
         key: 'span_lapor',
         label: 'SP4N-LAPOR!',
@@ -40,54 +39,6 @@ export const ADMIN_CHANNEL_CARDS: DashboardChannelCardConfig[] = [
     },
 ];
 
-export const OPERATOR_CHANNEL_CARDS: DashboardChannelCardConfig[] = [
-    {
-        key: 'span_lapor',
-        label: 'SP4N-LAPOR!',
-        desc: 'Layanan aspirasi nasional',
-        icon: Megaphone,
-        card: 'border-rose-400/25 bg-rose-400/5',
-        iconWrap: 'bg-rose-400/15 text-rose-500 dark:text-rose-400',
-        text: 'text-rose-500 dark:text-rose-400',
-    },
-    {
-        key: 'sosial_media',
-        label: 'Sosial Media',
-        desc: 'IG, Facebook, YouTube, WhatsApp',
-        icon: Share2,
-        card: 'border-violet-400/25 bg-violet-400/5',
-        iconWrap: 'bg-violet-400/15 text-violet-500 dark:text-violet-400',
-        text: 'text-violet-500 dark:text-violet-400',
-    },
-    {
-        key: 'kunjungan_langsung',
-        label: 'Kunjungan Langsung',
-        desc: 'Pelayanan & kotak saran',
-        icon: Users,
-        card: 'border-emerald-400/25 bg-emerald-400/5',
-        iconWrap: 'bg-emerald-400/15 text-emerald-600 dark:text-emerald-400',
-        text: 'text-emerald-600 dark:text-emerald-400',
-    },
-    {
-        key: 'wbs',
-        label: 'WBS',
-        desc: 'Whistleblowing system',
-        icon: ShieldAlert,
-        card: 'border-amber-300/40 bg-amber-300/5',
-        iconWrap: 'bg-amber-300/20 text-amber-600 dark:text-amber-300',
-        text: 'text-amber-600 dark:text-amber-300',
-    },
-    {
-        key: 'email',
-        label: 'Email',
-        desc: 'Laporan via surel',
-        icon: Mail,
-        card: 'border-sky-400/25 bg-sky-400/5',
-        iconWrap: 'bg-sky-400/15 text-sky-500 dark:text-sky-400',
-        text: 'text-sky-500 dark:text-sky-400',
-    },
-];
-
 export function statusBadge(status: Status): { label: string; className: string } {
     switch (status) {
         case 'baru':
@@ -121,16 +72,5 @@ export function classificationBadgeClass(classification: Classification): string
             return 'border-transparent bg-yellow-500 text-yellow-950 hover:bg-yellow-500';
         case 'permintaan_informasi':
             return 'border-transparent bg-indigo-500 text-white hover:bg-indigo-500';
-    }
-}
-
-export function classificationBadgeVariant(classification: Classification): 'default' | 'secondary' | 'destructive' | 'outline' {
-    switch (classification) {
-        case 'pengaduan':
-            return 'destructive';
-        case 'aspirasi':
-            return 'default';
-        case 'permintaan_informasi':
-            return 'secondary';
     }
 }

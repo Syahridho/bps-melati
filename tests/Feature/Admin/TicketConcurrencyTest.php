@@ -9,6 +9,7 @@ use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
@@ -222,10 +223,14 @@ test('event balasan di broadcast tepat satu kali setelah commit', function () {
     Event::assertDispatchedTimes(InboxUpdated::class, 1);
 
     Event::assertDispatched(TicketResponseCreated::class, function (TicketResponseCreated $event) {
-        return $event->afterCommit === true
+        // Broadcast dikirim inline (bukan lewat antrean `broadcasts`) supaya balasan
+        // langsung terlihat petugas lain yang membuka tiket yang sama.
+        return $event instanceof ShouldBroadcastNow
             && $event->ticket->id === $this->ticket->id
             && $event->response->type === 'respon_awal';
     });
+
+    Event::assertDispatched(TicketUpdated::class, fn (TicketUpdated $event) => $event instanceof ShouldBroadcastNow);
 });
 
 test('balasan yang di replay tidak menyiarkan event kedua', function () {

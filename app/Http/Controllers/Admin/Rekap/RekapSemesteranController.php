@@ -32,8 +32,9 @@ class RekapSemesteranController extends Controller
     public function __invoke(Request $request): Response
     {
         $semester = $this->resolveSemester($request->query('semester'));
+        $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
-        return Inertia::render('admin/rekap/semesteran', $this->payload($semester));
+        return Inertia::render('admin/rekap/semesteran', $this->payloadWithMode($semester, $tampilan));
     }
 
     /**
@@ -42,8 +43,9 @@ class RekapSemesteranController extends Controller
     public function print(Request $request): View
     {
         $semester = $this->resolveSemester($request->query('semester'));
+        $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
-        return view('rekap.semesteran-print', $this->payload($semester));
+        return view('rekap.semesteran-print', $this->payloadWithMode($semester, $tampilan));
     }
 
     /**
@@ -52,11 +54,43 @@ class RekapSemesteranController extends Controller
     public function excel(Request $request): \Illuminate\Http\Response
     {
         $semester = $this->resolveSemester($request->query('semester'));
+        $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
         return response()
-            ->view('rekap.semesteran-excel', $this->payload($semester))
+            ->view('rekap.semesteran-excel', $this->payloadWithMode($semester, $tampilan))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="rekap-semesteran-'.$semester.'.xls"');
+            ->header('Content-Disposition', 'attachment; filename="rekap-semesteran-'.$semester.$this->fileSuffix($tampilan).'.xls"');
+    }
+
+    /**
+     * Payload rekap + mode tampilan.
+     *
+     * Mode disisipkan DI LUAR hasil cache supaya isi cache tetap sama untuk
+     * kedua mode (kunci cache tidak perlu menambah `tampilan`).
+     *
+     * @return array<string, mixed>
+     */
+    private function payloadWithMode(string $semester, string $tampilan): array
+    {
+        $payload = $this->payload($semester);
+
+        if ($tampilan !== RekapReport::VIEW_MODE_RINGKAS) {
+            return $payload + ['tampilan' => $tampilan];
+        }
+
+        return $payload + [
+            'tampilan' => $tampilan,
+            'ringkasRows' => RekapReport::summaryRows($payload['rows']),
+            'ringkasTotals' => RekapReport::summaryTotals($payload['totals']),
+        ];
+    }
+
+    /**
+     * Suffix nama berkas Excel agar mode ringkas tidak tertimpa hasil detail.
+     */
+    private function fileSuffix(string $tampilan): string
+    {
+        return $tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '';
     }
 
     /**

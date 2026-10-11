@@ -18,6 +18,17 @@ export function isImageMime(mimeType: string, fileName: string): boolean {
     return mimeType?.startsWith('image/') || /\.(jpg|jpeg|png)$/i.test(fileName);
 }
 
+/**
+ * Nama kanal publik (broadcast) untuk sebuah nomor tiket.
+ *
+ * Nomor tiket memuat `/` (mis. `L-1400/102026/EE18`) yang tidak diizinkan
+ * protokol Pusher/Reverb pada nama kanal, sehingga harus dinormalisasi lebih dulu.
+ * Harus selalu identik dengan `Ticket::publicChannelName()` di backend.
+ */
+export function ticketPublicChannel(ticketNumber: string): string {
+    return `ticket.${ticketNumber.replace(/[^A-Za-z0-9_\-=,.@]/g, '-')}`;
+}
+
 export function isPdfMime(mimeType: string, fileName: string): boolean {
     return mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
 }

@@ -1,3 +1,4 @@
+import { ticketPublicChannel } from '@/lib/laporan-masuk-utils';
 import { type TicketDetail } from '@/types/check';
 import { router } from '@inertiajs/react';
 import { useEchoPublic } from '@laravel/echo-react';
@@ -10,7 +11,7 @@ export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail
     const [completing, setCompleting] = useState(false);
     const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
-    useEchoPublic(ticket ? `ticket.${ticket.ticket_number}` : '', '.ticket.updated', () => {
+    useEchoPublic(ticket ? ticketPublicChannel(ticket.ticket_number) : '', '.ticket.updated', () => {
         // Ketika ada update dari WebSocket, muat ulang data tiket dari server
         router.reload({ only: ['ticket'] });
     });

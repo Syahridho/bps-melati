@@ -7,6 +7,7 @@ use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
+use App\Support\SafeBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -178,7 +179,18 @@ class CheckTicketController extends Controller
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
 
-        TicketUpdated::dispatch($ticket, $response->load(['user', 'attachments']));
+        // Balasan pelapor sudah tersimpan; kegagalan broadcast tidak boleh membalikkan
+        // hasil ke pengguna (event dikirim inline, tanpa antrean).
+        SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket, $response->load(['user', 'attachments'])), [
+            'ticket_id' => $ticket->id,
+            'ticket_number' => $ticket->ticket_number,
+            'response_id' => $response->id,
+        ]);
+        SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), [
+            'ticket_id' => $ticket->id,
+            'ticket_number' => $ticket->ticket_number,
+            'response_id' => $response->id,
+        ]);
 
         return redirect()->back()->with('flash', [
             'success' => 'Balasan Anda berhasil terkirim!',
@@ -202,7 +214,13 @@ class CheckTicketController extends Controller
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));
             Cache::forget("ticket:{$ticket->ticket_number}");
 
-            InboxUpdated::dispatch($ticket, 'Pelapor');
+            // InboxUpdated -> badge & angka tab daftar Laporan Masuk.
+            // TicketUpdated -> halaman detail tiket yang sedang dibuka petugas
+            // ikut tahu tiket ini baru saja diselesaikan pelapor.
+            $context = ['ticket_id' => $ticket->id, 'ticket_number' => $ticket->ticket_number];
+
+            SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);
+            SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket), $context);
         }
 
         return redirect()->back()->with('flash', [

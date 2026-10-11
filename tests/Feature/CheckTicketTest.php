@@ -1,9 +1,12 @@
 <?php
 
+use App\Events\InboxUpdated;
+use App\Events\TicketUpdated;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -133,6 +136,62 @@ test('reporter can complete ticket on check page', function () {
     $ticket->refresh();
     expect($ticket->status)->toBe('selesai')
         ->and($ticket->completed_at)->not->toBeNull();
+});
+
+test('pelapor menyelesaikan tiket menyegarkan badge inbox dan halaman detail', function () {
+    Event::fake([InboxUpdated::class, TicketUpdated::class]);
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'I-1400/092026/0112',
+        'period' => '2026-09',
+        'sequence' => 112,
+        'classification' => 'permintaan_informasi',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Mohon data inflasi terbaru.',
+        'status' => 'respon_substantif',
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    Cache::put('ticket_check:'.md5($ticket->ticket_number), ['stale'], now()->addMinutes(30));
+    Cache::put("ticket:{$ticket->ticket_number}", ['stale'], now()->addMinutes(30));
+
+    $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]))->assertRedirect();
+
+    // Badge/tab Laporan Masuk.
+    Event::assertDispatchedTimes(InboxUpdated::class, 1);
+    // Halaman detail tiket yang sedang dibuka petugas ikut tahu status barunya.
+    Event::assertDispatchedTimes(TicketUpdated::class, 1);
+
+    Event::assertDispatched(TicketUpdated::class, fn (TicketUpdated $event) => $event->ticket->id === $ticket->id && $event->status === 'selesai');
+
+    // Cache tampilan /check dibersihkan supaya reload pelapor tidak basi.
+    expect(Cache::has('ticket_check:'.md5($ticket->ticket_number)))->toBeFalse()
+        ->and(Cache::has("ticket:{$ticket->ticket_number}"))->toBeFalse();
+});
+
+test('tiket yang sudah selesai tidak menyiarkan event inbox dua kali', function () {
+    Event::fake([InboxUpdated::class, TicketUpdated::class]);
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'I-1400/092026/0113',
+        'period' => '2026-09',
+        'sequence' => 113,
+        'classification' => 'permintaan_informasi',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Mohon data inflasi terbaru.',
+        'status' => 'selesai',
+        'completed_at' => now(),
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]))->assertRedirect();
+
+    Event::assertNotDispatched(InboxUpdated::class);
+    Event::assertNotDispatched(TicketUpdated::class);
 });
 
 test('expired tickets auto close based on classification settings', function () {

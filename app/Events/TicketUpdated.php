@@ -8,7 +8,7 @@ use App\Support\TicketResponsePayload;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -16,15 +16,20 @@ use Illuminate\Queue\SerializesModels;
  * Status / isi tiket berubah (balasan baru, pelapor membalas, tiket selesai).
  *
  * Kanal publik `ticket.{ticket_number}` tetap dipertahankan karena halaman
- * /check milik pelapor Spanyol belum login dan hanya boleh memakai kanal publik.
+ * /check milik pelapor belum login dan hanya boleh memakai kanal publik. Nama
+ * kanal dinormalisasi lewat `Ticket::publicChannelName()` karena nomor tiket
+ * memuat `/` yang tidak diizinkan protokol Pusher/Reverb.
+ *
+ * ShouldBroadcastNow (bukan ShouldBroadcast): halaman /check menunggu status
+ * terbaru dari petugas, jadi penundaan akibat antrean `broadcasts` (atau worker
+ * yang mati) langsung terasa oleh pelapor. Payload kecil, aman dikirim inline.
+ *
+ * Tidak ada afterCommit: pemanggil (App\Actions\ReplyToTicket dan
+ * CheckTicketController) dispatch setelah transaksi database selesai commit.
  */
-class TicketUpdated implements ShouldBroadcast
+class TicketUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    public bool $afterCommit = true;
-
-    public string $queue = 'broadcasts';
 
     public function __construct(
         public Ticket $ticket,
@@ -38,7 +43,7 @@ class TicketUpdated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('ticket.'.$this->ticket->ticket_number),
+            new Channel(Ticket::publicChannelName($this->ticket->ticket_number)),
             new PresenceChannel('ticket.'.$this->ticket->id),
         ];
     }

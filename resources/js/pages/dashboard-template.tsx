@@ -18,7 +18,6 @@ export default function DashboardTemplate({
     recentTickets,
     periodLabel,
     channelCards,
-    variant,
     allTicketsRoute,
     ticketDetailRouteName,
 }: DashboardTemplateProps) {
@@ -33,9 +32,9 @@ export default function DashboardTemplate({
                 </div>
 
                 <div className="min-w-0 space-y-6">
-                    <DashboardStatCards stats={stats} variant={variant} />
+                    <DashboardStatCards stats={stats} />
 
-                    <DashboardChannelCards stats={stats} channelCards={channelCards} variant={variant} />
+                    <DashboardChannelCards stats={stats} channelCards={channelCards} />
 
                     {/* Pie charts */}
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -54,7 +53,6 @@ export default function DashboardTemplate({
                         periodLabel={periodLabel}
                         allTicketsRoute={allTicketsRoute}
                         ticketDetailRouteName={ticketDetailRouteName}
-                        variant={variant}
                     />
                 </div>
             </div>

@@ -31,8 +31,9 @@ class RekapTahunanController extends Controller
     public function __invoke(Request $request): Response
     {
         $year = $this->resolveYear($request->query('year'));
+        $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
-        return Inertia::render('admin/rekap/tahunan', $this->payload($year));
+        return Inertia::render('admin/rekap/tahunan', $this->payloadWithMode($year, $tampilan));
     }
 
     /**
@@ -41,8 +42,9 @@ class RekapTahunanController extends Controller
     public function print(Request $request): View
     {
         $year = $this->resolveYear($request->query('year'));
+        $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
-        return view('rekap.tahunan-print', $this->payload($year));
+        return view('rekap.tahunan-print', $this->payloadWithMode($year, $tampilan));
     }
 
     /**
@@ -51,11 +53,43 @@ class RekapTahunanController extends Controller
     public function excel(Request $request): \Illuminate\Http\Response
     {
         $year = $this->resolveYear($request->query('year'));
+        $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
         return response()
-            ->view('rekap.tahunan-excel', $this->payload($year))
+            ->view('rekap.tahunan-excel', $this->payloadWithMode($year, $tampilan))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="rekap-tahunan-'.$year.'.xls"');
+            ->header('Content-Disposition', 'attachment; filename="rekap-tahunan-'.$year.$this->fileSuffix($tampilan).'.xls"');
+    }
+
+    /**
+     * Payload rekap + mode tampilan.
+     *
+     * Mode disisipkan DI LUAR hasil cache supaya isi cache tetap sama untuk
+     * kedua mode (kunci cache tidak perlu menambah `tampilan`).
+     *
+     * @return array<string, mixed>
+     */
+    private function payloadWithMode(string $year, string $tampilan): array
+    {
+        $payload = $this->payload($year);
+
+        if ($tampilan !== RekapReport::VIEW_MODE_RINGKAS) {
+            return $payload + ['tampilan' => $tampilan];
+        }
+
+        return $payload + [
+            'tampilan' => $tampilan,
+            'ringkasRows' => RekapReport::summaryRows($payload['rows']),
+            'ringkasTotals' => RekapReport::summaryTotals($payload['totals']),
+        ];
+    }
+
+    /**
+     * Suffix nama berkas Excel agar mode ringkas tidak tertimpa hasil detail.
+     */
+    private function fileSuffix(string $tampilan): string
+    {
+        return $tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '';
     }
 
     /**

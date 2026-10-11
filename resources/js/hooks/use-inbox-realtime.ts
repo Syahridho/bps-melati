@@ -2,6 +2,7 @@ import { type InboxChangedEvent, type InboxUpdatedEvent } from '@/types/laporan-
 import { router } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 const RELOAD_DEBOUNCE_MS = 500;
 
@@ -37,12 +38,25 @@ export function useInboxRealtime({ searching }: { searching: boolean }) {
         }, RELOAD_DEBOUNCE_MS);
     }, []);
 
+    // Event yang sudah pernah ditampilkan, supaya satu penyelesaian tidak
+    // memunculkan toast berkali-kali (reload memicu balasan ulang).
+    const announcedRef = useRef<Set<number>>(new Set());
+
     useEcho<InboxUpdatedEvent>(
         'inbox.laporan-masuk',
         '.inbox.updated',
         (event) => {
             if (event.actor_id !== null && event.status !== 'selesai') {
                 setRecentlyAnswered((prev) => ({ ...prev, [event.ticket_id]: event.actor_name ?? 'Petugas' }));
+            }
+
+            // Tiket yang diselesaikan pelapor langsung hilang dari Laporan Masuk,
+            // jadi angka badge turun tanpa jejak — beri tahu petugasnya.
+            if (event.status === 'selesai' && !announcedRef.current.has(event.ticket_id)) {
+                announcedRef.current.add(event.ticket_id);
+                toast.info(`Laporan #${event.ticket_number} diselesaikan pelapor`, {
+                    description: 'Tiket ini tidak lagi muncul di Laporan Masuk.',
+                });
             }
 
             scheduleReload();

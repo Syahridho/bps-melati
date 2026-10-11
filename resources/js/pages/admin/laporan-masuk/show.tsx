@@ -112,8 +112,14 @@ export default function Show() {
             setTicketVersion((prev) => Math.max(prev, version));
         },
         onCompleted: () => {
+            // Pelapor menandai tiket selesai lewat /check. Jangan paksa pindah
+            // halaman: petugas mungkin sedang membaca atau menulis balasan.
             setShowReplyForm(false);
             setPendingNotice(null);
+            setSuccessMessage('Pelapor menandai laporan ini selesai.');
+            toast.info('Pelapor menyelesaikan laporan ini', {
+                description: 'Status berubah menjadi Selesai. Balasan baru tidak dapat dikirim.',
+            });
         },
     });
 
@@ -123,12 +129,15 @@ export default function Show() {
             preserveScroll: true,
             onSuccess: () => {
                 setIsEditOpen(false);
-                toast.success('Laporan berhasil diperbarui');
+                toast.success('Laporan berhasil diperbarui', {
+                    position: 'bottom-right',
+                });
             },
             onError: (errs) => {
                 const firstError = Object.values(errs)[0];
                 toast.error('Gagal memperbarui laporan', {
                     description: typeof firstError === 'string' ? firstError : 'Periksa kembali isian Anda.',
+                    position: 'bottom-right',
                 });
             },
         });

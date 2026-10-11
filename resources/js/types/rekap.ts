@@ -47,3 +47,9 @@ export interface RekapMatrixPeriodColumn {
     key: string;
     label: string;
 }
+
+/**
+ * Mode tampilan tabel rekap: `detail` (PST/Lain/Asp/Inf per bulan) atau
+ * `ringkas` (satu kolom berisi jumlah keempatnya per bulan).
+ */
+export type RekapViewMode = 'detail' | 'ringkas';

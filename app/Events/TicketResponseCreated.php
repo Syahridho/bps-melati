@@ -9,7 +9,7 @@ use App\Support\TicketResponsePayload;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -17,19 +17,25 @@ use Illuminate\Queue\SerializesModels;
  * Balasan baru tersimpan pada tiket.
  *
  * Broadcast ke dua kanal:
- *  - `ticket.{ticket_number}` (publik) supaya halaman /check pelapor ikut ter-update.
+ *  - `ticket.{ticket_number}` (publik, dinormalisasi lewat
+ *    `Ticket::publicChannelName()` karena nomor tiket memuat `/`) supaya halaman
+ *    /check pelapor ikut ter-update.
  *  - `ticket.{id}` (presence, terautentikasi) untuk halaman detail Laporan Masuk
  *    yang dipakai banyak petugas secara bersamaan.
  *
- * afterCommit = true: tidak pernah terkirim sebelum baris respons benar-benar commit.
+ * ShouldBroadcastNow (bukan ShouldBroadcast): balasan baru harus langsung terlihat
+ * petugas lain yang membuka tiket yang sama. Kalau lewat antrean, pengiriman
+ * bergantung pada worker `queue:work --queue=broadcasts` dan `--sleep`-nya,
+ * sehingga balasan bisa terlambat beberapa detik — atau tidak sama sekali
+ * sampai worker di-restart.
+ * Payload-nya kecil (satu respons), jadi biaya broadcast inline tidak berarti.
+ *
+ * Tidak ada afterCommit: seluruh pemanggil (App\Actions\ReplyToTicket) dispatch
+ * setelah transaksi database selesai commit.
  */
-class TicketResponseCreated implements ShouldBroadcast
+class TicketResponseCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    public bool $afterCommit = true;
-
-    public string $queue = 'broadcasts';
 
     public function __construct(
         public Ticket $ticket,
@@ -43,7 +49,7 @@ class TicketResponseCreated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('ticket.'.$this->ticket->ticket_number),
+            new Channel(Ticket::publicChannelName($this->ticket->ticket_number)),
             new PresenceChannel('ticket.'.$this->ticket->id),
         ];
     }

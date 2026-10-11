@@ -1,9 +1,12 @@
 import { RekapFixedMatrixTable } from '@/components/rekap-fixed-matrix-table';
 import { RekapPeriodFilter } from '@/components/rekap-period-filter';
 import { RekapPrintActions } from '@/components/rekap-print-actions';
+import { RekapSummaryTable } from '@/components/rekap-summary-table';
+import { RekapViewModeSelect } from '@/components/rekap-view-mode-select';
 import { useRekapFilters } from '@/hooks/use-rekap-filters';
+import { REKAP_TABLE_NOTES, REKAP_VIEW_MODE_RINGKAS } from '@/lib/rekap-constants';
 import AdminPage from '@/pages/admin/page';
-import { type PeriodOption, type RekapMatrixPeriodColumn, type RekapMatrixRow, type RekapMatrixTotals } from '@/types/rekap';
+import { type PeriodOption, type RekapMatrixPeriodColumn, type RekapMatrixRow, type RekapMatrixTotals, type RekapViewMode } from '@/types/rekap';
 
 interface RekapTahunanProps {
     rows: RekapMatrixRow[];
@@ -12,16 +15,19 @@ interface RekapTahunanProps {
     year: string;
     yearLabel: string;
     years: PeriodOption[];
+    /** Mode tampilan aktif dari query `tampilan`; default `detail` bila kosong. */
+    tampilan: RekapViewMode;
 }
 
 const PRINT_FRAME_ID = 'rekap-tahunan-print-frame';
 
-export default function RekapTahunan({ rows, totals, months, year, yearLabel, years }: RekapTahunanProps) {
-    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handlePeriodChange, handlePrint } = useRekapFilters({
+export default function RekapTahunan({ rows, totals, months, year, yearLabel, years, tampilan }: RekapTahunanProps) {
+    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handlePeriodChange, handleViewModeChange, handlePrint } = useRekapFilters({
         routeKey: 'rekap-tahunan',
         periodParam: 'year',
         period: year,
         frameId: PRINT_FRAME_ID,
+        viewMode: tampilan,
     });
 
     return (
@@ -35,6 +41,8 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
         >
             <div className="flex min-w-0 flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-end gap-2">
+                    <RekapViewModeSelect value={tampilan} onValueChange={handleViewModeChange} />
+
                     <RekapPeriodFilter
                         value={year}
                         periods={years}
@@ -57,12 +65,13 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
                     />
                 </div>
 
-                <RekapFixedMatrixTable rows={rows} totals={totals} periods={months} />
+                {tampilan === REKAP_VIEW_MODE_RINGKAS ? (
+                    <RekapSummaryTable variant="fixed" rows={rows} totals={totals} periods={months} />
+                ) : (
+                    <RekapFixedMatrixTable rows={rows} totals={totals} periods={months} />
+                )}
 
-                <p className="text-muted-foreground text-xs">
-                    PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi. Baris kanal induk
-                    berwarna abu-abu karena tidak dapat dipilih saat input data.
-                </p>
+                <p className="text-muted-foreground text-xs">{REKAP_TABLE_NOTES[tampilan]}</p>
             </div>
         </AdminPage>
     );

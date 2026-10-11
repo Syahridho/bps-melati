@@ -56,6 +56,8 @@ export function LaporanMasukReplyForm({
     const { handleFileSelection, removeFile } = useAttachments();
 
     const [idempotencyKey, setIdempotencyKey] = useState(newIdempotencyKey);
+    /** true saat pengguna harus mengonfirmasi ulang karena ada balasan dari petugas lain. */
+    const [confirming, setConfirming] = useState(false);
 
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         response_type: defaultType,
@@ -74,6 +76,7 @@ export function LaporanMasukReplyForm({
         // tidak akan terbawa ke percobaan berikutnya.
         const key = newIdempotencyKey();
         setIdempotencyKey(key);
+        setConfirming(false);
 
         setData({
             response_type: defaultType,
@@ -102,6 +105,13 @@ export function LaporanMasukReplyForm({
         // eslint-disable-next-line react-hooks/exhaustive-deps -- hanya saat konflik berubah
     }, [conflict]);
 
+    // Peringatan "ada balasan baru" sudah tidak relevan: tidak perlu konfirmasi lagi.
+    useEffect(() => {
+        if (pendingNotice === null) {
+            setConfirming(false);
+        }
+    }, [pendingNotice]);
+
     const handleChange = useCallback(
         (value: string) => {
             setData('response_message', value);
@@ -120,6 +130,15 @@ export function LaporanMasukReplyForm({
         if (processing || now - lastSubmitAt.current < DOUBLE_SUBMIT_WINDOW_MS) {
             return;
         }
+
+        // Ada balasan baru dari petugas lain saat draft ini masih dibuka: minta
+        // konfirmasi sekali lagi sebelum benar-benar mengirim, supaya tidak jadi
+        // balasan ganda. Draft tidak pernah dihapus di langkah mana pun.
+        if (pendingNotice !== null && !confirming) {
+            setConfirming(true);
+            return;
+        }
+
         lastSubmitAt.current = now;
 
         post(route(`${routePrefix}.laporan-masuk.responses.store`, { ticket: ticketId }), {
@@ -133,6 +152,7 @@ export function LaporanMasukReplyForm({
                 onSuccess();
                 toast.success('Tanggapan berhasil dikirim', {
                     description: 'Status laporan diperbarui dan notifikasi diantrikan ke pelapor.',
+                    position: 'bottom-right',
                 });
             },
             onError: (formErrors) => {
@@ -140,6 +160,7 @@ export function LaporanMasukReplyForm({
                 const firstError = Object.values(formErrors)[0];
                 toast.error('Gagal mengirim tanggapan', {
                     description: typeof firstError === 'string' ? firstError : 'Periksa kembali isian Anda.',
+                    position: 'bottom-right',
                 });
             },
         });
@@ -148,6 +169,7 @@ export function LaporanMasukReplyForm({
     const handleCancel = () => {
         reset();
         clearErrors();
+        setConfirming(false);
         onDismissConflict();
         onCancel();
     };
@@ -224,23 +246,45 @@ export function LaporanMasukReplyForm({
                 onPreview={(file) => onPreviewFile(file, data.response_attachments)}
             />
 
-            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
                 <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={handleCancel} disabled={processing}>
                     Batal
                 </Button>
-                <Button type="button" className="w-full sm:w-auto" onClick={handleSubmit} disabled={processing}>
-                    {processing ? (
-                        <>
-                            <LoaderCircle className="mr-2 size-4 animate-spin" />
-                            Mengirim...
-                        </>
-                    ) : (
-                        <>
-                            <Send className="mr-2 size-4" />
-                            Kirim Balasan
-                        </>
-                    )}
-                </Button>
+
+                {confirming ? (
+                    <>
+                        <span className="text-muted-foreground text-xs sm:self-center sm:text-right">
+                            Yakin tetap mengirim? Balasan baru sudah masuk dari petugas lain.
+                        </span>
+                        <Button type="button" className="w-full sm:w-auto" onClick={handleSubmit} disabled={processing}>
+                            {processing ? (
+                                <>
+                                    <LoaderCircle className="mr-2 size-4 animate-spin" />
+                                    Mengirim...
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="mr-2 size-4" />
+                                    Ya, kirim tetap
+                                </>
+                            )}
+                        </Button>
+                    </>
+                ) : (
+                    <Button type="button" className="w-full sm:w-auto" onClick={handleSubmit} disabled={processing}>
+                        {processing ? (
+                            <>
+                                <LoaderCircle className="mr-2 size-4 animate-spin" />
+                                Mengirim...
+                            </>
+                        ) : (
+                            <>
+                                <Send className="mr-2 size-4" />
+                                Kirim Balasan
+                            </>
+                        )}
+                    </Button>
+                )}
             </div>
         </div>
     );

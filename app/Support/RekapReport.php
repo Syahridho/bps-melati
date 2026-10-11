@@ -22,6 +22,78 @@ class RekapReport
     public const COLUMNS = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'];
 
     /**
+     * Mode tampilan tabel rekap: `detail` (PST/Lain/Asp/Inf per bulan) dan
+     * `ringkas` (satu kolom jumlah per bulan).
+     */
+    public const VIEW_MODE_DETAIL = 'detail';
+
+    public const VIEW_MODE_RINGKAS = 'ringkas';
+
+    /**
+     * @var list<string>
+     */
+    public const VIEW_MODES = [self::VIEW_MODE_DETAIL, self::VIEW_MODE_RINGKAS];
+
+    /**
+     * Validasi query param `tampilan`; nilai kosong/tidak dikenal fallback ke detail.
+     */
+    public static function normalizeViewMode(?string $mode): string
+    {
+        return in_array($mode, self::VIEW_MODES, true) ? $mode : self::VIEW_MODE_DETAIL;
+    }
+
+    /**
+     * Jumlah PST + Lain + Asp + Inf dari angka satu bulan (sumber tunggal
+     * penjumlahan mode ringkas di backend: dipakai view print & Excel).
+     *
+     * @param  array<string, int>  $counts
+     */
+    public static function sumColumns(array $counts): int
+    {
+        $sum = 0;
+
+        foreach (self::COLUMNS as $column) {
+            $sum += (int) ($counts[$column] ?? 0);
+        }
+
+        return $sum;
+    }
+
+    /**
+     * Bentuk ringkas matriks baris: `perPeriod[period]` jadi satu integer
+     * (jumlah keempat klasifikasi). `jumlah` & `children` tidak berubah.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    public static function summaryRows(array $rows): array
+    {
+        return array_map(function (array $row): array {
+            $row['perPeriod'] = self::summaryPerPeriod($row['perPeriod'] ?? []);
+            $row['children'] = self::summaryRows($row['children'] ?? []);
+
+            return $row;
+        }, $rows);
+    }
+
+    /**
+     * Bentuk ringkas total: tiap periode jadi satu integer, `jumlah` tetap.
+     *
+     * @param  array<string, mixed>  $totals
+     * @return array<string, mixed>
+     */
+    public static function summaryTotals(array $totals): array
+    {
+        $summary = [];
+
+        foreach ($totals as $key => $value) {
+            $summary[$key] = $key === 'jumlah' ? (int) $value : self::sumColumns(is_array($value) ? $value : []);
+        }
+
+        return $summary;
+    }
+
+    /**
      * Pemetaan klasifikasi + service_type ke kolom tabel.
      */
     public static function columnFor(string $classification, ?string $serviceType): ?string
@@ -198,6 +270,21 @@ class RekapReport
         $row['jumlah'] = $jumlah;
 
         return $row;
+    }
+
+    /**
+     * @param  array<string, array<string, int>>  $perPeriod
+     * @return array<string, int>
+     */
+    private static function summaryPerPeriod(array $perPeriod): array
+    {
+        $summary = [];
+
+        foreach ($perPeriod as $period => $counts) {
+            $summary[$period] = self::sumColumns(is_array($counts) ? $counts : []);
+        }
+
+        return $summary;
     }
 
     /**

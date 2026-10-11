@@ -142,6 +142,22 @@ class Ticket extends Model
     }
 
     /**
+     * Nama kanal publik (broadcast) untuk sebuah nomor tiket.
+     *
+     * Nomor tiket selalu memuat `/` (mis. `L-1400/102026/EE18`), sedangkan
+     * protokol Pusher/Reverb hanya mengizinkan `[A-Za-z0-9_\-=,.@]` pada nama
+     * kanal — memakai nomor mentah akan ditolak broadcaster dengan
+     * "Invalid channel name". Karakter lain karena itu diganti `-`; nomor tiket
+     * selalu berstruktur tetap sehingga hasil penggantian tetap unik.
+     *
+     * Padanan frontend ada di `resources/js/lib/laporan-masuk-utils.ts`.
+     */
+    public static function publicChannelName(string $ticketNumber): string
+    {
+        return 'ticket.'.preg_replace('/[^A-Za-z0-9_\-=,.@]/', '-', $ticketNumber);
+    }
+
+    /**
      * Generate nomor tiket. Format: P-1400/MMYYYY/AA01
      * P = Prefix klasifikasi, MM = bulan, YYYY = tahun, AA = 2 huruf acak, 01 = nomor urut (AA100 jika >= 100)
      *

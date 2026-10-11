@@ -70,6 +70,16 @@
         col.kolom-angka { width: 1.7%; }
         col.kolom-jumlah { width: 3.4%; }
 
+        /* Mode ringkas: satu kolom angka per bulan, jadi kolom boleh lebih
+           lebar dan font diperbesar supaya tabel tetap terbaca & tidak terpotong. */
+        table.ringkas col.kolom-kanal { width: 26%; }
+        table.ringkas col.kolom-angka { width: 10%; }
+        table.ringkas col.kolom-jumlah { width: 14%; }
+        table.ringkas thead th { font-size: 9px; }
+        table.ringkas tbody td.angka,
+        table.ringkas tbody td.kanal,
+        table.ringkas tfoot td { font-size: 9px; }
+
         tbody td.angka { text-align: center; font-size: 7px; }
 
         tbody td.kanal { text-align: left; font-size: 7px; }
@@ -121,6 +131,12 @@
     @php
         // Urutan HARUS sama dengan RekapReport::COLUMNS di backend.
         $classificationColumns = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'];
+
+        $ringkas = ($tampilan ?? 'detail') === 'ringkas';
+        $tableRows = $ringkas ? ($ringkasRows ?? $rows) : $rows;
+        $tableTotals = $ringkas ? ($ringkasTotals ?? $totals) : $totals;
+        $columnsPerMonth = $ringkas ? 1 : 4;
+        $totalCols = count($months) * $columnsPerMonth + 2;
     @endphp
 
     <div class="kop">
@@ -137,11 +153,11 @@
         <h2>{{ $semesterLabel }}</h2>
     </div>
 
-    <table>
+    <table class="{{ $ringkas ? 'ringkas' : 'detail' }}">
         <colgroup>
             <col class="kolom-kanal">
             @foreach ($months as $month)
-                @foreach (range(1, 4) as $ignored)
+                @foreach (range(1, $columnsPerMonth) as $ignored)
                     <col class="kolom-angka">
                 @endforeach
             @endforeach
@@ -150,41 +166,51 @@
 
         <thead>
             <tr>
-                <th rowspan="2">Sumber Kanal</th>
+                <th @if(! $ringkas) rowspan="2" @endif>Sumber Kanal</th>
                 @foreach ($months as $month)
-                    <th colspan="4">{{ $month['label'] }}</th>
+                    <th @if(! $ringkas) colspan="4" @endif>{{ $month['label'] }}</th>
                 @endforeach
-                <th rowspan="2">Jumlah</th>
+                <th @if(! $ringkas) rowspan="2" @endif>Jumlah</th>
             </tr>
-            <tr>
-                @foreach ($months as $month)
-                    <th>PST</th>
-                    <th>Lain</th>
-                    <th>Asp</th>
-                    <th>Inf</th>
-                @endforeach
-            </tr>
+            @unless($ringkas)
+                <tr>
+                    @foreach ($months as $month)
+                        <th>PST</th>
+                        <th>Lain</th>
+                        <th>Asp</th>
+                        <th>Inf</th>
+                    @endforeach
+                </tr>
+            @endunless
         </thead>
 
         <tbody>
-            @forelse ($rows as $row)
+            @forelse ($tableRows as $row)
                 @php $hasChildren = count($row['children'] ?? []) > 0; @endphp
                 <tr class="induk {{ $hasChildren ? 'induk-cabang' : 'induk-tunggal' }}">
                     <td class="kanal">{{ $row['channel'] }}</td>
                     @if ($hasChildren)
                         {{-- Bercabang: data ada di baris anak, jadi kolom kanan dikosongkan --}}
                         @foreach ($months as $month)
-                            @foreach ($classificationColumns as $column)
+                            @if ($ringkas)
                                 <td class="angka"></td>
-                            @endforeach
+                            @else
+                                @foreach ($classificationColumns as $column)
+                                    <td class="angka"></td>
+                                @endforeach
+                            @endif
                         @endforeach
                         <td class="angka"></td>
                     @else
-                        {{-- Tidak bercabang: tampilkan 4 angka klasifikasi per bulan --}}
+                        {{-- Tidak bercabang: tampilkan angka per bulan --}}
                         @foreach ($months as $month)
-                            @foreach ($classificationColumns as $column)
-                                <td class="angka">{{ $row['perPeriod'][$month['key']][$column] ?? 0 }}</td>
-                            @endforeach
+                            @if ($ringkas)
+                                <td class="angka">{{ $row['perPeriod'][$month['key']] ?? 0 }}</td>
+                            @else
+                                @foreach ($classificationColumns as $column)
+                                    <td class="angka">{{ $row['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                                @endforeach
+                            @endif
                         @endforeach
                         <td class="angka">{{ $row['jumlah'] }}</td>
                     @endif
@@ -194,16 +220,20 @@
                     <tr class="anak">
                         <td class="kanal">{{ $child['channel'] }}</td>
                         @foreach ($months as $month)
-                            @foreach ($classificationColumns as $column)
-                                <td class="angka">{{ $child['perPeriod'][$month['key']][$column] ?? 0 }}</td>
-                            @endforeach
+                            @if ($ringkas)
+                                <td class="angka">{{ $child['perPeriod'][$month['key']] ?? 0 }}</td>
+                            @else
+                                @foreach ($classificationColumns as $column)
+                                    <td class="angka">{{ $child['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                                @endforeach
+                            @endif
                         @endforeach
                         <td class="angka">{{ $child['jumlah'] }}</td>
                     </tr>
                 @endforeach
             @empty
                 <tr>
-                    <td class="kosong" colspan="{{ count($months) * 4 + 2 }}">Belum ada data untuk periode ini.</td>
+                    <td class="kosong" colspan="{{ $totalCols }}">Belum ada data untuk periode ini.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -212,17 +242,25 @@
             <tr>
                 <td class="kanal">Total</td>
                 @foreach ($months as $month)
-                    @foreach ($classificationColumns as $column)
-                        <td>{{ $totals[$month['key']][$column] ?? 0 }}</td>
-                    @endforeach
+                    @if ($ringkas)
+                        <td>{{ $tableTotals[$month['key']] ?? 0 }}</td>
+                    @else
+                        @foreach ($classificationColumns as $column)
+                            <td>{{ $tableTotals[$month['key']][$column] ?? 0 }}</td>
+                        @endforeach
+                    @endif
                 @endforeach
-                <td>{{ $totals['jumlah'] }}</td>
+                <td>{{ $tableTotals['jumlah'] }}</td>
             </tr>
         </tfoot>
     </table>
 
     <div class="keterangan">
-        Keterangan: PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
+        @if ($ringkas)
+            Keterangan: Angka menunjukkan jumlah PST + Lain + Asp + Inf.
+        @else
+            Keterangan: PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
+        @endif
     </div>
 
     <div class="ttd">

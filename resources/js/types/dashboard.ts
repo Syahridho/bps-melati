@@ -56,7 +56,6 @@ export interface DashboardTemplateProps extends DashboardProps {
     headerTitle: string;
     breadcrumbs: BreadcrumbItem[];
     channelCards: DashboardChannelCardConfig[];
-    variant: 'admin' | 'operator';
     allTicketsRoute: string;
     ticketDetailRouteName: string;
 }

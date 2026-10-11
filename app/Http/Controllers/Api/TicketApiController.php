@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\InboxUpdated;
 use App\Events\TicketCreated;
+use App\Events\TicketUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
+use App\Support\SafeBroadcast;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -342,7 +344,12 @@ class TicketApiController extends Controller
             Cache::forget("ticket:{$ticket->ticket_number}");
             Cache::forget('dashboard:admin:version');
 
-            InboxUpdated::dispatch($ticket, 'Pelapor');
+            // Sama seperti jalur /check: segarkan badge/tab Laporan Masuk dan
+            // beri tahu halaman detail tiket yang sedang dibuka petugas.
+            $context = ['ticket_id' => $ticket->id, 'ticket_number' => $ticket->ticket_number];
+
+            SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);
+            SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket), $context);
         }
 
         return response()->json([

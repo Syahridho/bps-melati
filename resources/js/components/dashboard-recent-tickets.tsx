@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { classificationBadgeClass, classificationBadgeVariant, statusBadge } from '@/lib/dashboard-constants';
+import { classificationBadgeClass, statusBadge } from '@/lib/dashboard-constants';
 import { classificationLabel, formatDate } from '@/lib/dashboard-utils';
 import { cn } from '@/lib/utils';
 import { type TicketSummary } from '@/types/dashboard';
@@ -14,25 +14,12 @@ interface DashboardRecentTicketsProps {
     periodLabel: string;
     allTicketsRoute: string;
     ticketDetailRouteName: string;
-    variant: 'admin' | 'operator';
 }
 
-export function DashboardRecentTickets({ recentTickets, periodLabel, allTicketsRoute, ticketDetailRouteName, variant }: DashboardRecentTicketsProps) {
-    const isVariantAdmin = variant === 'admin';
-
+export function DashboardRecentTickets({ recentTickets, periodLabel, allTicketsRoute, ticketDetailRouteName }: DashboardRecentTicketsProps) {
     function renderClassificationBadge(classification: TicketSummary['classification']) {
-        if (isVariantAdmin) {
-            return (
-                <Badge className={cn('px-1.5 py-0 text-[10px]', classificationBadgeClass(classification))}>
-                    {classificationLabel(classification)}
-                </Badge>
-            );
-        }
-
         return (
-            <Badge variant={classificationBadgeVariant(classification)} className="px-1.5 py-0 text-[10px]">
-                {classificationLabel(classification)}
-            </Badge>
+            <Badge className={cn('px-1.5 py-0 text-[10px]', classificationBadgeClass(classification))}>{classificationLabel(classification)}</Badge>
         );
     }
 

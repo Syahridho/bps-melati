@@ -4,7 +4,7 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -18,14 +18,14 @@ use Illuminate\Queue\SerializesModels;
  * Payload sengaja tidak memuat angka hitungan maupun data pelapor: angka
  * berbeda per role (operator hanya boleh melihat tiketnya) dan kanal ini bisa
  * dibaca staf. Klien cukup memicu partial reload yang sudah terotorisasi.
+ *
+ * ShouldBroadcastNow (bukan ShouldBroadcast): badge sidebar dan angka tab harus
+ * ikut turun segera setelah tiket selesai, tidak boleh bergantung pada worker
+ * antrean `broadcasts`.
  */
-class InboxChanged implements ShouldBroadcast
+class InboxChanged implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    public bool $afterCommit = true;
-
-    public string $queue = 'broadcasts';
 
     /**
      * @param  array<int, int>  $ticketIds

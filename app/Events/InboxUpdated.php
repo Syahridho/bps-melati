@@ -6,7 +6,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -14,14 +14,16 @@ use Illuminate\Queue\SerializesModels;
  * Sinyal ringan untuk halaman daftar: ada tiket yang berubah status / dibalas.
  * Dipakai frontend untuk menyegarkan baris terkait dan badge hitungan
  * (dengan debounce) tanpa reload penuh.
+ *
+ * ShouldBroadcastNow (bukan ShouldBroadcast): bila antrean `broadcasts` tidak
+ * diproses worker, badge dan angka tab tidak pernah menyegarkan sampai petugas
+ * memuat ulang halaman. Payload-nya kecil (id + status), jadi aman inline.
+ *
+ * Tidak ada afterCommit: pemanggil dispatch setelah status tiket tersimpan.
  */
-class InboxUpdated implements ShouldBroadcast
+class InboxUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    public bool $afterCommit = true;
-
-    public string $queue = 'broadcasts';
 
     public function __construct(
         public Ticket $ticket,

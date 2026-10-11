@@ -13,7 +13,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: { child
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
             </AppContent>
-            <Toaster position="top-right" closeButton richColors />
+            <Toaster position="bottom-right" closeButton richColors />
         </AppShell>
     );
 }
