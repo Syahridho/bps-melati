@@ -24,3 +24,7 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 dump.rdb
+AGENTS.md
+/.kilo
+/.agents
+/alur
