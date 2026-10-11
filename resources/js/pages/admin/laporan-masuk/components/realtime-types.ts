@@ -49,6 +49,18 @@ export interface InboxUpdatedEvent {
     actor_name: string | null;
 }
 
+/**
+ * Payload `.inbox.changed` (App\Events\InboxChanged).
+ *
+ * Sinyal agregat: satu tiket berubah, atau satu batch auto close. Klien tidak
+ * memakai angkanya, hanya memicu partial reload yang sudah terotorisasi.
+ */
+export interface InboxChangedEvent {
+    reason: 'created' | 'read' | 'replied' | 'status_changed' | 'completed' | 'auto_closed';
+    ticket_ids: number[];
+    closed_count: number;
+}
+
 /** Banner konflik yang dikirim server lewat flash saat balasan ditolak (409). */
 export interface ReplyConflict {
     code: 'already_responded' | 'already_completed';

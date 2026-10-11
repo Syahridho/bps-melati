@@ -31,7 +31,7 @@ interface ReplyFormProps {
     onDismissConflict: () => void;
     onCancel: () => void;
     onSuccess: () => void;
-    onPreviewFile: (file: File) => void;
+    onPreviewFile: (file: File, files?: File[]) => void;
     onTyping: () => void;
 }
 
@@ -222,7 +222,7 @@ export function ReplyForm({
                 error={errors.response_attachments}
                 onChange={(files) => setData('response_attachments', handleFileSelection(data.response_attachments, files))}
                 onRemove={(file) => setData('response_attachments', removeFile(data.response_attachments, file))}
-                onPreview={onPreviewFile}
+                onPreview={(file) => onPreviewFile(file, data.response_attachments)}
             />
 
             <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">

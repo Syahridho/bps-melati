@@ -74,7 +74,7 @@ export default function Pengaturan() {
                     <div className="space-y-6">
                         <HeadingSmall
                             title="Batas Waktu Otomatis Selesai (Auto Close)"
-                            description="Jumlah hari tanpa balasan dari pelapor setelah petugas memberikan respon sebelum tiket secara otomatis ditandai selesai."
+                            description="Jumlah hari tanpa balasan dari pelapor setelah petugas memberikan respon sebelum tiket secara otomatis ditandai selesai. Isi 0 untuk menonaktifkan."
                         />
 
                         <div className="grid gap-4 sm:grid-cols-3">
@@ -85,7 +85,7 @@ export default function Pengaturan() {
                                 <Input
                                     id="auto_close_pengaduan_days"
                                     type="number"
-                                    min={1}
+                                    min={0}
                                     max={365}
                                     value={data.auto_close_pengaduan_days}
                                     onChange={(e) => setData('auto_close_pengaduan_days', e.target.value)}
@@ -101,7 +101,7 @@ export default function Pengaturan() {
                                 <Input
                                     id="auto_close_aspirasi_days"
                                     type="number"
-                                    min={1}
+                                    min={0}
                                     max={365}
                                     value={data.auto_close_aspirasi_days}
                                     onChange={(e) => setData('auto_close_aspirasi_days', e.target.value)}
@@ -117,7 +117,7 @@ export default function Pengaturan() {
                                 <Input
                                     id="auto_close_permintaan_informasi_days"
                                     type="number"
-                                    min={1}
+                                    min={0}
                                     max={365}
                                     value={data.auto_close_permintaan_informasi_days}
                                     onChange={(e) => setData('auto_close_permintaan_informasi_days', e.target.value)}

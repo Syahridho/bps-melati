@@ -1,6 +1,6 @@
 # Dokumentasi Alur Sistem, Use Case, dan ERD - Aplikasi "Melati"
 
-Folder ini berisi dokumentasi teknis sistem pelaporan **Melati** (Laravel 11 + Inertia.js + React) yang disusun berdasarkan analisis langsung terhadap kode sumber proyek.
+Folder ini berisi dokumentasi teknis sistem pelaporan **Melati** (Laravel 12 + Inertia.js v2 + React 19 + Laravel Reverb) yang disusun berdasarkan analisis langsung terhadap kode sumber proyek.
 
 ---
 
@@ -15,7 +15,10 @@ Folder ini berisi dokumentasi teknis sistem pelaporan **Melati** (Laravel 11 + I
 3. **`alur/flowchart-pelapor.md`**  
    Memuat diagram flowchart PlantUML alur kerja pelapor (publik/user), penjelasan rinci 5 tahapan alur (form pengajuan, validasi & generasi tiket sekuensial, cek status, loop tanggapan/balasan, serta penyelesaian manual & auto-close), matriks validasi, dan asumsi.
 
-4. **`alur/README.md`** (File ini)  
+4. **`alur/setup-deployment.md`**  
+   Panduan setup & deployment berbasis kode proyek terkini: kebutuhan sistem, konfigurasi `.env` lengkap, **Redis** (session/cache/queue/lock + scaling Reverb), **Laravel Reverb** (WebSocket), **queue worker**, **scheduler**, konfigurasi **Supervisor**, **Nginx + PHP-FPM**, cron produksi, katalog broadcast channel & event, troubleshooting, dan checklist rilis.
+
+5. **`alur/README.md`** (File ini)  
    Ringkasan sistem, daftar asumsi berbasis analisis kode sumber, dan panduan cara render kode PlantUML.
 
 ---
@@ -44,7 +47,10 @@ Berikut adalah asumsi dan aturan bisnis yang didapatkan secara langsung dari ana
      - `auto_close_pengaduan_days` (default: 3 hari)
      - `auto_close_aspirasi_days` (default: 1 hari)
      - `auto_close_permintaan_informasi_days` (default: 5 hari)
-   - Proses penutupan dijalankan setiap jam melalui Cron Laravel Scheduler (`tickets:auto-close`) dan dipicu secara instan setiap kali detail tiket diakses di rute `/check` atau `/api/check`.
+   - Proses penutupan dijalankan **setiap 15 menit** oleh Cron Laravel Scheduler (`tickets:auto-close`), dan juga dipicu secara lazy setiap kali detail tiket diakses di rute `/check` atau `/api/check` (lihat `Ticket::checkAndAutoClose()`).
+   - Titik awal hitungan adalah kolom `tickets.last_staff_response_at` (waktu tanggapan petugas terakhir). Bila pelapor membalas pada atau setelah waktu tersebut, hitungan berhenti sampai petugas menjawab lagi.
+   - Nilai pengaturan `0` berarti auto close dinonaktifkan untuk klasifikasi tersebut.
+   - Penutupan menandai `tickets.closed_reason = 'auto_close'`, mengisi `completed_at`, dan menambah satu entri riwayat sistem berbahasa Indonesia ("Laporan ditutup otomatis karena tidak ada balasan dari pelapor selama N hari").
 
 4. **Integrasi API (`routes/api.php` & `EnsureApiKeyIsValid.php`)**:
    - Rute API dilindungi oleh middleware `api.key` (mengecek header `X-API-KEY` atau token Authorization Bearer) dan diset pembatasan laju (*rate limiting*) `throttle:30,1`.

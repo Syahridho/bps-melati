@@ -1,3 +1,4 @@
+import { AttachmentPreviewDialog } from '@/components/attachment-preview-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -5,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { type ClosedReason } from '@/pages/admin/laporan-selesai/show';
 import AdminPage from '@/pages/admin/page';
 import { type SharedData } from '@/types';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
@@ -24,10 +26,11 @@ import {
     Paperclip,
     Pencil,
     Phone,
+    TimerOff,
     Trash2,
     User,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { type ReplyConflict } from './components/realtime-types';
 import { ResponseHistory } from './components/response-history';
@@ -55,6 +58,8 @@ interface TicketDetail {
     channel: string;
     created_by_name: string | null;
     completed_at: string | null;
+    closed_reason: ClosedReason | null;
+    auto_close_at: string | null;
     created_at: string;
     updated_at: string;
     attachments: Attachment[];
@@ -122,14 +127,6 @@ function statusVariant(status: Status): 'default' | 'secondary' | 'outline' {
     }
 }
 
-function isImageFile(file: File): boolean {
-    return file.type.startsWith('image/');
-}
-
-function isPdfFile(file: File): boolean {
-    return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-}
-
 export default function Show() {
     const { auth, ticket, can, from, flash } = usePage<ShowProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
@@ -143,6 +140,7 @@ export default function Show() {
 
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
+    const [previewAttachmentList, setPreviewAttachmentList] = useState<Attachment[]>([]);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [responses, setResponses] = useState<TicketResponseItem[]>(ticket.responses);
     const [ticketStatus, setTicketStatus] = useState<Status>(ticket.status);
@@ -164,18 +162,7 @@ export default function Show() {
     });
 
     const [previewFile, setPreviewFile] = useState<File | null>(null);
-    const previewUrl = useMemo(() => {
-        if (!previewFile) return null;
-        return URL.createObjectURL(previewFile);
-    }, [previewFile]);
-
-    useEffect(() => {
-        return () => {
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-            }
-        };
-    }, [previewUrl]);
+    const [previewFileList, setPreviewFileList] = useState<File[]>([]);
 
     useEffect(() => {
         setResponses(ticket.responses);
@@ -339,6 +326,12 @@ export default function Show() {
                                 <Clock className="size-3.5" />
                                 <span>Diterima {formatFullDate(ticket.created_at)}</span>
                             </div>
+                            {ticket.auto_close_at && (
+                                <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                                    <TimerOff className="size-3.5 shrink-0" />
+                                    <span>Akan ditutup otomatis pada {formatFullDate(ticket.auto_close_at)} bila pelapor tidak membalas.</span>
+                                </div>
+                            )}
                         </div>
                         <div className="flex shrink-0 flex-wrap items-center gap-2">
                             {canEdit && (
@@ -479,7 +472,15 @@ export default function Show() {
                                                     <p className="text-muted-foreground text-[10px]">{formatFileSize(att.size)}</p>
                                                 </div>
                                             </div>
-                                            <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => setPreviewAttachment(att)}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-7 shrink-0"
+                                                onClick={() => {
+                                                    setPreviewAttachment(att);
+                                                    setPreviewAttachmentList(ticket.attachments);
+                                                }}
+                                            >
                                                 <Eye className="size-3.5" />
                                             </Button>
                                         </div>
@@ -513,8 +514,14 @@ export default function Show() {
                         setPendingNotice(null);
                         setHighlightLast(true);
                     }}
-                    onPreviewAttachment={setPreviewAttachment}
-                    onPreviewFile={setPreviewFile}
+                    onPreviewAttachment={(att, list) => {
+                        setPreviewAttachment(att);
+                        setPreviewAttachmentList(list && list.length > 0 ? list : [att]);
+                    }}
+                    onPreviewFile={(file, files) => {
+                        setPreviewFile(file);
+                        setPreviewFileList(files && files.length > 0 ? files : [file]);
+                    }}
                     onTyping={broadcastTyping}
                     highlightLast={highlightLast}
                 />
@@ -684,67 +691,23 @@ export default function Show() {
                 </Dialog>
             )}
 
-            <Dialog open={!!previewAttachment} onOpenChange={() => setPreviewAttachment(null)}>
-                <DialogContent className="max-h-[90vh] sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle className="truncate text-base">{previewAttachment?.original_name}</DialogTitle>
-                    </DialogHeader>
+            <AttachmentPreviewDialog
+                item={previewAttachment}
+                items={previewAttachmentList}
+                onClose={() => {
+                    setPreviewAttachment(null);
+                    setPreviewAttachmentList([]);
+                }}
+            />
 
-                    <div className="flex items-center justify-center overflow-auto py-2">
-                        {previewAttachment && isImageMime(previewAttachment.mime_type, previewAttachment.original_name) && (
-                            <img
-                                src={previewAttachment.url}
-                                alt={previewAttachment.original_name}
-                                className="mx-auto max-h-[65vh] rounded-md object-contain"
-                            />
-                        )}
-
-                        {previewAttachment && isPdfMime(previewAttachment.mime_type, previewAttachment.original_name) && (
-                            <iframe
-                                src={previewAttachment.url}
-                                title={previewAttachment.original_name}
-                                className="h-[65vh] w-full rounded-md border-0"
-                            />
-                        )}
-                    </div>
-
-                    <DialogFooter className="flex items-center justify-between gap-2 sm:justify-between">
-                        <a
-                            href={previewAttachment?.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground inline-flex items-center text-xs hover:underline"
-                        >
-                            Buka di tab baru
-                        </a>
-                        <Button onClick={() => setPreviewAttachment(null)} className="w-full sm:w-auto">
-                            Tutup
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
-                <DialogContent className="max-h-[90vh] sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle className="truncate text-base">{previewFile?.name}</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="flex items-center justify-center overflow-auto py-2">
-                        {previewFile && isImageFile(previewFile) && previewUrl && (
-                            <img src={previewUrl} alt={previewFile.name} className="mx-auto max-h-[65vh] rounded-md object-contain" />
-                        )}
-
-                        {previewFile && isPdfFile(previewFile) && previewUrl && (
-                            <iframe src={previewUrl} title={previewFile.name} className="h-[65vh] w-full rounded-md border-0" />
-                        )}
-                    </div>
-
-                    <DialogFooter>
-                        <Button onClick={() => setPreviewFile(null)}>Tutup</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <AttachmentPreviewDialog
+                item={previewFile}
+                items={previewFileList}
+                onClose={() => {
+                    setPreviewFile(null);
+                    setPreviewFileList([]);
+                }}
+            />
         </AdminPage>
     );
 }

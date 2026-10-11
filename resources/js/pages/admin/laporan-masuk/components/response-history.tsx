@@ -24,8 +24,8 @@ interface ResponseHistoryProps {
     onToggleReply: () => void;
     onCancelReply: () => void;
     onReplySuccess: () => void;
-    onPreviewAttachment: (attachment: Attachment) => void;
-    onPreviewFile: (file: File) => void;
+    onPreviewAttachment: (attachment: Attachment, list?: Attachment[]) => void;
+    onPreviewFile: (file: File, files?: File[]) => void;
     onTyping: () => void;
     highlightLast?: boolean;
 }

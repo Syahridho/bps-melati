@@ -26,6 +26,7 @@ import {
     Paperclip,
     Search,
     Send,
+    TimerOff,
     User,
     X,
 } from 'lucide-react';
@@ -48,6 +49,7 @@ interface TicketResponse {
     message: string;
     user_name: string;
     is_reporter?: boolean;
+    is_system?: boolean;
     sent_at: string | null;
     created_at: string;
     attachments: Attachment[];
@@ -66,6 +68,8 @@ interface TicketDetail {
     channel: string;
     created_at: string;
     completed_at: string | null;
+    closed_reason: 'reporter' | 'staff' | 'auto_close' | null;
+    auto_close_at: string | null;
     attachments: Attachment[];
     responses: TicketResponse[];
 }
@@ -167,6 +171,21 @@ function isImageFile(file: File): boolean {
 
 function isPdfFile(file: File): boolean {
     return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+}
+
+function isImageMime(mimeType?: string | null, name?: string): boolean {
+    if (mimeType && mimeType.startsWith('image/')) return true;
+    if (name) {
+        const lower = name.toLowerCase();
+        return lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png') || lower.endsWith('.webp') || lower.endsWith('.gif');
+    }
+    return false;
+}
+
+function isPdfMime(mimeType?: string | null, name?: string): boolean {
+    if (mimeType === 'application/pdf') return true;
+    if (name) return name.toLowerCase().endsWith('.pdf');
+    return false;
 }
 
 export default function CheckTicket() {
@@ -462,10 +481,16 @@ export default function CheckTicket() {
                                                         rel="noopener noreferrer"
                                                         className="bg-card hover:bg-accent inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors"
                                                     >
-                                                        <Paperclip className="text-muted-foreground h-3.5 w-3.5" />
+                                                        {isImageMime(att.mime_type, att.original_name) ? (
+                                                            <ImageIcon className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+                                                        ) : isPdfMime(att.mime_type, att.original_name) ? (
+                                                            <FileText className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                                                        ) : (
+                                                            <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                                        )}
                                                         <span className="max-w-[200px] truncate">{att.original_name}</span>
                                                         <span className="text-muted-foreground">({formatFileSize(att.size)})</span>
-                                                        <Download className="text-muted-foreground ml-1 h-3.5 w-3.5" />
+                                                        <Download className="text-muted-foreground ml-1 h-3.5 w-3.5 shrink-0" />
                                                     </a>
                                                 ))}
                                             </div>
@@ -517,20 +542,27 @@ export default function CheckTicket() {
                                     ) : (
                                         <div className="space-y-6">
                                             {ticket.responses.map((res) => {
-                                                const isReporter = res.is_reporter || res.type === 'balasan_pelapor';
+                                                const isSystem = res.is_system === true;
+                                                const isReporter = isSystem || res.is_reporter || res.type === 'balasan_pelapor';
                                                 return (
                                                     <div
                                                         key={res.id}
                                                         className={`relative border-l-2 pb-6 pl-6 ${
-                                                            isReporter ? 'border-blue-500/30' : 'border-primary/30'
+                                                            isSystem
+                                                                ? 'border-muted-foreground/40 border-dashed'
+                                                                : isReporter
+                                                                  ? 'border-blue-500/30'
+                                                                  : 'border-primary/30'
                                                         } last:border-l-0 last:pb-0`}
                                                     >
                                                         <span
                                                             className={`absolute top-0 -left-[9px] flex h-4 w-4 items-center justify-center rounded-full ${
-                                                                isReporter ? 'bg-blue-600' : 'bg-primary'
+                                                                isSystem ? 'bg-muted-foreground' : isReporter ? 'bg-blue-600' : 'bg-primary'
                                                             } ring-background ring-4`}
                                                         >
-                                                            {isReporter ? (
+                                                            {isSystem ? (
+                                                                <TimerOff className="h-2.5 w-2.5 text-white" />
+                                                            ) : isReporter ? (
                                                                 <User className="h-2.5 w-2.5 text-white" />
                                                             ) : (
                                                                 <CheckCircle2 className="text-primary-foreground h-3 w-3" />
@@ -539,9 +571,11 @@ export default function CheckTicket() {
 
                                                         <div
                                                             className={`space-y-3 rounded-lg border p-4 shadow-xs ${
-                                                                isReporter
-                                                                    ? 'border-blue-200 bg-blue-50/30 dark:border-blue-900/40 dark:bg-blue-950/20'
-                                                                    : 'bg-card'
+                                                                isSystem
+                                                                    ? 'bg-muted/40 border-dashed'
+                                                                    : isReporter
+                                                                      ? 'border-blue-200 bg-blue-50/30 dark:border-blue-900/40 dark:bg-blue-950/20'
+                                                                      : 'bg-card'
                                                             }`}
                                                         >
                                                             <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
@@ -556,7 +590,7 @@ export default function CheckTicket() {
                                                                         }
                                                                         className="text-[11px]"
                                                                     >
-                                                                        {responseTypeLabel(res.type)}
+                                                                        {isSystem ? 'Otomatis' : responseTypeLabel(res.type)}
                                                                     </Badge>
                                                                     {res.user_name !== 'Operator' && res.user_name !== 'Admin' && (
                                                                         <span className="text-xs font-semibold">{res.user_name}</span>
@@ -567,7 +601,11 @@ export default function CheckTicket() {
                                                                 </span>
                                                             </div>
 
-                                                            <div className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
+                                                            <div
+                                                                className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                                                                    isSystem ? 'text-muted-foreground italic' : 'text-foreground'
+                                                                }`}
+                                                            >
                                                                 {res.message}
                                                             </div>
 
@@ -583,9 +621,20 @@ export default function CheckTicket() {
                                                                                 rel="noopener noreferrer"
                                                                                 className="bg-muted/50 hover:bg-accent inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors"
                                                                             >
-                                                                                <Paperclip className="text-muted-foreground h-3.5 w-3.5" />
+                                                                                {isImageMime(att.mime_type, att.original_name) ? (
+                                                                                    <ImageIcon className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+                                                                                ) : isPdfMime(att.mime_type, att.original_name) ? (
+                                                                                    <FileText className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                                                                                ) : (
+                                                                                    <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                                                                )}
                                                                                 <span className="max-w-[180px] truncate">{att.original_name}</span>
-                                                                                <Download className="text-muted-foreground h-3.5 w-3.5" />
+                                                                                {att.size ? (
+                                                                                    <span className="text-muted-foreground text-[10px]">
+                                                                                        ({formatFileSize(att.size)})
+                                                                                    </span>
+                                                                                ) : null}
+                                                                                <Download className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                                                                             </a>
                                                                         ))}
                                                                     </div>
@@ -595,6 +644,26 @@ export default function CheckTicket() {
                                                     </div>
                                                 );
                                             })}
+                                        </div>
+                                    )}
+
+                                    {/* Auto Close Notice */}
+                                    {ticket.status !== 'selesai' && ticket.auto_close_at && (
+                                        <div className="flex items-start gap-2 rounded-lg border border-dashed p-4 text-xs">
+                                            <TimerOff className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+                                            <p className="text-muted-foreground">
+                                                Laporan akan ditutup otomatis bila tidak ada balasan dari Anda sebelum{' '}
+                                                <span className="text-foreground font-medium">{formatDateTime(ticket.auto_close_at)}</span>.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {ticket.status === 'selesai' && ticket.closed_reason === 'auto_close' && (
+                                        <div className="flex items-start gap-2 rounded-lg border border-dashed p-4 text-xs">
+                                            <TimerOff className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+                                            <p className="text-muted-foreground">
+                                                Laporan ini telah ditutup otomatis karena tidak ada balasan dari Anda.
+                                            </p>
                                         </div>
                                     )}
 

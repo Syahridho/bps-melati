@@ -12,6 +12,7 @@ class TicketResponse extends Model
         'ticket_id',
         'user_id',
         'type',
+        'is_system',
         'message',
         'idempotency_key',
         'sent_at',
@@ -21,6 +22,7 @@ class TicketResponse extends Model
     protected function casts(): array
     {
         return [
+            'is_system' => 'boolean',
             'sent_at' => 'datetime',
             'email_sent_at' => 'datetime',
         ];
@@ -47,5 +49,23 @@ class TicketResponse extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(ResponseAttachment::class);
+    }
+
+    protected static function booted(): void
+    {
+        // Setiap balasan petugas menggeser titik awal hitungan auto close.
+        // Dipusatkan di model agar semua jalur (web, API, Input Data, Import)
+        // konsisten tanpa perlu menambahkannya di tiap service.
+        static::created(function (self $response): void {
+            if ($response->user_id === null || $response->is_system) {
+                return;
+            }
+
+            Ticket::query()
+                ->whereKey($response->ticket_id)
+                ->update([
+                    'last_staff_response_at' => $response->sent_at ?? $response->created_at ?? now(),
+                ]);
+        });
     }
 }

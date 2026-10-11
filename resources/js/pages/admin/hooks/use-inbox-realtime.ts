@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type InboxUpdatedEvent } from '../laporan-masuk/components/realtime-types';
+import { type InboxChangedEvent, type InboxUpdatedEvent } from '../laporan-masuk/components/realtime-types';
 
 const RELOAD_DEBOUNCE_MS = 500;
 
@@ -45,6 +45,17 @@ export function useInboxRealtime({ searching }: { searching: boolean }) {
                 setRecentlyAnswered((prev) => ({ ...prev, [event.ticket_id]: event.actor_name ?? 'Petugas' }));
             }
 
+            scheduleReload();
+        },
+        [],
+    );
+
+    // Sinyal agregat (mis. satu batch auto close): cukup memicu reload yang
+    // sama, jadi baris yang hilang dan angka badge/tab ikut turun.
+    useEcho<InboxChangedEvent>(
+        'inbox.laporan-masuk',
+        '.inbox.changed',
+        () => {
             scheduleReload();
         },
         [],

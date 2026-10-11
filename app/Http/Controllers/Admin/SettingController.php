@@ -37,9 +37,19 @@ class SettingController extends Controller
             'nama_penanda_tangan' => ['nullable', 'string', 'max:255'],
             'jabatan_penanda_tangan' => ['nullable', 'string', 'max:255'],
             'kota_penanda_tangan' => ['nullable', 'string', 'max:255'],
-            'auto_close_pengaduan_days' => ['required', 'integer', 'min:1', 'max:365'],
-            'auto_close_aspirasi_days' => ['required', 'integer', 'min:1', 'max:365'],
-            'auto_close_permintaan_informasi_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'auto_close_pengaduan_days' => ['required', 'integer', 'min:0', 'max:365'],
+            'auto_close_aspirasi_days' => ['required', 'integer', 'min:0', 'max:365'],
+            'auto_close_permintaan_informasi_days' => ['required', 'integer', 'min:0', 'max:365'],
+        ], [
+            'auto_close_pengaduan_days.min' => 'Batas waktu pengaduan minimal 0 hari. Isi 0 untuk menonaktifkan.',
+            'auto_close_aspirasi_days.min' => 'Batas waktu aspirasi minimal 0 hari. Isi 0 untuk menonaktifkan.',
+            'auto_close_permintaan_informasi_days.min' => 'Batas waktu permintaan informasi minimal 0 hari. Isi 0 untuk menonaktifkan.',
+            'auto_close_pengaduan_days.max' => 'Batas waktu pengaduan maksimal 365 hari.',
+            'auto_close_aspirasi_days.max' => 'Batas waktu aspirasi maksimal 365 hari.',
+            'auto_close_permintaan_informasi_days.max' => 'Batas waktu permintaan informasi maksimal 365 hari.',
+            'auto_close_pengaduan_days.required' => 'Batas waktu pengaduan wajib diisi. Isi 0 untuk menonaktifkan.',
+            'auto_close_aspirasi_days.required' => 'Batas waktu aspirasi wajib diisi. Isi 0 untuk menonaktifkan.',
+            'auto_close_permintaan_informasi_days.required' => 'Batas waktu permintaan informasi wajib diisi. Isi 0 untuk menonaktifkan.',
         ]);
 
         foreach ($validated as $key => $value) {

@@ -16,6 +16,7 @@ export interface TicketResponseItem {
     message: string;
     user_name: string;
     is_reporter?: boolean;
+    is_system?: boolean;
     sent_at: string | null;
     created_at?: string;
     attachments: Attachment[];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\AutoCloseTickets;
 use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
@@ -9,7 +10,7 @@ use App\Models\TicketResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,18 +54,20 @@ class CheckTicketController extends Controller
                     'channel' => $t->channel?->name ?? '-',
                     'created_at' => $t->created_at->toIso8601String(),
                     'completed_at' => $t->completed_at?->toIso8601String(),
+                    'closed_reason' => $t->closed_reason,
+                    'auto_close_at' => AutoCloseTickets::deadlineFor($t)?->toIso8601String(),
                     'attachments' => $t->attachments->map(fn ($attachment) => [
                         'id' => $attachment->id,
                         'original_name' => $attachment->original_name,
                         'mime_type' => $attachment->mime_type,
                         'size' => $attachment->size,
-                        'url' => Storage::url($attachment->path),
                     ])->values()->all(),
                     'responses' => $t->responses
                         ->sortBy(fn ($response) => ($response->sent_at ?? $response->created_at)->getTimestamp())
                         ->values()
                         ->map(function ($response) use ($t) {
-                            $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
+                            $isSystem = (bool) $response->is_system;
+                            $isReporter = $isSystem || $response->user_id === null || $response->type === 'balasan_pelapor';
                             $userName = $isReporter
                                 ? ($t->reporter_name ? $t->reporter_name.' (Pelapor)' : 'Pelapor')
                                 : ($response->user?->name ?? 'Petugas BPS');
@@ -73,8 +76,9 @@ class CheckTicketController extends Controller
                                 'id' => $response->id,
                                 'type' => $response->type,
                                 'message' => $response->message,
-                                'user_name' => $userName,
+                                'user_name' => $isSystem ? 'Sistem' : $userName,
                                 'is_reporter' => $isReporter,
+                                'is_system' => $isSystem,
                                 'sent_at' => $response->sent_at?->toIso8601String(),
                                 'created_at' => $response->created_at->toIso8601String(),
                                 'attachments' => $response->attachments->map(fn ($att) => [
@@ -82,12 +86,39 @@ class CheckTicketController extends Controller
                                     'original_name' => $att->original_name,
                                     'mime_type' => $att->mime_type,
                                     'size' => $att->size,
-                                    'url' => Storage::url($att->path),
                                 ])->values()->all(),
                             ];
                         })->values()->all(),
                 ];
             });
+
+            if ($ticket) {
+                $ticketId = $ticket['id'];
+
+                $ticket['attachments'] = array_map(function ($attachment) use ($ticketId) {
+                    $attachment['url'] = URL::temporarySignedRoute(
+                        'check.attachments.download',
+                        now()->addMinutes(30),
+                        ['type' => 'ticket', 'id' => $attachment['id'], 'ticket' => $ticketId]
+                    );
+
+                    return $attachment;
+                }, $ticket['attachments']);
+
+                $ticket['responses'] = array_map(function ($response) use ($ticketId) {
+                    $response['attachments'] = array_map(function ($att) use ($ticketId) {
+                        $att['url'] = URL::temporarySignedRoute(
+                            'check.attachments.download',
+                            now()->addMinutes(30),
+                            ['type' => 'response', 'id' => $att['id'], 'ticket' => $ticketId]
+                        );
+
+                        return $att;
+                    }, $response['attachments']);
+
+                    return $response;
+                }, $ticket['responses']);
+            }
         }
 
         return Inertia::render('check', [
@@ -141,6 +172,7 @@ class CheckTicketController extends Controller
         $ticket->update([
             'is_read' => false,
             'completed_at' => null,
+            'closed_reason' => null,
         ]);
 
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
@@ -164,6 +196,7 @@ class CheckTicketController extends Controller
             $ticket->update([
                 'status' => 'selesai',
                 'completed_at' => now(),
+                'closed_reason' => 'reporter',
             ]);
 
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));

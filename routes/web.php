@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Rekap\RekapSemesteranController;
 use App\Http\Controllers\Admin\Rekap\RekapTahunanController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TicketResponseController;
+use App\Http\Controllers\CheckAttachmentDownloadController;
 use App\Http\Controllers\CheckTicketController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\TicketController;
@@ -85,6 +86,7 @@ Route::post('/tickets', [TicketController::class, 'store'])->middleware('throttl
 Route::get('/check', CheckTicketController::class)->middleware('throttle:ticket-check')->name('tickets.check');
 Route::post('/check/{ticketNumber}/reply', [CheckTicketController::class, 'reply'])->middleware('throttle:ticket-reply')->name('tickets.check.reply')->where('ticketNumber', '.*');
 Route::post('/check/{ticketNumber}/complete', [CheckTicketController::class, 'complete'])->middleware('throttle:ticket-reply')->name('tickets.check.complete')->where('ticketNumber', '.*');
+Route::get('/check/lampiran/{type}/{id}', CheckAttachmentDownloadController::class)->middleware(['signed', 'throttle:30,1'])->whereIn('type', ['ticket', 'response'])->whereNumber('id')->name('check.attachments.download');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', function (Request $request) {

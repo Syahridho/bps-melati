@@ -176,6 +176,7 @@ class InputDataController extends Controller
                 'channel' => $ticket->channel?->name ?? '-',
                 'created_by_name' => $ticket->creator?->name,
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
+                'closed_reason' => $ticket->closed_reason,
                 'created_at' => $ticket->created_at->toIso8601String(),
                 'updated_at' => $ticket->updated_at->toIso8601String(),
                 'attachments' => $ticket->attachments->map(fn ($attachment) => [
@@ -265,6 +266,7 @@ class InputDataController extends Controller
             $ticket->update([
                 'status' => 'selesai',
                 'completed_at' => now(),
+                'closed_reason' => 'staff',
             ]);
 
             $cacheKey = "response:{$response->id}";

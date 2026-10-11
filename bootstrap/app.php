@@ -10,6 +10,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -56,6 +57,24 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // 2. Rate limit → 429 dengan sisa detik dalam Bahasa Indonesia.
+        $exceptions->render(function (InvalidSignatureException $exception, Request $request) {
+            $message = __('Tautan unduhan sudah kedaluwarsa. Muat ulang halaman status laporan lalu coba lagi.');
+
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'message' => $message,
+                    'code' => 'link_expired',
+                ], 403);
+            }
+
+            return Inertia::render('error', [
+                'status' => 403,
+                'message' => $message,
+            ])
+                ->toResponse($request)
+                ->setStatusCode(403);
+        });
+
         $exceptions->render(function (Response $response, Throwable $exception, Request $request) {
             if ($response->getStatusCode() !== 429) {
                 return null;
@@ -114,8 +133,14 @@ return Application::configure(basePath: dirname(__DIR__))
                     return $response;
                 }
 
+                $message = match (true) {
+                    $exception instanceof InvalidSignatureException => __('Tautan unduhan sudah kedaluwarsa. Muat ulang halaman status laporan lalu coba lagi.'),
+                    default => $exception->getMessage() ?: null,
+                };
+
                 return Inertia::render('error', [
                     'status' => $statusCode,
+                    'message' => $message,
                 ])
                     ->toResponse($request)
                     ->setStatusCode($statusCode);

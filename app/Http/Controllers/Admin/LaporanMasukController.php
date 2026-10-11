@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\AutoCloseTickets;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Models\Ticket;
@@ -159,6 +160,8 @@ class LaporanMasukController extends Controller
                 'channel' => $ticket->channel?->name ?? '-',
                 'created_by_name' => $ticket->creator?->name,
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
+                'closed_reason' => $ticket->closed_reason,
+                'auto_close_at' => AutoCloseTickets::deadlineFor($ticket)?->toIso8601String(),
                 'created_at' => $ticket->created_at->toIso8601String(),
                 'updated_at' => $ticket->updated_at->toIso8601String(),
                 'attachments' => $ticket->attachments->map(fn ($attachment) => [

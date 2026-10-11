@@ -295,6 +295,7 @@ class TicketApiController extends Controller
         $ticket->update([
             'is_read' => false,
             'completed_at' => null,
+            'closed_reason' => null,
         ]);
 
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
@@ -334,6 +335,7 @@ class TicketApiController extends Controller
             $ticket->update([
                 'status' => 'selesai',
                 'completed_at' => now(),
+                'closed_reason' => 'reporter',
             ]);
 
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));

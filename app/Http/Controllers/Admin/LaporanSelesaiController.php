@@ -99,6 +99,7 @@ class LaporanSelesaiController extends Controller
                 'status' => $ticket->status,
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
+                'closed_reason' => $ticket->closed_reason,
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
                 'created_at' => $ticket->created_at->toIso8601String(),
             ]);
@@ -175,6 +176,7 @@ class LaporanSelesaiController extends Controller
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'created_by_name' => $ticket->creator?->name,
+                'closed_reason' => $ticket->closed_reason,
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
                 'created_at' => $ticket->created_at->toIso8601String(),
                 'updated_at' => $ticket->updated_at->toIso8601String(),

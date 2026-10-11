@@ -4,6 +4,9 @@ use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->channel = Channel::create([
@@ -190,4 +193,210 @@ test('tickets auto-close artisan command works', function () {
 
     $ticketPengaduan->refresh();
     expect($ticketPengaduan->status)->toBe('selesai');
+});
+
+test('page /check produces signed download URLs instead of raw storage URLs', function () {
+    $ticket = Ticket::create([
+        'ticket_number' => 'L-1400/092026/0201',
+        'period' => '2026-09',
+        'sequence' => 201,
+        'classification' => 'pengaduan',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Pengaduan dengan lampiran',
+        'status' => 'respon_awal',
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    $att = $ticket->attachments()->create([
+        'path' => 'attachments/test/sample.pdf',
+        'original_name' => 'sample.pdf',
+        'mime_type' => 'application/pdf',
+        'size' => 1024,
+    ]);
+
+    $admin = User::factory()->create(['role' => 'admin']);
+    $response = $ticket->responses()->create([
+        'user_id' => $admin->id,
+        'type' => 'respon_awal',
+        'message' => 'Respon admin',
+        'sent_at' => now(),
+    ]);
+
+    $respAtt = $response->attachments()->create([
+        'path' => 'response_attachments/test/admin_note.pdf',
+        'original_name' => 'admin_note.pdf',
+        'mime_type' => 'application/pdf',
+        'size' => 2048,
+    ]);
+
+    Cache::forget('ticket_check:'.md5($ticket->ticket_number));
+
+    $res = $this->get('/check?ticket_number='.$ticket->ticket_number);
+    $res->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('check')
+            ->where('ticket.attachments.0.url', fn (string $url) => str_contains($url, '/check/lampiran/ticket/'.$att->id) && str_contains($url, 'signature='))
+            ->where('ticket.responses.0.attachments.0.url', fn (string $url) => str_contains($url, '/check/lampiran/response/'.$respAtt->id) && str_contains($url, 'signature='))
+        );
+});
+
+test('public reporter can download attachment with valid signed URL', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('response_attachments/1/doc.pdf', '%PDF-1.4 dummy content');
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'L-1400/092026/0202',
+        'period' => '2026-09',
+        'sequence' => 202,
+        'classification' => 'pengaduan',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Pengaduan',
+        'status' => 'respon_awal',
+        'source_app' => 'web',
+    ]);
+
+    $response = $ticket->responses()->create([
+        'user_id' => null,
+        'type' => 'respon_awal',
+        'message' => 'Balasan',
+    ]);
+
+    $att = $response->attachments()->create([
+        'path' => 'response_attachments/1/doc.pdf',
+        'original_name' => 'doc.pdf',
+        'mime_type' => 'application/pdf',
+        'size' => 100,
+    ]);
+
+    $signedUrl = URL::temporarySignedRoute(
+        'check.attachments.download',
+        now()->addMinutes(30),
+        ['type' => 'response', 'id' => $att->id]
+    );
+
+    $download = $this->get($signedUrl);
+    $download->assertOk();
+    $download->assertHeader('Content-Type', 'application/pdf');
+    $download->assertHeader('X-Content-Type-Options', 'nosniff');
+});
+
+test('tampered or unsigned attachment link is rejected with friendly message', function () {
+    $unsignedUrl = route('check.attachments.download', ['type' => 'response', 'id' => 999]);
+
+    $res = $this->get($unsignedUrl);
+    $res->assertStatus(403);
+    $res->assertInertia(fn (Assert $page) => $page
+        ->component('error')
+        ->where('status', 403)
+        ->where('message', 'Tautan unduhan sudah kedaluwarsa. Muat ulang halaman status laporan lalu coba lagi.')
+    );
+
+    // Tampered signature
+    $tampered = $unsignedUrl.'?signature=invalid123';
+    $resTampered = $this->get($tampered);
+    $resTampered->assertStatus(403);
+});
+
+test('expired signed link is rejected with friendly message', function () {
+    $expiredUrl = URL::temporarySignedRoute(
+        'check.attachments.download',
+        now()->subMinutes(5),
+        ['type' => 'response', 'id' => 1]
+    );
+
+    $res = $this->get($expiredUrl);
+    $res->assertStatus(403);
+    $res->assertInertia(fn (Assert $page) => $page
+        ->component('error')
+        ->where('status', 403)
+        ->where('message', 'Tautan unduhan sudah kedaluwarsa. Muat ulang halaman status laporan lalu coba lagi.')
+    );
+});
+
+test('attachment belonging to ticket A cannot be fetched via link created for ticket B (404)', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('attachments/test/doc_a.pdf', 'Content A');
+
+    $ticketA = Ticket::create([
+        'ticket_number' => 'L-1400/092026/0204',
+        'period' => '2026-09',
+        'sequence' => 204,
+        'classification' => 'pengaduan',
+        'channel_id' => $this->channel->id,
+        'content' => 'Tiket A',
+        'status' => 'baru',
+        'source_app' => 'web',
+    ]);
+
+    $ticketB = Ticket::create([
+        'ticket_number' => 'L-1400/092026/0205',
+        'period' => '2026-09',
+        'sequence' => 205,
+        'classification' => 'pengaduan',
+        'channel_id' => $this->channel->id,
+        'content' => 'Tiket B',
+        'status' => 'baru',
+        'source_app' => 'web',
+    ]);
+
+    $attA = $ticketA->attachments()->create([
+        'path' => 'attachments/test/doc_a.pdf',
+        'original_name' => 'doc_a.pdf',
+        'mime_type' => 'application/pdf',
+        'size' => 100,
+    ]);
+
+    // Sign with Ticket B as the expected ticket
+    $signedUrlMismatched = URL::temporarySignedRoute(
+        'check.attachments.download',
+        now()->addMinutes(30),
+        ['type' => 'ticket', 'id' => $attA->id, 'ticket' => $ticketB->id]
+    );
+
+    $res = $this->get($signedUrlMismatched);
+    $res->assertStatus(404);
+    $res->assertInertia(fn (Assert $page) => $page
+        ->component('error')
+        ->where('status', 404)
+        ->where('message', 'Lampiran tidak ditemukan.')
+    );
+});
+
+test('missing physical file returns 404 with friendly message', function () {
+    Storage::fake('public'); // empty storage
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'L-1400/092026/0203',
+        'period' => '2026-09',
+        'sequence' => 203,
+        'classification' => 'pengaduan',
+        'channel_id' => $this->channel->id,
+        'content' => 'Pengaduan',
+        'status' => 'respon_awal',
+        'source_app' => 'web',
+    ]);
+
+    $att = $ticket->attachments()->create([
+        'path' => 'attachments/nonexistent.pdf',
+        'original_name' => 'nonexistent.pdf',
+        'mime_type' => 'application/pdf',
+        'size' => 100,
+    ]);
+
+    $signedUrl = URL::temporarySignedRoute(
+        'check.attachments.download',
+        now()->addMinutes(30),
+        ['type' => 'ticket', 'id' => $att->id]
+    );
+
+    $res = $this->get($signedUrl);
+    $res->assertStatus(404);
+    $res->assertInertia(fn (Assert $page) => $page
+        ->component('error')
+        ->where('status', 404)
+        ->where('message', 'Lampiran tidak ditemukan.')
+    );
 });

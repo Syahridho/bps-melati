@@ -15,14 +15,14 @@ export default function ErrorPage({ status = 404, message }: ErrorPageProps) {
             case 404:
                 return {
                     title: 'Halaman Tidak Ditemukan',
-                    description: 'Maaf, halaman yang Anda cari tidak tersedia, telah dihapus, atau alamat URL yang Anda masukkan salah.',
+                    description: message || 'Maaf, halaman yang Anda cari tidak tersedia, telah dihapus, atau alamat URL yang Anda masukkan salah.',
                     icon: FileQuestion,
                     badgeText: '404 - Not Found',
                 };
             case 403:
                 return {
                     title: 'Akses Ditolak',
-                    description: 'Anda tidak memiliki hak akses atau izin yang cukup untuk membuka halaman atau sumber daya ini.',
+                    description: message || 'Anda tidak memiliki hak akses atau izin yang cukup untuk membuka halaman atau sumber daya ini.',
                     icon: Lock,
                     badgeText: '403 - Forbidden',
                 };

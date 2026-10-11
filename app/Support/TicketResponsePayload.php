@@ -13,6 +13,7 @@ class TicketResponsePayload
      *     id: int,
      *     user_name: string,
      *     is_reporter: bool,
+     *     is_system: bool,
      *     type: string,
      *     message: string,
      *     sent_at: string|null,
@@ -24,15 +25,19 @@ class TicketResponsePayload
     {
         $response->loadMissing(['user', 'attachments']);
 
-        $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
-        $userName = $isReporter
-            ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
-            : ($response->user?->name ?? '-');
+        $isSystem = (bool) $response->is_system;
+        $isReporter = $isSystem || $response->user_id === null || $response->type === 'balasan_pelapor';
+        $userName = $isSystem
+            ? 'Sistem'
+            : ($isReporter
+                ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
+                : ($response->user?->name ?? '-'));
 
         return [
             'id' => $response->id,
             'user_name' => $userName,
             'is_reporter' => $isReporter,
+            'is_system' => (bool) $response->is_system,
             'type' => $response->type,
             'message' => $response->message,
             'sent_at' => $response->sent_at?->toIso8601String(),

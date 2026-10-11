@@ -34,10 +34,9 @@ export function AppSidebar() {
         }
 
         reloadTimerRef.current = window.setTimeout(() => {
+            // router.reload() sudah mempertahankan state & scroll secara default.
             router.reload({
                 only: ['tickets', 'counts', 'inbox_open_count'],
-                preserveState: true,
-                preserveScroll: true,
             });
         }, 400);
     }, []);
@@ -69,10 +68,19 @@ export function AppSidebar() {
         }
     });
 
-    // Dengarkan pembaruan inbox (tiket selesai/dibalas) untuk sinkronisasi badge
+    // Dengarkan pembaruan inbox (tiket selesai/dibalas/auto close) untuk sinkronisasi badge
     useEcho(
         auth?.user ? 'inbox.laporan-masuk' : '',
         '.inbox.updated',
+        () => {
+            scheduleReload();
+        },
+        [auth?.user],
+    );
+
+    useEcho(
+        auth?.user ? 'inbox.laporan-masuk' : '',
+        '.inbox.changed',
         () => {
             scheduleReload();
         },

@@ -40,20 +40,10 @@ export function Pagination({ links, from, to, total, lastPage, perPage = 10, onP
     }
 
     const cleanLabel = (label: string) => {
-        if (
-            label.includes('&laquo;') ||
-            label.includes('Previous') ||
-            label.includes('Sebelumnya') ||
-            label.includes('pagination.previous')
-        ) {
+        if (label.includes('&laquo;') || label.includes('Previous') || label.includes('Sebelumnya') || label.includes('pagination.previous')) {
             return <ChevronLeft className="h-4 w-4" />;
         }
-        if (
-            label.includes('&raquo;') ||
-            label.includes('Next') ||
-            label.includes('Berikutnya') ||
-            label.includes('pagination.next')
-        ) {
+        if (label.includes('&raquo;') || label.includes('Next') || label.includes('Berikutnya') || label.includes('pagination.next')) {
             return <ChevronRight className="h-4 w-4" />;
         }
         return label;

@@ -121,10 +121,6 @@ class ReplyToTicket
                         $updates['status'] = $type;
                     }
 
-                    if ($locked->completed_at === null) {
-                        $updates['completed_at'] = now();
-                    }
-
                     if ($expectedVersion !== null && $expectedVersion !== $locked->version) {
                         Log::info('Balasan diterima dengan versi tiket yang sudah usang.', [
                             'ticket_id' => $locked->id,

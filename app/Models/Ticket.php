@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Actions\AutoCloseTickets;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,6 +31,8 @@ class Ticket extends Model
         'source_app',
         'created_by',
         'completed_at',
+        'closed_reason',
+        'last_staff_response_at',
     ];
 
     protected function casts(): array
@@ -37,6 +40,7 @@ class Ticket extends Model
         return [
             'is_read' => 'boolean',
             'completed_at' => 'datetime',
+            'last_staff_response_at' => 'datetime',
             'sequence' => 'integer',
             'version' => 'integer',
         ];
@@ -73,98 +77,42 @@ class Ticket extends Model
 
     /**
      * Auto-close active tickets whose last response from admin/operator exceeded the configured auto-close days.
+     *
+     * Wrapper tipis atas {@see AutoCloseTickets} supaya tidak ada dua implementasi.
      */
     public static function autoCloseExpiredTickets(): int
     {
-        $pengaduanDays = (int) Setting::get('auto_close_pengaduan_days', '3');
-        $aspirasiDays = (int) Setting::get('auto_close_aspirasi_days', '1');
-        $permintaanDays = (int) Setting::get('auto_close_permintaan_informasi_days', '5');
-
-        $daysMap = [
-            'pengaduan' => max(1, $pengaduanDays),
-            'aspirasi' => max(1, $aspirasiDays),
-            'permintaan_informasi' => max(1, $permintaanDays),
-        ];
-
-        $closedCount = 0;
-
-        $activeTickets = static::where('status', '!=', 'selesai')
-            ->whereHas('responses', function ($query) {
-                $query->whereNotNull('user_id');
-            })
-            ->with(['responses' => function ($q) {
-                $q->orderByDesc('created_at');
-            }])
-            ->get();
-
-        foreach ($activeTickets as $ticket) {
-            $lastResponse = $ticket->responses->first();
-            if (! $lastResponse || $lastResponse->user_id === null) {
-                continue;
-            }
-
-            $thresholdDays = $daysMap[$ticket->classification] ?? 3;
-            $expiryTime = ($lastResponse->sent_at ?? $lastResponse->created_at)->copy()->addDays($thresholdDays);
-
-            if (now()->greaterThanOrEqualTo($expiryTime)) {
-                $ticket->update([
-                    'status' => 'selesai',
-                    'completed_at' => now(),
-                ]);
-
-                Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-                Cache::forget("ticket:{$ticket->ticket_number}");
-                $closedCount++;
-            }
-        }
-
-        return $closedCount;
+        return app(AutoCloseTickets::class)->handle()->closedCount();
     }
 
     /**
      * Single ticket auto-close check helper.
+     *
+     * Memakai action yang sama agar aturan (status kandidat, balasan pelapor
+     * menghentikan hitungan, closed_reason) selalu konsisten.
      */
     public function checkAndAutoClose(): bool
     {
-        if ($this->status === 'selesai') {
+        if ($this->status === 'selesai' || $this->last_staff_response_at === null) {
             return false;
         }
 
-        $lastResponse = $this->responses()->latest()->first();
-        if (! $lastResponse || $lastResponse->user_id === null) {
+        $action = app(AutoCloseTickets::class);
+        $days = $action->resolveWindows()[$this->classification] ?? null;
+
+        if ($days === null) {
             return false;
         }
 
-        $settingKey = match ($this->classification) {
-            'pengaduan' => 'auto_close_pengaduan_days',
-            'aspirasi' => 'auto_close_aspirasi_days',
-            'permintaan_informasi' => 'auto_close_permintaan_informasi_days',
-            default => null,
-        };
+        $isCandidate = $action->candidateQuery($this->classification, $days)
+            ->whereKey($this->getKey())
+            ->exists();
 
-        $defaultDays = match ($this->classification) {
-            'pengaduan' => 3,
-            'aspirasi' => 1,
-            'permintaan_informasi' => 5,
-            default => 3,
-        };
-
-        $thresholdDays = max(1, (int) Setting::get($settingKey, (string) $defaultDays));
-        $expiryTime = ($lastResponse->sent_at ?? $lastResponse->created_at)->copy()->addDays($thresholdDays);
-
-        if (now()->greaterThanOrEqualTo($expiryTime)) {
-            $this->update([
-                'status' => 'selesai',
-                'completed_at' => now(),
-            ]);
-
-            Cache::forget('ticket_check:'.md5($this->ticket_number));
-            Cache::forget("ticket:{$this->ticket_number}");
-
-            return true;
+        if (! $isCandidate) {
+            return false;
         }
 
-        return false;
+        return $action->closeOne((int) $this->getKey(), $days);
     }
 
     protected static function booted(): void

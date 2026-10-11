@@ -1,6 +1,6 @@
+import { AttachmentPreviewDialog } from '@/components/attachment-preview-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
@@ -20,12 +20,16 @@ import {
     MessageSquare,
     Paperclip,
     Phone,
+    TimerOff,
     User,
+    UserCheck,
+    type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 
 type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
+export type ClosedReason = 'reporter' | 'staff' | 'auto_close';
 
 interface Attachment {
     id: number;
@@ -63,6 +67,7 @@ interface TicketDetail {
     source_app: string;
     channel: string;
     created_by_name: string | null;
+    closed_reason: ClosedReason | null;
     completed_at: string | null;
     created_at: string;
     updated_at: string;
@@ -146,12 +151,38 @@ function formatFileSize(bytes: number): string {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-function isImageMime(mimeType: string, fileName: string): boolean {
-    return mimeType?.startsWith('image/') || /\.(jpg|jpeg|png)$/i.test(fileName);
+const CLOSED_REASON_META: Record<ClosedReason, { label: string; icon: LucideIcon; className: string }> = {
+    auto_close: {
+        label: 'Ditutup otomatis',
+        icon: TimerOff,
+        className: 'border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-400',
+    },
+    reporter: {
+        label: 'Selesai oleh pelapor',
+        icon: UserCheck,
+        className: 'border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400',
+    },
+    staff: {
+        label: 'Selesai oleh petugas',
+        icon: UserCheck,
+        className: 'border-blue-300 text-blue-600 dark:border-blue-700 dark:text-blue-400',
+    },
+};
+
+function ClosedReasonBadge({ reason }: { reason: ClosedReason }) {
+    const meta = CLOSED_REASON_META[reason];
+    const Icon = meta.icon;
+
+    return (
+        <Badge variant="outline" className={cn(meta.className)}>
+            <Icon className="mr-1 size-3" />
+            {meta.label}
+        </Badge>
+    );
 }
 
-function isPdfMime(mimeType: string, fileName: string): boolean {
-    return mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+function isImageMime(mimeType: string, fileName: string): boolean {
+    return mimeType?.startsWith('image/') || /\.(jpg|jpeg|png)$/i.test(fileName);
 }
 
 export default function Show() {
@@ -199,6 +230,7 @@ export default function Show() {
                                     <CheckCircle2 className="mr-1 size-3" />
                                     {statusLabel(ticket.status)}
                                 </Badge>
+                                {ticket.closed_reason && <ClosedReasonBadge reason={ticket.closed_reason} />}
                             </div>
                             <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
                                 <span className="inline-flex items-center gap-1.5">
@@ -433,46 +465,7 @@ export default function Show() {
             </div>
 
             {/* Dialog Preview Lampiran */}
-            <Dialog open={!!previewAttachment} onOpenChange={() => setPreviewAttachment(null)}>
-                <DialogContent className="max-h-[90vh] sm:max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle className="truncate">{previewAttachment?.original_name}</DialogTitle>
-                        <DialogDescription>{previewAttachment && formatFileSize(previewAttachment.size)}</DialogDescription>
-                    </DialogHeader>
-
-                    <div className="max-h-[70vh] overflow-auto">
-                        {previewAttachment && isImageMime(previewAttachment.mime_type, previewAttachment.original_name) && (
-                            <img
-                                src={previewAttachment.url}
-                                alt={previewAttachment.original_name}
-                                className="mx-auto max-h-[65vh] rounded-md object-contain"
-                            />
-                        )}
-
-                        {previewAttachment && isPdfMime(previewAttachment.mime_type, previewAttachment.original_name) && (
-                            <iframe
-                                src={previewAttachment.url}
-                                title={previewAttachment.original_name}
-                                className="h-[65vh] w-full rounded-md border-0"
-                            />
-                        )}
-                    </div>
-
-                    <DialogFooter className="flex items-center justify-between gap-2 sm:justify-between">
-                        <a
-                            href={previewAttachment?.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground inline-flex items-center text-xs hover:underline"
-                        >
-                            Buka di tab baru
-                        </a>
-                        <Button onClick={() => setPreviewAttachment(null)} className="w-full sm:w-auto">
-                            Tutup
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <AttachmentPreviewDialog item={previewAttachment} onClose={() => setPreviewAttachment(null)} />
         </AdminPage>
     );
 }
