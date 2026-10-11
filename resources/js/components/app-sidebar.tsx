@@ -49,11 +49,8 @@ export function AppSidebar() {
                 auth.user.role === 'admin' ? route('dashboard.admin.laporan-masuk.index') : route('dashboard.operator.laporan-masuk.index');
 
             toast(`Laporan Masuk Baru${ticketNum}`, {
-                description: 'Ada laporan baru yang perlu ditindaklanjuti.',
-                action: {
-                    label: 'Lihat',
-                    onClick: () => router.visit(targetRoute),
-                },
+                description: 'Ada laporan baru yang perlu ditindak lanjuti.',
+
                 actionButtonStyle: {
                     background: '#ffffff',
                     color: '#005fb6',
