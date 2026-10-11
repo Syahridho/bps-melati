@@ -5,10 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { CLASSIFICATIONS } from '@/lib/welcome-constants';
-import { formatFileSize } from '@/lib/welcome-utils';
+import { formatFileSize, getTodayDateString } from '@/lib/welcome-utils';
 import { type ClassificationType } from '@/types/welcome';
 import { CheckCircle2, Circle, Eye, LoaderCircle, Paperclip, X } from 'lucide-react';
-import { type ChangeEvent, type FormEvent, type ReactNode, type RefObject } from 'react';
+import { type ChangeEvent, type FormEvent, type ReactNode, type RefObject, useEffect, useState } from 'react';
+
+/** Seberapa sering batas "hari ini" disegarkan ulang, dalam milidetik. */
+const TODAY_REFRESH_MS = 60000;
 
 interface ReportFormData {
     classification: ClassificationType | '';
@@ -65,6 +68,23 @@ export function ReportForm({
 }: ReportFormProps) {
     const selectedLabel = CLASSIFICATIONS.find((c) => c.value === data.classification)?.label;
     const fieldErrors = errors as Record<string, string | undefined>;
+
+    // Batas tanggal dihitung saat render, bukan konstanta modul, supaya tetap
+    // benar bila form dibiarkan terbuka melewati tengah malam.
+    const [today, setToday] = useState(getTodayDateString);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setToday(getTodayDateString()), TODAY_REFRESH_MS);
+
+        return () => window.clearInterval(timer);
+    }, []);
+
+    // Tanggal masa depan tidak bisa dipilih lewat kalender (atribut `max`), tapi
+    // pengetikan manual masih bisa. Nilai dikembalikan ke hari ini supaya isian
+    // sesuai dengan yang diizinkan form. Validasi backend tetap lapisan akhir.
+    const handleTanggalKejadianChange = (value: string) => {
+        setData('tanggal_kejadian', value !== '' && value > today ? today : value);
+    };
 
     return (
         <form onSubmit={onSubmit} className="mx-auto w-full max-w-2xl min-w-0">
@@ -155,10 +175,15 @@ export function ReportForm({
                                         <Input
                                             id="tanggal"
                                             type="date"
+                                            max={today}
                                             className="w-full"
                                             value={data.tanggal_kejadian}
-                                            onChange={(e) => setData('tanggal_kejadian', e.target.value)}
+                                            onChange={(e) => handleTanggalKejadianChange(e.target.value)}
+                                            aria-describedby="tanggal-hint"
                                         />
+                                        <p id="tanggal-hint" className="text-muted-foreground text-xs">
+                                            Pilih tanggal hari ini atau sebelumnya.
+                                        </p>
                                         <FieldError message={errors.tanggal_kejadian} />
                                     </div>
                                 )}

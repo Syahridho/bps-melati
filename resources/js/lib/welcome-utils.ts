@@ -29,6 +29,22 @@ export function formatFileSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/**
+ * Tanggal hari ini dalam format YYYY-MM-DD memakai zona waktu lokal browser.
+ *
+ * Jangan pakai toISOString(): hasilnya berdasar UTC sehingga di WIB (UTC+7)
+ * tanggal bisa mundur satu hari, dan nilai itu dipakai sebagai batas `max`
+ * input tanggal.
+ */
+export function getTodayDateString(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
 export function isImageFile(file: File): boolean {
     return file.type.startsWith('image/');
 }
