@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import AdminPage from '@/pages/admin/page';
@@ -17,44 +16,24 @@ import {
     Clock,
     Eye,
     FileText,
-    Forward,
     Globe,
     Image as ImageIcon,
     Layers,
     LoaderCircle,
     Mail,
-    MessageSquare,
     Paperclip,
     Pencil,
     Phone,
-    Send,
     Trash2,
     User,
-    X,
 } from 'lucide-react';
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-
-type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
-type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
-
-interface Attachment {
-    id: number;
-    original_name: string;
-    mime_type: string;
-    size: number;
-    url: string;
-}
-
-interface TicketResponseItem {
-    id: number;
-    type: 'respon_awal' | 'respon_substantif';
-    message: string;
-    user_name: string;
-    sent_at: string | null;
-    created_at: string;
-    attachments: Attachment[];
-}
+import { type ReplyConflict } from './components/realtime-types';
+import { ResponseHistory } from './components/response-history';
+import { type Attachment, type Classification, type Status, type TicketResponseItem } from './components/types';
+import { useTicketRealtime } from './components/use-ticket-realtime';
+import { formatFileSize, formatFullDate, isImageMime, isPdfMime } from './components/utils';
 
 interface TicketDetail {
     id: number;
@@ -70,6 +49,7 @@ interface TicketDetail {
     reporter_wa: string | null;
     content: string;
     status: Status;
+    version: number;
     is_read: boolean;
     source_app: string;
     channel: string;
@@ -90,6 +70,7 @@ interface ShowProps extends SharedData {
     from?: 'input-data' | 'laporan-masuk';
     flash: {
         success?: string;
+        conflict?: ReplyConflict;
     };
 }
 
@@ -141,51 +122,6 @@ function statusVariant(status: Status): 'default' | 'secondary' | 'outline' {
     }
 }
 
-function responseTypeLabel(type: string): string {
-    switch (type) {
-        case 'respon_awal':
-            return 'Respon Awal';
-        case 'respon_substantif':
-            return 'Respon Substantif';
-        case 'balasan_pelapor':
-            return 'Balasan Pelapor';
-        default:
-            return type;
-    }
-}
-
-function responseTypeVariant(type: string): 'default' | 'secondary' | 'outline' {
-    if (type === 'balasan_pelapor') return 'outline';
-    return type === 'respon_awal' ? 'secondary' : 'default';
-}
-
-function formatFullDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
-
-function formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
-
-function isImageMime(mimeType: string, fileName: string): boolean {
-    return mimeType?.startsWith('image/') || /\.(jpg|jpeg|png)$/i.test(fileName);
-}
-
-function isPdfMime(mimeType: string, fileName: string): boolean {
-    return mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
-}
-
 function isImageFile(file: File): boolean {
     return file.type.startsWith('image/');
 }
@@ -205,23 +141,20 @@ export default function Show() {
     const canEdit = can?.edit ?? auth.user.role === 'admin';
     const canDelete = can?.delete ?? auth.user.role === 'admin';
 
-    const [showForward, setShowForward] = useState(false);
+    const [showReplyForm, setShowReplyForm] = useState(false);
     const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [responses, setResponses] = useState<TicketResponseItem[]>(ticket.responses);
+    const [ticketStatus, setTicketStatus] = useState<Status>(ticket.status);
+    const [ticketVersion, setTicketVersion] = useState<number>(ticket.version ?? 0);
+    const [highlightLast, setHighlightLast] = useState(false);
+    const [conflict, setConflict] = useState<ReplyConflict | null>(flash?.conflict ?? null);
+    const [pendingNotice, setPendingNotice] = useState<string | null>(null);
 
-    // Modals state
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Response form
-    const { data, setData, post, processing, errors, reset } = useForm({
-        type: '' as string,
-        message: '',
-        attachments: [] as File[],
-    });
-
-    // Edit form
     const editForm = useForm({
         reporter_name: ticket.reporter_name ?? '',
         reporter_email: ticket.reporter_email ?? '',
@@ -230,9 +163,6 @@ export default function Show() {
         content: ticket.content ?? '',
     });
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Preview for uploaded files (before submit)
     const [previewFile, setPreviewFile] = useState<File | null>(null);
     const previewUrl = useMemo(() => {
         if (!previewFile) return null;
@@ -248,16 +178,29 @@ export default function Show() {
     }, [previewUrl]);
 
     useEffect(() => {
+        setResponses(ticket.responses);
+        setTicketStatus(ticket.status);
+        setTicketVersion(ticket.version ?? 0);
+    }, [ticket.responses, ticket.status, ticket.version]);
+
+    useEffect(() => {
+        if (flash?.conflict) {
+            setConflict(flash.conflict);
+            setShowReplyForm(true);
+        }
+    }, [flash?.conflict]);
+
+    useEffect(() => {
         if (flash?.success) {
             setSuccessMessage(flash.success);
-            setShowForward(false);
-            reset();
+            setShowReplyForm(false);
+            setPendingNotice(null);
+            setHighlightLast(true);
             const timer = setTimeout(() => setSuccessMessage(null), 5000);
             return () => clearTimeout(timer);
         }
-    }, [flash, reset]);
+    }, [flash?.success]);
 
-    // Reset edit form values when edit dialog opens or ticket changes
     useEffect(() => {
         if (isEditOpen) {
             editForm.setData({
@@ -269,48 +212,62 @@ export default function Show() {
             });
             editForm.clearErrors();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when dialog opens
     }, [isEditOpen, ticket]);
 
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files) return;
-        const newFiles = Array.from(e.target.files);
+    // Jumlah balasan saat form dibuka — dipakai untuk memberi tahu pengguna bahwa
+    // ada balasan baru dari petugas lain sebelum ia menekan Kirim.
+    const responsesAtFormOpen = useRef(responses.length);
+    const showReplyFormRef = useRef(showReplyForm);
+    showReplyFormRef.current = showReplyForm;
+    const responseCountRef = useRef(responses.length);
+    responseCountRef.current = responses.length;
 
-        const validFiles = newFiles.filter((file) => {
-            const isLt2MB = file.size <= 2 * 1024 * 1024;
-            const isValidType = isImageFile(file) || isPdfFile(file);
-            return isLt2MB && isValidType;
-        });
-
-        const updated = [...data.attachments, ...validFiles].slice(0, 3);
-        setData('attachments', updated);
-
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+    useEffect(() => {
+        if (showReplyForm) {
+            responsesAtFormOpen.current = responseCountRef.current;
+            setPendingNotice(null);
         }
-    };
+    }, [showReplyForm]);
 
-    const handleRemoveFile = (index: number) => {
-        const updated = data.attachments.filter((_, i) => i !== index);
-        setData('attachments', updated);
-    };
+    const handleIncomingResponse = useCallback((response: TicketResponseItem) => {
+        setResponses((prev) => (prev.some((item) => item.id === response.id) ? prev : [...prev, response]));
+        setHighlightLast(true);
 
-    const handleSubmit = () => {
-        post(route(`${routePrefix}.laporan-masuk.responses.store`, { ticket: ticket.id }), {
-            preserveScroll: true,
-            onSuccess: () => {
-                reset();
-                toast.success('Tanggapan berhasil dikirim', {
-                    description: 'Status laporan diperbarui dan email terkirim ke pelapor.',
-                });
-            },
-            onError: (errors) => {
-                const firstError = Object.values(errors)[0];
-                toast.error('Gagal mengirim tanggapan', {
-                    description: firstError ?? 'Periksa kembali isian Anda.',
-                });
-            },
+        setPendingNotice((current) => {
+            if (current !== null || !showReplyFormRef.current) {
+                return current;
+            }
+
+            // Hanya beri peringatan bila balasan benar-benar baru Semenjak form dibuka.
+            if (responsesAtFormOpen.current >= responseCountRef.current) {
+                return current;
+            }
+
+            return `Ada balasan baru dari ${response.user_name}.`;
         });
-    };
+    }, []);
+
+    const {
+        viewers,
+        typingName,
+        broadcastTyping,
+        version: liveVersion,
+    } = useTicketRealtime({
+        ticketId: ticket.id,
+        currentUserId: auth.user.id,
+        initialVersion: ticketVersion,
+        currentUserName: auth.user.name,
+        onResponse: handleIncomingResponse,
+        onStatusChange: (status, version) => {
+            setTicketStatus(status);
+            setTicketVersion((prev) => Math.max(prev, version));
+        },
+        onCompleted: () => {
+            setShowReplyForm(false);
+            setPendingNotice(null);
+        },
+    });
 
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -353,7 +310,6 @@ export default function Show() {
             ]}
         >
             <div className="space-y-6">
-                {/* Success alert */}
                 {successMessage && (
                     <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="h-5 w-5 shrink-0" />
@@ -361,7 +317,6 @@ export default function Show() {
                     </div>
                 )}
 
-                {/* Back button & header */}
                 <div className="flex items-center justify-between">
                     <Link
                         href={route(backRouteName)}
@@ -372,15 +327,13 @@ export default function Show() {
                     </Link>
                 </div>
 
-                {/* Main card */}
                 <div className="bg-card rounded-lg border">
-                    {/* Header */}
                     <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0 space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
                                 <h2 className="text-xl font-bold">{ticket.ticket_number}</h2>
                                 <Badge variant={classificationVariant(ticket.classification)}>{classificationLabel(ticket.classification)}</Badge>
-                                <Badge variant={statusVariant(ticket.status)}>{statusLabel(ticket.status)}</Badge>
+                                <Badge variant={statusVariant(ticketStatus)}>{statusLabel(ticketStatus)}</Badge>
                             </div>
                             <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
                                 <Clock className="size-3.5" />
@@ -405,16 +358,11 @@ export default function Show() {
                                     Hapus
                                 </Button>
                             )}
-                            <Button variant="outline" size="sm" onClick={() => setShowForward(!showForward)}>
-                                <Forward className="mr-1.5 size-4" />
-                                Forward / Balas
-                            </Button>
                         </div>
                     </div>
 
                     <Separator />
 
-                    {/* Info pelapor & meta */}
                     <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="flex items-start gap-3">
                             <div className="bg-muted rounded-md p-2">
@@ -498,7 +446,6 @@ export default function Show() {
 
                     <Separator />
 
-                    {/* Judul & Isi laporan */}
                     <div className="space-y-4 px-6 py-5">
                         {ticket.title && (
                             <div>
@@ -511,7 +458,6 @@ export default function Show() {
                             <div className="bg-muted/40 text-foreground mt-2 rounded-lg p-4 text-sm whitespace-pre-wrap">{ticket.content}</div>
                         </div>
 
-                        {/* Lampiran pelapor */}
                         {ticket.attachments && ticket.attachments.length > 0 && (
                             <div>
                                 <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
@@ -544,172 +490,36 @@ export default function Show() {
                     </div>
                 </div>
 
-                {/* Form Forward / Balas (Collapsible) */}
-                {showForward && (
-                    <div className="bg-card rounded-lg border p-6">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h3 className="font-semibold">Forward / Tindak Lanjut Laporan</h3>
-                            <Button variant="ghost" size="icon" className="size-7" onClick={() => setShowForward(false)}>
-                                <X className="size-4" />
-                            </Button>
-                        </div>
-                        <div className="space-y-4">
-                            <div>
-                                <Label htmlFor="type" className="mb-1.5 block">
-                                    Jenis Respon <span className="text-destructive">*</span>
-                                </Label>
-                                <Select value={data.type} onValueChange={(val) => setData('type', val)}>
-                                    <SelectTrigger id="type">
-                                        <SelectValue placeholder="Pilih jenis respon" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="respon_awal">Respon Awal (Informasi telah diterima & diproses)</SelectItem>
-                                        <SelectItem value="respon_substantif">Respon Substantif (Jawaban lengkap / penyelesaian)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.type && <p className="text-destructive mt-1 text-xs">{errors.type}</p>}
-                            </div>
-
-                            <div>
-                                <Label htmlFor="message" className="mb-1.5 block">
-                                    Pesan Tanggapan <span className="text-destructive">*</span>
-                                </Label>
-                                <Textarea
-                                    id="message"
-                                    rows={5}
-                                    placeholder="Tuliskan pesan tanggapan yang akan dikirimkan kepada pelapor..."
-                                    value={data.message}
-                                    onChange={(e) => setData('message', e.target.value)}
-                                />
-                                {errors.message && <p className="text-destructive mt-1 text-xs">{errors.message}</p>}
-                            </div>
-
-                            {/* Attachments */}
-                            <div>
-                                <Label className="mb-1.5 block">Lampiran (Opsional, maks 3 file, total maks 2MB/file)</Label>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/jpeg,image/png,application/pdf"
-                                        multiple
-                                        className="hidden"
-                                        onChange={handleFileChange}
-                                    />
-                                    <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                        <Paperclip className="mr-2 h-4 w-4" />
-                                        Pilih File
-                                    </Button>
-                                </div>
-
-                                {data.attachments.length > 0 && (
-                                    <div className="mt-2 space-y-2">
-                                        {data.attachments.map((file, index) => (
-                                            <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
-                                                <div className="flex items-center gap-2 truncate">
-                                                    {isImageFile(file) ? (
-                                                        <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
-                                                    ) : (
-                                                        <FileText className="h-4 w-4 shrink-0 text-red-500" />
-                                                    )}
-                                                    <span className="truncate font-medium">{file.name}</span>
-                                                    <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6"
-                                                        onClick={() => setPreviewFile(file)}
-                                                    >
-                                                        <Eye className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-destructive h-6 w-6"
-                                                        onClick={() => handleRemoveFile(index)}
-                                                    >
-                                                        <X className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex justify-end gap-2 pt-2">
-                                <Button variant="outline" onClick={() => setShowForward(false)}>
-                                    Batal
-                                </Button>
-                                <Button onClick={handleSubmit} disabled={processing}>
-                                    {processing ? (
-                                        <>
-                                            <LoaderCircle className="mr-2 size-4 animate-spin" />
-                                            Mengirim...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Send className="mr-2 size-4" />
-                                            Kirim Tanggapan
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Riwayat Tanggapan */}
-                {ticket.responses && ticket.responses.length > 0 && (
-                    <div className="bg-card rounded-lg border p-6">
-                        <h3 className="mb-4 flex items-center gap-2 font-semibold">
-                            <MessageSquare className="size-4" />
-                            Riwayat Tanggapan ({ticket.responses.length})
-                        </h3>
-                        <div className="space-y-4">
-                            {ticket.responses.map((resp) => (
-                                <div key={resp.id} className="bg-muted/20 space-y-2 rounded-lg border p-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium">{resp.user_name}</span>
-                                            <Badge variant={responseTypeVariant(resp.type)} className="text-[10px]">
-                                                {responseTypeLabel(resp.type)}
-                                            </Badge>
-                                        </div>
-                                        <span className="text-muted-foreground text-xs">{formatFullDate(resp.sent_at || resp.created_at)}</span>
-                                    </div>
-                                    <p className="text-sm whitespace-pre-wrap">{resp.message}</p>
-                                    {resp.attachments && resp.attachments.length > 0 && (
-                                        <div className="pt-2">
-                                            <p className="text-muted-foreground mb-1 text-xs font-medium">Lampiran:</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {resp.attachments.map((att) => (
-                                                    <Button
-                                                        key={att.id}
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="h-7 gap-1.5 text-xs"
-                                                        onClick={() => setPreviewAttachment(att)}
-                                                    >
-                                                        <Paperclip className="size-3" />
-                                                        <span className="max-w-[150px] truncate">{att.original_name}</span>
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <ResponseHistory
+                    responses={responses}
+                    ticketId={ticket.id}
+                    ticketStatus={ticketStatus}
+                    expectedVersion={liveVersion}
+                    routePrefix={routePrefix}
+                    showReplyForm={showReplyForm}
+                    viewers={viewers}
+                    currentUserId={auth.user.id}
+                    typingName={typingName}
+                    pendingNotice={pendingNotice}
+                    conflict={conflict}
+                    onDismissConflict={() => setConflict(null)}
+                    onToggleReply={() => setShowReplyForm(true)}
+                    onCancelReply={() => {
+                        setShowReplyForm(false);
+                        setPendingNotice(null);
+                    }}
+                    onReplySuccess={() => {
+                        setShowReplyForm(false);
+                        setPendingNotice(null);
+                        setHighlightLast(true);
+                    }}
+                    onPreviewAttachment={setPreviewAttachment}
+                    onPreviewFile={setPreviewFile}
+                    onTyping={broadcastTyping}
+                    highlightLast={highlightLast}
+                />
             </div>
 
-            {/* Modal Edit (Hanya Admin) */}
             {canEdit && (
                 <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
@@ -721,7 +531,6 @@ export default function Show() {
                             <DialogDescription>Perbarui data informasi pelapor, judul, dan isi laporan.</DialogDescription>
                         </DialogHeader>
 
-                        {/* Readonly info header */}
                         <div className="bg-muted/40 space-y-1 rounded-md border p-3 text-xs">
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Nomor Tiket:</span>
@@ -833,7 +642,6 @@ export default function Show() {
                 </Dialog>
             )}
 
-            {/* Modal Hapus (Hanya Admin) */}
             {canDelete && (
                 <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
                     <DialogContent className="sm:max-w-md">
@@ -876,7 +684,6 @@ export default function Show() {
                 </Dialog>
             )}
 
-            {/* Dialog Preview Lampiran Publik */}
             <Dialog open={!!previewAttachment} onOpenChange={() => setPreviewAttachment(null)}>
                 <DialogContent className="max-h-[90vh] sm:max-w-3xl">
                     <DialogHeader>
@@ -917,7 +724,6 @@ export default function Show() {
                 </DialogContent>
             </Dialog>
 
-            {/* Dialog Preview File Upload */}
             <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
                 <DialogContent className="max-h-[90vh] sm:max-w-3xl">
                     <DialogHeader>

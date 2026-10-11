@@ -4,10 +4,13 @@ namespace App\Providers;
 
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Models\User;
 use App\Support\RekapCache;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -38,6 +41,16 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($request->ip());
         });
 
+        // Balasan petugas: dibatasi per akun, bukan per IP (banyak petugas sharing IP).
+        RateLimiter::for('ticket-response', function (Request $request) {
+            return Limit::perMinute(20)->by((string) ($request->user()?->id ?? $request->ip()));
+        });
+
+        // Lapis kedua login: per IP saja, lebih longgar dari per email+IP.
+        RateLimiter::for('login-ip', function (Request $request) {
+            return Limit::perMinute(20)->by('login-ip|'.$request->ip());
+        });
+
         // Rekap di-cache per periode. Rotasi token saat tiket/kanal berubah
         // supaya halaman rekap otomatis menghitung ulang pada request berikutnya.
         Ticket::saved(function (Ticket $ticket) {
@@ -56,5 +69,18 @@ class AppServiceProvider extends ServiceProvider
 
         Channel::saved(fn () => RekapCache::invalidate());
         Channel::deleted(fn () => RekapCache::invalidate());
+
+        // Jaga konsistensi kolom sesi meski logout terjadi lewat jalan lain
+        // (mis. session()->invalidate() di controller lain atau flush manual).
+        Event::listen(Logout::class, function (Logout $event): void {
+            $user = $event->user;
+
+            if ($user instanceof User) {
+                $user->forceFill([
+                    'current_session_id' => null,
+                    'last_activity_at' => null,
+                ])->saveQuietly();
+            }
+        });
     }
 }

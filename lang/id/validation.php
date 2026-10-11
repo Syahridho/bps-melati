@@ -1,0 +1,180 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pesan Validasi
+    |--------------------------------------------------------------------------
+    |
+    | Override string bawaan Laravel (bahasa Inggris) ke Bahasa Indonesia.
+    |
+    */
+
+    'accepted' => 'Kolom :attribute harus diterima.',
+    'accepted_if' => 'Kolom :attribute harus diterima ketika :other bernilai :value.',
+    'active_url' => 'Kolom :attribute bukan URL yang valid.',
+    'after' => 'Kolom :attribute harus berupa tanggal setelah :date.',
+    'after_or_equal' => 'Kolom :attribute harus berupa tanggal setelah atau sama dengan :date.',
+    'alpha' => 'Kolom :attribute hanya boleh berisi huruf.',
+    'alpha_dash' => 'Kolom :attribute hanya boleh berisi huruf, angka, tanda hubung, dan garis bawah.',
+    'alpha_num' => 'Kolom :attribute hanya boleh berisi huruf dan angka.',
+    'array' => 'Kolom :attribute harus berupa larik.',
+    'ascii' => 'Kolom :attribute hanya boleh berisi karakter dan simbol satu byte.',
+    'before' => 'Kolom :attribute harus berupa tanggal sebelum :date.',
+    'before_or_equal' => 'Kolom :attribute harus berupa tanggal sebelum atau sama dengan :date.',
+    'between' => [
+        'array' => 'Kolom :attribute harus berisi antara :min sampai :max item.',
+        'file' => 'Ukuran :attribute harus antara :min sampai :max kilobyte.',
+        'numeric' => 'Kolom :attribute harus bernilai antara :min sampai :max.',
+        'string' => 'Kolom :attribute harus berisi antara :min sampai :max karakter.',
+    ],
+    'boolean' => 'Kolom :attribute harus bernilai benar atau salah.',
+    'can' => 'Kolom :attribute berisi nilai yang tidak diizinkan.',
+    'confirmed' => 'Konfirmasi :attribute tidak cocok.',
+    'contains' => 'Kolom :attribute tidak memiliki nilai yang diperlukan.',
+    'current_password' => 'Password yang dimasukkan salah.',
+    'date' => 'Kolom :attribute bukan tanggal yang valid.',
+    'date_equals' => 'Kolom :attribute harus berupa tanggal yang sama dengan :date.',
+    'date_format' => 'Kolom :attribute tidak sesuai dengan format :format.',
+    'decimal' => 'Kolom :attribute harus memiliki :decimal digit desimal.',
+    'declined' => 'Kolom :attribute harus ditolak.',
+    'declined_if' => 'Kolom :attribute harus ditolak ketika :other bernilai :value.',
+    'different' => 'Kolom :attribute dan :other harus berbeda.',
+    'digits' => 'Kolom :attribute harus terdiri dari :digits digit.',
+    'digits_between' => 'Kolom :attribute harus terdiri dari :min sampai :max digit.',
+    'dimensions' => 'Kolom :attribute memiliki dimensi gambar yang tidak valid.',
+    'distinct' => 'Kolom :attribute memiliki nilai yang duplikat.',
+    'doesnt_end_with' => 'Kolom :attribute tidak boleh diakhiri dengan salah satu dari: :values.',
+    'doesnt_start_with' => 'Kolom :attribute tidak boleh diawali dengan salah satu dari: :values.',
+    'email' => 'Format :attribute tidak valid.',
+    'ends_with' => 'Kolom :attribute harus diakhiri dengan salah satu dari: :values.',
+    'enum' => 'Nilai :attribute tidak valid.',
+    'exists' => 'Data :attribute tidak valid.',
+    'extensions' => 'Kolom :attribute harus memiliki salah satu dari ekstensi berikut: :values.',
+    'file' => 'Kolom :attribute harus berupa berkas.',
+    'filled' => 'Kolom :attribute wajib diisi.',
+    'gt' => [
+        'array' => 'Kolom :attribute harus berisi lebih dari :value item.',
+        'file' => 'Ukuran :attribute harus lebih dari :value kilobyte.',
+        'numeric' => 'Kolom :attribute harus lebih dari :value.',
+        'string' => 'Kolom :attribute harus lebih dari :value karakter.',
+    ],
+    'gte' => [
+        'array' => 'Kolom :attribute harus berisi :value item atau lebih.',
+        'file' => 'Ukuran :attribute harus :value kilobyte atau lebih.',
+        'numeric' => 'Kolom :attribute harus :value atau lebih.',
+        'string' => 'Kolom :attribute harus :value karakter atau lebih.',
+    ],
+    'hex_color' => 'Kolom :attribute harus berupa warna heksadesimal yang valid.',
+    'image' => 'Kolom :attribute harus berupa gambar.',
+    'in' => 'Kolom :attribute yang dipilih tidak valid.',
+    'in_array' => 'Kolom :attribute tidak ada di dalam :other.',
+    'integer' => 'Kolom :attribute harus berupa bilangan bulat.',
+    'ip' => 'Kolom :attribute harus berupa alamat IP yang valid.',
+    'ipv4' => 'Kolom :attribute harus berupa alamat IPv4 yang valid.',
+    'ipv6' => 'Kolom :attribute harus berupa alamat IPv6 yang valid.',
+    'json' => 'Kolom :attribute harus berupa string JSON yang valid.',
+    'list' => 'Kolom :attribute harus berupa larik.',
+    'lowercase' => 'Kolom :attribute harus berupa huruf kecil.',
+    'lt' => [
+        'array' => 'Kolom :attribute harus berisi kurang dari :value item.',
+        'file' => 'Ukuran :attribute harus kurang dari :value kilobyte.',
+        'numeric' => 'Kolom :attribute harus kurang dari :value.',
+        'string' => 'Kolom :attribute harus kurang dari :value karakter.',
+    ],
+    'lte' => [
+        'array' => 'Kolom :attribute tidak boleh berisi lebih dari :value item.',
+        'file' => 'Ukuran :attribute tidak boleh lebih dari :value kilobyte.',
+        'numeric' => 'Kolom :attribute tidak boleh lebih dari :value.',
+        'string' => 'Kolom :attribute tidak boleh lebih dari :value karakter.',
+    ],
+    'mac_address' => 'Kolom :attribute harus berupa alamat MAC yang valid.',
+    'max' => [
+        'array' => 'Kolom :attribute tidak boleh berisi lebih dari :max item.',
+        'file' => 'Ukuran :attribute tidak boleh lebih dari :max kilobyte.',
+        'numeric' => 'Kolom :attribute tidak boleh lebih dari :max.',
+        'string' => 'Kolom :attribute tidak boleh lebih dari :max karakter.',
+    ],
+    'max_digits' => 'Kolom :attribute tidak boleh memiliki lebih dari :max digit.',
+    'mimes' => 'Kolom :attribute harus berupa berkas berjenis: :values.',
+    'mimetypes' => 'Kolom :attribute harus berupa berkas berjenis: :values.',
+    'min' => [
+        'array' => 'Kolom :attribute harus berisi minimal :min item.',
+        'file' => 'Ukuran :attribute harus minimal :min kilobyte.',
+        'numeric' => 'Kolom :attribute harus minimal :min.',
+        'string' => 'Kolom :attribute harus minimal :min karakter.',
+    ],
+    'min_digits' => 'Kolom :attribute harus memiliki minimal :min digit.',
+    'missing' => 'Kolom :attribute tidak ada.',
+    'missing_in' => 'Kolom :attribute tidak ada di dalam :values.',
+    'missing_unless' => 'Kolom :attribute tidak ada kecuali :other bernilai :value.',
+    'missing_with' => 'Kolom :attribute tidak ada jika :values ada.',
+    'missing_with_all' => 'Kolom :attribute tidak ada jika :values ada.',
+    'multiple_of' => 'Kolom :attribute harus merupakan kelipatan dari :value.',
+    'not_in' => 'Kolom :attribute yang dipilih tidak valid.',
+    'not_regex' => 'Format :attribute tidak valid.',
+    'numeric' => 'Kolom :attribute harus berupa angka.',
+    'present' => 'Kolom :attribute harus ada.',
+    'present_if' => 'Kolom :attribute harus ada ketika :other bernilai :value.',
+    'present_unless' => 'Kolom :attribute harus ada kecuali :other bernilai :value.',
+    'present_with' => 'Kolom :attribute harus ada ketika :values ada.',
+    'present_with_all' => 'Kolom :attribute harus ada ketika :values ada.',
+    'prohibited' => 'Kolom :attribute dilarang diisi.',
+    'prohibited_if' => 'Kolom :attribute dilarang diisi ketika :other bernilai :value.',
+    'prohibited_if_accepted' => 'Kolom :attribute dilarang diisi ketika :other diterima.',
+    'prohibited_if_declined' => 'Kolom :attribute dilarang diisi ketika :other ditolak.',
+    'prohibited_unless' => 'Kolom :attribute dilarang diisi kecuali :other bernilai :value.',
+    'prohibits' => 'Kolom :attribute melarang :other terisi.',
+    'regex' => 'Format :attribute tidak valid.',
+    'required' => 'Kolom :attribute wajib diisi.',
+    'required_array_keys' => 'Kolom :attribute harus memiliki entri untuk: :values.',
+    'required_if' => 'Kolom :attribute wajib diisi ketika :other bernilai :value.',
+    'required_if_accepted' => 'Kolom :attribute wajib diisi ketika :other diterima.',
+    'required_if_declined' => 'Kolom :attribute wajib diisi ketika :other ditolak.',
+    'required_unless' => 'Kolom :attribute wajib diisi kecuali :other bernilai :value.',
+    'required_with' => 'Kolom :attribute wajib diisi ketika :values ada.',
+    'required_with_all' => 'Kolom :attribute wajib diisi ketika :values ada.',
+    'required_without' => 'Kolom :attribute wajib diisi ketika :values tidak ada.',
+    'required_without_all' => 'Kolom :attribute wajib diisi ketika :values tidak ada.',
+    'same' => 'Kolom :attribute dan :other harus sama.',
+    'size' => [
+        'array' => 'Kolom :attribute harus berisi :size item.',
+        'file' => 'Ukuran :attribute harus :size kilobyte.',
+        'numeric' => 'Kolom :attribute harus bernilai :size.',
+        'string' => 'Kolom :attribute harus berisi :size karakter.',
+    ],
+    'starts_with' => 'Kolom :attribute harus diawali dengan salah satu dari: :values.',
+    'string' => 'Kolom :attribute harus berupa teks.',
+    'timezone' => 'Kolom :attribute harus berupa zona waktu yang valid.',
+    'unique' => 'Data :attribute sudah digunakan.',
+    'uploaded' => 'Kolom :attribute gagal diunggah.',
+    'uppercase' => 'Kolom :attribute harus berupa huruf besar.',
+    'ulid' => 'Kolom :attribute harus berupa ULID yang valid.',
+    'url' => 'Format :attribute tidak valid.',
+    'uuid' => 'Kolom :attribute harus berupa UUID yang valid.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pesan Kustom
+    |--------------------------------------------------------------------------
+    */
+
+    'custom' => [
+        'email' => [
+            'required' => 'Email wajib diisi.',
+            'email' => 'Format email tidak valid.',
+        ],
+        'password' => [
+            'required' => 'Password wajib diisi.',
+        ],
+    ],
+
+    'attributes' => [
+        'email' => 'email',
+        'password' => 'password',
+        'current_password' => 'password saat ini',
+        'password_confirmation' => 'konfirmasi password',
+    ],
+
+];

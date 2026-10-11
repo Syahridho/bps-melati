@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Cache;
 
 class Ticket extends Model
@@ -24,6 +25,7 @@ class Ticket extends Model
         'content',
         'access_code',
         'status',
+        'version',
         'is_read',
         'source_app',
         'created_by',
@@ -36,6 +38,7 @@ class Ticket extends Model
             'is_read' => 'boolean',
             'completed_at' => 'datetime',
             'sequence' => 'integer',
+            'version' => 'integer',
         ];
     }
 
@@ -57,6 +60,15 @@ class Ticket extends Model
     public function responses(): HasMany
     {
         return $this->hasMany(TicketResponse::class);
+    }
+
+    /**
+     * Respons terakhir pada tiket ini (terlama -> terbaru), dipakai untuk
+     * label "dibalas oleh X" di halaman daftar.
+     */
+    public function lastResponse(): HasOne
+    {
+        return $this->hasOne(TicketResponse::class)->latestOfMany('id');
     }
 
     /**

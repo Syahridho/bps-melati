@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { cn } from '@/lib/utils';
-import { AlertCircle, HelpCircle, Lightbulb, Mail, Megaphone, Share2, ShieldAlert, Users, Globe } from 'lucide-react';
+import { AlertCircle, Globe, HelpCircle, Lightbulb, Mail, Megaphone, Share2, ShieldAlert, Users } from 'lucide-react';
 
 export interface PublicStats {
     total: number;

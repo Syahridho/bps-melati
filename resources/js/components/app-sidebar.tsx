@@ -144,7 +144,6 @@ export function AppSidebar() {
                 },
             ],
         },
-       
     ];
 
     const mainNavItems = auth.user.role === 'admin' ? adminNavItems : operatorNavItems;

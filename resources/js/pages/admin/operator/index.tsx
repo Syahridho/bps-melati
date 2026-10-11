@@ -1,4 +1,4 @@
-import { Pagination } from '@/components/pagination';
+import { type PaginatedData, Pagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,17 +9,25 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AdminPage from '@/pages/admin/page';
-import { type PaginatedData, type SharedData } from '@/types';
+import { type SharedData } from '@/types';
 import { router, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Edit, LoaderCircle, MoreHorizontal, Search, Trash2, UserPlus, Users } from 'lucide-react';
+import { CheckCircle2, Edit, LoaderCircle, LogOut, MoreHorizontal, Search, Trash2, UserPlus, Users } from 'lucide-react';
 import { type FormEvent, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Operator {
     id: number;
     name: string;
     email: string;
     role: string;
+    is_active: boolean;
     created_at: string;
+    is_online: boolean;
+    last_active_at: string | null;
+    last_login_at: string | null;
+    last_login_device: string;
+    last_login_ip: string | null;
+    has_session: boolean;
 }
 
 interface OperatorPageProps extends SharedData {
@@ -34,7 +42,7 @@ interface OperatorPageProps extends SharedData {
 }
 
 export default function KelolaOperator() {
-    const { operators, filters, flash } = usePage<OperatorPageProps>().props;
+    const { auth, operators, filters, flash } = usePage<OperatorPageProps>().props;
 
     const [search, setSearch] = useState(filters.search || '');
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -72,6 +80,18 @@ export default function KelolaOperator() {
     const handleSearchChange = (value: string) => {
         setSearch(value);
         router.get(route('dashboard.admin.operator.index'), { search: value, per_page: filters.per_page }, { preserveState: true, replace: true });
+    };
+
+    const handleForceLogout = (target: Operator) => {
+        router.post(
+            route('dashboard.admin.operator.force-logout', { operator: target.id }),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => toast.success(`Sesi ${target.name} telah diakhiri.`),
+                onError: () => toast.error('Gagal mengakhiri sesi pengguna.'),
+            },
+        );
     };
 
     const handlePerPageChange = (perPage: number) => {
@@ -184,14 +204,15 @@ export default function KelolaOperator() {
                                         <TableHead>Nama Lengkap</TableHead>
                                         <TableHead>Email</TableHead>
                                         <TableHead>Role</TableHead>
-                                        <TableHead>Tanggal Dibuat</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Login Terakhir</TableHead>
                                         <TableHead className="w-[100px] text-right">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {operators.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-muted-foreground h-24 text-center">
+                                            <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
                                                 Tidak ada data pengguna ditemukan.
                                             </TableCell>
                                         </TableRow>
@@ -208,12 +229,57 @@ export default function KelolaOperator() {
                                                         {op.role}
                                                     </Badge>
                                                 </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-wrap items-center gap-1.5">
+                                                        {op.is_active ? (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={
+                                                                    op.is_online
+                                                                        ? 'gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400'
+                                                                        : 'text-[10px]'
+                                                                }
+                                                            >
+                                                                <span
+                                                                    className={
+                                                                        op.is_online
+                                                                            ? 'inline-block size-1.5 rounded-full bg-emerald-500'
+                                                                            : 'bg-muted-foreground inline-block size-1.5 rounded-full'
+                                                                    }
+                                                                    aria-hidden="true"
+                                                                />
+                                                                {op.is_online ? 'Online' : 'Offline'}
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="border-destructive/30 bg-destructive/10 text-destructive text-[10px]"
+                                                            >
+                                                                Nonaktif
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell className="text-muted-foreground text-xs">
-                                                    {new Date(op.created_at).toLocaleDateString('id-ID', {
-                                                        day: 'numeric',
-                                                        month: 'long',
-                                                        year: 'numeric',
-                                                    })}
+                                                    {op.last_login_at ? (
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span>
+                                                                {new Date(op.last_login_at).toLocaleString('id-ID', {
+                                                                    day: 'numeric',
+                                                                    month: 'short',
+                                                                    year: 'numeric',
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit',
+                                                                })}
+                                                            </span>
+                                                            <span className="text-[10px] opacity-80">
+                                                                {op.last_login_device}
+                                                                {op.last_login_ip ? ` · ${op.last_login_ip}` : ''}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        'Belum pernah login'
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
@@ -228,6 +294,15 @@ export default function KelolaOperator() {
                                                                 <Edit className="mr-2 h-4 w-4" />
                                                                 Edit
                                                             </DropdownMenuItem>
+                                                            {op.has_session && op.id !== auth.user.id && (
+                                                                <DropdownMenuItem
+                                                                    onClick={() => handleForceLogout(op)}
+                                                                    className="text-amber-600 focus:text-amber-600 dark:text-amber-400"
+                                                                >
+                                                                    <LogOut className="mr-2 h-4 w-4" />
+                                                                    Paksa Logout
+                                                                </DropdownMenuItem>
+                                                            )}
                                                             <DropdownMenuItem
                                                                 onClick={() => setDeletingOperator(op)}
                                                                 className="text-destructive focus:text-destructive"

@@ -2,11 +2,13 @@ import AppearanceToggleDropdown from '@/components/appearance-dropdown';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { type SharedData } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { useEchoPublic } from '@laravel/echo-react';
 import {
     AlertCircle,
     ArrowLeft,
@@ -168,18 +170,24 @@ function isPdfFile(file: File): boolean {
 }
 
 export default function CheckTicket() {
-    const { auth, ticketNumber, ticket, searched, flash, errors: pageErrors } = usePage<CheckPageProps>().props;
+    const { ticketNumber, ticket, searched, flash, errors: pageErrors } = usePage<CheckPageProps>().props;
     const [inputQuery, setInputQuery] = useState(ticketNumber || '');
     const [copied, setCopied] = useState(false);
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [completing, setCompleting] = useState(false);
+    const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         message: '',
         attachments: [] as File[],
+    });
+
+    useEchoPublic(ticket ? `ticket.${ticket.ticket_number}` : '', '.ticket.updated', () => {
+        // Ketika ada update dari WebSocket, muat ulang data tiket dari server
+        router.reload({ only: ['ticket'] });
     });
 
     useEffect(() => {
@@ -273,7 +281,6 @@ export default function CheckTicket() {
                         </div>
                         <nav className="flex items-center gap-4">
                             <AppearanceToggleDropdown />
-                           
                         </nav>
                     </div>
                 </header>
@@ -551,9 +558,9 @@ export default function CheckTicket() {
                                                                     >
                                                                         {responseTypeLabel(res.type)}
                                                                     </Badge>
-                                                                    {res.user_name !== "Operator" && res.user_name !== "Admin" && (
+                                                                    {res.user_name !== 'Operator' && res.user_name !== 'Admin' && (
                                                                         <span className="text-xs font-semibold">{res.user_name}</span>
-                                                                        )}
+                                                                    )}
                                                                 </div>
                                                                 <span className="text-muted-foreground text-xs">
                                                                     {res.sent_at ? formatDateTime(res.sent_at) : formatDateTime(res.created_at)}
@@ -604,7 +611,7 @@ export default function CheckTicket() {
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={handleComplete}
+                                                            onClick={() => setIsCompleteDialogOpen(true)}
                                                             disabled={completing}
                                                             className="flex-1 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 sm:flex-initial dark:text-emerald-400"
                                                         >
@@ -744,7 +751,35 @@ export default function CheckTicket() {
                     )}
                 </main>
             </div>
+
+            {/* Modal Konfirmasi Selesai */}
+            <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Tandai Laporan Selesai?</DialogTitle>
+                        <DialogDescription>
+                            Apakah Anda yakin laporan ini telah selesai ditangani dan ingin menutupnya? Tiket yang sudah ditutup tidak dapat dibalas
+                            kembali.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-4 flex flex-row gap-2 sm:gap-0">
+                        <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => setIsCompleteDialogOpen(false)}>
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setIsCompleteDialogOpen(false);
+                                handleComplete();
+                            }}
+                            disabled={completing}
+                            className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 sm:flex-none"
+                        >
+                            Ya, Tandai Selesai
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
-

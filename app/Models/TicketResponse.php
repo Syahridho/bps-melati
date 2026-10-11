@@ -13,6 +13,7 @@ class TicketResponse extends Model
         'user_id',
         'type',
         'message',
+        'idempotency_key',
         'sent_at',
         'email_sent_at',
     ];
@@ -23,6 +24,14 @@ class TicketResponse extends Model
             'sent_at' => 'datetime',
             'email_sent_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Kunci idempotensi untuk mendeteksi request kembar (double submit / retry).
+     */
+    public function scopeWithIdempotencyKey($query, ?string $key)
+    {
+        return $key === null ? $query : $query->where('idempotency_key', $key);
     }
 
     public function ticket(): BelongsTo

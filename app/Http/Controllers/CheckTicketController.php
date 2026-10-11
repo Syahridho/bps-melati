@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use Illuminate\Http\RedirectResponse;
@@ -143,6 +144,8 @@ class CheckTicketController extends Controller
 
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
+
+        TicketUpdated::dispatch($ticket, $response->load(['user', 'attachments']));
 
         return redirect()->back()->with('flash', [
             'success' => 'Balasan Anda berhasil terkirim!',

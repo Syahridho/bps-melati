@@ -10,7 +10,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Circle, Clock, Copy, Eye, HelpCircle, Lightbulb, LoaderCircle, MessageCircle, MessagesSquare, Paperclip, PenSquare, Ticket, Trash2, X } from 'lucide-react';
+import {
+    AlertCircle,
+    CheckCircle2,
+    Circle,
+    Clock,
+    Copy,
+    Eye,
+    HelpCircle,
+    Lightbulb,
+    LoaderCircle,
+    MessageCircle,
+    MessagesSquare,
+    Paperclip,
+    PenSquare,
+    Ticket,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 
 interface ChannelChild {
@@ -250,14 +267,13 @@ export default function Welcome() {
                         <img src="/desc-melati.webp" alt="Logo BPS" className="h-[26px] w-[74px] shrink-0 object-contain sm:h-[30px] sm:w-[84px]" />
 
                         <nav className="ml-auto flex items-center gap-1.5 sm:gap-2">
-                            
                             <Button asChild variant="outline" size="sm">
                                 <Link href={route('tickets.check')}>
                                     <span className="sm:hidden">Cek Tiket</span>
                                     <span className="hidden sm:inline">Cek Status Tiket</span>
                                 </Link>
                             </Button>
-                            
+
                             {auth.user && (
                                 <Button asChild size="sm">
                                     <Link href={auth.user.role === 'admin' ? route('dashboard.admin.index') : route('dashboard.operator.index')}>
@@ -688,9 +704,7 @@ function AlurPelaporan() {
                 <h3 id="alur-title" className="text-xl font-bold tracking-tight sm:text-2xl">
                     Bagaimana Alur Pelaporan?
                 </h3>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                    5 langkah mudah menyampaikan dan memantau laporan Anda hingga selesai.
-                </p>
+                <p className="text-muted-foreground text-xs sm:text-sm">5 langkah mudah menyampaikan dan memantau laporan Anda hingga selesai.</p>
             </div>
 
             <ol className="grid grid-cols-1 md:grid-cols-5 md:gap-4">
@@ -711,7 +725,7 @@ function AlurPelaporan() {
                             {!isLast && (
                                 <div
                                     aria-hidden="true"
-                                    className="bg-border absolute left-6 top-12 bottom-0 z-0 w-px -translate-x-1/2 md:left-1/2 md:top-7 md:bottom-auto md:h-px md:w-full md:translate-x-0"
+                                    className="bg-border absolute top-12 bottom-0 left-6 z-0 w-px -translate-x-1/2 md:top-7 md:bottom-auto md:left-1/2 md:h-px md:w-full md:translate-x-0"
                                 />
                             )}
 
@@ -719,9 +733,7 @@ function AlurPelaporan() {
                             <div
                                 className={cn(
                                     'relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full transition-colors md:size-14',
-                                    isFirst
-                                        ? 'bg-primary text-primary-foreground shadow-sm'
-                                        : 'bg-card border text-foreground shadow-sm',
+                                    isFirst ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-card text-foreground border shadow-sm',
                                 )}
                             >
                                 <Icon className="size-5 md:size-6" aria-hidden="true" />

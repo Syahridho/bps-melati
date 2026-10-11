@@ -21,7 +21,8 @@ interface ResetPasswordForm {
 }
 
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
-    const { data, setData, post, processing, errors, reset } = useForm<ResetPasswordForm>({
+    // Index signature diperlukan oleh constraint FormDataType dari @inertiajs/react.
+    const { data, setData, post, processing, errors, reset } = useForm<ResetPasswordForm & Record<string, string>>({
         token: token,
         email: email,
         password: '',

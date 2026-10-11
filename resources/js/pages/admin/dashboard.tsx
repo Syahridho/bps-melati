@@ -158,9 +158,7 @@ export default function AdminDashboard({ stats, trend, recentTickets, periodLabe
             <div className="w-full max-w-full min-w-0 space-y-6">
                 {/* Header periode */}
                 <div className="flex flex-col gap-1">
-                    <h2 className="text-sm leading-snug font-semibold break-words sm:text-base">
-                        PENANGANAN KONSULTASI PENGADUAN BPS PROVINSI RIAU
-                    </h2>
+                    <h2 className="text-sm leading-snug font-semibold break-words sm:text-base">PENANGANAN KONSULTASI PENGADUAN BPS PROVINSI RIAU</h2>
                     <p className="text-muted-foreground text-xs">Menampilkan data: {periodLabel}</p>
                 </div>
 

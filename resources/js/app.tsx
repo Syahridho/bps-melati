@@ -1,5 +1,6 @@
 import '../css/app.css';
 
+import { SessionProvider } from '@/components/session-provider';
 import { createInertiaApp } from '@inertiajs/react';
 import { configureEcho } from '@laravel/echo-react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -23,7 +24,15 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
-        root.render(<App {...props} />);
+        // SessionProvider berada di luar konteks Inertia, jadi id user awal
+        // harus diteruskan lewat prop, bukan diambil dengan usePage().
+        const initialUserId = readInitialUserId(props.initialPage.props);
+
+        root.render(
+            <SessionProvider initialUserId={initialUserId}>
+                <App {...props} />
+            </SessionProvider>,
+        );
     },
     progress: {
         color: '#005fb6',
@@ -32,3 +41,14 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+function readInitialUserId(props: unknown): number | null {
+    if (typeof props !== 'object' || props === null) {
+        return null;
+    }
+
+    const auth = (props as { auth?: { user?: { id?: unknown } } }).auth;
+    const id = auth?.user?.id;
+
+    return typeof id === 'number' ? id : null;
+}

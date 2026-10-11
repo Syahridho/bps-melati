@@ -1,0 +1,15 @@
+export const SATUAN_TUGAS_OPTIONS = [
+    'BPS Provinsi Riau (berkedudukan di Pekanbaru)',
+    'BPS Kabupaten Kuantan Singingi',
+    'BPS Kabupaten Indragiri Hulu',
+    'BPS Kabupaten Indragiri Hilir',
+    'BPS Kabupaten Pelalawan',
+    'BPS Kabupaten Siak',
+    'BPS Kabupaten Kampar',
+    'BPS Kabupaten Rokan Hulu',
+    'BPS Kabupaten Bengkalis',
+    'BPS Kabupaten Rokan Hilir',
+    'BPS Kabupaten Kepulauan Meranti',
+    'BPS Kota Pekanbaru',
+    'BPS Kota Dumai',
+];

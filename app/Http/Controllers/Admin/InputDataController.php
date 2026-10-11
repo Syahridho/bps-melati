@@ -8,6 +8,7 @@ use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketResponseSubmitted;
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Support\TicketResponsePayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -135,7 +136,12 @@ class InputDataController extends Controller
      */
     public function show(Request $request, string $ticketNumber): Response
     {
-        $ticket = Ticket::with(['channel', 'creator', 'attachments', 'responses.user', 'responses.attachments'])
+        $ticket = Ticket::with([
+            'channel',
+            'creator',
+            'attachments',
+            'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
+        ])
             ->where('ticket_number', $ticketNumber)
             ->where('source_app', 'admin')
             ->firstOrFail();
@@ -164,6 +170,7 @@ class InputDataController extends Controller
                 'reporter_wa' => $ticket->reporter_wa,
                 'content' => $ticket->content,
                 'status' => $ticket->status,
+                'version' => $ticket->version,
                 'is_read' => $ticket->is_read,
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
@@ -178,28 +185,9 @@ class InputDataController extends Controller
                     'size' => $attachment->size,
                     'url' => Storage::url($attachment->path),
                 ]),
-                'responses' => $ticket->responses->sortByDesc('created_at')->values()->map(function ($response) use ($ticket) {
-                    $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
-                    $userName = $isReporter
-                        ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
-                        : ($response->user?->name ?? '-');
-
-                    return [
-                        'id' => $response->id,
-                        'user_name' => $userName,
-                        'is_reporter' => $isReporter,
-                        'type' => $response->type,
-                        'message' => $response->message,
-                        'sent_at' => $response->sent_at->toIso8601String(),
-                        'attachments' => $response->attachments->map(fn ($attachment) => [
-                            'id' => $attachment->id,
-                            'original_name' => $attachment->original_name,
-                            'mime_type' => $attachment->mime_type,
-                            'size' => $attachment->size,
-                            'url' => Storage::url($attachment->path),
-                        ]),
-                    ];
-                }),
+                'responses' => $ticket->responses->map(
+                    fn ($response) => TicketResponsePayload::from($response, $ticket)
+                )->values()->all(),
             ],
         ]);
     }

@@ -2,6 +2,7 @@ import { Pagination, type PaginatedData } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useInboxRealtime } from '@/pages/admin/hooks/use-inbox-realtime';
 import AdminPage from '@/pages/admin/page';
 import { type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -21,10 +22,12 @@ interface Ticket {
     reporter_wa: string | null;
     content: string;
     status: Status;
+    version: number;
     is_read: boolean;
     source_app: string;
     channel: string;
     created_at: string;
+    last_responded_by: string | null;
 }
 
 type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif';
@@ -117,6 +120,10 @@ export default function LaporanMasuk() {
 
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Jangan reload otomatis saat pengguna sedang mengetik di kolom pencarian.
+    const isSearching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
+    const { recentlyAnswered, clearRecentlyAnswered } = useInboxRealtime({ searching: isSearching });
 
     useEffect(() => {
         setSearchQuery(filters.search || '');
@@ -240,6 +247,7 @@ export default function LaporanMasuk() {
                                     <Link
                                         href={route(`${routePrefix}.laporan-masuk.show`, { ticketNumber: ticket.ticket_number })}
                                         className="min-w-0 flex-1"
+                                        onClick={() => clearRecentlyAnswered(ticket.id)}
                                     >
                                         <div className="mb-1 flex items-center justify-between gap-2">
                                             <span
@@ -281,6 +289,11 @@ export default function LaporanMasuk() {
                                                 </Badge>
                                             ) : null}
                                             <span className="text-muted-foreground text-[10px]">{ticket.channel}</span>
+                                            {recentlyAnswered[ticket.id] && (
+                                                <Badge variant="outline" className="text-[10px]">
+                                                    dibalas oleh {recentlyAnswered[ticket.id]}
+                                                </Badge>
+                                            )}
                                         </div>
                                     </Link>
                                 </div>

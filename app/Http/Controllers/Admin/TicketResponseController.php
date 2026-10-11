@@ -2,88 +2,144 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\ReplyToTicket;
+use App\Exceptions\TicketAlreadyCompletedException;
+use App\Exceptions\TicketAlreadyRespondedException;
 use App\Http\Controllers\Controller;
-use App\Mail\TicketResponseSubmitted;
+use App\Http\Requests\StoreTicketResponseRequest;
 use App\Models\Ticket;
-use App\Models\TicketResponse;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class TicketResponseController extends Controller
 {
     /**
      * Simpan respon (respon awal / respon substantif) untuk tiket.
+     *
+     * Seluruh logika tabrakan & idempotensi berada di App\Actions\ReplyToTicket.
+     * Controller hanya menerjemahkan exception domain menjadi respons HTTP/Inertia.
      */
-    public function store(Request $request, Ticket $ticket): RedirectResponse
+    public function store(StoreTicketResponseRequest $request, Ticket $ticket, ReplyToTicket $replyToTicket): RedirectResponse|JsonResponse
     {
-        $validated = $request->validate([
-            'type' => ['required', 'in:respon_awal,respon_substantif'],
-            'message' => ['required', 'string', 'min:10'],
-            'attachments' => ['nullable', 'array', 'max:3'],
-            'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
-        ]);
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 403);
 
-        $response = TicketResponse::create([
-            'ticket_id' => $ticket->id,
-            'user_id' => auth()->id(),
-            'type' => $validated['type'],
-            'message' => $validated['message'],
-            'sent_at' => now(),
-        ]);
+        try {
+            $result = $replyToTicket->handle(
+                $ticket,
+                $actor,
+                [
+                    'type' => $request->validated('response_type'),
+                    'message' => $request->validated('response_message'),
+                    'idempotency_key' => $request->validated('idempotency_key'),
+                    'expected_version' => $request->validated('expected_version'),
+                ],
+                $request->file('response_attachments', []),
+            );
 
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store("response_attachments/{$response->id}", 'public');
+            $response = $result->response;
+        } catch (TicketAlreadyRespondedException $e) {
+            Log::warning('Balasan ditolak (409): Respon Awal sudah ada.', [
+                'ticket_id' => $ticket->id,
+                'actor_id' => $actor->id,
+                'existing_response_id' => $e->existingResponse->id,
+            ]);
 
-                $response->attachments()->create([
-                    'path' => $path,
-                    'original_name' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getClientMimeType(),
-                    'size' => $file->getSize(),
-                ]);
+            $message = $this->conflictMessage($e);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'data' => [
+                        'code' => 'already_responded',
+                        'responded_by' => $e->respondedBy,
+                        'responded_at' => $e->respondedAt,
+                    ],
+                ], Response::HTTP_CONFLICT);
             }
+
+            // Draft di frontend tidak dihapus: useForm mempertahankan isinya saat
+            // onError, jadi pengguna bisa langsung kirim ulang sebagai Respon Substantif.
+            return back()->withErrors(['response_message' => $message])->with('flash', [
+                'conflict' => [
+                    'code' => 'already_responded',
+                    'message' => $message,
+                    'responded_by' => $e->respondedBy,
+                    'responded_at' => $e->respondedAt,
+                ],
+            ]);
+        } catch (TicketAlreadyCompletedException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'data' => ['code' => 'already_completed'],
+                ], Response::HTTP_CONFLICT);
+            }
+
+            return back()->withErrors(['response_message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            Log::error('Gagal menyimpan tanggapan tiket: '.$e->getMessage(), [
+                'ticket_id' => $ticket->id,
+                'actor_id' => $actor->id,
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyimpan tanggapan. Silakan coba lagi.',
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            return back()->withErrors([
+                'response_message' => 'Gagal menyimpan tanggapan. Silakan coba lagi.',
+            ]);
         }
 
-        // Update status tiket sesuai jenis respon dan catat completed_at
-        $ticket->update([
-            'status' => $validated['type'],
-            'completed_at' => $ticket->completed_at ?? now(),
-        ]);
+        // Permintaan kembar: balasan sudah tersimpan, jangan ulangi broadcast/notifikasi.
+        if (! $result->replayed) {
+            $replyToTicket->afterCommit($ticket, $response, $actor);
+        }
 
-        // Clear cache publik /check di Redis agar langsung update
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-
-        // Cache response di Redis selama 24 jam
-        $cacheKey = "response:{$response->id}";
-        Cache::put($cacheKey, [
-            'id' => $response->id,
-            'ticket_id' => $ticket->id,
-            'type' => $response->type,
-            'message' => $response->message,
-            'user' => auth()->user()->name,
-            'sent_at' => $response->sent_at->toIso8601String(),
-        ], now()->addHours(24));
-
-        // Kirim email tanggapan ke pelapor via SMTP jika alamat email tersedia
-        if (! empty($ticket->reporter_email)) {
-            try {
-                Mail::to($ticket->reporter_email)
-                    ->send(new TicketResponseSubmitted($ticket, $response->load('attachments')));
-
-                $response->update(['email_sent_at' => now()]);
-            } catch (\Throwable $e) {
-                Log::error("Gagal mengirim email tanggapan ke {$ticket->reporter_email}: {$e->getMessage()}", [
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $result->replayed ? 'Respon sudah terkirim sebelumnya.' : 'Respon berhasil dikirim!',
+                'data' => [
                     'ticket_id' => $ticket->id,
+                    'ticket_number' => $ticket->fresh()?->ticket_number,
+                    'status' => $ticket->fresh()?->status,
+                    'version' => $ticket->fresh()?->version,
                     'response_id' => $response->id,
-                ]);
-            }
+                    'replayed' => $result->replayed,
+                ],
+            ], Response::HTTP_CREATED);
         }
 
-        return redirect()->back()->with('flash', [
-            'success' => 'Respon berhasil dikirim!',
+        return back()->with('flash', [
+            'success' => $result->replayed
+                ? 'Respon ini sudah pernah terkirim sebelumnya.'
+                : 'Respon berhasil dikirim!',
         ]);
+    }
+
+    private function conflictMessage(TicketAlreadyRespondedException $e): string
+    {
+        $message = 'Tiket ini sudah mendapat Respon Awal';
+
+        if ($e->respondedBy !== null) {
+            $message .= ' dari '.$e->respondedBy;
+        }
+
+        if ($e->respondedAt !== null) {
+            $message .= ' pada '.now()->parse($e->respondedAt)->locale('id')->translatedFormat('d F Y H:i');
+        }
+
+        return $message.'. Silakan kirim sebagai Respon Substantif.';
     }
 }

@@ -138,8 +138,11 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
                         <Table className="min-w-[1100px] border-collapse text-[11px]">
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent">
-                                    <TableHead rowSpan={2} className="bg-muted sticky left-0 z-20 border-r after:bg-border after:absolute after:top-0 after:right-0 after:h-full after:w-px">
-                                       Sumber Kanal
+                                    <TableHead
+                                        rowSpan={2}
+                                        className="bg-muted after:bg-border sticky left-0 z-20 border-r after:absolute after:top-0 after:right-0 after:h-full after:w-px"
+                                    >
+                                        Sumber Kanal
                                     </TableHead>
                                     {months.map((month) => (
                                         <TableHead key={month.key} colSpan={4} className="border-r text-center font-semibold">
@@ -155,7 +158,10 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
                                         SUB_COLUMNS.map((sub, index) => (
                                             <TableHead
                                                 key={`${month.key}-${sub}`}
-                                                className={cn('text-muted-foreground text-center text-[10px] font-normal after:bg-border after:absolute after:top-0 after:right-0 after:h-full after:w-px', index === 3 && 'border-r')}
+                                                className={cn(
+                                                    'text-muted-foreground after:bg-border text-center text-[10px] font-normal after:absolute after:top-0 after:right-0 after:h-full after:w-px',
+                                                    index === 3 && 'border-r',
+                                                )}
                                             >
                                                 {sub}
                                             </TableHead>

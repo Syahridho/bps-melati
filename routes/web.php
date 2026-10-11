@@ -100,7 +100,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
         Route::delete('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'destroy'])->name('laporan-masuk.destroy')->where('ticketNumber', '.*');
-        Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])->name('laporan-masuk.responses.store');
+        Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])
+            ->middleware('throttle:ticket-response')
+            ->name('laporan-masuk.responses.store');
         Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
         Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
@@ -118,6 +120,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('operator', [OperatorController::class, 'store'])->name('operator.store');
         Route::put('operator/{operator}', [OperatorController::class, 'update'])->name('operator.update');
         Route::delete('operator/{operator}', [OperatorController::class, 'destroy'])->name('operator.destroy');
+        Route::post('operator/{operator}/force-logout', [OperatorController::class, 'forceLogout'])->name('operator.force-logout');
     });
 
     Route::middleware('role:operator')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
@@ -129,7 +132,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
         Route::delete('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'destroy'])->name('laporan-masuk.destroy')->where('ticketNumber', '.*');
-        Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])->name('laporan-masuk.responses.store');
+        Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])
+            ->middleware('throttle:ticket-response')
+            ->name('laporan-masuk.responses.store');
         Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
         Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');

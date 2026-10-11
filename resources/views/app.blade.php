@@ -16,6 +16,9 @@
         <link rel="preload" as="image" href="/desc-melati.webp" type="image/webp">
         <link rel="preload" as="image" href="/melati_big.webp" type="image/webp">
 
+        {{-- Diperlukan hooks sesi (heartbeat + session guard) untuk fetch langsung. --}}
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+
         @routes
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

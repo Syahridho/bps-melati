@@ -1,6 +1,7 @@
 import { Pagination, type PaginatedData } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { type SharedData } from '@/types';
@@ -29,12 +30,18 @@ interface Ticket {
 
 type FilterTab = 'semua' | 'respon_awal' | 'respon_substantif' | 'pengaduan' | 'aspirasi' | 'permintaan';
 
+interface PeriodOption {
+    value: string;
+    label: string;
+}
+
 interface LaporanSelesaiProps extends SharedData {
     tickets: PaginatedData<Ticket>;
     filters: {
         search: string;
         filter: FilterTab;
         per_page: number;
+        period: string;
     };
     counts: {
         semua: number;
@@ -44,6 +51,7 @@ interface LaporanSelesaiProps extends SharedData {
         aspirasi: number;
         permintaan: number;
     };
+    periods: PeriodOption[];
 }
 
 function classificationLabel(classification: Classification): string {
@@ -109,11 +117,20 @@ function getTicketDisplayTitle(ticket: Ticket): string {
 }
 
 export default function LaporanSelesai() {
-    const { auth, tickets, filters, counts } = usePage<LaporanSelesaiProps>().props;
+    const { auth, tickets, filters, counts, periods } = usePage<LaporanSelesaiProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [isLoading, setIsLoading] = useState(false);
+
+    const queryParams = (overrides: Record<string, string | number> = {}) => ({
+        filter: filters.filter,
+        search: searchQuery,
+        per_page: filters.per_page,
+        period: filters.period,
+        page: 1,
+        ...overrides,
+    });
 
     useEffect(() => {
         setSearchQuery(filters.search || '');
@@ -128,7 +145,13 @@ export default function LaporanSelesai() {
         const timer = setTimeout(() => {
             router.get(
                 route(`${routePrefix}.laporan-selesai.index`),
-                { filter: filters.filter, search: searchQuery, per_page: filters.per_page, page: 1 },
+                {
+                    filter: filters.filter,
+                    search: searchQuery,
+                    per_page: filters.per_page,
+                    period: filters.period,
+                    page: 1,
+                },
                 {
                     preserveState: true,
                     preserveScroll: true,
@@ -140,34 +163,36 @@ export default function LaporanSelesai() {
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, filters.filter, filters.per_page, filters.search, routePrefix]);
+    }, [searchQuery, filters.filter, filters.per_page, filters.period, filters.search, routePrefix]);
 
     const handleFilterChange = (tab: FilterTab) => {
-        router.get(
-            route(`${routePrefix}.laporan-selesai.index`),
-            { filter: tab, search: searchQuery, per_page: filters.per_page, page: 1 },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-                onStart: () => setIsLoading(true),
-                onFinish: () => setIsLoading(false),
-            },
-        );
+        router.get(route(`${routePrefix}.laporan-selesai.index`), queryParams({ filter: tab }), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onStart: () => setIsLoading(true),
+            onFinish: () => setIsLoading(false),
+        });
+    };
+
+    const handlePeriodChange = (period: string) => {
+        router.get(route(`${routePrefix}.laporan-selesai.index`), queryParams({ period }), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onStart: () => setIsLoading(true),
+            onFinish: () => setIsLoading(false),
+        });
     };
 
     const handlePerPageChange = (newPerPage: number) => {
-        router.get(
-            route(`${routePrefix}.laporan-selesai.index`),
-            { filter: filters.filter, search: searchQuery, per_page: newPerPage, page: 1 },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-                onStart: () => setIsLoading(true),
-                onFinish: () => setIsLoading(false),
-            },
-        );
+        router.get(route(`${routePrefix}.laporan-selesai.index`), queryParams({ per_page: newPerPage }), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onStart: () => setIsLoading(true),
+            onFinish: () => setIsLoading(false),
+        });
     };
 
     const filterTabs: { key: FilterTab; label: string; count?: number }[] = [
@@ -187,11 +212,23 @@ export default function LaporanSelesai() {
         >
             <div className="bg-card overflow-hidden rounded-lg border">
                 {/* Toolbar */}
-                <div className="flex items-center gap-2 border-b px-4 py-3">
-                    <div className="relative flex-1">
+                <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
+                    <div className="relative min-w-[12rem] flex-1">
                         <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
                         <Input placeholder="Cari laporan..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
+                    <Select value={filters.period} onValueChange={handlePeriodChange}>
+                        <SelectTrigger className="w-44 shrink-0">
+                            <SelectValue placeholder="Pilih bulan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {periods.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Filter tabs */}

@@ -65,9 +65,9 @@ test('admin response clears ticket check cache', function () {
     // Admin responds
     $this->actingAs($admin)
         ->post("/dashboard/admin/laporan-masuk/{$ticket->id}/responses", [
-            'type' => 'respon_awal',
-            'message' => 'Laporan Anda sudah kami terima dan sedang diproses.',
-        ]);
+            'response_type' => 'respon_awal',
+            'response_message' => 'Laporan Anda sudah kami terima dan sedang diproses.',
+        ])->assertRedirect();
 
     // Cache should be invalidated
     expect(Cache::has($cacheKey))->toBeFalse();

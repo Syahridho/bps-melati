@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Support\RekapReport;
+use App\Support\TicketResponsePayload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -26,6 +28,7 @@ class LaporanSelesaiController extends Controller
         $search = trim((string) $request->query('search', ''));
         $filter = (string) $request->query('filter', 'semua');
         $perPage = (int) $request->query('per_page', 10);
+        $period = (string) $request->query('period', now()->format('Y-m'));
 
         // Whitelist filter
         $allowedFilters = ['semua', 'respon_awal', 'respon_substantif', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
@@ -36,6 +39,11 @@ class LaporanSelesaiController extends Controller
         // Whitelist per_page
         if (! in_array($perPage, [10, 20, 50, 100], true)) {
             $perPage = 10;
+        }
+
+        // Validasi period (YYYY-MM)
+        if (! preg_match('/^\d{4}-\d{2}$/', $period)) {
+            $period = now()->format('Y-m');
         }
 
         $frontendFilterKey = ($filter === 'permintaan_informasi') ? 'permintaan' : $filter;
@@ -57,6 +65,7 @@ class LaporanSelesaiController extends Controller
         // Query utama daftar tiket laporan selesai
         $ticketsQuery = Ticket::with('channel')
             ->whereIn('status', self::COMPLETED_STATUSES)
+            ->where('period', $period)
             ->tap($searchQueryClosure)
             ->when($filter !== 'semua', function ($query) use ($filter) {
                 if ($filter === 'respon_awal') {
@@ -95,7 +104,7 @@ class LaporanSelesaiController extends Controller
             ]);
 
         // Base query untuk counts (mengikuti pencarian, tanpa filter tab)
-        $countBaseQuery = Ticket::whereIn('status', self::COMPLETED_STATUSES)->tap($searchQueryClosure);
+        $countBaseQuery = Ticket::whereIn('status', self::COMPLETED_STATUSES)->where('period', $period)->tap($searchQueryClosure);
 
         $counts = [
             'semua' => (clone $countBaseQuery)->count(),
@@ -106,14 +115,30 @@ class LaporanSelesaiController extends Controller
             'permintaan' => (clone $countBaseQuery)->where('classification', 'permintaan_informasi')->count(),
         ];
 
+        // List period untuk dropdown (mirip dengan rekap); selalu sertakan bulan berjalan
+        $periods = RekapReport::ticketPeriods();
+        $currentPeriod = now()->format('Y-m');
+        foreach ([$currentPeriod, $period] as $ensurePeriod) {
+            if (! in_array($ensurePeriod, $periods, true)) {
+                $periods[] = $ensurePeriod;
+            }
+        }
+        rsort($periods);
+        $periodsOptions = array_map(fn (string $value): array => [
+            'value' => $value,
+            'label' => RekapReport::formatPeriod($value, 'F Y'),
+        ], $periods);
+
         return Inertia::render('admin/laporan-selesai', [
             'tickets' => $tickets,
             'filters' => [
                 'search' => $search,
                 'filter' => $frontendFilterKey,
                 'per_page' => $perPage,
+                'period' => $period,
             ],
             'counts' => $counts,
+            'periods' => $periodsOptions,
         ]);
     }
 
@@ -122,7 +147,12 @@ class LaporanSelesaiController extends Controller
      */
     public function show(string $ticketNumber): Response
     {
-        $ticket = Ticket::with(['channel', 'creator', 'attachments', 'responses.user', 'responses.attachments'])
+        $ticket = Ticket::with([
+            'channel',
+            'creator',
+            'attachments',
+            'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
+        ])
             ->where('ticket_number', $ticketNumber)
             ->whereIn('status', self::COMPLETED_STATUSES)
             ->firstOrFail();
@@ -155,28 +185,9 @@ class LaporanSelesaiController extends Controller
                     'size' => $attachment->size,
                     'url' => Storage::url($attachment->path),
                 ]),
-                'responses' => $ticket->responses->sortByDesc('created_at')->values()->map(function ($response) use ($ticket) {
-                    $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
-                    $userName = $isReporter
-                        ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
-                        : ($response->user?->name ?? '-');
-
-                    return [
-                        'id' => $response->id,
-                        'user_name' => $userName,
-                        'is_reporter' => $isReporter,
-                        'type' => $response->type,
-                        'message' => $response->message,
-                        'sent_at' => $response->sent_at->toIso8601String(),
-                        'attachments' => $response->attachments->map(fn ($attachment) => [
-                            'id' => $attachment->id,
-                            'original_name' => $attachment->original_name,
-                            'mime_type' => $attachment->mime_type,
-                            'size' => $attachment->size,
-                            'url' => Storage::url($attachment->path),
-                        ]),
-                    ];
-                }),
+                'responses' => $ticket->responses->map(
+                    fn ($response) => TicketResponsePayload::from($response, $ticket)
+                )->values()->all(),
             ],
         ]);
     }
