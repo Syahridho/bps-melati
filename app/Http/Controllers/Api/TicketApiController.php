@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\InboxUpdated;
 use App\Events\TicketCreated;
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
@@ -338,6 +339,8 @@ class TicketApiController extends Controller
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));
             Cache::forget("ticket:{$ticket->ticket_number}");
             Cache::forget('dashboard:admin:version');
+
+            InboxUpdated::dispatch($ticket, 'Pelapor');
         }
 
         return response()->json([

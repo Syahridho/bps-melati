@@ -33,7 +33,7 @@ export function useInboxRealtime({ searching }: { searching: boolean }) {
         }
 
         debounceRef.current = window.setTimeout(() => {
-            router.reload({ only: ['tickets', 'counts', 'unread_count'] });
+            router.reload({ only: ['tickets', 'counts', 'inbox_open_count'] });
         }, RELOAD_DEBOUNCE_MS);
     }, []);
 

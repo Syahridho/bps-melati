@@ -3,25 +3,48 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { useEchoPublic } from '@laravel/echo-react';
+import { useEcho, useEchoPublic } from '@laravel/echo-react';
 import { ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, Settings, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
-    const { auth, unread_count } = usePage<SharedData>().props;
+    const { auth, inbox_open_count } = usePage<SharedData>().props;
 
-    const [unreadCount, setUnreadCount] = useState(unread_count ?? 0);
+    const [openCount, setOpenCount] = useState(inbox_open_count ?? 0);
+    const reloadTimerRef = useRef<number | null>(null);
 
     // Sinkronkan state lokal dengan prop Inertia saat navigasi
     useEffect(() => {
-        setUnreadCount(unread_count ?? 0);
-    }, [unread_count]);
+        setOpenCount(inbox_open_count ?? 0);
+    }, [inbox_open_count]);
+
+    useEffect(() => {
+        return () => {
+            if (reloadTimerRef.current !== null) {
+                window.clearTimeout(reloadTimerRef.current);
+            }
+        };
+    }, []);
+
+    const scheduleReload = useCallback(() => {
+        if (reloadTimerRef.current !== null) {
+            window.clearTimeout(reloadTimerRef.current);
+        }
+
+        reloadTimerRef.current = window.setTimeout(() => {
+            router.reload({
+                only: ['tickets', 'counts', 'inbox_open_count'],
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }, 400);
+    }, []);
 
     // Dengarkan event real-time tiket baru di posisi mana saja
     useEchoPublic('admin.notifications', '.ticket.created', (event: { ticket_number?: string }) => {
-        setUnreadCount((prev) => prev + 1);
+        setOpenCount((prev) => prev + 1);
 
         if (auth.user.role === 'admin' || auth.user.role === 'operator') {
             const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
@@ -42,9 +65,19 @@ export function AppSidebar() {
                 className: '!bg-[#005fb6] !text-white !border-none !dark:bg-[#004a91] !dark:text-slate-100',
             });
 
-            router.reload({ only: ['tickets', 'unread_count'] });
+            scheduleReload();
         }
     });
+
+    // Dengarkan pembaruan inbox (tiket selesai/dibalas) untuk sinkronisasi badge
+    useEcho(
+        auth?.user ? 'inbox.laporan-masuk' : '',
+        '.inbox.updated',
+        () => {
+            scheduleReload();
+        },
+        [auth?.user],
+    );
 
     const adminNavItems: NavItem[] = [
         {
@@ -66,7 +99,7 @@ export function AppSidebar() {
             title: 'Laporan Masuk',
             url: '/dashboard/admin/laporan-masuk',
             icon: Inbox,
-            badge: unreadCount,
+            badge: openCount,
         },
 
         {
@@ -116,7 +149,7 @@ export function AppSidebar() {
             title: 'Laporan Masuk',
             url: '/dashboard/operator/laporan-masuk',
             icon: Inbox,
-            badge: unreadCount,
+            badge: openCount,
         },
 
         {

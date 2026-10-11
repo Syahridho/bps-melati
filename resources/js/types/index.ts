@@ -27,7 +27,7 @@ export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
-    unread_count: number;
+    inbox_open_count: number;
     [key: string]: unknown;
 }
 

@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Ticket;
+use App\Support\InboxCounter;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -46,8 +46,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'unread_count' => fn () => ($request->user()?->isAdmin() || $request->user()?->isOperator())
-                ? Ticket::where('status', 'baru')->count()
+            'inbox_open_count' => fn () => ($request->user()?->isAdmin() || $request->user()?->isOperator())
+                ? InboxCounter::getCounts($request->user())['semua']
                 : 0,
             'flash' => [
                 'ticket_number' => fn () => $request->session()->get('ticket_number'),

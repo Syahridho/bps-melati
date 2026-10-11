@@ -24,18 +24,18 @@ interface AppHeaderProps {
 
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
-    const { auth, unread_count } = page.props;
+    const { auth, inbox_open_count } = page.props;
     const getInitials = useInitials();
     const dashboardUrl = auth.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/operator';
 
-    const [unreadCount, setUnreadCount] = useState(unread_count ?? 0);
+    const [openCount, setOpenCount] = useState(inbox_open_count ?? 0);
 
     useEffect(() => {
-        setUnreadCount(unread_count ?? 0);
-    }, [unread_count]);
+        setOpenCount(inbox_open_count ?? 0);
+    }, [inbox_open_count]);
 
     useEchoPublic('admin.notifications', '.ticket.created', () => {
-        setUnreadCount((prev) => prev + 1);
+        setOpenCount((prev) => prev + 1);
     });
 
     const mainNavItems: NavItem[] =
@@ -43,7 +43,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
             ? [
                   { title: 'Dashboard', url: '/dashboard/admin', icon: LayoutGrid },
                   { title: 'Input Data', url: '/dashboard/admin/input-data', icon: FilePlus2 },
-                  { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox, badge: unreadCount },
+                  { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox, badge: openCount },
                   { title: 'Laporan Selesai', url: '/dashboard/admin/laporan-selesai', icon: ClipboardList },
               ]
             : [{ title: 'Dashboard', url: '/dashboard/operator', icon: LayoutGrid }];

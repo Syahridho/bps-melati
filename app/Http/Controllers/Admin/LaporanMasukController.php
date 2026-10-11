@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Models\Ticket;
+use App\Support\InboxCounter;
 use App\Support\TicketResponsePayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -99,22 +100,6 @@ class LaporanMasukController extends Controller
                     : null,
             ]);
 
-        // Base query untuk counts (mengikuti pencarian, tanpa filter tab)
-        $countBaseQuery = Ticket::query()
-            ->where('source_app', '!=', 'admin')
-            ->where('status', '!=', 'selesai')
-            ->tap($searchQueryClosure);
-
-        $counts = [
-            'semua' => (clone $countBaseQuery)->count(),
-            'belum_dibaca' => (clone $countBaseQuery)->where('is_read', false)->count(),
-            'pengaduan' => (clone $countBaseQuery)->where('classification', 'pengaduan')->count(),
-            'aspirasi' => (clone $countBaseQuery)->where('classification', 'aspirasi')->count(),
-            'permintaan' => (clone $countBaseQuery)->where('classification', 'permintaan_informasi')->count(),
-            'respon_awal' => (clone $countBaseQuery)->where('status', 'respon_awal')->count(),
-            'respon_substantif' => (clone $countBaseQuery)->where('status', 'respon_substantif')->count(),
-        ];
-
         return Inertia::render('admin/laporan-masuk', [
             'tickets' => $tickets,
             'filters' => [
@@ -122,7 +107,7 @@ class LaporanMasukController extends Controller
                 'filter' => $frontendFilterKey,
                 'per_page' => $perPage,
             ],
-            'counts' => $counts,
+            'counts' => fn () => InboxCounter::getCounts($request->user()),
         ]);
     }
 

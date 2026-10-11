@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
@@ -167,6 +168,8 @@ class CheckTicketController extends Controller
 
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));
             Cache::forget("ticket:{$ticket->ticket_number}");
+
+            InboxUpdated::dispatch($ticket, 'Pelapor');
         }
 
         return redirect()->back()->with('flash', [
