@@ -9,7 +9,7 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useEchoPublic } from '@laravel/echo-react';
 import { ClipboardList, FilePlus2, Inbox, LayoutGrid, Menu, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -35,7 +35,9 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     }, [inbox_open_count]);
 
     useEchoPublic('admin.notifications', '.ticket.created', () => {
-        setOpenCount((prev) => prev + 1);
+        router.reload({
+            only: ['tickets', 'counts', 'inbox_open_count'],
+        });
     });
 
     const mainNavItems: NavItem[] =

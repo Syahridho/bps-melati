@@ -16,7 +16,7 @@ class SettingController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('admin/pengaturan', [
+        return Inertia::render('settings/application', [
             'settings' => [
                 'nama_penanda_tangan' => Setting::get('nama_penanda_tangan', ''),
                 'jabatan_penanda_tangan' => Setting::get('jabatan_penanda_tangan', 'KETUA TIM PENGADUAN'),

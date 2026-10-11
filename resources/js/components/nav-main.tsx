@@ -29,7 +29,7 @@ function isUrlActive(itemUrl: string, currentUrl: string): boolean {
         return currentPath === itemPath;
     }
 
-    if ((itemPath === '/dashboard/admin/pengaturan' || itemPath === '/dashboard/operator/pengaturan') && currentPath.startsWith('/settings')) {
+    if (itemPath === '/settings/application' && currentPath.startsWith('/settings')) {
         return true;
     }
 

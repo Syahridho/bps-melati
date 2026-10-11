@@ -1,149 +1,35 @@
-import { type PaginatedData, Pagination } from '@/components/pagination';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { OperatorDeleteDialog } from '@/components/operator-delete-dialog';
+import { OperatorFormDialog } from '@/components/operator-form-dialog';
+import { OperatorTable } from '@/components/operator-table';
+import { useOperatorManagement } from '@/hooks/use-operator-management';
 import AdminPage from '@/pages/admin/page';
-import { type SharedData } from '@/types';
-import { router, useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, Edit, LoaderCircle, LogOut, MoreHorizontal, Search, Trash2, UserPlus, Users } from 'lucide-react';
-import { type FormEvent, useEffect, useState } from 'react';
-import { toast } from 'sonner';
-
-interface Operator {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    is_active: boolean;
-    created_at: string;
-    is_online: boolean;
-    last_active_at: string | null;
-    last_login_at: string | null;
-    last_login_device: string;
-    last_login_ip: string | null;
-    has_session: boolean;
-}
-
-interface OperatorPageProps extends SharedData {
-    operators: PaginatedData<Operator>;
-    filters: {
-        search: string;
-        per_page: number;
-    };
-    flash: {
-        success?: string;
-    };
-}
+import { type OperatorPageProps } from '@/types/operator';
+import { usePage } from '@inertiajs/react';
+import { CheckCircle2 } from 'lucide-react';
 
 export default function KelolaOperator() {
     const { auth, operators, filters, flash } = usePage<OperatorPageProps>().props;
 
-    const [search, setSearch] = useState(filters.search || '');
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-    // Modal state
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [editingOperator, setEditingOperator] = useState<Operator | null>(null);
-    const [deletingOperator, setDeletingOperator] = useState<Operator | null>(null);
-
-    // Form Tambah Operator/User
-    const createForm = useForm({
-        name: '',
-        role: 'operator',
-        email: '',
-        password: '',
-    });
-
-    // Form Edit Operator/User
-    const editForm = useForm({
-        name: '',
-        role: 'operator',
-        email: '',
-        password: '',
-    });
-
-    useEffect(() => {
-        if (flash?.success) {
-            setSuccessMessage(flash.success);
-            const timer = setTimeout(() => setSuccessMessage(null), 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [flash]);
-
-    // Live search handler
-    const handleSearchChange = (value: string) => {
-        setSearch(value);
-        router.get(route('dashboard.admin.operator.index'), { search: value, per_page: filters.per_page }, { preserveState: true, replace: true });
-    };
-
-    const handleForceLogout = (target: Operator) => {
-        router.post(
-            route('dashboard.admin.operator.force-logout', { operator: target.id }),
-            {},
-            {
-                preserveScroll: true,
-                onSuccess: () => toast.success(`Sesi ${target.name} telah diakhiri.`),
-                onError: () => toast.error('Gagal mengakhiri sesi pengguna.'),
-            },
-        );
-    };
-
-    const handlePerPageChange = (perPage: number) => {
-        router.get(route('dashboard.admin.operator.index'), { search, per_page: perPage }, { preserveState: true, replace: true });
-    };
-
-    // Form Submit: Tambah Operator/User
-    const handleCreateSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        createForm.post(route('dashboard.admin.operator.store'), {
-            onSuccess: () => {
-                createForm.reset();
-                setIsCreateOpen(false);
-            },
-        });
-    };
-
-    // Form Submit: Edit Operator/User
-    const handleEditSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        if (!editingOperator) return;
-
-        editForm.put(route('dashboard.admin.operator.update', editingOperator.id), {
-            onSuccess: () => {
-                editForm.reset();
-                setEditingOperator(null);
-            },
-        });
-    };
-
-    // Action: Open Edit Modal
-    const openEditModal = (op: Operator) => {
-        setEditingOperator(op);
-        editForm.setData({
-            name: op.name,
-            role: op.role || 'operator',
-            email: op.email,
-            password: '',
-        });
-        editForm.clearErrors();
-    };
-
-    // Action: Delete Operator/User
-    const handleDeleteSubmit = () => {
-        if (!deletingOperator) return;
-
-        router.delete(route('dashboard.admin.operator.destroy', deletingOperator.id), {
-            onSuccess: () => {
-                setDeletingOperator(null);
-            },
-        });
-    };
+    const {
+        search,
+        handleSearchChange,
+        handlePerPageChange,
+        successMessage,
+        isCreateOpen,
+        setIsCreateOpen,
+        openCreateModal,
+        editingOperator,
+        setEditingOperator,
+        openEditModal,
+        deletingOperator,
+        setDeletingOperator,
+        createForm,
+        editForm,
+        handleCreateSubmit,
+        handleEditSubmit,
+        handleForceLogout,
+        handleDeleteSubmit,
+    } = useOperatorManagement(filters.search, filters.per_page, flash?.success);
 
     return (
         <AdminPage
@@ -160,353 +46,45 @@ export default function KelolaOperator() {
                     </div>
                 )}
 
-                <Card>
-                    <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <CardTitle className="flex items-center gap-2 text-lg font-bold">
-                                <Users className="text-primary h-5 w-5" />
-                                Daftar Akun Pengguna
-                            </CardTitle>
-                            <CardDescription>Total {operators.total} akun terdaftar dalam sistem</CardDescription>
-                        </div>
-                        <Button
-                            onClick={() => {
-                                createForm.reset();
-                                createForm.clearErrors();
-                                setIsCreateOpen(true);
-                            }}
-                            className="gap-2"
-                        >
-                            <UserPlus className="h-4 w-4" />
-                            Tambah Pengguna Baru
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {/* Search Bar */}
-                        <div className="flex items-center gap-2">
-                            <div className="relative max-w-sm flex-1">
-                                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                                <Input
-                                    placeholder="Cari berdasarkan nama atau email..."
-                                    value={search}
-                                    onChange={(e) => handleSearchChange(e.target.value)}
-                                    className="pl-9"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Tabel Pengguna */}
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[60px]">No</TableHead>
-                                        <TableHead>Nama Lengkap</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Login Terakhir</TableHead>
-                                        <TableHead className="w-[100px] text-right">Aksi</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {operators.data.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
-                                                Tidak ada data pengguna ditemukan.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        operators.data.map((op, idx) => (
-                                            <TableRow key={op.id}>
-                                                <TableCell className="font-medium">
-                                                    {(operators.current_page - 1) * operators.per_page + idx + 1}
-                                                </TableCell>
-                                                <TableCell className="text-foreground font-semibold">{op.name}</TableCell>
-                                                <TableCell>{op.email}</TableCell>
-                                                <TableCell>
-                                                    <Badge variant={op.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
-                                                        {op.role}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex flex-wrap items-center gap-1.5">
-                                                        {op.is_active ? (
-                                                            <Badge
-                                                                variant="outline"
-                                                                className={
-                                                                    op.is_online
-                                                                        ? 'gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400'
-                                                                        : 'text-[10px]'
-                                                                }
-                                                            >
-                                                                <span
-                                                                    className={
-                                                                        op.is_online
-                                                                            ? 'inline-block size-1.5 rounded-full bg-emerald-500'
-                                                                            : 'bg-muted-foreground inline-block size-1.5 rounded-full'
-                                                                    }
-                                                                    aria-hidden="true"
-                                                                />
-                                                                {op.is_online ? 'Online' : 'Offline'}
-                                                            </Badge>
-                                                        ) : (
-                                                            <Badge
-                                                                variant="outline"
-                                                                className="border-destructive/30 bg-destructive/10 text-destructive text-[10px]"
-                                                            >
-                                                                Nonaktif
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-muted-foreground text-xs">
-                                                    {op.last_login_at ? (
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <span>
-                                                                {new Date(op.last_login_at).toLocaleString('id-ID', {
-                                                                    day: 'numeric',
-                                                                    month: 'short',
-                                                                    year: 'numeric',
-                                                                    hour: '2-digit',
-                                                                    minute: '2-digit',
-                                                                })}
-                                                            </span>
-                                                            <span className="text-[10px] opacity-80">
-                                                                {op.last_login_device}
-                                                                {op.last_login_ip ? ` · ${op.last_login_ip}` : ''}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        'Belum pernah login'
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Buka menu</span>
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => openEditModal(op)}>
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            {op.has_session && op.id !== auth.user.id && (
-                                                                <DropdownMenuItem
-                                                                    onClick={() => handleForceLogout(op)}
-                                                                    className="text-amber-600 focus:text-amber-600 dark:text-amber-400"
-                                                                >
-                                                                    <LogOut className="mr-2 h-4 w-4" />
-                                                                    Paksa Logout
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            <DropdownMenuItem
-                                                                onClick={() => setDeletingOperator(op)}
-                                                                className="text-destructive focus:text-destructive"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Hapus
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-
-                        {/* Pagination */}
-                        <Pagination
-                            links={operators.links}
-                            from={operators.from}
-                            to={operators.to}
-                            total={operators.total}
-                            lastPage={operators.last_page}
-                            perPage={operators.per_page}
-                            onPerPageChange={handlePerPageChange}
-                        />
-                    </CardContent>
-                </Card>
+                <OperatorTable
+                    operators={operators}
+                    authUserId={auth.user.id}
+                    search={search}
+                    onSearchChange={handleSearchChange}
+                    onPerPageChange={handlePerPageChange}
+                    onOpenCreate={openCreateModal}
+                    onEdit={openEditModal}
+                    onForceLogout={handleForceLogout}
+                    onDelete={setDeletingOperator}
+                />
             </div>
 
             {/* Modal Tambah Pengguna */}
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <UserPlus className="text-primary h-5 w-5" />
-                            Tambah Pengguna Baru
-                        </DialogTitle>
-                        <DialogDescription>Isi formulir di bawah ini untuk membuat akun Admin atau Operator baru.</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="create_name">Nama Lengkap</Label>
-                            <Input
-                                id="create_name"
-                                placeholder="Masukkan nama pengguna"
-                                value={createForm.data.name}
-                                onChange={(e) => createForm.setData('name', e.target.value)}
-                            />
-                            {createForm.errors.name && <p className="text-destructive text-xs">{createForm.errors.name}</p>}
-                        </div>
-
-                        {/* Dropdown Role pengguna di bawah Nama Lengkap */}
-                        <div className="space-y-2">
-                            <Label htmlFor="create_role">Role Pengguna</Label>
-                            <Select value={createForm.data.role} onValueChange={(value) => createForm.setData('role', value)}>
-                                <SelectTrigger id="create_role">
-                                    <SelectValue placeholder="Pilih Role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="operator">Operator</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {createForm.errors.role && <p className="text-destructive text-xs">{createForm.errors.role}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="create_email">Alamat Email</Label>
-                            <Input
-                                id="create_email"
-                                type="email"
-                                placeholder="pengguna@melati.bps.go.id"
-                                value={createForm.data.email}
-                                onChange={(e) => createForm.setData('email', e.target.value)}
-                            />
-                            {createForm.errors.email && <p className="text-destructive text-xs">{createForm.errors.email}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="create_password">Password</Label>
-                            <Input
-                                id="create_password"
-                                type="password"
-                                placeholder="Minimal 8 karakter"
-                                value={createForm.data.password}
-                                onChange={(e) => createForm.setData('password', e.target.value)}
-                            />
-                            {createForm.errors.password && <p className="text-destructive text-xs">{createForm.errors.password}</p>}
-                        </div>
-
-                        <DialogFooter className="mt-6">
-                            <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                                Batal
-                            </Button>
-                            <Button type="submit" disabled={createForm.processing} className="gap-2">
-                                {createForm.processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                Simpan Pengguna
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <OperatorFormDialog
+                open={isCreateOpen}
+                onOpenChange={setIsCreateOpen}
+                mode="create"
+                data={createForm.data}
+                setData={createForm.setData}
+                errors={createForm.errors}
+                processing={createForm.processing}
+                onSubmit={handleCreateSubmit}
+            />
 
             {/* Modal Edit Pengguna */}
-            <Dialog open={!!editingOperator} onOpenChange={(open) => !open && setEditingOperator(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Edit className="text-primary h-5 w-5" />
-                            Edit Data Pengguna
-                        </DialogTitle>
-                        <DialogDescription>Perbarui informasi nama, role (Admin/Operator), email, atau atur ulang password.</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleEditSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="edit_name">Nama Lengkap</Label>
-                            <Input
-                                id="edit_name"
-                                placeholder="Nama pengguna"
-                                value={editForm.data.name}
-                                onChange={(e) => editForm.setData('name', e.target.value)}
-                            />
-                            {editForm.errors.name && <p className="text-destructive text-xs">{editForm.errors.name}</p>}
-                        </div>
-
-                        {/* Dropdown Role pengguna di bawah Nama Lengkap */}
-                        <div className="space-y-2">
-                            <Label htmlFor="edit_role">Role Pengguna</Label>
-                            <Select value={editForm.data.role} onValueChange={(value) => editForm.setData('role', value)}>
-                                <SelectTrigger id="edit_role">
-                                    <SelectValue placeholder="Pilih Role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="operator">Operator</SelectItem>
-                                    <SelectItem value="admin">Admin</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {editForm.errors.role && <p className="text-destructive text-xs">{editForm.errors.role}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="edit_email">Alamat Email</Label>
-                            <Input
-                                id="edit_email"
-                                type="email"
-                                placeholder="Email pengguna"
-                                value={editForm.data.email}
-                                onChange={(e) => editForm.setData('email', e.target.value)}
-                            />
-                            {editForm.errors.email && <p className="text-destructive text-xs">{editForm.errors.email}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="edit_password" className="flex items-center gap-1">
-                                Password Baru (Opsional)
-                            </Label>
-                            <Input
-                                id="edit_password"
-                                type="password"
-                                placeholder="Kosongkan jika tidak ingin mengubah password"
-                                value={editForm.data.password}
-                                onChange={(e) => editForm.setData('password', e.target.value)}
-                            />
-                            {editForm.errors.password && <p className="text-destructive text-xs">{editForm.errors.password}</p>}
-                        </div>
-
-                        <DialogFooter className="mt-6">
-                            <Button type="button" variant="outline" onClick={() => setEditingOperator(null)}>
-                                Batal
-                            </Button>
-                            <Button type="submit" disabled={editForm.processing} className="gap-2">
-                                {editForm.processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                Simpan Perubahan
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <OperatorFormDialog
+                open={!!editingOperator}
+                onOpenChange={(open) => !open && setEditingOperator(null)}
+                mode="edit"
+                data={editForm.data}
+                setData={editForm.setData}
+                errors={editForm.errors}
+                processing={editForm.processing}
+                onSubmit={handleEditSubmit}
+            />
 
             {/* Modal Hapus Pengguna */}
-            <Dialog open={!!deletingOperator} onOpenChange={(open) => !open && setDeletingOperator(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="text-destructive flex items-center gap-2">
-                            <Trash2 className="h-5 w-5" />
-                            Konfirmasi Hapus Pengguna
-                        </DialogTitle>
-                        <DialogDescription>
-                            Apakah Anda yakin ingin menghapus pengguna <strong className="text-foreground">{deletingOperator?.name}</strong> (
-                            {deletingOperator?.email})? Tindakan ini tidak dapat dibatalkan.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="mt-4">
-                        <Button type="button" variant="outline" onClick={() => setDeletingOperator(null)}>
-                            Batal
-                        </Button>
-                        <Button type="button" variant="destructive" onClick={handleDeleteSubmit} className="gap-2">
-                            Hapus Pengguna
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <OperatorDeleteDialog operator={deletingOperator} onClose={() => setDeletingOperator(null)} onConfirm={handleDeleteSubmit} />
         </AdminPage>
     );
 }

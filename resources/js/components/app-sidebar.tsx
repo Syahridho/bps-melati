@@ -43,8 +43,6 @@ export function AppSidebar() {
 
     // Dengarkan event real-time tiket baru di posisi mana saja
     useEchoPublic('admin.notifications', '.ticket.created', (event: { ticket_number?: string }) => {
-        setOpenCount((prev) => prev + 1);
-
         if (auth.user.role === 'admin' || auth.user.role === 'operator') {
             const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
             const targetRoute =
@@ -137,7 +135,7 @@ export function AppSidebar() {
         },
         {
             title: 'Pengaturan',
-            url: '/dashboard/admin/pengaturan',
+            url: '/settings/application',
             icon: Settings,
         },
     ];

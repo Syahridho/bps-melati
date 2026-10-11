@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Events\TicketCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketResponseSubmitted;
@@ -302,8 +301,6 @@ class InputDataController extends Controller
             'status' => $ticket->status,
             'created_at' => $ticket->created_at->toIso8601String(),
         ], now()->addHours(24));
-
-        TicketCreated::dispatch($ticket);
 
         return redirect()->back()->with('flash', [
             'ticket_number' => $ticket->ticket_number,

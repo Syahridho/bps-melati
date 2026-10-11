@@ -12,7 +12,7 @@ use function Pest\Laravel\get;
 uses(RefreshDatabase::class);
 
 test('guest cannot access settings page', function () {
-    get(route('dashboard.admin.pengaturan.index'))
+    get(route('settings.application.edit'))
         ->assertRedirect(route('login'));
 });
 
@@ -20,7 +20,7 @@ test('operator cannot access settings page', function () {
     $operator = User::factory()->create(['role' => 'operator']);
 
     actingAs($operator)
-        ->get(route('dashboard.admin.pengaturan.index'))
+        ->get(route('settings.application.edit'))
         ->assertForbidden();
 });
 
@@ -28,10 +28,10 @@ test('admin can access settings page', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->get(route('dashboard.admin.pengaturan.index'))
+        ->get(route('settings.application.edit'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/pengaturan')
+            ->component('settings/application')
             ->has('settings')
         );
 });
@@ -40,7 +40,7 @@ test('admin can update signatory settings and update redis cache', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->post(route('dashboard.admin.pengaturan.update'), [
+        ->post(route('settings.application.update'), [
             'nama_penanda_tangan' => 'Dr. Budi Santoso, M.Si',
             'jabatan_penanda_tangan' => 'KEPALA BPS PROVINSI',
             'kota_penanda_tangan' => 'Pekanbaru',
@@ -68,14 +68,10 @@ test('admin can update signatory settings and update redis cache', function () {
         ->and(Cache::get('setting:nama_penanda_tangan'))->toBe('Dr. Budi Santoso, M.Si');
 });
 
-test('operator can access operator settings page', function () {
+test('operator cannot access application settings page', function () {
     $operator = User::factory()->create(['role' => 'operator']);
 
     actingAs($operator)
-        ->get(route('dashboard.operator.pengaturan.index'))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/pengaturan')
-            ->has('settings')
-        );
+        ->get(route('settings.application.edit'))
+        ->assertForbidden();
 });

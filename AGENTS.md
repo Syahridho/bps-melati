@@ -218,7 +218,7 @@ Keep broadcast payloads PII-light — the two ticket channels are unauthenticate
 
 Three completion paths: reporter self-complete, lazy `Ticket::checkAndAutoClose()` on read (in `CheckTicketController::__invoke` and `TicketApiController::check`), and the batch command `php artisan tickets:auto-close` (scheduled hourly in `routes/console.php`).
 
-Windows come from `Setting` keys: pengaduan **3d**, asfalto aspirations **1d**, permintaan informasi **5d**. Editable at `/dashboard/*/pengaturan`. Rule: auto-close only fires when the **latest** response has a non-null `user_id`.
+Windows come from `Setting` keys: pengaduan **3d**, asfalto aspirations **1d**, permintaan informasi **5d**. Editable at `/settings/application`. Rule: auto-close only fires when the **latest** response has a non-null `user_id`.
 
 ---
 
@@ -314,7 +314,7 @@ const { data, setData, post, processing, errors, reset } = useForm({
   ```tsx
   {errors.field && <p className="text-destructive text-xs">{errors.field}</p>}
   ```
-  The legacy `<InputError message={errors.email} />` component survives only in `login-form.tsx` and `pages/admin/pengaturan.tsx`.
+  The legacy `<InputError message={errors.email} />` component survives only in `login-form.tsx` and `pages/settings/application.tsx`.
 - Action-level feedback uses **Sonner** (`import { toast } from 'sonner'`), not inline errors.
 - Multiple independent `useForm` instances per page are normal.
 

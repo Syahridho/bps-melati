@@ -1,8 +1,11 @@
 <?php
 
+use App\Events\TicketCreated;
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Support\InboxCounter;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -73,6 +76,27 @@ test('can create ticket via post /api/tickets with valid api key and validation'
         'classification' => 'pengaduan',
         'source_app' => 'flutter',
     ]);
+});
+
+test('creating ticket via api dispatches TicketCreated and increments inbox_open_count', function () {
+    Event::fake([TicketCreated::class]);
+
+    $initialInboxCount = InboxCounter::getCounts()['semua'];
+
+    $payload = [
+        'classification' => 'aspirasi',
+        'title' => 'Aspirasi dari Aplikasi Android',
+        'content' => 'Uraian aspirasi yang dikirimkan melalui API mobile.',
+    ];
+
+    $response = $this->withHeader('X-API-KEY', $this->apiKey)
+        ->postJson('/api/tickets', $payload);
+
+    $response->assertStatus(201);
+    Event::assertDispatched(TicketCreated::class);
+
+    $newInboxCount = InboxCounter::getCounts()['semua'];
+    expect($newInboxCount)->toBe($initialInboxCount + 1);
 });
 
 test('validation prevents invalid inputs or sql injection strings', function () {

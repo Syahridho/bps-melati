@@ -19,7 +19,7 @@ export default function SettingsLayout({
     const currentPath = pageUrl.split('?')[0].split('#')[0];
 
     const role = auth?.user?.role;
-    const appSettingUrl = role === 'admin' ? '/dashboard/admin/pengaturan' : role === 'operator' ? '/dashboard/operator/pengaturan' : null;
+    const appSettingUrl = role === 'admin' ? '/settings/application' : null;
 
     const sidebarNavItems: NavItem[] = [
         ...(appSettingUrl

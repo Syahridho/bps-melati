@@ -8,79 +8,16 @@ use App\Http\Controllers\Admin\OperatorController;
 use App\Http\Controllers\Admin\Rekap\RekapBulananController;
 use App\Http\Controllers\Admin\Rekap\RekapSemesteranController;
 use App\Http\Controllers\Admin\Rekap\RekapTahunanController;
-use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TicketResponseController;
 use App\Http\Controllers\CheckAttachmentDownloadController;
 use App\Http\Controllers\CheckTicketController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\TicketController;
-use App\Models\Channel;
-use App\Models\Ticket;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    $channels = Cache::remember('channels:tree', now()->addHours(24), function () {
-        return Channel::with('children')
-            ->whereNull('parent_id')
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get()
-            ->map(fn ($ch) => [
-                'id' => $ch->id,
-                'name' => $ch->name,
-                'children' => $ch->children->where('is_active', true)->map(fn ($c) => [
-                    'id' => $c->id,
-                    'name' => $c->name,
-                ])->values()->all(),
-            ])
-            ->all();
-    });
-
-    // Statistik publik: total seluruh waktu, key ikut versi supaya otomatis segar saat ada tiket berubah
-    $stats = Cache::remember(
-        'welcome:stats:v'.Cache::get('dashboard:admin:version', 0),
-        now()->addMinutes(10),
-        function () {
-            $summary = Ticket::query()
-                ->selectRaw("
-                    COUNT(*) as total,
-                    SUM(classification = 'pengaduan') as pengaduan,
-                    SUM(classification = 'aspirasi') as aspirasi,
-                    SUM(classification = 'permintaan_informasi') as permintaan_informasi
-                ")
-                ->first();
-
-            // Sub-kanal digabung ke kanal induknya
-            $channelCounts = Ticket::query()
-                ->join('channels as c', 'c.id', '=', 'tickets.channel_id')
-                ->leftJoin('channels as p', 'p.id', '=', 'c.parent_id')
-                ->selectRaw('COALESCE(p.slug, c.slug) as root_slug, COUNT(*) as total')
-                ->groupBy('root_slug')
-                ->pluck('total', 'root_slug');
-
-            return [
-                'total' => (int) $summary->total,
-                'pengaduan' => (int) $summary->pengaduan,
-                'aspirasi' => (int) $summary->aspirasi,
-                'permintaan_informasi' => (int) $summary->permintaan_informasi,
-                'span_lapor' => (int) ($channelCounts['sp4n-lapor'] ?? 0),
-                'sosial_media' => (int) ($channelCounts['sosial-media'] ?? 0),
-                'kunjungan_langsung' => (int) ($channelCounts['kunjungan-langsung'] ?? 0),
-                'website' => (int) ($channelCounts['website'] ?? 0),
-                'wbs' => (int) ($channelCounts['wbs'] ?? 0),
-                'email' => (int) ($channelCounts['email'] ?? 0),
-            ];
-        },
-    );
-
-    return Inertia::render('welcome', [
-        'channels' => $channels,
-        'stats' => $stats,
-    ]);
-})->name('home');
+Route::get('/', WelcomeController::class)->name('home');
 
 Route::post('/tickets', [TicketController::class, 'store'])->middleware('throttle:ticket-store')->name('tickets.store');
 Route::get('/check', CheckTicketController::class)->middleware('throttle:ticket-check')->name('tickets.check');
@@ -116,8 +53,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('rekap-tahunan', RekapTahunanController::class)->name('rekap-tahunan.index');
         Route::get('rekap-tahunan/print', [RekapTahunanController::class, 'print'])->name('rekap-tahunan.print');
         Route::get('rekap-tahunan/excel', [RekapTahunanController::class, 'excel'])->name('rekap-tahunan.excel');
-        Route::get('pengaturan', [SettingController::class, 'index'])->name('pengaturan.index');
-        Route::post('pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
+        // URL lama -> URL baru pengaturan aplikasi (lihat routes/settings.php).
+        Route::permanentRedirect('pengaturan', '/settings/application');
         Route::get('operator', [OperatorController::class, 'index'])->name('operator.index');
         Route::post('operator', [OperatorController::class, 'store'])->name('operator.store');
         Route::put('operator/{operator}', [OperatorController::class, 'update'])->name('operator.update');
@@ -148,8 +85,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('rekap-tahunan', RekapTahunanController::class)->name('rekap-tahunan.index');
         Route::get('rekap-tahunan/print', [RekapTahunanController::class, 'print'])->name('rekap-tahunan.print');
         Route::get('rekap-tahunan/excel', [RekapTahunanController::class, 'excel'])->name('rekap-tahunan.excel');
-        Route::get('pengaturan', [SettingController::class, 'index'])->name('pengaturan.index');
-        Route::post('pengaturan', [SettingController::class, 'update'])->name('pengaturan.update');
     });
 });
 

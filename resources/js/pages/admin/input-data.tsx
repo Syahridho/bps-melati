@@ -1,3 +1,112 @@
-import InputData from './input-data/index';
+import { InputDataAddTicketDialog } from '@/components/input-data-add-ticket-dialog';
+import { InputDataFilterTabs } from '@/components/input-data-filter-tabs';
+import { InputDataTicketList } from '@/components/input-data-ticket-list';
+import { Pagination, type PaginatedData } from '@/components/pagination';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useInputDataFilters } from '@/hooks/use-input-data-filters';
+import AdminPage from '@/pages/admin/page';
+import { type SharedData } from '@/types';
+import { type ChannelGroup, type FilterTab, type TicketItem } from '@/types/input-data';
+import { Head, usePage } from '@inertiajs/react';
+import { CheckCircle2, Plus, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-export default InputData;
+interface InputDataPageProps extends SharedData {
+    tickets: PaginatedData<TicketItem>;
+    channels: ChannelGroup[];
+    filters: {
+        search: string;
+        filter: FilterTab;
+        per_page: number;
+    };
+    counts: {
+        semua: number;
+        pengaduan: number;
+        aspirasi: number;
+        permintaan: number;
+    };
+    flash: {
+        ticket_number?: string;
+        success?: string;
+    };
+}
+
+export default function InputData() {
+    const { auth, tickets, channels, filters, counts, flash } = usePage<InputDataPageProps>().props;
+    const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handlePerPageChange } = useInputDataFilters(routePrefix, filters);
+
+    useEffect(() => {
+        if (flash?.success) {
+            setSuccessMessage(flash.success);
+            const timer = setTimeout(() => setSuccessMessage(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash]);
+
+    return (
+        <AdminPage breadcrumbs={[{ title: 'Input Data', href: route(`${routePrefix}.input-data.index`) }]}>
+            <Head title="Input Data" />
+            <div className="space-y-6">
+                {/* Header & Success Alert */}
+                {successMessage && (
+                    <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        <span>{successMessage}</span>
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold tracking-tight">Input Data</h2>
+                        <p className="text-muted-foreground text-sm">Kelola dan tambahkan laporan, aspirasi, atau permintaan informasi baru.</p>
+                    </div>
+                    <Button onClick={() => setIsAddDialogOpen(true)} className="shrink-0 gap-2">
+                        <Plus className="h-4 w-4" />
+                        Tambah Data Baru
+                    </Button>
+                </div>
+
+                {/* Inbox Card Layout */}
+                <div className="bg-card overflow-hidden rounded-lg border">
+                    {/* Toolbar */}
+                    <div className="flex items-center gap-2 border-b px-4 py-3">
+                        <div className="relative flex-1">
+                            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+                            <Input
+                                placeholder="Cari laporan..."
+                                className="pl-9"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Filter tabs */}
+                    <InputDataFilterTabs currentFilter={filters.filter} counts={counts} onFilterChange={handleFilterChange} />
+
+                    {/* Ticket list */}
+                    <InputDataTicketList tickets={tickets} isLoading={isLoading} routePrefix={routePrefix} />
+
+                    {/* Pagination Footer */}
+                    <Pagination
+                        links={tickets.links}
+                        from={tickets.from}
+                        to={tickets.to}
+                        total={tickets.total}
+                        lastPage={tickets.last_page}
+                        perPage={filters.per_page}
+                        onPerPageChange={handlePerPageChange}
+                    />
+                </div>
+            </div>
+
+            <InputDataAddTicketDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} channels={channels} routePrefix={routePrefix} />
+        </AdminPage>
+    );
+}

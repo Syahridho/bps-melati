@@ -1,10 +1,13 @@
 <?php
 
+use App\Events\TicketCreated;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\InboxCounter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -172,4 +175,34 @@ test('admin can store ticket with direct response and response attachments', fun
     expect($response)->not->toBeNull()
         ->and($response->message)->toBe('Laporan telah ditindaklanjuti secara substantif.')
         ->and($response->attachments)->toHaveCount(1);
+});
+
+test('storing ticket via input-data does not dispatch TicketCreated and does not change inbox_open_count', function () {
+    Event::fake([TicketCreated::class]);
+    $admin = User::factory()->create(['name' => 'Administrator', 'role' => 'admin']);
+    $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true]);
+
+    $initialInboxCount = InboxCounter::getCounts($admin)['semua'];
+
+    actingAs($admin)
+        ->post(route('dashboard.admin.input-data.store'), [
+            'classification' => 'pengaduan',
+            'title' => 'Input Tiket Baru Admin',
+            'channel_id' => $channel->id,
+            'content' => 'Uraian pengaduan yang dibuat oleh admin',
+            'service_type' => 'pst',
+            'tanggal_kejadian' => now()->format('Y-m-d'),
+        ])
+        ->assertRedirect();
+
+    Event::assertNotDispatched(TicketCreated::class);
+
+    $updatedInboxCount = InboxCounter::getCounts($admin)['semua'];
+    expect($updatedInboxCount)->toBe($initialInboxCount);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.input-data.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('inbox_open_count', $initialInboxCount)
+        );
 });

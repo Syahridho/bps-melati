@@ -4,6 +4,7 @@ use App\Events\TicketCreated;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\TicketCounter;
+use App\Support\InboxCounter;
 use Illuminate\Support\Facades\Event;
 
 beforeEach(function () {
@@ -213,4 +214,22 @@ it('allows optional reporter fields to be empty', function () {
     expect($ticket->reporter_name)->toBeNull()
         ->and($ticket->reporter_email)->toBeNull()
         ->and($ticket->reporter_wa)->toBeNull();
+});
+
+it('increments inbox_open_count and broadcasts TicketCreated when ticket submitted from public form', function () {
+    $initialInboxCount = InboxCounter::getCounts()['semua'];
+
+    $response = $this->post(route('tickets.store'), [
+        'channel_id' => $this->channel->id,
+        'classification' => 'pengaduan',
+        'title' => 'Pengaduan Publik Baru',
+        'service_type' => 'pst',
+        'content' => 'Pengaduan publik yang valid dan lengkap uraiannya.',
+    ]);
+
+    $response->assertRedirect();
+    Event::assertDispatched(TicketCreated::class);
+
+    $newInboxCount = InboxCounter::getCounts()['semua'];
+    expect($newInboxCount)->toBe($initialInboxCount + 1);
 });
