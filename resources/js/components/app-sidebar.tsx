@@ -45,8 +45,6 @@ export function AppSidebar() {
     useEchoPublic('admin.notifications', '.ticket.created', (event: { ticket_number?: string }) => {
         if (auth.user.role === 'admin' || auth.user.role === 'operator') {
             const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
-            const targetRoute =
-                auth.user.role === 'admin' ? route('dashboard.admin.laporan-masuk.index') : route('dashboard.operator.laporan-masuk.index');
 
             toast(`Laporan Masuk Baru${ticketNum}`, {
                 description: 'Ada laporan baru yang perlu ditindak lanjuti.',

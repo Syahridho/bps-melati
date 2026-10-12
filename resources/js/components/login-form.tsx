@@ -26,7 +26,7 @@ const NOTICE_MESSAGES: Record<string, string> = {
     expired: 'Sesi Anda telah berakhir karena tidak ada aktivitas. Silakan login kembali.',
 };
 
-export default function LoginForm({ status, noticeReason, throttleSeconds, sessionConflict }: LoginProps) {
+export default function LoginForm({ noticeReason, throttleSeconds, sessionConflict }: LoginProps) {
     const [showPassword, setShowPassword] = useState(false);
     const [conflict, setConflict] = useState<SessionConflictInfo | null>(sessionConflict ?? null);
     const [remainingSeconds, setRemainingSeconds] = useState<number>(throttleSeconds ?? 0);
@@ -70,9 +70,9 @@ export default function LoginForm({ status, noticeReason, throttleSeconds, sessi
         }
     }, [errors, conflict, noticeReason]);
 
-    const generalError = (errors as Record<string, string | undefined>).general;
+    // const generalError = (errors as Record<string, string | undefined>).general;
     const isThrottled = cooldownUntil > 0;
-    const noticeMessage = noticeReason ? (NOTICE_MESSAGES[noticeReason] ?? null) : null;
+    // const noticeMessage = noticeReason ? (NOTICE_MESSAGES[noticeReason] ?? null) : null;
 
     const submit = useCallback(
         (force: boolean) => {
