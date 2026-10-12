@@ -19,12 +19,12 @@ interface LoginProps {
     sessionConflict?: SessionConflictInfo | null;
 }
 
-const NOTICE_MESSAGES: Record<string, string> = {
-    taken_over: 'Sesi Anda berakhir karena akun ini login di perangkat lain.',
-    forced_logout: 'Sesi Anda berakhir karena administrator mengakhiri sesi Anda.',
-    deactivated: 'Akun Anda dinonaktifkan. Hubungi administrator.',
-    expired: 'Sesi Anda telah berakhir karena tidak ada aktivitas. Silakan login kembali.',
-};
+// const NOTICE_MESSAGES: Record<string, string> = {
+//     taken_over: 'Sesi Anda berakhir karena akun ini login di perangkat lain.',
+//     forced_logout: 'Sesi Anda berakhir karena administrator mengakhiri sesi Anda.',
+//     deactivated: 'Akun Anda dinonaktifkan. Hubungi administrator.',
+//     expired: 'Sesi Anda telah berakhir karena tidak ada aktivitas. Silakan login kembali.',
+// };
 
 export default function LoginForm({ noticeReason, throttleSeconds, sessionConflict }: LoginProps) {
     const [showPassword, setShowPassword] = useState(false);
