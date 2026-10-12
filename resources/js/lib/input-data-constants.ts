@@ -1,5 +1,5 @@
 export const SATUAN_TUGAS_OPTIONS = [
-    'BPS Provinsi Riau (berkedudukan di Pekanbaru)',
+    'BPS Provinsi Riau',
     'BPS Kabupaten Kuantan Singingi',
     'BPS Kabupaten Indragiri Hulu',
     'BPS Kabupaten Indragiri Hilir',

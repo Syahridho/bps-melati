@@ -7,8 +7,13 @@ import { cn } from '@/lib/utils';
 import { CLASSIFICATIONS } from '@/lib/welcome-constants';
 import { formatFileSize, getTodayDateString } from '@/lib/welcome-utils';
 import { type ClassificationType } from '@/types/welcome';
-import { CheckCircle2, Circle, Eye, LoaderCircle, Paperclip, X } from 'lucide-react';
+import { CheckCircle2, Circle, Eye, Info, LoaderCircle, Paperclip, X } from 'lucide-react';
 import { type ChangeEvent, type FormEvent, type ReactNode, type RefObject, useEffect, useState } from 'react';
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger,
+} from '@/components/ui/hover-card';
 
 /** Seberapa sering batas "hari ini" disegarkan ulang, dalam milidetik. */
 const TODAY_REFRESH_MS = 60000;
@@ -122,11 +127,24 @@ export function ReportForm({
                         })}
                     </div>
 
-                    <div className="border-t" />
-
                     <div className="!mb-4 space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="nama">Nama</Label>
+                            <div className="flex items-center gap-1.5">
+                                <Label htmlFor="nama">Nama</Label>
+                                <HoverCard openDelay={0} closeDelay={100}>
+                                    <HoverCardTrigger asChild>
+                                        <span
+                                            aria-hidden
+                                            className="text-muted-foreground transition-colors hover:text-foreground"
+                                        >
+                                            <Info className="size-4" />
+                                        </span>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent side={"right"} className="w-auto px-3 py-1.5 text-sm">
+                                        Opsional
+                                    </HoverCardContent>
+                                </HoverCard>
+                            </div>
                             <Input
                                 id="nama"
                                 placeholder="Masukkan nama"
@@ -136,7 +154,22 @@ export function ReportForm({
                             <FieldError message={errors.reporter_name} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <div className="flex items-center gap-1.5">
+                                <Label htmlFor="email">Email</Label>
+                                <HoverCard openDelay={0} closeDelay={100}>
+                                    <HoverCardTrigger asChild>
+                                        <span
+                                            aria-hidden
+                                            className="text-muted-foreground transition-colors hover:text-foreground"
+                                        >
+                                            <Info className="size-4" />
+                                        </span>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent side={"right"} className="w-auto px-3 py-1.5 text-sm">
+                                        Opsional
+                                    </HoverCardContent>
+                                </HoverCard>
+                            </div>
                             <Input
                                 id="email"
                                 type="email"
@@ -147,7 +180,22 @@ export function ReportForm({
                             <FieldError message={errors.reporter_email} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="wa">WhatsApp</Label>
+                            <div className="flex items-center gap-1.5">
+                                <Label htmlFor="wa">WhatsApp</Label>
+                                <HoverCard openDelay={0} closeDelay={100}>
+                                    <HoverCardTrigger asChild>
+                                        <span
+                                            aria-hidden
+                                            className="text-muted-foreground transition-colors hover:text-foreground"
+                                        >
+                                            <Info className="size-4" />
+                                        </span>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent side={"right"} className="w-auto px-3 py-1.5 text-sm">
+                                        Opsional
+                                    </HoverCardContent>
+                                </HoverCard>
+                            </div>
                             <Input
                                 id="wa"
                                 type="tel"
@@ -171,7 +219,22 @@ export function ReportForm({
                             <>
                                 {data.classification === 'pengaduan' && (
                                     <div className="space-y-2">
-                                        <Label htmlFor="tanggal">Tanggal kejadian (opsional)</Label>
+                                        <div className="flex items-center gap-1.5">
+                                            <Label htmlFor="tanggal">Tanggal kejadian</Label>
+                                            <HoverCard openDelay={0} closeDelay={100}>
+                                                <HoverCardTrigger asChild>
+                                                    <span
+                                                        aria-hidden
+                                                        className="text-muted-foreground transition-colors hover:text-foreground"
+                                                    >
+                                                        <Info className="size-4" />
+                                                    </span>
+                                                </HoverCardTrigger>
+                                                <HoverCardContent side={"right"} className="w-auto px-3 py-1.5 text-sm">
+                                                    Opsional
+                                                </HoverCardContent>
+                                            </HoverCard>
+                                        </div>
                                         <Input
                                             id="tanggal"
                                             type="date"
@@ -218,8 +281,6 @@ export function ReportForm({
                             </>
                         )}
                     </div>
-
-                    <div className="border-t" />
 
                     {/* Lampiran */}
                     <div className="space-y-3">

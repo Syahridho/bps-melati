@@ -7,6 +7,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './hooks/use-appearance';
+import { TooltipProvider } from './components/ui/tooltip';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -30,7 +31,9 @@ createInertiaApp({
 
         root.render(
             <SessionProvider initialUserId={initialUserId}>
-                <App {...props} />
+                <TooltipProvider delayDuration={0}>
+                    <App {...props} />
+                </TooltipProvider>
             </SessionProvider>,
         );
     },
