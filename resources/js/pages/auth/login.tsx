@@ -13,7 +13,10 @@ interface LoginPageProps {
 export default function LoginPage({ status, noticeReason, throttleSeconds, sessionConflict }: LoginPageProps) {
     return (
         <div className="bg-background flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-            <Head title="Masuk" />
+            <Head title="Masuk">
+                <link rel="preload" as="image" href="/melati_big.webp" type="image/webp" media="(min-width: 768px)" />
+                <link rel="preload" as="image" href="/desc-melati.webp" type="image/webp" media="(min-width: 768px)" />
+            </Head>
             <div className="w-full max-w-sm md:max-w-3xl">
                 <LoginForm status={status} noticeReason={noticeReason} throttleSeconds={throttleSeconds} sessionConflict={sessionConflict} />
             </div>

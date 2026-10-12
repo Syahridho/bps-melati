@@ -12,10 +12,6 @@
         <link rel="icon" href="/logo-melati.ico" sizes="any">
         <link rel="apple-touch-icon" href="/logo-melati.png">
 
-        <link rel="preload" as="image" href="/logo-melati.webp" type="image/webp">
-        <link rel="preload" as="image" href="/desc-melati.webp" type="image/webp">
-        <link rel="preload" as="image" href="/melati_big.webp" type="image/webp">
-
         {{-- Diperlukan hooks sesi (heartbeat + session guard) untuk fetch langsung. --}}
         <meta name="csrf-token" content="{{ csrf_token() }}">
 

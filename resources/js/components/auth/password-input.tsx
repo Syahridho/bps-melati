@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { Eye, EyeOff } from 'lucide-react';
 import { forwardRef, useState, type ComponentProps } from 'react';
 
@@ -8,18 +9,18 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(({
     const [showPassword, setShowPassword] = useState(false);
 
     return (
-        <div className="relative">
-            <Input ref={ref} type={showPassword ? 'text' : 'password'} className={`px-9 ${className ?? ''}`} {...props} />
+        <>
+            <Input ref={ref} type={showPassword ? 'text' : 'password'} className={cn('px-9', className)} {...props} />
             <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                 aria-pressed={showPassword}
-                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 rounded-sm"
+                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 z-10 -translate-y-1/2 rounded-sm"
             >
                 {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
             </button>
-        </div>
+        </>
     );
 });
 

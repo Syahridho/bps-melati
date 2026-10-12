@@ -1,4 +1,4 @@
-import { useSessionGuard } from '@/hooks/use-session-guard';
+import { SessionGuard } from '@/hooks/use-session-guard';
 import { useSessionHeartbeat } from '@/hooks/use-session-heartbeat';
 import { router } from '@inertiajs/react';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -33,9 +33,13 @@ export function SessionProvider({ children, initialUserId }: SessionProviderProp
     }, []);
 
     useSessionHeartbeat(userId !== null);
-    useSessionGuard(userId);
 
-    return <>{children}</>;
+    return (
+        <>
+            <SessionGuard userId={userId} />
+            {children}
+        </>
+    );
 }
 
 function readUserId(props: unknown): number | null {

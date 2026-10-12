@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 const PING_INTERVAL_MS = 60_000;
+const SESSION_ENDED_STATUSES = new Set([401, 403, 419]);
 
 /**
  * Menjaga `last_activity_at` tetap segar dengan memanggil `POST /session/ping`
@@ -22,30 +23,53 @@ export function useSessionHeartbeat(enabled = true): void {
             return;
         }
 
-        const ping = () => {
-            if (document.visibilityState !== 'visible') {
-                return;
-            }
-
-            const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
-
-            void fetch(route('session.ping'), {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    ...(token ? { 'X-CSRF-TOKEN': token } : {}),
-                },
-                credentials: 'same-origin',
-            }).catch(() => {
-                // Jaringan putus sementara tidak apa-apa: ambang waktu di server
-                // tetap menjaga status, dan middleware menegakkan aturan.
-            });
-        };
+        let ended = false;
 
         const stop = () => {
             if (timerRef.current !== null) {
                 window.clearInterval(timerRef.current);
                 timerRef.current = null;
+            }
+        };
+
+        const handleSessionEnded = () => {
+            if (ended) {
+                return;
+            }
+            ended = true;
+            stop();
+            window.location.reload();
+        };
+
+        const ping = async () => {
+            if (ended || document.visibilityState !== 'visible') {
+                return;
+            }
+
+            const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
+
+            try {
+                const response = await fetch(route('session.ping'), {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                    },
+                    credentials: 'same-origin',
+                });
+
+                if (response.redirected || SESSION_ENDED_STATUSES.has(response.status)) {
+                    handleSessionEnded();
+                }
+            } catch {
+                // Jaringan putus sementara tidak apa-apa: ambang waktu di server
+                // tetap menjaga status, dan middleware menegakkan aturan.
+            }
+        };
+
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                void ping();
             }
         };
 
@@ -62,15 +86,9 @@ export function useSessionHeartbeat(enabled = true): void {
             navigator.sendBeacon(route('session.ping'), body);
         };
 
-        timerRef.current = window.setInterval(ping, PING_INTERVAL_MS);
+        timerRef.current = window.setInterval(() => void ping(), PING_INTERVAL_MS);
         document.addEventListener('visibilitychange', onVisibilityChange);
         window.addEventListener('pagehide', markLeaving);
-
-        function onVisibilityChange() {
-            if (document.visibilityState === 'visible') {
-                ping();
-            }
-        }
 
         return () => {
             stop();
