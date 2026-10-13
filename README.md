@@ -5,6 +5,8 @@ Provinsi Riau. Pelapor mengirim laporan secara publik, petugas
 memprosesnya di dashboard, dan statusnya bisa dilacak dengan nomor tiket.
 Dibangun dengan Laravel dan Inertia, memakai Reverb untuk pembaruan realtime.
 
+DEMO : https://test.syahridho.my.id/
+
 ## Fitur
 
 - Formulir publik untuk pengaduan, aspirasi, dan permintaan informasi.
