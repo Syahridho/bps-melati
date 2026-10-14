@@ -1,5 +1,6 @@
 import { REKAP_PRINT_FRAME_ID, REKAP_VIEW_MODE_PARAM } from '@/lib/rekap-constants';
 import { resolveRekapRolePrefix } from '@/lib/rekap-utils';
+import { generateExportFilename } from '@/lib/export-filename';
 import { type RekapViewMode } from '@/types/rekap';
 import { router } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
@@ -19,9 +20,13 @@ interface UseRekapFiltersOptions {
      * supaya perilakunya sama seperti sebelumnya.
      */
     viewMode?: RekapViewMode;
+    /** Prefix nama file export PDF. */
+    exportPrefix: string;
+    /** Periode string untuk nama file export PDF. */
+    exportPeriode: string;
 }
 
-export function useRekapFilters({ routeKey, periodParam, period, frameId = REKAP_PRINT_FRAME_ID, viewMode }: UseRekapFiltersOptions) {
+export function useRekapFilters({ routeKey, periodParam, period, frameId = REKAP_PRINT_FRAME_ID, viewMode, exportPrefix, exportPeriode }: UseRekapFiltersOptions) {
     const [exportOpen, setExportOpen] = useState(false);
 
     const rolePrefix = useMemo(() => resolveRekapRolePrefix(), []);
@@ -64,8 +69,31 @@ export function useRekapFilters({ routeKey, periodParam, period, frameId = REKAP
 
     const handlePrint = useCallback(() => {
         const frame = document.getElementById(frameId) as HTMLIFrameElement | null;
-        frame?.contentWindow?.print();
-    }, [frameId]);
+        if (!frame || !frame.contentWindow || !frame.contentDocument) return;
+
+        const filename = generateExportFilename(exportPrefix, exportPeriode);
+        const iframeWin = frame.contentWindow;
+        const iframeDoc = frame.contentDocument;
+
+        const originalParentTitle = document.title;
+        const originalIframeTitle = iframeDoc.title;
+
+        document.title = filename;
+        iframeDoc.title = filename;
+
+        const restore = () => {
+            document.title = originalParentTitle;
+            if (iframeDoc) {
+                iframeDoc.title = originalIframeTitle;
+            }
+            iframeWin.removeEventListener('afterprint', restore);
+        };
+
+        iframeWin.addEventListener('afterprint', restore);
+        setTimeout(restore, 3000);
+
+        iframeWin.print();
+    }, [frameId, exportPrefix, exportPeriode]);
 
     return {
         rolePrefix,

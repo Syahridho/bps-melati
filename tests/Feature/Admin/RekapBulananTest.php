@@ -77,11 +77,12 @@ it('blocks operators from the monthly recap', function () {
 });
 
 it('exports the monthly recap as an excel spreadsheet', function () {
-    actingAs(User::factory()->admin()->create())
+    $response = actingAs(User::factory()->admin()->create())
         ->get(route('dashboard.admin.rekap-bulanan.excel'))
         ->assertOk()
-        ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
-        ->assertHeader('Content-Disposition', 'attachment; filename="rekap-bulanan-'.now()->format('Y-m').'.xls"');
+        ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+
+    expect($response->headers->get('Content-Disposition'))->toMatch('/^attachment; filename="Rekap-Bulanan-.+_\d{8}_\d{6}\.xls"$/');
 });
 
 it('splits pengaduan by service type and counts every classification', function () {

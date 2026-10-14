@@ -3,6 +3,7 @@ import { RekapPeriodMatrixTable } from '@/components/rekap-period-matrix-table';
 import { RekapPrintActions } from '@/components/rekap-print-actions';
 import { RekapSummaryTable } from '@/components/rekap-summary-table';
 import { RekapViewModeSelect } from '@/components/rekap-view-mode-select';
+import { formatSemesterForFilename } from '@/lib/export-filename';
 import { useRekapFilters } from '@/hooks/use-rekap-filters';
 import { REKAP_TABLE_NOTES, REKAP_VIEW_MODE_RINGKAS } from '@/lib/rekap-constants';
 import AdminPage from '@/pages/admin/page';
@@ -28,6 +29,8 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
         period: semester,
         frameId: PRINT_FRAME_ID,
         viewMode: tampilan,
+        exportPrefix: 'Rekap-Semesteran',
+        exportPeriode: formatSemesterForFilename(semester),
     });
 
     return (

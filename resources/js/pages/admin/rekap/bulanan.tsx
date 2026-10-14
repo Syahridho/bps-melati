@@ -18,6 +18,8 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
         routeKey: 'rekap-bulanan',
         periodParam: 'period',
         period,
+        exportPrefix: 'Rekap-Bulanan',
+        exportPeriode: periodLabel.replace(/\s+/g, '-'),
     });
 
     return (

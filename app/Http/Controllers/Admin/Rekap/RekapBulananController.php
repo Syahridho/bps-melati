@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Rekap;
 
 use App\Http\Controllers\Controller;
+use App\Support\ExportFilename;
 use App\Support\RekapCache;
 use App\Support\RekapReport;
 use Illuminate\Contracts\View\View;
@@ -39,11 +40,13 @@ class RekapBulananController extends Controller
     public function excel(Request $request): \Illuminate\Http\Response
     {
         $period = $this->resolvePeriod($request->query('period'));
+        $periodeStr = str_replace(' ', '-', RekapReport::formatPeriod($period, 'F Y'));
+        $filename = ExportFilename::make('Rekap-Bulanan', $periodeStr, 'xls');
 
         return response()
             ->view('rekap.bulanan-excel', $this->render($period))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="rekap-bulanan-'.$period.'.xls"');
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 
     /**

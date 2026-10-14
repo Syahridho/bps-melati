@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Rekap;
 
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
+use App\Support\ExportFilename;
 use App\Support\RekapCache;
 use App\Support\RekapReport;
 use Illuminate\Contracts\View\View;
@@ -56,10 +57,15 @@ class RekapSemesteranController extends Controller
         $semester = $this->resolveSemester($request->query('semester'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
+        $year = substr($semester, 0, 4);
+        $roman = $semester[5] === '1' ? 'I' : 'II';
+        $periodeStr = $roman . '-' . $year . ($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
+        $filename = ExportFilename::make('Rekap-Semesteran', $periodeStr, 'xls');
+
         return response()
             ->view('rekap.semesteran-excel', $this->payloadWithMode($semester, $tampilan))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="rekap-semesteran-'.$semester.$this->fileSuffix($tampilan).'.xls"');
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 
     /**

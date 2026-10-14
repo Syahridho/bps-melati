@@ -73,11 +73,12 @@ it('blocks operators from the yearly recap', function () {
 });
 
 it('exports the yearly recap as an excel spreadsheet', function () {
-    actingAs(User::factory()->admin()->create())
+    $response = actingAs(User::factory()->admin()->create())
         ->get(route('dashboard.admin.rekap-tahunan.excel', ['year' => '2026']))
         ->assertOk()
-        ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
-        ->assertHeader('Content-Disposition', 'attachment; filename="rekap-tahunan-2026.xls"');
+        ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+
+    expect($response->headers->get('Content-Disposition'))->toMatch('/^attachment; filename="Rekap-Tahunan-2026_\d{8}_\d{6}\.xls"$/');
 });
 
 it('labels all twelve months of the year', function () {

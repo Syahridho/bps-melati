@@ -28,6 +28,8 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
         period: year,
         frameId: PRINT_FRAME_ID,
         viewMode: tampilan,
+        exportPrefix: 'Rekap-Tahunan',
+        exportPeriode: year,
     });
 
     return (

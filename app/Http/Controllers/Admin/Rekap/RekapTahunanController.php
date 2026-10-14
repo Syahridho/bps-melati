@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Rekap;
 
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
+use App\Support\ExportFilename;
 use App\Support\RekapCache;
 use App\Support\RekapReport;
 use Illuminate\Contracts\View\View;
@@ -55,10 +56,13 @@ class RekapTahunanController extends Controller
         $year = $this->resolveYear($request->query('year'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
+        $periodeStr = $year . ($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
+        $filename = ExportFilename::make('Rekap-Tahunan', $periodeStr, 'xls');
+
         return response()
             ->view('rekap.tahunan-excel', $this->payloadWithMode($year, $tampilan))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="rekap-tahunan-'.$year.$this->fileSuffix($tampilan).'.xls"');
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 
     /**
