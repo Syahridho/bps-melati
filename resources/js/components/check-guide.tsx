@@ -1,6 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card } from '@/components/ui/card';
-import { CircleCheck, Clock, Inbox, ListChecks, MessageCircle, Search, ShieldCheck, Ticket } from 'lucide-react';
+import { ListChecks, Search, ShieldCheck, Ticket } from 'lucide-react';
 
 const GUIDE_STEPS = [
     {
@@ -20,12 +20,12 @@ const GUIDE_STEPS = [
     },
 ];
 
-const STATUS_ITEMS = [
-    { label: 'Diterima', icon: Inbox },
-    { label: 'Diproses', icon: Clock },
-    { label: 'Menunggu Tanggapan', icon: MessageCircle },
-    { label: 'Selesai', icon: CircleCheck },
-];
+// const STATUS_ITEMS = [
+//     { label: 'Diterima', icon: Inbox },
+//     { label: 'Diproses', icon: Clock },
+//     { label: 'Menunggu Tanggapan', icon: MessageCircle },
+//     { label: 'Selesai', icon: CircleCheck },
+// ];
 
 export function CheckGuideSection() {
     return (
