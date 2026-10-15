@@ -112,6 +112,8 @@ export interface LaporanMasukProps extends SharedData {
         search: string;
         filter: FilterTab;
         per_page: number;
+        from: string | null;
+        to: string | null;
     };
     counts: {
         semua: number;
@@ -122,6 +124,7 @@ export interface LaporanMasukProps extends SharedData {
         respon_awal: number;
         respon_substantif: number;
     };
+    inbox_open_count: number;
 }
 
 export interface TicketDetail {

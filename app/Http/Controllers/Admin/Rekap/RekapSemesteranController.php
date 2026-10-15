@@ -59,7 +59,7 @@ class RekapSemesteranController extends Controller
 
         $year = substr($semester, 0, 4);
         $roman = $semester[5] === '1' ? 'I' : 'II';
-        $periodeStr = $roman . '-' . $year . ($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
+        $periodeStr = $roman.'-'.$year.($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
         $filename = ExportFilename::make('Rekap-Semesteran', $periodeStr, 'xls');
 
         return response()

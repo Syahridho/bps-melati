@@ -38,11 +38,7 @@ export interface TicketItem {
     channel: string;
     completed_at: string | null;
     created_at: string;
-}
-
-export interface PeriodOption {
-    value: string;
-    label: string;
+    updated_at: string;
 }
 
 export interface LaporanSelesaiProps extends SharedData {
@@ -51,7 +47,8 @@ export interface LaporanSelesaiProps extends SharedData {
         search: string;
         filter: FilterTab;
         per_page: number;
-        period: string;
+        from: string | null;
+        to: string | null;
     };
     counts: {
         semua: number;
@@ -61,7 +58,6 @@ export interface LaporanSelesaiProps extends SharedData {
         aspirasi: number;
         permintaan: number;
     };
-    periods: PeriodOption[];
 }
 
 export interface ShowProps extends SharedData {
@@ -75,7 +71,6 @@ export interface ShowProps extends SharedData {
         created_by_name: string | null;
         closed_reason: ClosedReason | null;
         auto_close_at: string | null;
-        updated_at: string;
         attachments: Attachment[];
         responses: TicketResponseItem[];
     };

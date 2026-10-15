@@ -32,7 +32,24 @@ class SendTicketResponseNotification implements ShouldQueue
      */
     public array $backoff = [10, 60, 300];
 
-    public function __construct(public TicketResponse $response) {}
+    public function __construct(public TicketResponse $response)
+    {
+        $this->onQueue('notifications');
+    }
+
+    /**
+     * Tag untuk pencarian di Horizon dashboard.
+     *
+     * @return list<string>
+     */
+    public function tags(): array
+    {
+        return [
+            'notification',
+            'ticket:'.$this->response->ticket_id,
+            'response:'.$this->response->id,
+        ];
+    }
 
     public function handle(): void
     {

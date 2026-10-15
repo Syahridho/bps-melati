@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\LaporanCache;
 use App\Support\RekapCache;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -55,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         // supaya halaman rekap otomatis menghitung ulang pada request berikutnya.
         Ticket::saved(function (Ticket $ticket) {
             RekapCache::invalidate();
+            LaporanCache::invalidate();
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));
             Cache::forget('dashboard:admin:stats');
             Cache::forget('dashboard:operator:stats');
@@ -62,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
 
         Ticket::deleted(function (Ticket $ticket) {
             RekapCache::invalidate();
+            LaporanCache::invalidate();
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));
             Cache::forget('dashboard:admin:stats');
             Cache::forget('dashboard:operator:stats');

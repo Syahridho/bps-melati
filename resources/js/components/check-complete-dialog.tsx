@@ -15,8 +15,8 @@ export function CheckCompleteDialog({ open, onOpenChange, completing, onConfirm 
                 <DialogHeader>
                     <DialogTitle>Tandai Laporan Selesai?</DialogTitle>
                     <DialogDescription>
-                        Apakah Anda yakin laporan ini telah selesai ditangani dan ingin menutupnya? <span className="font-semibold">Tiket yang sudah ditutup tidak dapat dibalas
-                        kembali.</span> 
+                        Apakah Anda yakin laporan ini telah selesai ditangani dan ingin menutupnya?{' '}
+                        <span className="font-semibold">Tiket yang sudah ditutup tidak dapat dibalas kembali.</span>
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="mt-4 flex flex-row gap-2 sm:gap-0">

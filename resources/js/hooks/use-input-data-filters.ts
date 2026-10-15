@@ -2,9 +2,22 @@ import { type FilterTab } from '@/types/input-data';
 import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-export function useInputDataFilters(routePrefix: string, initialFilters: { search: string; filter: FilterTab; per_page: number }) {
+export function useInputDataFilters(
+    routePrefix: string,
+    initialFilters: { search: string; filter: FilterTab; per_page: number; from: string | null; to: string | null },
+) {
     const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
     const [isLoading, setIsLoading] = useState(false);
+
+    const queryParams = (overrides: Record<string, string | number | null> = {}) => ({
+        tab: initialFilters.filter,
+        q: searchQuery,
+        per_page: initialFilters.per_page,
+        from: initialFilters.from,
+        to: initialFilters.to,
+        page: 1,
+        ...overrides,
+    });
 
     useEffect(() => {
         setSearchQuery(initialFilters.search || '');
@@ -18,7 +31,14 @@ export function useInputDataFilters(routePrefix: string, initialFilters: { searc
         const timer = setTimeout(() => {
             router.get(
                 route(`${routePrefix}.input-data.index`),
-                { filter: initialFilters.filter, search: searchQuery, per_page: initialFilters.per_page, page: 1 },
+                {
+                    tab: initialFilters.filter,
+                    q: searchQuery,
+                    per_page: initialFilters.per_page,
+                    from: initialFilters.from,
+                    to: initialFilters.to,
+                    page: 1,
+                },
                 {
                     preserveState: true,
                     preserveScroll: true,
@@ -27,29 +47,52 @@ export function useInputDataFilters(routePrefix: string, initialFilters: { searc
                     onFinish: () => setIsLoading(false),
                 },
             );
-        }, 300);
+        }, 400);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, initialFilters.filter, initialFilters.per_page, initialFilters.search, routePrefix]);
+    }, [searchQuery, initialFilters.filter, initialFilters.per_page, initialFilters.from, initialFilters.to, initialFilters.search, routePrefix]);
 
     const handleFilterChange = (tab: FilterTab) => {
-        router.get(
-            route(`${routePrefix}.input-data.index`),
-            { filter: tab, search: searchQuery, per_page: initialFilters.per_page, page: 1 },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-                onStart: () => setIsLoading(true),
-                onFinish: () => setIsLoading(false),
-            },
-        );
+        router.get(route(`${routePrefix}.input-data.index`), queryParams({ tab }), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onStart: () => setIsLoading(true),
+            onFinish: () => setIsLoading(false),
+        });
+    };
+
+    const handleRangeChange = (from: string | null, to: string | null) => {
+        router.get(route(`${routePrefix}.input-data.index`), queryParams({ from, to }), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onStart: () => setIsLoading(true),
+            onFinish: () => setIsLoading(false),
+        });
     };
 
     const handlePerPageChange = (newPerPage: number) => {
+        router.get(route(`${routePrefix}.input-data.index`), queryParams({ per_page: newPerPage }), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onStart: () => setIsLoading(true),
+            onFinish: () => setIsLoading(false),
+        });
+    };
+
+    const handleResetFilters = () => {
         router.get(
             route(`${routePrefix}.input-data.index`),
-            { filter: initialFilters.filter, search: searchQuery, per_page: newPerPage, page: 1 },
+            {
+                tab: 'semua',
+                q: '',
+                per_page: initialFilters.per_page,
+                from: 'semua',
+                to: 'semua',
+                page: 1,
+            },
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -60,5 +103,13 @@ export function useInputDataFilters(routePrefix: string, initialFilters: { searc
         );
     };
 
-    return { searchQuery, setSearchQuery, isLoading, handleFilterChange, handlePerPageChange };
+    return {
+        searchQuery,
+        setSearchQuery,
+        isLoading,
+        handleFilterChange,
+        handleRangeChange,
+        handlePerPageChange,
+        handleResetFilters,
+    };
 }

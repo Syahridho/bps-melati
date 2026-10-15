@@ -7,6 +7,8 @@ use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketResponseSubmitted;
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Support\LaporanFilter;
+use App\Support\LaporanFilterQuery;
 use App\Support\TicketResponsePayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,54 +26,39 @@ class InputDataController extends Controller
      */
     public function index(Request $request): Response
     {
-        $search = trim((string) $request->query('search', ''));
-        $filter = (string) $request->query('filter', 'semua');
-        $perPage = (int) $request->query('per_page', 10);
+        $filter = new LaporanFilter($request, 'semua', 10);
 
         // Whitelist filter
         $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
-        if (! in_array($filter, $allowedFilters, true)) {
-            $filter = 'semua';
+        if (! in_array($filter->tab, $allowedFilters, true)) {
+            $filter->tab = 'semua';
         }
 
-        // Whitelist per_page
-        if (! in_array($perPage, [10, 20, 50, 100], true)) {
-            $perPage = 10;
-        }
+        $frontendFilterKey = ($filter->tab === 'permintaan_informasi') ? 'permintaan' : $filter->tab;
 
-        $frontendFilterKey = ($filter === 'permintaan_informasi') ? 'permintaan' : $filter;
-
-        // Callback pencarian kata kunci
-        $searchQueryClosure = function ($query) use ($search) {
-            if ($search !== '') {
-                $query->where(function ($q) use ($search) {
-                    $q->where('ticket_number', 'like', "%{$search}%")
-                        ->orWhere('title', 'like', "%{$search}%")
-                        ->orWhere('reporter_name', 'like', "%{$search}%")
-                        ->orWhere('reporter_email', 'like', "%{$search}%")
-                        ->orWhere('reporter_wa', 'like', "%{$search}%")
-                        ->orWhere('content', 'like', "%{$search}%");
-                });
-            }
-        };
+        $searchClosure = LaporanFilterQuery::searchClosure($filter->search);
 
         // Query utama daftar tiket (hanya tiket yang diinput manual oleh admin/operator)
         $ticketsQuery = Ticket::with('channel')
             ->where('source_app', 'admin')
-            ->tap($searchQueryClosure)
-            ->when($filter !== 'semua', function ($query) use ($filter) {
-                if ($filter === 'pengaduan') {
+            ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
+                $q->whereDate('created_at', '>=', $filter->from)
+                    ->whereDate('created_at', '<=', $filter->to);
+            })
+            ->tap($searchClosure)
+            ->when($filter->tab !== 'semua', function ($query) use ($filter) {
+                if ($filter->tab === 'pengaduan') {
                     $query->where('classification', 'pengaduan');
-                } elseif ($filter === 'aspirasi') {
+                } elseif ($filter->tab === 'aspirasi') {
                     $query->where('classification', 'aspirasi');
-                } elseif ($filter === 'permintaan' || $filter === 'permintaan_informasi') {
+                } elseif ($filter->tab === 'permintaan' || $filter->tab === 'permintaan_informasi') {
                     $query->where('classification', 'permintaan_informasi');
                 }
             });
 
         $tickets = $ticketsQuery
             ->orderByDesc('created_at')
-            ->paginate($perPage)
+            ->paginate($filter->perPage)
             ->withQueryString()
             ->through(fn (Ticket $ticket) => [
                 'id' => $ticket->id,
@@ -91,14 +78,29 @@ class InputDataController extends Controller
                 'created_at' => $ticket->created_at->toIso8601String(),
             ]);
 
-        // Base query untuk counts (mengikuti pencarian, tanpa filter tab)
-        $countBaseQuery = Ticket::query()->where('source_app', 'admin')->tap($searchQueryClosure);
+        // Counts mengikuti pencarian dan rentang tanggal, tapi TIDAK mengikuti tab
+        $countBaseQuery = Ticket::query()
+            ->where('source_app', 'admin')
+            ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
+                $q->whereDate('created_at', '>=', $filter->from)
+                    ->whereDate('created_at', '<=', $filter->to);
+            })
+            ->tap($searchClosure);
+
+        $countsData = (clone $countBaseQuery)
+            ->selectRaw("
+                COUNT(*) as semua,
+                SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
+                SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
+                SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan
+            ")
+            ->first();
 
         $counts = [
-            'semua' => (clone $countBaseQuery)->count(),
-            'pengaduan' => (clone $countBaseQuery)->where('classification', 'pengaduan')->count(),
-            'aspirasi' => (clone $countBaseQuery)->where('classification', 'aspirasi')->count(),
-            'permintaan' => (clone $countBaseQuery)->where('classification', 'permintaan_informasi')->count(),
+            'semua' => (int) ($countsData->semua ?? 0),
+            'pengaduan' => (int) ($countsData->pengaduan ?? 0),
+            'aspirasi' => (int) ($countsData->aspirasi ?? 0),
+            'permintaan' => (int) ($countsData->permintaan ?? 0),
         ];
 
         $channels = Cache::remember('channels:tree', now()->addHours(24), function () {
@@ -121,11 +123,7 @@ class InputDataController extends Controller
         return Inertia::render('admin/input-data', [
             'tickets' => $tickets,
             'channels' => $channels,
-            'filters' => [
-                'search' => $search,
-                'filter' => $frontendFilterKey,
-                'per_page' => $perPage,
-            ],
+            'filters' => $filter->toFilterProps($frontendFilterKey),
             'counts' => $counts,
         ]);
     }

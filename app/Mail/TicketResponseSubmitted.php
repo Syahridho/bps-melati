@@ -20,7 +20,9 @@ class TicketResponseSubmitted extends Mailable implements ShouldQueue
     public function __construct(
         public Ticket $ticket,
         public TicketResponse $response
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function envelope(): Envelope
     {

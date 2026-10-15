@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
-use App\Support\RekapReport;
 use App\Support\TicketResponsePayload;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,34 +21,61 @@ class LaporanSelesaiController extends Controller
     private const COMPLETED_STATUSES = ['respon_awal', 'respon_substantif', 'selesai'];
 
     /**
-     * Daftar laporan selesai dengan paginasi dan pencarian.
+     * Daftar laporan selesai dengan paginasi, pencarian, dan rentang tanggal (Date Range).
      */
     public function index(Request $request): Response
     {
-        $search = trim((string) $request->query('search', ''));
-        $filter = (string) $request->query('filter', 'semua');
-        $perPage = (int) $request->query('per_page', 10);
-        $period = (string) $request->query('period', now()->format('Y-m'));
+        $search = trim((string) ($request->query('q', $request->query('search', ''))));
+        $filter = (string) ($request->query('tab', $request->query('filter', 'semua')));
+        $perPage = (int) $request->query('per_page', 15);
+        $fromInput = $request->query('from');
+        $toInput = $request->query('to');
 
-        // Whitelist filter
+        // Whitelist filter / tab
         $allowedFilters = ['semua', 'respon_awal', 'respon_substantif', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
         if (! in_array($filter, $allowedFilters, true)) {
             $filter = 'semua';
         }
 
         // Whitelist per_page
-        if (! in_array($perPage, [10, 20, 50, 100], true)) {
-            $perPage = 10;
-        }
-
-        // Validasi period (YYYY-MM)
-        if (! preg_match('/^\d{4}-\d{2}$/', $period)) {
-            $period = now()->format('Y-m');
+        if (! in_array($perPage, [10, 15, 20, 50, 100], true)) {
+            $perPage = 15;
         }
 
         $frontendFilterKey = ($filter === 'permintaan_informasi') ? 'permintaan' : $filter;
 
-        // Callback pencarian kata kunci
+        // Resolusi rentang tanggal (Timezone: Asia/Jakarta)
+        $tz = 'Asia/Jakarta';
+        $isSemuaWaktu = ($fromInput === 'semua' || $toInput === 'semua');
+
+        if (! $isSemuaWaktu) {
+            if ($fromInput && $toInput) {
+                try {
+                    $fromDate = Carbon::parse($fromInput, $tz)->toDateString();
+                    $toDate = Carbon::parse($toInput, $tz)->toDateString();
+                    if ($toDate < $fromDate) {
+                        $toDate = $fromDate;
+                        $toInput = $fromInput;
+                    }
+                    $fromInput = $fromDate;
+                    $toInput = $toDate;
+                } catch (\Throwable) {
+                    $now = Carbon::now($tz);
+                    $fromInput = $now->copy()->startOfMonth()->toDateString();
+                    $toInput = $now->copy()->endOfMonth()->toDateString();
+                }
+            } else {
+                // Default: Bulan ini
+                $now = Carbon::now($tz);
+                $fromInput = $now->copy()->startOfMonth()->toDateString();
+                $toInput = $now->copy()->endOfMonth()->toDateString();
+            }
+        } else {
+            $fromInput = 'semua';
+            $toInput = 'semua';
+        }
+
+        // Callback pencarian kata kunci (Catatan: untuk performa tabel besar, pertimbangkan MySQL FULLTEXT index)
         $searchQueryClosure = function ($query) use ($search) {
             if ($search !== '') {
                 $query->where(function ($q) use ($search) {
@@ -65,7 +92,10 @@ class LaporanSelesaiController extends Controller
         // Query utama daftar tiket laporan selesai
         $ticketsQuery = Ticket::with('channel')
             ->whereIn('status', self::COMPLETED_STATUSES)
-            ->where('period', $period)
+            ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($query) use ($fromInput, $toInput) {
+                $query->whereDate('updated_at', '>=', $fromInput)
+                    ->whereDate('updated_at', '<=', $toInput);
+            })
             ->tap($searchQueryClosure)
             ->when($filter !== 'semua', function ($query) use ($filter) {
                 if ($filter === 'respon_awal') {
@@ -102,33 +132,37 @@ class LaporanSelesaiController extends Controller
                 'closed_reason' => $ticket->closed_reason,
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
                 'created_at' => $ticket->created_at->toIso8601String(),
+                'updated_at' => $ticket->updated_at->toIso8601String(),
             ]);
 
-        // Base query untuk counts (mengikuti pencarian, tanpa filter tab)
-        $countBaseQuery = Ticket::whereIn('status', self::COMPLETED_STATUSES)->where('period', $period)->tap($searchQueryClosure);
+        // Base query untuk counts (mengikuti rentang tanggal dan pencarian, tanpa filter tab)
+        $countBaseQuery = Ticket::query()
+            ->whereIn('status', self::COMPLETED_STATUSES)
+            ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($q) use ($fromInput, $toInput) {
+                $q->whereDate('updated_at', '>=', $fromInput)
+                    ->whereDate('updated_at', '<=', $toInput);
+            })
+            ->tap($searchQueryClosure);
+
+        $countsData = (clone $countBaseQuery)
+            ->selectRaw("
+                COUNT(*) as semua,
+                SUM(CASE WHEN status = 'respon_awal' THEN 1 ELSE 0 END) as respon_awal,
+                SUM(CASE WHEN status = 'respon_substantif' THEN 1 ELSE 0 END) as respon_substantif,
+                SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
+                SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
+                SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan
+            ")
+            ->first();
 
         $counts = [
-            'semua' => (clone $countBaseQuery)->count(),
-            'respon_awal' => (clone $countBaseQuery)->where('status', 'respon_awal')->count(),
-            'respon_substantif' => (clone $countBaseQuery)->where('status', 'respon_substantif')->count(),
-            'pengaduan' => (clone $countBaseQuery)->where('classification', 'pengaduan')->count(),
-            'aspirasi' => (clone $countBaseQuery)->where('classification', 'aspirasi')->count(),
-            'permintaan' => (clone $countBaseQuery)->where('classification', 'permintaan_informasi')->count(),
+            'semua' => (int) ($countsData->semua ?? 0),
+            'respon_awal' => (int) ($countsData->respon_awal ?? 0),
+            'respon_substantif' => (int) ($countsData->respon_substantif ?? 0),
+            'pengaduan' => (int) ($countsData->pengaduan ?? 0),
+            'aspirasi' => (int) ($countsData->aspirasi ?? 0),
+            'permintaan' => (int) ($countsData->permintaan ?? 0),
         ];
-
-        // List period untuk dropdown (mirip dengan rekap); selalu sertakan bulan berjalan
-        $periods = RekapReport::ticketPeriods();
-        $currentPeriod = now()->format('Y-m');
-        foreach ([$currentPeriod, $period] as $ensurePeriod) {
-            if (! in_array($ensurePeriod, $periods, true)) {
-                $periods[] = $ensurePeriod;
-            }
-        }
-        rsort($periods);
-        $periodsOptions = array_map(fn (string $value): array => [
-            'value' => $value,
-            'label' => RekapReport::formatPeriod($value, 'F Y'),
-        ], $periods);
 
         return Inertia::render('admin/laporan-selesai', [
             'tickets' => $tickets,
@@ -136,10 +170,10 @@ class LaporanSelesaiController extends Controller
                 'search' => $search,
                 'filter' => $frontendFilterKey,
                 'per_page' => $perPage,
-                'period' => $period,
+                'from' => $fromInput,
+                'to' => $toInput,
             ],
             'counts' => $counts,
-            'periods' => $periodsOptions,
         ]);
     }
 

@@ -56,7 +56,7 @@ class RekapTahunanController extends Controller
         $year = $this->resolveYear($request->query('year'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
-        $periodeStr = $year . ($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
+        $periodeStr = $year.($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
         $filename = ExportFilename::make('Rekap-Tahunan', $periodeStr, 'xls');
 
         return response()

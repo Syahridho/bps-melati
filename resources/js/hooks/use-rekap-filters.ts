@@ -1,6 +1,6 @@
+import { generateExportFilename } from '@/lib/export-filename';
 import { REKAP_PRINT_FRAME_ID, REKAP_VIEW_MODE_PARAM } from '@/lib/rekap-constants';
 import { resolveRekapRolePrefix } from '@/lib/rekap-utils';
-import { generateExportFilename } from '@/lib/export-filename';
 import { type RekapViewMode } from '@/types/rekap';
 import { router } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
@@ -26,7 +26,15 @@ interface UseRekapFiltersOptions {
     exportPeriode: string;
 }
 
-export function useRekapFilters({ routeKey, periodParam, period, frameId = REKAP_PRINT_FRAME_ID, viewMode, exportPrefix, exportPeriode }: UseRekapFiltersOptions) {
+export function useRekapFilters({
+    routeKey,
+    periodParam,
+    period,
+    frameId = REKAP_PRINT_FRAME_ID,
+    viewMode,
+    exportPrefix,
+    exportPeriode,
+}: UseRekapFiltersOptions) {
     const [exportOpen, setExportOpen] = useState(false);
 
     const rolePrefix = useMemo(() => resolveRekapRolePrefix(), []);

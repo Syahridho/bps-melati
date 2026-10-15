@@ -79,10 +79,17 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                     ) : (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton asChild isActive={isUrlActive(item.url, page.url)}>
-                                <Link href={item.url} prefetch>
-                                    {item.icon && <item.icon />}
-                                    <span>{item.title}</span>
-                                </Link>
+                                {item.external ? (
+                                    <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                        {item.icon && <item.icon />}
+                                        <span>{item.title}</span>
+                                    </a>
+                                ) : (
+                                    <Link href={item.url} prefetch>
+                                        {item.icon && <item.icon />}
+                                        <span>{item.title}</span>
+                                    </Link>
+                                )}
                             </SidebarMenuButton>
                             {item.badge != null && item.badge > 0 && (
                                 <SidebarMenuBadge className="bg-primary text-white peer-hover/menu-button:text-white peer-data-[active=true]/menu-button:text-white dark:bg-blue-500 dark:text-white">

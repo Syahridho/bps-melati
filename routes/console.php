@@ -25,3 +25,6 @@ Schedule::command('sessions:cleanup')->everyMinute()->withoutOverlapping();
 
 // Audit log autentikasi dipangkas sesuai retensi config.
 Schedule::command('auth:prune-logs')->dailyAt('02:15');
+
+// Snapshot metrik Horizon setiap 5 menit untuk grafik di dashboard.
+Schedule::command('horizon:snapshot')->everyFiveMinutes();

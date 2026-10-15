@@ -1,7 +1,9 @@
+import { DateRangeFilter } from '@/components/date-range-filter';
 import { InputDataAddTicketDialog } from '@/components/input-data-add-ticket-dialog';
 import { InputDataFilterTabs } from '@/components/input-data-filter-tabs';
 import { InputDataTicketList } from '@/components/input-data-ticket-list';
 import { Pagination, type PaginatedData } from '@/components/pagination';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useInputDataFilters } from '@/hooks/use-input-data-filters';
@@ -9,7 +11,7 @@ import AdminPage from '@/pages/admin/page';
 import { type SharedData } from '@/types';
 import { type ChannelGroup, type FilterTab, type TicketItem } from '@/types/input-data';
 import { Head, usePage } from '@inertiajs/react';
-import { CheckCircle2, Plus, Search } from 'lucide-react';
+import { CheckCircle2, Plus, RotateCcw, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface InputDataPageProps extends SharedData {
@@ -19,6 +21,8 @@ interface InputDataPageProps extends SharedData {
         search: string;
         filter: FilterTab;
         per_page: number;
+        from: string | null;
+        to: string | null;
     };
     counts: {
         semua: number;
@@ -39,7 +43,8 @@ export default function InputData() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handlePerPageChange } = useInputDataFilters(routePrefix, filters);
+    const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
+        useInputDataFilters(routePrefix, filters);
 
     useEffect(() => {
         if (flash?.success) {
@@ -48,6 +53,8 @@ export default function InputData() {
             return () => clearTimeout(timer);
         }
     }, [flash]);
+
+    const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
 
     return (
         <AdminPage breadcrumbs={[{ title: 'Input Data', href: route(`${routePrefix}.input-data.index`) }]}>
@@ -75,8 +82,8 @@ export default function InputData() {
                 {/* Inbox Card Layout */}
                 <div className="bg-card overflow-hidden rounded-lg border">
                     {/* Toolbar */}
-                    <div className="flex items-center gap-2 border-b px-4 py-3">
-                        <div className="relative flex-1">
+                    <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
+                        <div className="relative min-w-[12rem] flex-1">
                             <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
                             <Input
                                 placeholder="Cari laporan..."
@@ -85,13 +92,58 @@ export default function InputData() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
+                        <DateRangeFilter from={filters.from} to={filters.to} onRangeChange={handleRangeChange} />
                     </div>
+
+                    {/* Active filter summary */}
+                    {hasActiveFilters && (
+                        <div className="bg-muted/30 flex flex-wrap items-center gap-2 border-b px-4 py-2 text-xs">
+                            <span className="text-muted-foreground font-medium">Filter aktif:</span>
+                            {filters.filter !== 'semua' && (
+                                <Badge variant="secondary" className="gap-1">
+                                    Tab: {filters.filter}
+                                    <button onClick={() => handleFilterChange('semua')} className="hover:text-foreground">
+                                        <X className="size-3" />
+                                    </button>
+                                </Badge>
+                            )}
+                            {filters.search && (
+                                <Badge variant="secondary" className="gap-1">
+                                    Pencarian: &quot;{filters.search}&quot;
+                                    <button onClick={() => setSearchQuery('')} className="hover:text-foreground">
+                                        <X className="size-3" />
+                                    </button>
+                                </Badge>
+                            )}
+                            {filters.from && filters.from !== 'semua' && (
+                                <Badge variant="secondary" className="gap-1">
+                                    Tanggal: {filters.from} s.d. {filters.to}
+                                    <button onClick={() => handleRangeChange('semua', 'semua')} className="hover:text-foreground">
+                                        <X className="size-3" />
+                                    </button>
+                                </Badge>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={handleResetFilters} className="h-6 px-2 text-xs">
+                                <RotateCcw className="mr-1 size-3" />
+                                Reset semua
+                            </Button>
+                        </div>
+                    )}
 
                     {/* Filter tabs */}
                     <InputDataFilterTabs currentFilter={filters.filter} counts={counts} onFilterChange={handleFilterChange} />
 
                     {/* Ticket list */}
-                    <InputDataTicketList tickets={tickets} isLoading={isLoading} routePrefix={routePrefix} />
+                    {tickets.data.length === 0 ? (
+                        <div className="text-muted-foreground flex flex-col items-center justify-center py-16">
+                            <p className="text-sm">Tidak ada laporan pada rentang ini</p>
+                            <Button variant="outline" size="sm" onClick={handleResetFilters} className="mt-3">
+                                Reset filter
+                            </Button>
+                        </div>
+                    ) : (
+                        <InputDataTicketList tickets={tickets} isLoading={isLoading} routePrefix={routePrefix} />
+                    )}
 
                     {/* Pagination Footer */}
                     <Pagination
