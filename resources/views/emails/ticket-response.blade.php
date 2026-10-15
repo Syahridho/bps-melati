@@ -39,3 +39,4 @@ Cek Status Tiket
 
 Terima kasih,<br>
 **{{ config('app.name', 'Melati') }} - BPS Provinsi Riau**
+</x-mail::message>
