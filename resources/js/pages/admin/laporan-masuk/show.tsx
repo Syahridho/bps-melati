@@ -66,6 +66,40 @@ export default function Show() {
         setTicketVersion(ticket.version ?? 0);
     }, [ticket]);
 
+    // Auto-refresh polling when there are responses with email_status === 'pending'
+    useEffect(() => {
+        const hasPendingEmail = responses.some((r) => r.email_status === 'pending');
+        if (!hasPendingEmail) {
+            return;
+        }
+
+        const startTime = Date.now();
+        const maxDuration = 2 * 60 * 1000; // 2 minutes
+
+        const interval = setInterval(() => {
+            if (Date.now() - startTime >= maxDuration) {
+                clearInterval(interval);
+                return;
+            }
+
+            // Check if still has pending email in current responses
+            const stillPending = responses.some((r) => r.email_status === 'pending');
+            if (!stillPending) {
+                clearInterval(interval);
+                return;
+            }
+
+            router.reload({
+                only: ['ticket'],
+                preserveScroll: true,
+            });
+        }, 4000);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [responses]);
+
     const responseCountRef = useRef(responses.length);
     responseCountRef.current = responses.length;
 
