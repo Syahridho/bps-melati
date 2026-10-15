@@ -6,30 +6,17 @@ import { router } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
 
 interface UseRekapFiltersOptions {
-    /** Prefix route tanpa titik, contoh: `rekap-bulanan`. */
     routeKey: string;
-    /** Nama query periode, contoh: `period` / `semester` / `year`. */
-    periodParam: string;
-    /** Nilai periode aktif (dari props Inertia). */
-    period: string;
-    /** Id iframe pratinjau cetak; default dipakai halaman bulanan. */
+    queryParams: Record<string, string | number>;
     frameId?: string;
-    /**
-     * Mode tampilan rekap dari props Inertia. Bila diisi, mode ikut dibawa pada
-     * navigasi dan URL export. Halaman tanpa mode (bulanan) biarkan undefined
-     * supaya perilakunya sama seperti sebelumnya.
-     */
     viewMode?: RekapViewMode;
-    /** Prefix nama file export PDF. */
     exportPrefix: string;
-    /** Periode string untuk nama file export PDF. */
     exportPeriode: string;
 }
 
 export function useRekapFilters({
     routeKey,
-    periodParam,
-    period,
+    queryParams,
     frameId = REKAP_PRINT_FRAME_ID,
     viewMode,
     exportPrefix,
@@ -40,40 +27,43 @@ export function useRekapFilters({
     const rolePrefix = useMemo(() => resolveRekapRolePrefix(), []);
 
     const queryString = useMemo(() => {
-        const params = [`${periodParam}=${encodeURIComponent(period)}`];
+        const params = new URLSearchParams();
+
+        Object.entries(queryParams).forEach(([key, val]) => {
+            if (val !== undefined && val !== null && val !== '') {
+                params.append(key, String(val));
+            }
+        });
 
         if (viewMode) {
-            params.push(`${REKAP_VIEW_MODE_PARAM}=${encodeURIComponent(viewMode)}`);
+            params.append(REKAP_VIEW_MODE_PARAM, viewMode);
         }
 
-        return params.join('&');
-    }, [periodParam, period, viewMode]);
+        return params.toString();
+    }, [queryParams, viewMode]);
 
     const printUrl = useMemo(() => `${route(`${rolePrefix}${routeKey}.print`)}?${queryString}`, [rolePrefix, routeKey, queryString]);
 
     const excelUrl = useMemo(() => `${route(`${rolePrefix}${routeKey}.excel`)}?${queryString}`, [rolePrefix, routeKey, queryString]);
 
-    /**
-     * Ganti periode atau mode tampilan tanpa kehilangan yang lain: setiap
-     * navigasi selalu mengirim ulang periode dan mode yang sedang aktif.
-     */
     const navigate = useCallback(
-        (nextPeriod: string, nextViewMode?: RekapViewMode) => {
+        (nextParams: Record<string, string | number>, nextViewMode?: RekapViewMode) => {
             router.get(
                 route(`${rolePrefix}${routeKey}.index`),
                 {
-                    [periodParam]: nextPeriod,
+                    ...queryParams,
+                    ...nextParams,
                     ...((nextViewMode ?? viewMode) ? { [REKAP_VIEW_MODE_PARAM]: (nextViewMode ?? viewMode) as RekapViewMode } : {}),
                 },
                 { preserveState: true, preserveScroll: true, replace: true },
             );
         },
-        [rolePrefix, routeKey, periodParam, viewMode],
+        [rolePrefix, routeKey, queryParams, viewMode],
     );
 
-    const handlePeriodChange = useCallback((value: string) => navigate(value), [navigate]);
+    const handleParamChange = useCallback((key: string, value: string | number) => navigate({ [key]: value }), [navigate]);
 
-    const handleViewModeChange = useCallback((value: RekapViewMode) => navigate(period, value), [navigate, period]);
+    const handleViewModeChange = useCallback((value: RekapViewMode) => navigate({}, value), [navigate]);
 
     const handlePrint = useCallback(() => {
         const frame = document.getElementById(frameId) as HTMLIFrameElement | null;
@@ -110,7 +100,7 @@ export function useRekapFilters({
         excelUrl,
         exportOpen,
         setExportOpen,
-        handlePeriodChange,
+        handleParamChange,
         handleViewModeChange,
         handlePrint,
     };

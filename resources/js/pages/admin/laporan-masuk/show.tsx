@@ -107,6 +107,21 @@ export default function Show() {
         initialVersion: ticketVersion,
         currentUserName: auth.user.name,
         onResponse: handleIncomingResponse,
+        onEmailStatusUpdate: (event) => {
+            setResponses((prev) =>
+                prev.map((r) =>
+                    r.id === event.response_id
+                        ? {
+                              ...r,
+                              email_status: event.email_status as any,
+                              email_sent_at: event.email_sent_at,
+                              email_failed_at: event.email_failed_at,
+                              email_error: event.email_error,
+                          }
+                        : r,
+                ),
+            );
+        },
         onStatusChange: (status, version) => {
             setTicketStatus(status);
             setTicketVersion((prev) => Math.max(prev, version));

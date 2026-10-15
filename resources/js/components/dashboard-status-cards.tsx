@@ -12,7 +12,7 @@ export function DashboardStatusCards({ stats }: DashboardStatusCardsProps) {
             <Card className="min-w-0 border border-amber-500/30 bg-amber-500/5">
                 <CardContent className="flex items-center justify-between gap-2 p-4">
                     <div className="min-w-0 space-y-0.5">
-                        <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Belum Dibalas (Baru)</p>
+                        <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Belum Dibalas</p>
                         <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{stats.baru}</p>
                     </div>
                     <Clock className="h-8 w-8 shrink-0 text-amber-500 opacity-80" />

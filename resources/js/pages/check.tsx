@@ -1,5 +1,7 @@
+import { BpsFooter } from '@/components/bps-footer';
 import { CheckCompleteDialog } from '@/components/check-complete-dialog';
 import { CheckConversationCard } from '@/components/check-conversation-card';
+import { CheckGuideSection } from '@/components/check-guide';
 import { CheckHeader } from '@/components/check-header';
 import { CheckSearchCard } from '@/components/check-search-card';
 import { CheckTicketSummary } from '@/components/check-ticket-summary';
@@ -42,10 +44,10 @@ export default function CheckTicket() {
     return (
         <>
             <Head title="Cek Status Laporan / Tiket" />
-            <div className="bg-background text-foreground min-h-screen">
+            <div className="bg-background text-foreground min-h-screen flex flex-col">
                 <CheckHeader />
 
-                <main className="mx-auto max-w-4xl space-y-8 px-6 py-10">
+                <main className="mx-auto max-w-4xl space-y-12 px-4 py-10 pb-16 sm:px-6 md:space-y-16 md:py-12 md:pb-24 flex-1 w-full lg:px-8">
                     <CheckSearchCard inputQuery={inputQuery} onInputChange={setInputQuery} onSubmit={handleSearch} />
 
                     {/* Global Flash / Notification */}
@@ -101,15 +103,21 @@ export default function CheckTicket() {
                             />
                         </div>
                     )}
-                </main>
-            </div>
 
-            <CheckCompleteDialog
-                open={isCompleteDialogOpen}
-                onOpenChange={setIsCompleteDialogOpen}
-                completing={completing}
-                onConfirm={handleComplete}
-            />
+                    {!searched && <CheckGuideSection />}
+                </main>
+
+                <BpsFooter />
+
+                {ticket && (
+                    <CheckCompleteDialog
+                        open={isCompleteDialogOpen}
+                        onOpenChange={setIsCompleteDialogOpen}
+                        onConfirm={handleComplete}
+                        completing={completing}
+                    />
+                )}
+            </div>
         </>
     );
 }

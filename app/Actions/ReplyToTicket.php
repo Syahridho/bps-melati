@@ -2,7 +2,7 @@
 
 namespace App\Actions;
 
-use App\Events\InboxUpdated;
+use App\EmailStatus;
 use App\Events\TicketResponseCreated;
 use App\Events\TicketUpdated;
 use App\Exceptions\TicketAlreadyCompletedException;
@@ -92,6 +92,8 @@ class ReplyToTicket
                         $this->guardResponAwal($locked, $actor);
                     }
 
+                    $initialEmailStatus = blank($locked->reporter_email) ? EmailStatus::Skipped : EmailStatus::Pending;
+
                     $response = TicketResponse::create([
                         'ticket_id' => $locked->id,
                         'user_id' => $actor->id,
@@ -99,6 +101,7 @@ class ReplyToTicket
                         'message' => $message,
                         'idempotency_key' => $idempotencyKey,
                         'sent_at' => now(),
+                        'email_status' => $initialEmailStatus,
                     ]);
 
                     foreach ($attachments as $file) {

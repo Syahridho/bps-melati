@@ -1,3 +1,4 @@
+import { EmailStatusBadge } from '@/components/laporan/email-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,50 +6,7 @@ import { formatFullDate, responseTypeLabel, responseTypeVariant } from '@/lib/la
 import { cn } from '@/lib/utils';
 import { type Attachment, type TicketResponseItem } from '@/types/laporan-masuk';
 import { useForm } from '@inertiajs/react';
-import { AlertTriangle, CheckCircle2, Mail, MailX, Paperclip, RefreshCw, TimerOff } from 'lucide-react';
-
-function EmailStatusBadge({ status }: { status: TicketResponseItem['email_status'] }) {
-    if (!status) return null;
-
-    const config: Record<string, { label: string; icon: typeof Mail; className: string }> = {
-        sent: {
-            label: 'Diserahkan ke server email',
-            icon: CheckCircle2,
-            className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-        },
-        failed: {
-            label: 'Gagal dikirim',
-            icon: MailX,
-            className: 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400',
-        },
-        bounced: {
-            label: 'Email tidak terkirim (bounce)',
-            icon: AlertTriangle,
-            className: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-        },
-        pending: {
-            label: 'Menunggu pengiriman',
-            icon: Mail,
-            className: 'border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400',
-        },
-        skipped: {
-            label: 'Email tidak dikirim (tanpa alamat)',
-            icon: Mail,
-            className: 'text-muted-foreground border-transparent bg-transparent',
-        },
-    };
-
-    const c = config[status];
-    if (!c) return null;
-
-    const Icon = c.icon;
-    return (
-        <span className={cn('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium', c.className)}>
-            <Icon className="size-3" />
-            {c.label}
-        </span>
-    );
-}
+import { AlertTriangle, Paperclip, RefreshCw, TimerOff } from 'lucide-react';
 
 interface ResponseItemProps {
     response: TicketResponseItem;
@@ -74,16 +32,24 @@ export function LaporanMasukResponseItem({ response, onPreviewAttachment, resend
                         {isSystem ? 'Otomatis' : responseTypeLabel(response.type)}
                     </Badge>
                 </div>
-                {dateSource && <span className="text-muted-foreground text-xs">{formatFullDate(dateSource)}</span>}
+                {dateSource && (
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                        <span>{formatFullDate(dateSource)}</span>
+                        {response.email_status && !response.is_reporter && (
+                            <>
+                                <span>·</span>
+                                <EmailStatusBadge
+                                    status={response.email_status}
+                                    sentAt={response.email_sent_at}
+                                    failedAt={response.email_failed_at}
+                                    error={response.email_error}
+                                />
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
             <p className={cn('text-sm whitespace-pre-wrap', isSystem && 'text-muted-foreground italic')}>{response.message}</p>
-
-            {/* Email status badge */}
-            {response.email_status && !response.is_reporter && (
-                <div className="pt-1">
-                    <EmailStatusBadge status={response.email_status} />
-                </div>
-            )}
 
             {/* Peringatan email gagal/bounce + tombol kirim ulang */}
             {showEmailWarning && (
@@ -148,10 +114,8 @@ function ResendForm({ url, currentEmail }: { url: string; currentEmail: string }
             </div>
             <Button type="submit" size="sm" variant="outline" disabled={processing} className="h-8 gap-1.5 text-xs">
                 <RefreshCw className={cn('size-3', processing && 'animate-spin')} />
-                Kirim ulang
+                Kirim ulang email
             </Button>
         </form>
     );
 }
-
-export { LaporanMasukResponseItem as ResponseItem };

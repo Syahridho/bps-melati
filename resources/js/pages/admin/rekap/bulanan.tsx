@@ -8,16 +8,17 @@ import { type PeriodOption, type RekapRow, type RekapTotals } from '@/types/reka
 interface RekapBulananProps {
     rows: RekapRow[];
     totals: RekapTotals;
-    period: string;
+    year: string;
+    month: string;
+    years: PeriodOption[];
+    months: PeriodOption[];
     periodLabel: string;
-    periods: PeriodOption[];
 }
 
-export default function RekapBulanan({ rows, totals, period, periodLabel, periods }: RekapBulananProps) {
-    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handlePeriodChange, handlePrint } = useRekapFilters({
+export default function RekapBulanan({ rows, totals, year, month, years, months, periodLabel }: RekapBulananProps) {
+    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleParamChange, handlePrint } = useRekapFilters({
         routeKey: 'rekap-bulanan',
-        periodParam: 'period',
-        period,
+        queryParams: { year, month },
         exportPrefix: 'Rekap-Bulanan',
         exportPeriode: periodLabel.replace(/\s+/g, '-'),
     });
@@ -31,14 +32,24 @@ export default function RekapBulanan({ rows, totals, period, periodLabel, period
                 { title: 'Bulanan', href: route(`${rolePrefix}rekap-bulanan.index`) },
             ]}
         >
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 pb-10">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-muted-foreground text-sm">
                         Periode <span className="text-foreground font-medium">{periodLabel}</span>
                     </p>
 
                     <div className="flex items-center gap-2">
-                        <RekapPeriodFilter value={period} periods={periods} onValueChange={handlePeriodChange} />
+                        <RekapPeriodFilter
+                            year={year}
+                            years={years}
+                            onYearChange={(y) => handleParamChange('year', y)}
+                            monthOrSemester={month}
+                            monthOrSemesters={months}
+                            onMonthOrSemesterChange={(m) => handleParamChange('month', m)}
+                            secondaryPlaceholder="Pilih bulan"
+                            yearTriggerClassName="w-36"
+                            secondaryTriggerClassName="w-48"
+                        />
 
                         <RekapPrintActions
                             excelUrl={excelUrl}

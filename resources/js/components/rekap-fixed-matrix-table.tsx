@@ -3,34 +3,26 @@ import { countFor, sumCounts, sumMonthCell } from '@/lib/rekap-utils';
 import { cn } from '@/lib/utils';
 import { type RekapMatrixPeriodColumn, type RekapMatrixRow, type RekapMatrixTotals, type RekapPeriodCounts, type RekapViewMode } from '@/types/rekap';
 
-/** Lebar kolom tetap (px) supaya tabel tidak "ngambang" melebar acak. */
-const KANAL_COL_WIDTH = 176;
-const DATA_COL_WIDTH = 44;
-/** Kolom ringkas hanya satu per bulan, jadi boleh lebih lebar. */
-const SUMMARY_DATA_COL_WIDTH = 72;
-const JUMLAH_COL_WIDTH = 68;
+const KANAL_COL_WIDTH = 220;
+const DATA_COL_WIDTH = 48;
+const SUMMARY_DATA_COL_WIDTH = 76;
+const JUMLAH_COL_WIDTH = 76;
 
 interface RekapFixedMatrixTableProps {
     rows: RekapMatrixRow[];
     totals: RekapMatrixTotals;
     periods: RekapMatrixPeriodColumn[];
-    /** `detail` = PST/Lain/Asp/Inf per bulan, `ringkas` = satu kolom jumlah per bulan. */
     viewMode?: RekapViewMode;
 }
 
-/**
- * min-w-0 di setiap level pembungkus mencegah tabel lebar memaksa seluruh
- * halaman melebar (bug flexbox: item flex defaultnya min-width:auto),
- * supaya scrollbar horizontal muncul tepat di bawah tabel, bukan di bawah halaman.
- */
 export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_VIEW_MODE_DEFAULT }: RekapFixedMatrixTableProps) {
     const ringkas = viewMode === REKAP_VIEW_MODE_RINGKAS;
     const dataColWidth = ringkas ? SUMMARY_DATA_COL_WIDTH : DATA_COL_WIDTH;
 
     return (
-        <div className="bg-card min-w-0 overflow-hidden rounded-lg border">
-            <div className="max-h-[70vh] min-w-0 overflow-auto">
-                <table className="w-full table-fixed border-separate border-spacing-0 text-[11px]">
+        <div className="bg-card min-w-0 overflow-hidden rounded-md border">
+            <div className="overflow-x-auto min-w-0">
+                <table className="w-full table-fixed border-collapse text-sm">
                     <colgroup>
                         <col style={{ width: KANAL_COL_WIDTH }} />
                         {periods.map((period) =>
@@ -47,7 +39,7 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
                         <tr>
                             <th
                                 rowSpan={ringkas ? undefined : 2}
-                                className="bg-muted sticky left-0 z-40 border-r border-b px-2 py-2 text-left align-middle font-semibold"
+                                className="bg-muted text-foreground sticky left-0 z-40 border-r border-b px-4 py-2 text-left font-medium text-sm"
                             >
                                 Sumber Kanal
                             </th>
@@ -56,7 +48,7 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
                                     key={period.key}
                                     colSpan={ringkas ? undefined : REKAP_MATRIX_COLUMNS.length}
                                     className={cn(
-                                        'bg-muted border-b py-1.5 text-center font-semibold',
+                                        'bg-muted text-foreground border-b py-2 text-center font-medium text-sm',
                                         periodIndex % 2 === 1 && 'bg-muted/70',
                                         'border-r-border border-r-2',
                                     )}
@@ -64,7 +56,7 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
                                     {period.label}
                                 </th>
                             ))}
-                            <th rowSpan={ringkas ? undefined : 2} className="bg-muted border-b py-2 text-center align-middle font-semibold">
+                            <th rowSpan={ringkas ? undefined : 2} className="bg-muted text-foreground border-b py-2 text-center font-medium text-sm">
                                 Jumlah
                             </th>
                         </tr>
@@ -75,7 +67,7 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
                                         <th
                                             key={`${period.key}-${sub}`}
                                             className={cn(
-                                                'text-muted-foreground border-b py-1 text-center text-[10px] font-normal',
+                                                'text-muted-foreground border-b py-1.5 text-center text-xs font-normal',
                                                 periodIndex % 2 === 1 ? 'bg-muted/70' : 'bg-muted',
                                                 subIndex === REKAP_MATRIX_COLUMNS.length - 1
                                                     ? 'border-r-border border-r-2'
@@ -95,7 +87,7 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
                             <tr>
                                 <td
                                     colSpan={periods.length * (ringkas ? 1 : REKAP_MATRIX_COLUMNS.length) + 2}
-                                    className="text-muted-foreground h-24 text-center"
+                                    className="text-muted-foreground h-24 text-center text-sm"
                                 >
                                     Belum ada data untuk periode ini.
                                 </td>
@@ -106,14 +98,14 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
                     </tbody>
 
                     <tfoot>
-                        <tr className="bg-muted/80">
-                            <td className="bg-muted sticky left-0 z-10 border-r font-semibold">Total</td>
+                        <tr className="bg-muted/50 hover:bg-muted/50">
+                            <td className="bg-muted text-foreground sticky left-0 z-10 border-r pl-4 font-medium uppercase h-9 py-1.5 text-sm">Total</td>
                             {periods.map((period, periodIndex) =>
                                 ringkas ? (
                                     <td
                                         key={`${period.key}-sum`}
                                         className={cn(
-                                            'border-t py-1.5 text-center font-medium tabular-nums',
+                                            'border-t h-9 py-1.5 text-center font-medium tabular-nums whitespace-nowrap text-sm',
                                             'border-r-border border-r-2',
                                             periodIndex % 2 === 1 && 'bg-muted/70',
                                         )}
@@ -125,7 +117,7 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
                                         <td
                                             key={`${period.key}-${column}`}
                                             className={cn(
-                                                'border-t py-1.5 text-center font-medium tabular-nums',
+                                                'border-t h-9 py-1.5 text-center font-medium tabular-nums whitespace-nowrap text-sm',
                                                 index === REKAP_MATRIX_COLUMNS.length - 1
                                                     ? 'border-r-border border-r-2'
                                                     : 'border-r-border/40 border-r',
@@ -137,7 +129,7 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
                                     ))
                                 ),
                             )}
-                            <td className="border-t py-1.5 text-center font-semibold tabular-nums">{totals.jumlah}</td>
+                            <td className="border-t h-9 py-1.5 text-center font-medium tabular-nums whitespace-nowrap text-sm">{totals.jumlah}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -148,16 +140,21 @@ export function RekapFixedMatrixTable({ rows, totals, periods, viewMode = REKAP_
 
 function FixedMatrixRow({ row, periods, ringkas }: { row: RekapMatrixRow; periods: RekapMatrixPeriodColumn[]; ringkas: boolean }) {
     const hasChildren = row.children && row.children.length > 0;
-    const columnCount = ringkas ? 1 : REKAP_MATRIX_COLUMNS.length;
-    const rightColSpan = periods.length * columnCount + 1;
 
     return (
         <>
-            <tr className={cn(hasChildren ? 'bg-muted/50 font-semibold' : 'hover:bg-muted/30')}>
-                <td className={cn('sticky left-0 z-10 border-r border-b px-2 py-1.5', hasChildren ? 'bg-muted/50' : 'bg-card')}>{row.channel}</td>
+            <tr className={cn(hasChildren ? 'bg-muted/50 font-medium' : 'hover:bg-muted/40')}>
+                <td
+                    className={cn(
+                        'sticky left-0 z-10 border-r border-b pl-4 whitespace-nowrap h-9 py-1.5 text-sm',
+                        hasChildren ? 'bg-muted/50 font-medium' : 'bg-card font-normal',
+                    )}
+                >
+                    {row.channel}
+                </td>
 
                 {hasChildren ? (
-                    <td colSpan={rightColSpan} className="bg-muted/50 border-b" />
+                    <td colSpan={periods.length * (ringkas ? 1 : REKAP_MATRIX_COLUMNS.length) + 1} className="bg-muted/50 border-b h-9 py-1.5" />
                 ) : (
                     <>
                         {periods.map((period, periodIndex) =>
@@ -165,7 +162,7 @@ function FixedMatrixRow({ row, periods, ringkas }: { row: RekapMatrixRow; period
                                 <td
                                     key={`${period.key}-sum`}
                                     className={cn(
-                                        'border-b py-1.5 text-center tabular-nums',
+                                        'h-9 py-1.5 border-r border-b text-center tabular-nums whitespace-nowrap text-sm',
                                         'border-r-border border-r-2',
                                         periodIndex % 2 === 1 && 'bg-muted/20',
                                     )}
@@ -173,12 +170,14 @@ function FixedMatrixRow({ row, periods, ringkas }: { row: RekapMatrixRow; period
                                     {sumMonthCell(row.perPeriod, period.key)}
                                 </td>
                             ) : (
-                                REKAP_MATRIX_COLUMNS.map((column, index) => (
+                                REKAP_MATRIX_COLUMNS.map((column, subIndex) => (
                                     <td
                                         key={`${period.key}-${column}`}
                                         className={cn(
-                                            'border-b py-1.5 text-center tabular-nums',
-                                            index === columnCount - 1 ? 'border-r-border border-r-2' : 'border-r-border/40 border-r',
+                                            'h-9 py-1.5 border-b text-center tabular-nums whitespace-nowrap text-sm',
+                                            subIndex === REKAP_MATRIX_COLUMNS.length - 1
+                                                ? 'border-r-border border-r-2'
+                                                : 'border-r-border/40 border-r',
                                             periodIndex % 2 === 1 && 'bg-muted/20',
                                         )}
                                     >
@@ -187,21 +186,23 @@ function FixedMatrixRow({ row, periods, ringkas }: { row: RekapMatrixRow; period
                                 ))
                             ),
                         )}
-                        <td className="border-b py-1.5 text-center font-medium tabular-nums">{row.jumlah}</td>
+                        <td className="h-9 py-1.5 border-b text-center font-medium tabular-nums whitespace-nowrap text-sm">{row.jumlah}</td>
                     </>
                 )}
             </tr>
 
             {hasChildren &&
                 row.children.map((child) => (
-                    <tr key={`${row.channel}-${child.channel}`} className="hover:bg-muted/30">
-                        <td className="bg-card text-muted-foreground sticky left-0 z-10 border-r border-b py-1.5 pr-2 pl-6">{child.channel}</td>
+                    <tr key={`${row.channel}-${child.channel}`} className="hover:bg-muted/40">
+                        <td className="text-muted-foreground sticky left-0 z-10 border-r border-b bg-card pl-8 font-normal whitespace-nowrap h-9 py-1.5 text-sm">
+                            {child.channel.replace(/^-+\s*/, '')}
+                        </td>
                         {periods.map((period, periodIndex) =>
                             ringkas ? (
                                 <td
                                     key={`${period.key}-sum`}
                                     className={cn(
-                                        'border-b py-1.5 text-center tabular-nums',
+                                        'h-9 py-1.5 border-r border-b text-center tabular-nums whitespace-nowrap text-sm',
                                         'border-r-border border-r-2',
                                         periodIndex % 2 === 1 && 'bg-muted/20',
                                     )}
@@ -209,12 +210,14 @@ function FixedMatrixRow({ row, periods, ringkas }: { row: RekapMatrixRow; period
                                     {sumMonthCell(child.perPeriod, period.key)}
                                 </td>
                             ) : (
-                                REKAP_MATRIX_COLUMNS.map((column, index) => (
+                                REKAP_MATRIX_COLUMNS.map((column, subIndex) => (
                                     <td
                                         key={`${period.key}-${column}`}
                                         className={cn(
-                                            'border-b py-1.5 text-center tabular-nums',
-                                            index === columnCount - 1 ? 'border-r-border border-r-2' : 'border-r-border/40 border-r',
+                                            'h-9 py-1.5 border-b text-center tabular-nums whitespace-nowrap text-sm',
+                                            subIndex === REKAP_MATRIX_COLUMNS.length - 1
+                                                ? 'border-r-border border-r-2'
+                                                : 'border-r-border/40 border-r',
                                             periodIndex % 2 === 1 && 'bg-muted/20',
                                         )}
                                     >
@@ -223,7 +226,7 @@ function FixedMatrixRow({ row, periods, ringkas }: { row: RekapMatrixRow; period
                                 ))
                             ),
                         )}
-                        <td className="border-b py-1.5 text-center font-medium tabular-nums">{child.jumlah}</td>
+                        <td className="h-9 py-1.5 border-b text-center font-medium tabular-nums whitespace-nowrap text-sm">{child.jumlah}</td>
                     </tr>
                 ))}
         </>

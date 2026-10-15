@@ -16,6 +16,7 @@ export interface UseTicketRealtimeOptions {
     /** Nama pengguna yang tampil di indikator "sedang mengetik". */
     currentUserName: string;
     onResponse: (response: TicketResponseItem) => void;
+    onEmailStatusUpdate?: (event: { response_id: number; email_status: string; email_sent_at?: string | null; email_failed_at?: string | null; email_error?: string | null }) => void;
     onStatusChange: (status: TicketBroadcastEvent['status'], version: number) => void;
     onCompleted?: () => void;
 }
@@ -54,6 +55,7 @@ export function useTicketRealtime({
     initialVersion,
     currentUserName,
     onResponse,
+    onEmailStatusUpdate,
     onStatusChange,
     onCompleted,
 }: UseTicketRealtimeOptions): UseTicketRealtimeResult {
@@ -63,8 +65,8 @@ export function useTicketRealtime({
     const [version, setVersion] = useState(initialVersion);
 
     // Callback disimpan di ref agar event Echo tidak perlu re-subscribe tiap render.
-    const handlers = useRef({ onResponse, onStatusChange, onCompleted });
-    handlers.current = { onResponse, onStatusChange, onCompleted };
+    const handlers = useRef({ onResponse, onEmailStatusUpdate, onStatusChange, onCompleted });
+    handlers.current = { onResponse, onEmailStatusUpdate, onStatusChange, onCompleted };
 
     // Satu balasan di-broadcast dua kali di kanal presence: `.ticket.updated`
     // dan `.ticket.response.created` membawa response yang sama. Efek samping
@@ -73,8 +75,13 @@ export function useTicketRealtime({
 
     const { channel } = useEchoPresence<TicketBroadcastEvent>(
         `ticket.${ticketId}`,
-        ['.ticket.response.created', '.ticket.updated'],
-        (event) => {
+        ['.ticket.response.created', '.ticket.updated', '.ticket.response.email-status-updated'],
+        (event: any) => {
+            if (event.response_id && event.email_status) {
+                handlers.current.onEmailStatusUpdate?.(event);
+                return;
+            }
+
             setVersion((prev) => Math.max(prev, event.version));
             handlers.current.onStatusChange(event.status, event.version);
 

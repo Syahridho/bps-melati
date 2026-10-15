@@ -69,7 +69,7 @@ test('admin can resend failed response email with new email', function () {
     // Flag idempotensi di-reset
     $freshResponse = $response->fresh();
     expect($freshResponse->email_sent_at)->toBeNull()
-        ->and($freshResponse->email_status)->toBe('pending')
+        ->and($freshResponse->email_status?->value ?? $freshResponse->email_status)->toBe('pending')
         ->and($freshResponse->email_failed_at)->toBeNull()
         ->and($freshResponse->email_error)->toBeNull();
 

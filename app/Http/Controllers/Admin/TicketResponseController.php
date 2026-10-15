@@ -156,7 +156,11 @@ class TicketResponseController extends Controller
         abort_unless($user instanceof User && $user->isAdmin(), 403);
         abort_unless($response->ticket_id === $ticket->id, 404);
 
-        if (! in_array($response->email_status, ['failed', 'bounced'], true)) {
+        $statusValue = $response->email_status instanceof \App\EmailStatus
+            ? $response->email_status->value
+            : $response->email_status;
+
+        if (! in_array($statusValue, ['failed', 'bounced'], true)) {
             return back()->withErrors(['reporter_email' => 'Respon ini tidak berada dalam status gagal atau bounce.']);
         }
 

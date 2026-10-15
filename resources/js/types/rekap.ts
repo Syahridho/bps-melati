@@ -21,6 +21,7 @@ export interface RekapTableColumn {
 export interface PeriodOption {
     value: string;
     label: string;
+    disabled?: boolean;
 }
 
 /** Urutan kolom klasifikasi harus sama dengan RekapReport::COLUMNS di backend. */

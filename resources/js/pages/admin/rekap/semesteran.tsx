@@ -13,24 +13,24 @@ interface RekapSemesteranProps {
     rows: RekapMatrixRow[];
     totals: RekapMatrixTotals;
     months: RekapMatrixPeriodColumn[];
+    year: string;
     semester: string;
-    semesterLabel: string;
+    years: PeriodOption[];
     semesters: PeriodOption[];
-    /** Mode tampilan aktif dari query `tampilan`; default `detail` bila kosong. */
+    semesterLabel: string;
     tampilan: RekapViewMode;
 }
 
 const PRINT_FRAME_ID = 'rekap-semesteran-print-frame';
 
-export default function RekapSemesteran({ rows, totals, months, semester, semesterLabel, semesters, tampilan }: RekapSemesteranProps) {
-    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handlePeriodChange, handleViewModeChange, handlePrint } = useRekapFilters({
+export default function RekapSemesteran({ rows, totals, months, year, semester, years, semesters, semesterLabel, tampilan }: RekapSemesteranProps) {
+    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleParamChange, handleViewModeChange, handlePrint } = useRekapFilters({
         routeKey: 'rekap-semesteran',
-        periodParam: 'semester',
-        period: semester,
+        queryParams: { year, semester },
         frameId: PRINT_FRAME_ID,
         viewMode: tampilan,
         exportPrefix: 'Rekap-Semesteran',
-        exportPeriode: formatSemesterForFilename(semester),
+        exportPeriode: formatSemesterForFilename(sprintfSemester(year, semester)),
     });
 
     return (
@@ -42,16 +42,20 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
                 { title: 'Semesteran', href: route(`${rolePrefix}rekap-semesteran.index`) },
             ]}
         >
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 pb-10">
                 <div className="flex flex-wrap items-center justify-end gap-2">
                     <RekapViewModeSelect value={tampilan} onValueChange={handleViewModeChange} />
 
                     <RekapPeriodFilter
-                        value={semester}
-                        periods={semesters}
-                        onValueChange={handlePeriodChange}
-                        placeholder="Pilih semester"
-                        triggerClassName="w-[280px]"
+                        year={year}
+                        years={years}
+                        onYearChange={(y) => handleParamChange('year', y)}
+                        monthOrSemester={semester}
+                        monthOrSemesters={semesters}
+                        onMonthOrSemesterChange={(s) => handleParamChange('semester', s)}
+                        secondaryPlaceholder="Pilih semester"
+                        yearTriggerClassName="w-36"
+                        secondaryTriggerClassName="w-56"
                     />
 
                     <RekapPrintActions
@@ -78,4 +82,8 @@ export default function RekapSemesteran({ rows, totals, months, semester, semest
             </div>
         </AdminPage>
     );
+}
+
+function sprintfSemester(year: string, semester: string): string {
+    return `${year}-${semester}`;
 }

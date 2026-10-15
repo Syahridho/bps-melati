@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\EmailStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,7 +27,7 @@ class TicketResponse extends Model
     protected function casts(): array
     {
         return [
-            'is_system' => 'boolean',
+            'email_status' => EmailStatus::class,
             'sent_at' => 'datetime',
             'email_sent_at' => 'datetime',
             'email_failed_at' => 'datetime',

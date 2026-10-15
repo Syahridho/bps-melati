@@ -2,13 +2,16 @@
 
 namespace App\Jobs;
 
+use App\Events\TicketResponseEmailStatusUpdated;
 use App\Mail\TicketResponseSubmitted;
+use App\Models\Ticket;
 use App\Models\TicketResponse;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -54,7 +57,7 @@ class SendTicketResponseNotification implements ShouldQueue
 
     public function handle(): void
     {
-        $response = $this->response->fresh();
+        $response = $this->response->fresh(['ticket']);
 
         if ($response === null || $response->email_sent_at !== null) {
             return;
@@ -65,6 +68,8 @@ class SendTicketResponseNotification implements ShouldQueue
         if ($ticket === null || blank($ticket->reporter_email)) {
             $response->forceFill(['email_status' => 'skipped'])->save();
 
+            $this->clearCacheAndBroadcast($response, $ticket);
+
             return;
         }
 
@@ -73,7 +78,11 @@ class SendTicketResponseNotification implements ShouldQueue
         $response->forceFill([
             'email_sent_at' => now(),
             'email_status' => 'sent',
+            'email_failed_at' => null,
+            'email_error' => null,
         ])->save();
+
+        $this->clearCacheAndBroadcast($response, $ticket);
     }
 
     public function failed(?Throwable $exception): void
@@ -88,13 +97,25 @@ class SendTicketResponseNotification implements ShouldQueue
         ]);
 
         // Catat kegagalan di database tanpa mengubah email_sent_at (idempotensi tetap utuh)
-        $response = $this->response->fresh();
+        $response = $this->response->fresh(['ticket']);
         if ($response !== null) {
             $response->forceFill([
                 'email_status' => 'failed',
                 'email_failed_at' => now(),
                 'email_error' => Str::limit($exception?->getMessage() ?? '', 500),
             ])->save();
+
+            $this->clearCacheAndBroadcast($response, $response->ticket);
+        }
+    }
+
+    private function clearCacheAndBroadcast(TicketResponse $response, ?Ticket $ticket): void
+    {
+        if ($ticket !== null) {
+            Cache::forget('ticket_check:'.md5($ticket->ticket_number));
+            Cache::forget("ticket:{$ticket->ticket_number}");
+
+            TicketResponseEmailStatusUpdated::dispatch($response, $ticket);
         }
     }
 

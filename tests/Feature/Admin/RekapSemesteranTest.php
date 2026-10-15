@@ -74,7 +74,7 @@ it('blocks operators from the semester recap', function () {
 
 it('exports the semester recap as an excel spreadsheet', function () {
     $response = actingAs(User::factory()->admin()->create())
-        ->get(route('dashboard.admin.rekap-semesteran.excel', ['semester' => '2026-1']))
+        ->get(route('dashboard.admin.rekap-semesteran.excel', ['year' => '2026', 'semester' => '1']))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
 
@@ -83,9 +83,10 @@ it('exports the semester recap as an excel spreadsheet', function () {
 
 it('labels the six months of the second semester', function () {
     actingAs(User::factory()->admin()->create())
-        ->get(semesterUrl(['semester' => '2026-2']))
+        ->get(semesterUrl(['year' => '2026', 'semester' => '2']))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('semester', '2026-2')
+            ->where('year', '2026')
+            ->where('semester', '2')
             ->where('semesterLabel', 'Semester II (Juli - Desember) 2026')
             ->where('months.0.key', '2026-07')
             ->where('months.0.label', 'Juli')
@@ -102,7 +103,7 @@ it('aggregates child channel tickets into their own row per month', function () 
     semesterTicket('2026-09', ['channel_id' => $child->id]);
 
     actingAs(User::factory()->admin()->create())
-        ->get(semesterUrl(['semester' => '2026-2']))
+        ->get(semesterUrl(['year' => '2026', 'semester' => '2']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('rows.0.channel', 'Sosial Media')
             ->where('rows.0.jumlah', 0)
@@ -121,7 +122,7 @@ it('excludes tickets outside the selected semester', function () {
     semesterTicket('2026-07', ['channel_id' => $child->id]);
 
     actingAs(User::factory()->admin()->create())
-        ->get(semesterUrl(['semester' => '2026-2']))
+        ->get(semesterUrl(['year' => '2026', 'semester' => '2']))
         ->assertInertia(fn (Assert $page) => $page->where('totals.jumlah', 1));
 });
 

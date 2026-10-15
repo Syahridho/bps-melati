@@ -13,19 +13,17 @@ interface RekapTahunanProps {
     totals: RekapMatrixTotals;
     months: RekapMatrixPeriodColumn[];
     year: string;
-    yearLabel: string;
     years: PeriodOption[];
-    /** Mode tampilan aktif dari query `tampilan`; default `detail` bila kosong. */
+    yearLabel: string;
     tampilan: RekapViewMode;
 }
 
 const PRINT_FRAME_ID = 'rekap-tahunan-print-frame';
 
-export default function RekapTahunan({ rows, totals, months, year, yearLabel, years, tampilan }: RekapTahunanProps) {
-    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handlePeriodChange, handleViewModeChange, handlePrint } = useRekapFilters({
+export default function RekapTahunan({ rows, totals, months, year, years, yearLabel, tampilan }: RekapTahunanProps) {
+    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleParamChange, handleViewModeChange, handlePrint } = useRekapFilters({
         routeKey: 'rekap-tahunan',
-        periodParam: 'year',
-        period: year,
+        queryParams: { year },
         frameId: PRINT_FRAME_ID,
         viewMode: tampilan,
         exportPrefix: 'Rekap-Tahunan',
@@ -41,16 +39,15 @@ export default function RekapTahunan({ rows, totals, months, year, yearLabel, ye
                 { title: 'Tahunan', href: route(`${rolePrefix}rekap-tahunan.index`) },
             ]}
         >
-            <div className="flex min-w-0 flex-col gap-4">
+            <div className="flex min-w-0 flex-col gap-4 pb-10">
                 <div className="flex flex-wrap items-center justify-end gap-2">
                     <RekapViewModeSelect value={tampilan} onValueChange={handleViewModeChange} />
 
                     <RekapPeriodFilter
-                        value={year}
-                        periods={years}
-                        onValueChange={handlePeriodChange}
-                        placeholder="Pilih tahun"
-                        triggerClassName="w-[220px]"
+                        year={year}
+                        years={years}
+                        onYearChange={(y) => handleParamChange('year', y)}
+                        yearTriggerClassName="w-36"
                     />
 
                     <RekapPrintActions

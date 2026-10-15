@@ -19,6 +19,9 @@ class TicketResponsePayload
      *     sent_at: string|null,
      *     created_at: string,
      *     email_status: string|null,
+     *     email_sent_at: string|null,
+     *     email_failed_at: string|null,
+     *     email_error: string|null,
      *     attachments: list<array{id: int, original_name: string, mime_type: string|null, size: int, url: string}>
      * }
      */
@@ -34,6 +37,10 @@ class TicketResponsePayload
                 ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
                 : ($response->user?->name ?? '-'));
 
+        $statusValue = $response->email_status instanceof \App\EmailStatus
+            ? $response->email_status->value
+            : $response->email_status;
+
         return [
             'id' => $response->id,
             'user_name' => $userName,
@@ -43,7 +50,10 @@ class TicketResponsePayload
             'message' => $response->message,
             'sent_at' => $response->sent_at?->toIso8601String(),
             'created_at' => $response->created_at->toIso8601String(),
-            'email_status' => $isReporter ? null : $response->email_status,
+            'email_status' => $isReporter ? null : $statusValue,
+            'email_sent_at' => $isReporter ? null : $response->email_sent_at?->toIso8601String(),
+            'email_failed_at' => $isReporter ? null : $response->email_failed_at?->toIso8601String(),
+            'email_error' => $isReporter ? null : $response->email_error,
             'attachments' => $response->attachments->map(fn ($attachment) => [
                 'id' => $attachment->id,
                 'original_name' => $attachment->original_name,

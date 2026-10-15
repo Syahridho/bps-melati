@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Support\LaporanCache;
 use App\Support\RekapCache;
+use App\Support\RekapYears;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -56,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
         // supaya halaman rekap otomatis menghitung ulang pada request berikutnya.
         Ticket::saved(function (Ticket $ticket) {
             RekapCache::invalidate();
+            RekapYears::invalidate();
             LaporanCache::invalidate();
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));
             Cache::forget('dashboard:admin:stats');
@@ -64,14 +66,21 @@ class AppServiceProvider extends ServiceProvider
 
         Ticket::deleted(function (Ticket $ticket) {
             RekapCache::invalidate();
+            RekapYears::invalidate();
             LaporanCache::invalidate();
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));
             Cache::forget('dashboard:admin:stats');
             Cache::forget('dashboard:operator:stats');
         });
 
-        Channel::saved(fn () => RekapCache::invalidate());
-        Channel::deleted(fn () => RekapCache::invalidate());
+        Channel::saved(function () {
+            RekapCache::invalidate();
+            RekapYears::invalidate();
+        });
+        Channel::deleted(function () {
+            RekapCache::invalidate();
+            RekapYears::invalidate();
+        });
 
         // Jaga konsistensi kolom sesi meski logout terjadi lewat jalan lain
         // (mis. session()->invalidate() di controller lain atau flush manual).

@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="utf-8">
-    <title>Rekap Pengaduan {{ $periodLabel }}</title>
-    {{-- Rekap bulanan memakai portrait dengan margin 15mm --}}
-    @include('rekap._print-style', ['orientasi' => 'portrait', 'marginHalaman' => 15])
-</head>
-<body>
-    @include('rekap._print-kop')
-
-    @include('rekap._print-judul', ['judul' => 'Bulan : '.$periodLabel])
-
+@component('rekap.layouts.pdf', [
+    'orientasi' => 'portrait',
+    'marginHalaman' => '15mm',
+    'title' => 'Rekap Pengaduan ' . $periodLabel,
+])
+    @php
+        $judulDokumen = 'REKAP LAPORAN BULANAN BPS PROVINSI RIAU';
+        $subjudulDokumen = 'Bulan : ' . $periodLabel;
+    @endphp
     <style>
         col.kolom-kanal { width: 40%; }
         col.kolom-pst { width: 12%; }
@@ -19,6 +15,8 @@
         col.kolom-info { width: 12%; }
         col.kolom-jumlah { width: 12%; }
     </style>
+
+    @include('rekap.partials.letterhead', ['judulDokumen' => $judulDokumen, 'subjudulDokumen' => $subjudulDokumen])
 
     <table>
         <colgroup>
@@ -50,7 +48,7 @@
                     $hasChildren = isset($row['children']) && count($row['children']) > 0;
                 @endphp
 
-                <tr class="induk {{ $hasChildren ? 'induk-cabang' : 'induk-tunggal' }}">
+                <tr>
                     <td class="kanal">{{ $row['channel'] }}</td>
 
                     @if ($hasChildren)
@@ -65,8 +63,8 @@
                 </tr>
 
                 @foreach ($row['children'] ?? [] as $child)
-                    <tr class="anak">
-                        <td class="kanal">{{ $child['channel'] }}</td>
+                    <tr>
+                        <td class="kanal" style="padding-left: 15px;">- {{ $child['channel'] }}</td>
                         <td class="angka">{{ $child['pengaduan_pst'] }}</td>
                         <td class="angka">{{ $child['pengaduan_lainnya'] }}</td>
                         <td class="angka">{{ $child['aspirasi'] }}</td>
@@ -76,7 +74,7 @@
                 @endforeach
             @empty
                 <tr>
-                    <td class="kosong" colspan="6">Belum ada data untuk periode ini.</td>
+                    <td class="tengah" colspan="6">Belum ada data untuk periode ini.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -84,11 +82,11 @@
         <tfoot>
             <tr>
                 <td class="kanal">Total</td>
-                <td>{{ $totals['pengaduan_pst'] }}</td>
-                <td>{{ $totals['pengaduan_lainnya'] }}</td>
-                <td>{{ $totals['aspirasi'] }}</td>
-                <td>{{ $totals['permintaan_informasi'] }}</td>
-                <td>{{ $totals['jumlah'] }}</td>
+                <td class="angka">{{ $totals['pengaduan_pst'] }}</td>
+                <td class="angka">{{ $totals['pengaduan_lainnya'] }}</td>
+                <td class="angka">{{ $totals['aspirasi'] }}</td>
+                <td class="angka">{{ $totals['permintaan_informasi'] }}</td>
+                <td class="angka">{{ $totals['jumlah'] }}</td>
             </tr>
         </tfoot>
     </table>
@@ -97,6 +95,14 @@
         Keterangan: PST = Pengaduan Layanan PST, Lainnya = Pengaduan Layanan Lainnya, Aspirasi = Aspirasi, Permintaan Informasi = Permintaan Informasi.
     </div>
 
-    @include('rekap._print-ttd')
-</body>
-</html>
+    @isset($penandaTangan)
+        <div class="ttd-container clearfix">
+            <div class="ttd-box">
+                <div>Pekanbaru, {{ $penandaTangan['tanggal'] ?? now()->translatedFormat('j F Y') }}</div>
+                <div style="font-weight: bold; margin-top: 2px;">{{ $penandaTangan['jabatan'] ?? 'Administrator' }}</div>
+                <div class="ttd-space"></div>
+                <div class="ttd-nama">{{ $penandaTangan['nama'] ?? '-' }}</div>
+            </div>
+        </div>
+    @endisset
+@endcomponent
