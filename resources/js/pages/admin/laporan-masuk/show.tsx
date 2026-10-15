@@ -113,10 +113,10 @@ export default function Show() {
                     r.id === event.response_id
                         ? {
                               ...r,
-                              email_status: event.email_status as any,
-                              email_sent_at: event.email_sent_at,
-                              email_failed_at: event.email_failed_at,
-                              email_error: event.email_error,
+                              email_status: event.email_status as TicketResponseItem['email_status'],
+                              email_sent_at: event.email_sent_at ?? null,
+                              email_failed_at: event.email_failed_at ?? null,
+                              email_error: event.email_error ?? null,
                           }
                         : r,
                 ),

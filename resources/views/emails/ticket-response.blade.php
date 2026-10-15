@@ -33,6 +33,9 @@ Berikut adalah **{{ $response->type === 'respon_awal' ? 'Respon Awal' : 'Respon 
 
 Jika Anda memiliki pertanyaan lebih lanjut, silakan hubungi kami melalui layanan informasi resmi.
 
+<x-mail::button :url="url('/check') . '?' . http_build_query(['ticket_number' => $ticket->ticket_number])" color="primary">
+Cek Status Tiket
+</x-mail::button>
+
 Terima kasih,<br>
 **{{ config('app.name', 'Melati') }} - BPS Provinsi Riau**
-</x-mail::message>

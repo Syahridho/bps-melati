@@ -76,16 +76,19 @@ export function useTicketRealtime({
     const { channel } = useEchoPresence<TicketBroadcastEvent>(
         `ticket.${ticketId}`,
         ['.ticket.response.created', '.ticket.updated', '.ticket.response.email-status-updated'],
-        (event: any) => {
+        (event: Record<string, unknown>) => {
             if (event.response_id && event.email_status) {
-                handlers.current.onEmailStatusUpdate?.(event);
+                handlers.current.onEmailStatusUpdate?.(event as Parameters<NonNullable<UseTicketRealtimeOptions['onEmailStatusUpdate']>>[0]);
                 return;
             }
 
-            setVersion((prev) => Math.max(prev, event.version));
-            handlers.current.onStatusChange(event.status, event.version);
+            const eventVersion = typeof event.version === 'number' ? event.version : 0;
+            const eventStatus = event.status as TicketBroadcastEvent['status'];
 
-            if (event.status === 'selesai') {
+            setVersion((prev) => Math.max(prev, eventVersion));
+            handlers.current.onStatusChange(eventStatus, eventVersion);
+
+            if (eventStatus === 'selesai') {
                 handlers.current.onCompleted?.();
             }
 
