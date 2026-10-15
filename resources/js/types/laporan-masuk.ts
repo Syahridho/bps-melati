@@ -25,6 +25,7 @@ export interface TicketResponseItem {
     is_system?: boolean;
     sent_at: string | null;
     created_at?: string;
+    email_status?: 'pending' | 'sent' | 'failed' | 'bounced' | 'skipped' | null;
     attachments: Attachment[];
 }
 

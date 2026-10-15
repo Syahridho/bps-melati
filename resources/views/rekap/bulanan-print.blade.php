@@ -3,28 +3,31 @@
 <head>
     <meta charset="utf-8">
     <title>Rekap Pengaduan {{ $periodLabel }}</title>
-    {{-- Rekap bulanan hanya lima kolom angka, jadi tetap portrait. --}}
-    @include('rekap._print-style', ['orientasi' => 'portrait', 'marginHalaman' => 12])
+    {{-- Rekap bulanan memakai portrait dengan margin 15mm --}}
+    @include('rekap._print-style', ['orientasi' => 'portrait', 'marginHalaman' => 15])
 </head>
 <body>
     @include('rekap._print-kop')
 
     @include('rekap._print-judul', ['judul' => 'Bulan : '.$periodLabel])
 
-    {{-- Bulanan memakai kolom lebar sehingga lebar kolom mengikuti isi, bukan
-         persentase tetap milik tabel matriks. --}}
     <style>
-        col.kolom-kanal { width: 30%; }
+        col.kolom-kanal { width: 40%; }
+        col.kolom-pst { width: 12%; }
+        col.kolom-lainnya { width: 12%; }
+        col.kolom-aspirasi { width: 12%; }
+        col.kolom-info { width: 12%; }
+        col.kolom-jumlah { width: 12%; }
     </style>
 
     <table>
         <colgroup>
             <col class="kolom-kanal">
-            <col>
-            <col>
-            <col>
-            <col>
-            <col>
+            <col class="kolom-pst">
+            <col class="kolom-lainnya">
+            <col class="kolom-aspirasi">
+            <col class="kolom-info">
+            <col class="kolom-jumlah">
         </colgroup>
 
         <thead>
@@ -32,7 +35,7 @@
                 <th rowspan="2">Sumber Kanal</th>
                 <th colspan="2">Pengaduan</th>
                 <th rowspan="2">Aspirasi</th>
-                <th rowspan="2">Permintaan Informasi</th>
+                <th rowspan="2">Permintaan<br>Informasi</th>
                 <th rowspan="2">Jumlah</th>
             </tr>
             <tr>
@@ -44,8 +47,6 @@
         <tbody>
             @forelse ($rows as $row)
                 @php
-                    // Kanal induk yang bercabang tidak bisa dipilih saat input data,
-                    // jadi kolom angkanya dikosongkan dan diberi abu-abu.
                     $hasChildren = isset($row['children']) && count($row['children']) > 0;
                 @endphp
 
@@ -93,7 +94,7 @@
     </table>
 
     <div class="keterangan">
-        Keterangan: PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
+        Keterangan: PST = Pengaduan Layanan PST, Lainnya = Pengaduan Layanan Lainnya, Aspirasi = Aspirasi, Permintaan Informasi = Permintaan Informasi.
     </div>
 
     @include('rekap._print-ttd')

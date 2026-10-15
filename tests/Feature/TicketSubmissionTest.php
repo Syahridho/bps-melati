@@ -32,7 +32,7 @@ it('can submit a pengaduan ticket', function () {
         'title' => 'Jalan Rusak',
         'service_type' => 'pst',
         'reporter_name' => 'Ahmad Fauzi',
-        'reporter_email' => 'ahmad@test.com',
+        'reporter_email' => 'ahmad.pelapor@gmail.com',
         'reporter_wa' => '08123456789',
         'content' => 'Jalan rusak parah di daerah kami sudah 3 bulan.',
         'tanggal_kejadian' => '2026-09-20',
@@ -48,7 +48,7 @@ it('can submit a pengaduan ticket', function () {
         ->and($ticket->title)->toBe('Jalan Rusak')
         ->and($ticket->service_type)->toBe('pst')
         ->and($ticket->reporter_name)->toBe('Ahmad Fauzi')
-        ->and($ticket->reporter_email)->toBe('ahmad@test.com')
+        ->and($ticket->reporter_email)->toBe('ahmad.pelapor@gmail.com')
         ->and($ticket->status)->toBe('baru')
         ->and($ticket->is_read)->toBeFalse()
         ->and($ticket->source_app)->toBe('web')

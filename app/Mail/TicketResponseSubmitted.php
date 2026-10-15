@@ -10,6 +10,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,6 +23,15 @@ class TicketResponseSubmitted extends Mailable implements ShouldQueue
         public TicketResponse $response
     ) {
         $this->onQueue('notifications');
+    }
+
+    public function headers(): Headers
+    {
+        return new Headers(
+            text: [
+                'X-Ticket-Response-Id' => (string) $this->response->id,
+            ],
+        );
     }
 
     public function envelope(): Envelope

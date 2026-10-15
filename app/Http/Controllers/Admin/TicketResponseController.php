@@ -6,8 +6,11 @@ use App\Actions\ReplyToTicket;
 use App\Exceptions\TicketAlreadyCompletedException;
 use App\Exceptions\TicketAlreadyRespondedException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\StoreTicketResponseRequest;
+use App\Jobs\SendTicketResponseNotification;
 use App\Models\Ticket;
+use App\Models\TicketResponse;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -141,5 +144,49 @@ class TicketResponseController extends Controller
         }
 
         return $message.'. Silakan kirim sebagai Respon Substantif.';
+    }
+
+    /**
+     * Perbarui email pelapor dan kirim ulang notifikasi untuk respon yang gagal/bounce.
+     * Hanya admin yang boleh mengakses (authorize di sini, bukan di FormRequest).
+     */
+    public function resend(Ticket $ticket, TicketResponse $response): RedirectResponse
+    {
+        $user = request()->user();
+        abort_unless($user instanceof User && $user->isAdmin(), 403);
+        abort_unless($response->ticket_id === $ticket->id, 404);
+
+        if (! in_array($response->email_status, ['failed', 'bounced'], true)) {
+            return back()->withErrors(['reporter_email' => 'Respon ini tidak berada dalam status gagal atau bounce.']);
+        }
+
+        $validated = request()->validate([
+            'reporter_email' => ['required', ...StoreTicketRequest::emailRules(), 'max:255'],
+        ], [
+            'reporter_email.required' => 'Email pelapor wajib diisi.',
+            'reporter_email.email' => 'Alamat email tampaknya tidak valid. Periksa kembali penulisannya.',
+            'reporter_email.max' => 'Email maksimal 255 karakter.',
+        ]);
+
+        $newEmail = strtolower(trim($validated['reporter_email']));
+
+        // Perbarui email pelapor di tiket
+        $ticket->update(['reporter_email' => $newEmail]);
+
+        // Reset flag idempotensi agar job mengirim ulang
+        $response->forceFill([
+            'email_sent_at' => null,
+            'email_status' => 'pending',
+            'email_failed_at' => null,
+            'email_error' => null,
+            'email_bounced_at' => null,
+        ])->save();
+
+        // Dispatch ulang job
+        SendTicketResponseNotification::dispatch($response)->afterCommit();
+
+        return back()->with('flash', [
+            'success' => 'Email pelapor diperbarui dan notifikasi sedang dikirim ulang.',
+        ]);
     }
 }

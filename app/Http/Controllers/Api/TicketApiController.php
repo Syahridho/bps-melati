@@ -6,6 +6,7 @@ use App\Events\InboxUpdated;
 use App\Events\TicketCreated;
 use App\Events\TicketUpdated;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreTicketRequest;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
@@ -34,7 +35,7 @@ class TicketApiController extends Controller
             'title' => ['required', 'string', 'min:3', 'max:255'],
             'channel_id' => ['required', 'integer', 'exists:channels,id'],
             'reporter_name' => ['nullable', 'string', 'max:255'],
-            'reporter_email' => ['nullable', 'email', 'max:255'],
+            'reporter_email' => ['nullable', ...StoreTicketRequest::emailRules(), 'max:255'],
             'reporter_wa' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'max:30'],
             'content' => ['required', 'string', 'min:10'],
             'service_type' => ['nullable', 'string', 'in:pst,lainnya'],
@@ -74,7 +75,7 @@ class TicketApiController extends Controller
             'satuan_tugas' => $validated['satuan_tugas'] ?? null,
             'channel_id' => $validated['channel_id'],
             'reporter_name' => ! empty($validated['reporter_name']) ? trim($validated['reporter_name']) : null,
-            'reporter_email' => ! empty($validated['reporter_email']) ? trim($validated['reporter_email']) : null,
+            'reporter_email' => ! empty($validated['reporter_email']) ? strtolower(trim($validated['reporter_email'])) : null,
             'reporter_wa' => ! empty($validated['reporter_wa']) ? trim($validated['reporter_wa']) : null,
             'content' => trim($validated['content']),
             'status' => 'baru',

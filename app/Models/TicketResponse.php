@@ -17,6 +17,10 @@ class TicketResponse extends Model
         'idempotency_key',
         'sent_at',
         'email_sent_at',
+        'email_status',
+        'email_failed_at',
+        'email_error',
+        'email_bounced_at',
     ];
 
     protected function casts(): array
@@ -25,6 +29,8 @@ class TicketResponse extends Model
             'is_system' => 'boolean',
             'sent_at' => 'datetime',
             'email_sent_at' => 'datetime',
+            'email_failed_at' => 'datetime',
+            'email_bounced_at' => 'datetime',
         ];
     }
 

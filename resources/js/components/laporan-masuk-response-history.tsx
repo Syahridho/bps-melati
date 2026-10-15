@@ -19,6 +19,8 @@ interface ResponseHistoryProps {
     typingName: string | null;
     pendingNotice: string | null;
     conflict: ReplyConflict | null;
+    canResend?: boolean;
+    reporterEmail?: string;
     onDismissConflict: () => void;
     onToggleReply: () => void;
     onCancelReply: () => void;
@@ -41,6 +43,8 @@ export function LaporanMasukResponseHistory({
     typingName,
     pendingNotice,
     conflict,
+    canResend = false,
+    reporterEmail,
     onDismissConflict,
     onToggleReply,
     onCancelReply,
@@ -86,7 +90,19 @@ export function LaporanMasukResponseHistory({
 
                         return (
                             <div key={response.id} ref={isLast ? lastItemRef : undefined}>
-                                <LaporanMasukResponseItem response={response} onPreviewAttachment={onPreviewAttachment} />
+                                <LaporanMasukResponseItem
+                                    response={response}
+                                    onPreviewAttachment={onPreviewAttachment}
+                                    resendUrl={
+                                        canResend && (response.email_status === 'failed' || response.email_status === 'bounced')
+                                            ? route('dashboard.admin.laporan-masuk.responses.resend', {
+                                                  ticket: ticketId,
+                                                  response: response.id,
+                                              })
+                                            : undefined
+                                    }
+                                    reporterEmail={reporterEmail}
+                                />
                             </div>
                         );
                     })}

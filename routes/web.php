@@ -42,6 +42,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])
             ->middleware('throttle:ticket-response')
             ->name('laporan-masuk.responses.store');
+        Route::post('laporan-masuk/{ticket}/responses/{response}/resend', [TicketResponseController::class, 'resend'])
+            ->name('laporan-masuk.responses.resend');
         Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
         Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');

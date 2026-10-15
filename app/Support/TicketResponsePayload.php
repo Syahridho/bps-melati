@@ -18,6 +18,7 @@ class TicketResponsePayload
      *     message: string,
      *     sent_at: string|null,
      *     created_at: string,
+     *     email_status: string|null,
      *     attachments: list<array{id: int, original_name: string, mime_type: string|null, size: int, url: string}>
      * }
      */
@@ -42,6 +43,7 @@ class TicketResponsePayload
             'message' => $response->message,
             'sent_at' => $response->sent_at?->toIso8601String(),
             'created_at' => $response->created_at->toIso8601String(),
+            'email_status' => $isReporter ? null : $response->email_status,
             'attachments' => $response->attachments->map(fn ($attachment) => [
                 'id' => $attachment->id,
                 'original_name' => $attachment->original_name,

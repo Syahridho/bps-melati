@@ -216,6 +216,8 @@ export default function Show() {
                     typingName={typingName}
                     pendingNotice={pendingNotice}
                     conflict={conflict}
+                    canResend={auth.user.role === 'admin'}
+                    reporterEmail={ticket.reporter_email ?? ''}
                     onDismissConflict={() => setConflict(null)}
                     onToggleReply={() => setShowReplyForm((prev) => !prev)}
                     onCancelReply={() => setShowReplyForm(false)}

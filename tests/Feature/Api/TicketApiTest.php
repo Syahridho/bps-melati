@@ -43,7 +43,7 @@ test('can create ticket via post /api/tickets with valid api key and validation'
         'title' => 'Pengaduan Layanan dari Flutter',
         'content' => 'Ini adalah isi pengaduan dari aplikasi mobile Flutter yang dikirim via API.',
         'reporter_name' => 'Budi Flutter',
-        'reporter_email' => 'budi.flutter@example.com',
+        'reporter_email' => 'budi.flutter@gmail.com',
         'reporter_wa' => '081234567890',
         'attachments' => [
             UploadedFile::fake()->create('bukti.pdf', 100, 'application/pdf'),

@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -62,19 +63,50 @@ class SendTicketResponseNotification implements ShouldQueue
         $ticket = $response->ticket;
 
         if ($ticket === null || blank($ticket->reporter_email)) {
+            $response->forceFill(['email_status' => 'skipped'])->save();
+
             return;
         }
 
         Mail::to($ticket->reporter_email)->queue(new TicketResponseSubmitted($ticket, $response));
 
-        $response->forceFill(['email_sent_at' => now()])->save();
+        $response->forceFill([
+            'email_sent_at' => now(),
+            'email_status' => 'sent',
+        ])->save();
     }
 
     public function failed(?Throwable $exception): void
     {
-        Log::error('Gagal mengirim notifikasi email tanggapan: '.$exception->getMessage(), [
+        $maskedEmail = $this->maskedEmail();
+
+        Log::error('Gagal mengirim notifikasi email tanggapan.', [
             'response_id' => $this->response->id,
             'ticket_id' => $this->response->ticket_id,
+            'email' => $maskedEmail,
+            'error' => Str::limit($exception?->getMessage() ?? '', 500),
         ]);
+
+        // Catat kegagalan di database tanpa mengubah email_sent_at (idempotensi tetap utuh)
+        $response = $this->response->fresh();
+        if ($response !== null) {
+            $response->forceFill([
+                'email_status' => 'failed',
+                'email_failed_at' => now(),
+                'email_error' => Str::limit($exception?->getMessage() ?? '', 500),
+            ])->save();
+        }
+    }
+
+    private function maskedEmail(): string
+    {
+        $email = $this->response->ticket?->reporter_email;
+        if (blank($email) || ! str_contains($email, '@')) {
+            return '***';
+        }
+
+        [$local, $domain] = explode('@', $email, 2);
+
+        return Str::limit($local, 3, '***').'@'.$domain;
     }
 }

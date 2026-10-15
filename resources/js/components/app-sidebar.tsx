@@ -133,12 +133,12 @@ export function AppSidebar() {
             url: '/settings/application',
             icon: Settings,
         },
-        {
-            title: 'Antrean',
-            url: '/horizon',
-            icon: Activity,
-            external: true,
-        },
+        // {
+        //     title: 'Antrean',
+        //     url: '/horizon',
+        //     icon: Activity,
+        //     external: true,
+        // },
     ];
 
     const operatorNavItems: NavItem[] = [

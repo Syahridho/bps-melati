@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Channel;
+use App\Rules\NotPlaceholderEmail;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -72,7 +73,7 @@ class StoreTicketRequest extends FormRequest
                 },
             ],
             'reporter_name' => ['nullable', 'string', 'max:100'],
-            'reporter_email' => ['nullable', 'email:rfc', 'max:150'],
+            'reporter_email' => ['nullable', ...self::emailRules(), 'max:255'],
             'reporter_wa' => ['nullable', 'string', 'regex:/^(\+62|62|0)8[0-9]{8,12}$/'],
             'content' => ['required', 'string', 'min:10', 'max:5000'],
             'service_type' => ['nullable', 'in:pst,lainnya', $isWebsite ? 'nullable' : 'required_if:classification,pengaduan'],
@@ -110,8 +111,8 @@ class StoreTicketRequest extends FormRequest
             'channel_id.required' => 'Kanal laporan wajib dipilih.',
             'channel_id.exists' => 'Kanal laporan tidak ditemukan atau tidak aktif.',
             'reporter_name.max' => 'Nama pelapor maksimal 100 karakter.',
-            'reporter_email.email' => 'Format email tidak valid.',
-            'reporter_email.max' => 'Email maksimal 150 karakter.',
+            'reporter_email.email' => 'Alamat email tampaknya tidak valid. Periksa kembali penulisannya.',
+            'reporter_email.max' => 'Email maksimal 255 karakter.',
             'reporter_wa.regex' => 'Format nomor WhatsApp tidak valid (contoh: 081234567890).',
             'content.required' => 'Isi uraian laporan wajib diisi.',
             'content.min' => 'Isi uraian laporan minimal 10 karakter.',
@@ -127,5 +128,18 @@ class StoreTicketRequest extends FormRequest
             'attachments.*.mimetypes' => 'Tipe MIME file lampiran tidak valid.',
             'attachments.*.max' => 'Ukuran file lampiran maksimal 2MB.',
         ];
+    }
+
+    /**
+     * Rule email yang dipakai bersama oleh form web dan API.
+     * Di environment testing, DNS check dilewati agar test tidak bergantung jaringan.
+     *
+     * @return array<int, string|NotPlaceholderEmail>
+     */
+    public static function emailRules(): array
+    {
+        $rfc = app()->environment('testing') ? 'email:rfc,spoof' : 'email:rfc,dns,spoof';
+
+        return [$rfc, new NotPlaceholderEmail];
     }
 }
