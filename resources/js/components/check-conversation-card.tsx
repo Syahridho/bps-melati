@@ -131,9 +131,9 @@ export function CheckConversationCard({
                                                 >
                                                     {isSystem ? 'Otomatis' : responseTypeLabel(res.type)}
                                                 </Badge>
-                                                {res.user_name !== 'Operator' && res.user_name !== 'Admin' && (
+                                                {/* {res.user_name !== 'Operator' && res.user_name !== 'Admin' && (
                                                     <span className="text-xs font-semibold">{res.user_name}</span>
-                                                )}
+                                                )} */}
                                             </div>
                                             <span className="text-muted-foreground text-xs">
                                                 {res.sent_at ? formatDateTime(res.sent_at) : formatDateTime(res.created_at)}
