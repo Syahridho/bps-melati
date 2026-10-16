@@ -26,7 +26,7 @@ export function AttachmentField({ attachments, errors, fileInputRef, onFileChang
                     <InfoHint>Opsional</InfoHint>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                    Maksimal 3 file (PDF, gambar JPG/PNG, dokumen Word/Excel/ZIP). Ukuran maks 5MB per file.
+                    Maksimal 3 file (PDF, gambar JPG/PNG). Ukuran maks 2MB per file.
                 </p>
             </div>
 
