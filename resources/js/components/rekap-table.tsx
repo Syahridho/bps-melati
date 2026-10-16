@@ -12,42 +12,45 @@ interface RekapTableProps {
 export function RekapTable({ rows, totals, periodLabel }: RekapTableProps) {
     return (
         <div className="bg-card overflow-hidden rounded-md border">
-            <Table className="w-full table-fixed border-collapse text-sm">
+            <Table className="w-full min-w-[720px] table-fixed border-collapse text-sm">
+                <colgroup>
+                    <col className="w-[30%]" />
+                    {REKAP_COLUMNS.map((column) => (
+                        <col key={column.key} className="w-[14%]" />
+                    ))}
+                </colgroup>
+
                 <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                        <TableHead colSpan={REKAP_COLUMNS.length + 1} className="bg-muted/60 text-foreground text-center font-medium uppercase py-2 text-sm">
+                        <TableHead colSpan={REKAP_COLUMNS.length + 1} className="bg-muted/60 text-foreground py-2 text-center text-sm font-medium uppercase">
                             Rekap Pengaduan BPS Provinsi Riau
                         </TableHead>
                     </TableRow>
                     <TableRow className="hover:bg-transparent">
-                        <TableHead colSpan={REKAP_COLUMNS.length + 1} className="text-foreground text-center font-medium uppercase py-1.5 text-sm">
+                        <TableHead colSpan={REKAP_COLUMNS.length + 1} className="text-foreground py-1.5 text-center text-sm font-medium uppercase">
                             Bulan : {periodLabel}
                         </TableHead>
                     </TableRow>
                     <TableRow className="hover:bg-transparent">
-                        <TableHead rowSpan={2} className="text-foreground min-w-[220px] border-r text-center align-middle font-medium whitespace-nowrap py-2 text-sm">
+                        <TableHead rowSpan={2} className="text-foreground border-r py-2 text-center align-middle text-sm font-medium">
                             Sumber Kanal
                         </TableHead>
-                        <TableHead colSpan={2} className="text-foreground border-r text-center font-medium whitespace-nowrap py-1.5 text-sm">
+                        <TableHead colSpan={2} className="text-foreground border-r py-1.5 text-center text-sm font-medium whitespace-nowrap">
                             Pengaduan
                         </TableHead>
-                        <TableHead rowSpan={2} className="text-foreground border-r text-center align-middle font-medium whitespace-nowrap py-2 text-sm">
+                        <TableHead rowSpan={2} className="text-foreground border-r py-2 text-center align-middle text-sm font-medium whitespace-normal">
                             Aspirasi
                         </TableHead>
-                        <TableHead rowSpan={2} className="text-foreground border-r text-center align-middle font-medium whitespace-nowrap py-2 text-sm">
+                        <TableHead rowSpan={2} className="text-foreground border-r py-2 text-center align-middle text-sm font-medium whitespace-normal">
                             Permintaan Informasi
                         </TableHead>
-                        <TableHead rowSpan={2} className="text-foreground text-center align-middle font-medium whitespace-nowrap py-2 text-sm">
+                        <TableHead rowSpan={2} className="text-foreground py-2 text-center align-middle text-sm font-medium whitespace-nowrap">
                             Jumlah
                         </TableHead>
                     </TableRow>
                     <TableRow className="hover:bg-transparent">
-                        <TableHead className="text-center font-normal text-xs text-muted-foreground whitespace-nowrap py-1">
-                            PST
-                        </TableHead>
-                        <TableHead className="border-r text-center font-normal text-xs text-muted-foreground whitespace-nowrap py-1">
-                            Lainnya
-                        </TableHead>
+                        <TableHead className="text-muted-foreground py-1 text-center text-xs font-normal whitespace-nowrap">PST</TableHead>
+                        <TableHead className="text-muted-foreground border-r py-1 text-center text-xs font-normal whitespace-nowrap">Lainnya</TableHead>
                     </TableRow>
                 </TableHeader>
 
@@ -65,12 +68,12 @@ export function RekapTable({ rows, totals, periodLabel }: RekapTableProps) {
 
                 <TableFooter>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell className="text-foreground pl-4 font-medium uppercase whitespace-nowrap h-9 py-1.5 text-sm">Total</TableCell>
+                        <TableCell className="text-foreground h-9 py-1.5 pr-4 pl-4 text-sm font-medium uppercase">Total</TableCell>
                         {REKAP_COLUMNS.map((column) => (
                             <TableCell
                                 key={column.key}
                                 className={cn(
-                                    'text-center font-medium tabular-nums whitespace-nowrap h-9 py-1.5 text-sm',
+                                    'h-9 py-1.5 text-center text-sm font-medium whitespace-nowrap tabular-nums',
                                     column.key === 'jumlah' && 'bg-muted/60',
                                 )}
                             >
@@ -90,7 +93,12 @@ function RekapTableRow({ row }: { row: RekapRow }) {
     return (
         <>
             <TableRow className={cn(hasChildren ? 'bg-muted/50 font-medium' : 'hover:bg-muted/40')}>
-                <TableCell className={cn('border-r pl-4 text-left whitespace-nowrap h-9 py-1.5 text-sm', hasChildren ? 'bg-muted/50 font-medium' : 'bg-card font-normal')}>
+                <TableCell
+                    className={cn(
+                        'min-h-9 border-r py-1.5 pr-4 pl-4 text-left text-sm break-words whitespace-normal',
+                        hasChildren ? 'bg-muted/50 font-medium' : 'bg-card font-normal',
+                    )}
+                >
                     {row.channel}
                 </TableCell>
 
@@ -100,7 +108,7 @@ function RekapTableRow({ row }: { row: RekapRow }) {
                     REKAP_COLUMNS.map((column) => (
                         <TableCell
                             key={column.key}
-                            className={cn('h-9 py-1.5 text-center tabular-nums whitespace-nowrap text-sm', column.key === 'jumlah' && 'bg-muted/40 font-medium')}
+                            className={cn('h-9 py-1.5 text-center text-sm whitespace-nowrap tabular-nums', column.key === 'jumlah' && 'bg-muted/40 font-medium')}
                         >
                             {row[column.key]}
                         </TableCell>
@@ -111,13 +119,13 @@ function RekapTableRow({ row }: { row: RekapRow }) {
             {hasChildren &&
                 row.children.map((child) => (
                     <TableRow key={`${row.channel}-${child.channel}`} className="hover:bg-muted/40">
-                        <TableCell className="text-muted-foreground border-r bg-card pl-8 text-left font-normal whitespace-nowrap h-9 py-1.5 text-sm">
+                        <TableCell className="text-muted-foreground bg-card min-h-9 border-r py-1.5 pr-4 pl-8 text-left text-sm font-normal break-words whitespace-normal">
                             {child.channel.replace(/^-+\s*/, '')}
                         </TableCell>
                         {REKAP_COLUMNS.map((column) => (
                             <TableCell
                                 key={column.key}
-                                className={cn('h-9 py-1.5 text-center tabular-nums whitespace-nowrap text-sm', column.key === 'jumlah' && 'bg-muted/40 font-medium')}
+                                className={cn('h-9 py-1.5 text-center text-sm whitespace-nowrap tabular-nums', column.key === 'jumlah' && 'bg-muted/40 font-medium')}
                             >
                                 {child[column.key]}
                             </TableCell>
