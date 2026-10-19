@@ -7,6 +7,7 @@ use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
+use App\Support\ReplyDeadline;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,7 +57,7 @@ class CheckTicketController extends Controller
                     'created_at' => $t->created_at->toIso8601String(),
                     'completed_at' => $t->completed_at?->toIso8601String(),
                     'closed_reason' => $t->closed_reason,
-                    'auto_close_at' => AutoCloseTickets::deadlineFor($t)?->toIso8601String(),
+                    'auto_close_at' => ReplyDeadline::for($t)?->toIso8601String(),
                     'attachments' => $t->attachments->map(fn ($attachment) => [
                         'id' => $attachment->id,
                         'original_name' => $attachment->original_name,
