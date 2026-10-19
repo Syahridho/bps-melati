@@ -45,6 +45,8 @@ export function LaporanMasukResponseHistory({
     conflict,
     canResend = false,
     reporterEmail,
+    isBerkadarPengawasan = false,
+    autoCloseDays,
     onDismissConflict,
     onToggleReply,
     onCancelReply,
@@ -56,66 +58,55 @@ export function LaporanMasukResponseHistory({
 }: ResponseHistoryProps) {
     const lastItemRef = useRef<HTMLDivElement>(null);
     const isCompleted = ticketStatus === 'selesai';
-    const hasResponAwal =
-        responses.some((response) => response.type === 'respon_awal') ||
-        ticketStatus === 'respon_awal' ||
-        ticketStatus === 'respon_substantif' ||
-        ticketStatus === 'selesai';
+    const hasResponAwal = responses.some((r) => r.type === 'respon_awal');
 
     useEffect(() => {
-        if (!highlightLast || !lastItemRef.current) {
-            return;
+        if (highlightLast && lastItemRef.current) {
+            lastItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-
-        lastItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, [highlightLast, responses.length]);
+    }, [highlightLast]);
 
     return (
-        <div className="bg-card space-y-4 rounded-lg border p-4 sm:p-6">
+        <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="flex items-center gap-2 font-semibold">
-                    <MessageSquare className="size-4" />
-                    Riwayat Tanggapan ({responses.length})
-                </h3>
+                <div className="flex items-center gap-2">
+                    <MessageSquare className="size-5 text-primary" />
+                    <h3 className="font-semibold text-lg">Riwayat Tanggapan & Percakapan</h3>
+                </div>
 
                 <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingName={typingName} />
             </div>
 
-            {responses.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Belum ada tanggapan untuk laporan ini.</p>
-            ) : (
-                <div className="space-y-4">
-                    {responses.map((response, index) => {
-                        const isLast = index === responses.length - 1;
+            <div className="space-y-4">
+                {responses.map((response, index) => {
+                    const isLast = index === responses.length - 1;
+                    return (
+                        <div key={response.id} ref={isLast && highlightLast ? lastItemRef : null}>
+                            <LaporanMasukResponseItem
+                                response={response}
+                                routePrefix={routePrefix}
+                                canResend={canResend}
+                                reporterEmail={reporterEmail}
+                                onPreviewAttachment={onPreviewAttachment}
+                            />
+                        </div>
+                    );
+                })}
 
-                        return (
-                            <div key={response.id} ref={isLast ? lastItemRef : undefined}>
-                                <LaporanMasukResponseItem
-                                    response={response}
-                                    onPreviewAttachment={onPreviewAttachment}
-                                    resendUrl={
-                                        canResend && (response.email_status === 'failed' || response.email_status === 'bounced')
-                                            ? route('dashboard.admin.laporan-masuk.responses.resend', {
-                                                  ticket: ticketId,
-                                                  response: response.id,
-                                              })
-                                            : undefined
-                                    }
-                                    reporterEmail={reporterEmail}
-                                />
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                {responses.length === 0 && (
+                    <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+                        Belum ada tanggapan pada laporan ini.
+                    </div>
+                )}
+            </div>
 
             {!showReplyForm && (
-                <div className="pt-1">
+                <div className="flex justify-end pt-2">
                     {isCompleted ? (
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <span className="inline-flex w-full sm:w-auto">
+                                    <span tabIndex={0} className="inline-block">
                                         <Button type="button" variant="outline" className="w-full sm:w-auto" disabled>
                                             <MessageSquareReply className="mr-1.5 size-4" />
                                             Balas

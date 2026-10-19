@@ -30,7 +30,7 @@ class LaporanMasukController extends Controller
         $filter = new LaporanFilter($request, 'semua', 10);
 
         // Whitelist filter
-        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'ditandai'];
+        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'ditandai', 'berkadar_pengawasan'];
         if (! in_array($filter->tab, $allowedFilters, true)) {
             $filter->tab = 'semua';
         }
@@ -65,6 +65,8 @@ class LaporanMasukController extends Controller
                     $query->where('status', 'respon_substantif');
                 } elseif ($filter->tab === 'ditandai') {
                     $query->whereHas('bookmarkedBy', fn ($q) => $q->where('users.id', auth()->id()));
+                } elseif ($filter->tab === 'berkadar_pengawasan') {
+                    $query->where('is_berkadar_pengawasan', true);
                 }
             }
 
@@ -94,7 +96,9 @@ class LaporanMasukController extends Controller
                     'is_read' => $ticket->is_read,
                     'is_bookmarked' => (bool) $ticket->is_bookmarked,
                     'berkadar_pengawasan' => $ticket->is_berkadar_pengawasan,
-                    'reply_deadline_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
+                    'auto_close_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
+                    'auto_close_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
+                'reply_deadline_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
                     'source_app' => $ticket->source_app,
                     'channel' => $ticket->channel?->name ?? '-',
                     'created_at' => $ticket->created_at->toIso8601String(),
@@ -131,7 +135,8 @@ class LaporanMasukController extends Controller
                     SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
                     SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan,
                     SUM(CASE WHEN status = 'respon_awal' THEN 1 ELSE 0 END) as respon_awal,
-                    SUM(CASE WHEN status = 'respon_substantif' THEN 1 ELSE 0 END) as respon_substantif
+                    SUM(CASE WHEN status = 'respon_substantif' THEN 1 ELSE 0 END) as respon_substantif,
+                    SUM(CASE WHEN is_berkadar_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan
                 ")
                 ->first();
 
@@ -148,6 +153,7 @@ class LaporanMasukController extends Controller
                 'respon_awal' => (int) ($countsData->respon_awal ?? 0),
                 'respon_substantif' => (int) ($countsData->respon_substantif ?? 0),
                 'ditandai' => (int) $ditandaiCount,
+                'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
             ];
         };
 
@@ -244,6 +250,7 @@ class LaporanMasukController extends Controller
                     'flagged_days' => $flaggedDays,
                     'effective_days' => $effectiveDays,
                 ],
+                'auto_close_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
                 'reply_deadline_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
                 'created_at' => $ticket->created_at->toIso8601String(),
                 'updated_at' => $ticket->updated_at->toIso8601String(),

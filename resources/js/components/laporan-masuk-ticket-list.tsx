@@ -109,7 +109,11 @@ export function LaporanMasukTicketList({ tickets, isLoading, routePrefix, recent
                                             {statusLabel(ticket.status)}
                                         </Badge>
                                     ) : null}
-                                    <span className="text-muted-foreground text-[10px]">{ticket.channel}</span>
+                                    {ticket.berkadar_pengawasan && (
+                                        <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400">
+                                            Berkadar Pengawasan
+                                        </Badge>
+                                    )}
                                     {recentlyAnswered[ticket.id] && (
                                         <Badge variant="outline" className="text-[10px]">
                                             dibalas oleh {recentlyAnswered[ticket.id]}

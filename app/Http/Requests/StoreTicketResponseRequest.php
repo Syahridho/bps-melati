@@ -34,7 +34,6 @@ class StoreTicketResponseRequest extends FormRequest
         return [
             'response_type' => ['required', 'in:respon_awal,respon_substantif'],
             'response_message' => ['required', 'string', 'min:10', 'max:5000'],
-            'berkadar_pengawasan' => ['sometimes', 'boolean'],
             'response_attachments' => ['nullable', 'array', 'max:3'],
             'response_attachments.*' => [
                 'file',

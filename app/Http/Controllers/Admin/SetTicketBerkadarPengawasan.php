@@ -33,6 +33,18 @@ class SetTicketBerkadarPengawasan extends Controller
             $ticket->timestamps = false;
             $ticket->save();
             $ticket->timestamps = true;
+
+            Cache::forget('ticket_check:'.md5($ticket->ticket_number));
+            Cache::forget("ticket:{$ticket->ticket_number}");
+
+            SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket), [
+                'ticket_id' => $ticket->id,
+                'ticket_number' => $ticket->ticket_number,
+            ]);
+            SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, $request->user()->name, $request->user()), [
+                'ticket_id' => $ticket->id,
+                'ticket_number' => $ticket->ticket_number,
+            ]);
         }
 
         $ticket->load('berkadarPengawasanModifier');

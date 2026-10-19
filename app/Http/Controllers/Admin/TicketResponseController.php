@@ -38,7 +38,6 @@ class TicketResponseController extends Controller
                 [
                     'type' => $request->validated('response_type'),
                     'message' => $request->validated('response_message'),
-                    'berkadar_pengawasan' => $request->boolean('berkadar_pengawasan'),
                     'idempotency_key' => $request->validated('idempotency_key'),
                     'expected_version' => $request->validated('expected_version'),
                 ],

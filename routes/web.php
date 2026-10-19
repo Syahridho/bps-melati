@@ -47,7 +47,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('laporan-masuk/{ticketNumber}/bookmark', [TicketBookmarkController::class, 'store'])->name('laporan-masuk.bookmark.store')->where('ticketNumber', '.*');
         Route::delete('laporan-masuk/{ticketNumber}/bookmark', [TicketBookmarkController::class, 'destroy'])->name('laporan-masuk.bookmark.destroy')->where('ticketNumber', '.*');
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
-        Route::put('laporan-masuk/{ticketNumber}/berkadar-pengawasan', SetTicketBerkadarPengawasan::class)
+        Route::match(['put', 'patch'], 'laporan-masuk/{ticketNumber}/berkadar-pengawasan', SetTicketBerkadarPengawasan::class)
             ->name('laporan-masuk.berkadar-pengawasan.update')
             ->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
@@ -83,7 +83,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('laporan-masuk/{ticketNumber}/bookmark', [TicketBookmarkController::class, 'store'])->name('laporan-masuk.bookmark.store')->where('ticketNumber', '.*');
         Route::delete('laporan-masuk/{ticketNumber}/bookmark', [TicketBookmarkController::class, 'destroy'])->name('laporan-masuk.bookmark.destroy')->where('ticketNumber', '.*');
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
-        Route::put('laporan-masuk/{ticketNumber}/berkadar-pengawasan', SetTicketBerkadarPengawasan::class)
+        Route::match(['put', 'patch'], 'laporan-masuk/{ticketNumber}/berkadar-pengawasan', SetTicketBerkadarPengawasan::class)
             ->name('laporan-masuk.berkadar-pengawasan.update')
             ->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
