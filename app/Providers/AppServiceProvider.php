@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Support\LaporanCache;
 use App\Support\RekapCache;
 use App\Support\RekapYears;
-use Illuminate\Auth\Events\Logout;
+use App\Events\TicketCreated;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;

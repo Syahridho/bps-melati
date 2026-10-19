@@ -9,12 +9,17 @@ import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
 import { useLaporanMasukFilters } from '@/hooks/use-laporan-masuk-filters';
 import AdminPage from '@/pages/admin/page';
 import { type LaporanMasukProps } from '@/types/laporan-masuk';
-import { Head, usePage } from '@inertiajs/react';
+import { useEcho } from '@laravel/echo-react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { RotateCcw, Search, X } from 'lucide-react';
 
 export default function LaporanMasuk() {
-    const { auth, tickets, filters, counts } = usePage<LaporanMasukProps>().props;
-    const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+    const { auth, tickets, filters, counts, server_now } = usePage<LaporanMasukProps>().props;
+    const routePrefix = auth.user.role === 'admin' 
+        ? 'dashboard.admin' 
+        : auth.user.role === 'operator_tim' 
+        ? 'dashboard.operator-tim' 
+        : 'dashboard.operator';
 
     const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
         useLaporanMasukFilters(routePrefix, filters);
@@ -24,6 +29,19 @@ export default function LaporanMasuk() {
     const { recentlyAnswered, clearRecentlyAnswered } = useInboxRealtime({ searching: isSearching });
 
     const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
+
+    useEcho<{ ticket_id: number; ticket_number: string; bookmarked: boolean; ditandai_count: number; origin?: string }>(
+        auth?.user ? `user.${auth.user.id}` : '',
+        '.ticket.bookmark.changed',
+        (event) => {
+            const socketId = (window as any).Echo?.socketId?.();
+            if (event.origin && socketId && event.origin === socketId) {
+                return;
+            }
+            router.reload({ only: ['tickets', 'counts'] });
+        },
+        [auth?.user?.id]
+    );
 
     return (
         <AdminPage breadcrumbs={[{ title: 'Laporan Masuk', href: route(`${routePrefix}.laporan-masuk.index`) }]}>
@@ -102,6 +120,7 @@ export default function LaporanMasuk() {
                             routePrefix={routePrefix}
                             recentlyAnswered={recentlyAnswered}
                             onSelectTicket={clearRecentlyAnswered}
+                            serverNow={server_now}
                         />
                     )}
 

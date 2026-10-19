@@ -92,6 +92,7 @@ class LaporanFilter
     public function toCacheParams(): array
     {
         return [
+            'user_id' => auth()->id(),
             'tab' => $this->tab,
             'from' => $this->from,
             'to' => $this->to,

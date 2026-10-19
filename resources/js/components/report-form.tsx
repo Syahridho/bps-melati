@@ -5,6 +5,8 @@ import { ReporterFields } from '@/components/report/reporter-fields';
 import { type ReportFormProps } from '@/components/report/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { warnJenisLaporan } from '@/lib/welcome-utils';
 import { LoaderCircle } from 'lucide-react';
 
 export type { ReportFormData, ReportFormProps } from '@/components/report/types';
@@ -20,6 +22,8 @@ export function ReportForm({
     onRemoveFile,
     onPreviewFile,
 }: ReportFormProps) {
+    const terkunci = !data.classification;
+
     return (
         <form onSubmit={onSubmit} className="mx-auto w-full max-w-2xl min-w-0">
             <Card className="shadow-xs">
@@ -40,6 +44,7 @@ export function ReportForm({
 
                     {/* Lampiran */}
                     <AttachmentField
+                        classification={data.classification}
                         attachments={data.attachments}
                         errors={errors}
                         fileInputRef={fileInputRef}
@@ -50,7 +55,19 @@ export function ReportForm({
                 </CardContent>
 
                 <CardFooter className="flex justify-end gap-3 pt-6">
-                    <Button type="submit" disabled={processing || !data.classification} className="w-full sm:w-auto">
+                    <Button
+                        type="submit"
+                        disabled={processing}
+                        aria-disabled={terkunci || processing}
+                        tabIndex={terkunci || processing ? -1 : 0}
+                        className={cn('w-full sm:w-auto', (terkunci || processing) && 'opacity-50 cursor-not-allowed')}
+                        onClick={(e) => {
+                            if (terkunci) {
+                                e.preventDefault();
+                                warnJenisLaporan();
+                            }
+                        }}
+                    >
                         {processing && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
                         Kirim Laporan
                     </Button>

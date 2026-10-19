@@ -9,7 +9,11 @@ import { useState } from 'react';
 
 export default function Show() {
     const { auth, ticket } = usePage<ShowProps>().props;
-    const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+    const routePrefix = auth.user.role === 'admin' 
+        ? 'dashboard.admin' 
+        : auth.user.role === 'operator_tim' 
+        ? 'dashboard.operator-tim' 
+        : 'dashboard.operator';
 
     const backRouteName = `${routePrefix}.laporan-selesai.index`;
     const backLabel = 'Laporan Selesai';
@@ -52,6 +56,7 @@ export default function Show() {
                     ticketStatus={ticket.status}
                     canEdit={false}
                     canDelete={false}
+                    routePrefix={routePrefix}
                     onEdit={() => {}}
                     onDelete={() => {}}
                     onPreviewAttachment={handlePreviewAttachment}

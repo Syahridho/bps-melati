@@ -16,6 +16,7 @@ export function LaporanMasukFilterTabs({ currentFilter, counts, onFilterChange }
         { key: 'permintaan', label: 'Permintaan Info', count: counts.permintaan },
         { key: 'respon_awal', label: 'Respon Awal', count: counts.respon_awal },
         { key: 'respon_substantif', label: 'Respon Substantif', count: counts.respon_substantif },
+        { key: 'ditandai', label: 'Ditandai', count: counts.ditandai },
     ];
 
     return (

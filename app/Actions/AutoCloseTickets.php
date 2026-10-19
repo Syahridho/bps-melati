@@ -40,6 +40,7 @@ class AutoCloseTickets
         'pengaduan' => 'auto_close_pengaduan_days',
         'aspirasi' => 'auto_close_aspirasi_days',
         'permintaan_informasi' => 'auto_close_permintaan_informasi_days',
+        'berkadar_pengawasan' => 'auto_close_berkadar_pengawasan_days',
     ];
 
     /**
@@ -117,7 +118,8 @@ class AutoCloseTickets
         $windows = [];
 
         foreach (self::SETTING_KEYS as $classification => $key) {
-            $raw = Setting::get($key);
+            $defaultVal = $classification === 'berkadar_pengawasan' ? '30' : null;
+            $raw = Setting::get($key, $defaultVal);
 
             if ($raw === null || trim((string) $raw) === '') {
                 continue;
@@ -151,8 +153,7 @@ class AutoCloseTickets
      */
     public function candidateQuery(string $classification, int $days): Builder
     {
-        return Ticket::query()
-            ->where('classification', $classification)
+        $query = Ticket::query()
             ->whereIn('status', self::CANDIDATE_STATUSES)
             ->whereNotNull('last_staff_response_at')
             ->where('last_staff_response_at', '<=', now()->subDays($days))
@@ -163,6 +164,15 @@ class AutoCloseTickets
                         'COALESCE(ticket_responses.sent_at, ticket_responses.created_at) >= tickets.last_staff_response_at'
                     );
             });
+
+        if ($classification === 'berkadar_pengawasan') {
+            $query->where('berkadar_pengawasan', true);
+        } else {
+            $query->where('berkadar_pengawasan', false)
+                ->where('classification', $classification);
+        }
+
+        return $query;
     }
 
     /**
@@ -198,103 +208,30 @@ class AutoCloseTickets
                 $ticket->responses()->create([
                     'user_id' => null,
                     'type' => 'respon_substantif',
+                    'message' => 'Laporan otomatis ditutup karena tidak ada tanggapan dari pelapor setelah '.$days.' hari.',
                     'is_system' => true,
-                    'message' => self::systemMessage($days),
                     'sent_at' => now(),
                 ]);
 
-                $updated = Ticket::query()
-                    ->whereKey($ticket->id)
-                    ->whereIn('status', self::CANDIDATE_STATUSES)
-                    ->update([
-                        'status' => 'selesai',
-                        'completed_at' => now(),
-                        'closed_reason' => self::CLOSED_REASON,
-                    ]);
+                $ticket->update([
+                    'status' => 'selesai',
+                    'completed_at' => now(),
+                    'closed_reason' => self::CLOSED_REASON,
+                ]);
 
-                return $updated === 1;
-            }, 3);
+                return true;
+            });
 
             if ($closed) {
-                $this->forgetTicketCaches($ticketId);
+                LaporanCache::invalidate();
+                broadcast(new TicketUpdated($ticketId));
+                broadcast(new InboxUpdated(Ticket::find($ticketId)));
             }
 
             return $closed;
         } catch (Throwable $e) {
             report($e);
-
-            Log::error('Gagal menutup satu tiket secara otomatis.', [
-                'ticket_id' => $ticketId,
-                'error' => $e->getMessage(),
-            ]);
-
             return false;
         }
-    }
-
-    /**
-     * Invalidasi cache yang menyimpan isi/hitungan tiket.
-     */
-    public function forgetTicketCaches(int $ticketId): void
-    {
-        $ticket = Ticket::query()->find($ticketId);
-
-        if ($ticket === null) {
-            return;
-        }
-
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget('dashboard:admin:version');
-        LaporanCache::invalidate();
-    }
-
-    /**
-     * Tenggat auto close untuk satu tiket, atau null bila fiturnya nonaktif
-     * untuk klasifikasi tersebut / tiket belum pernah dibalas petugas.
-     *
-     * Dipakai controller agar tanggal tampil dihitung di server, bukan di klien.
-     */
-    public static function deadlineFor(Ticket $ticket): ?Carbon
-    {
-        if ($ticket->last_staff_response_at === null || $ticket->status === 'selesai') {
-            return null;
-        }
-
-        $days = self::windows()[$ticket->classification] ?? null;
-
-        if ($days === null) {
-            return null;
-        }
-
-        return $ticket->last_staff_response_at->copy()->addDays($days);
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    private static function windows(): array
-    {
-        $windows = [];
-
-        foreach (self::SETTING_KEYS as $classification => $key) {
-            $raw = trim((string) Setting::get($key));
-
-            if ($raw === '' || ! ctype_digit($raw) || (int) $raw <= 0) {
-                continue;
-            }
-
-            $windows[$classification] = (int) $raw;
-        }
-
-        return $windows;
-    }
-
-    /**
-     * Teks entri sistem yang ditambahkan ke riwayat tanggapan.
-     */
-    public static function systemMessage(int $days): string
-    {
-        return "Laporan ditutup otomatis karena tidak ada balasan dari pelapor selama {$days} hari.";
     }
 }

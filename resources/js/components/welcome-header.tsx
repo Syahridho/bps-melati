@@ -24,7 +24,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
 
                     {user && (
                         <Button asChild size="sm">
-                            <Link href={user.role === 'admin' ? route('dashboard.admin.index') : route('dashboard.operator.index')}>Dashboard</Link>
+                            <Link href={user.role === 'admin' ? route('dashboard.admin.index') : user.role === 'operator_tim' ? route('dashboard.operator-tim.index') : route('dashboard.operator.index')}>Dashboard</Link>
                         </Button>
                     )}
                     <AppearanceToggleDropdown />

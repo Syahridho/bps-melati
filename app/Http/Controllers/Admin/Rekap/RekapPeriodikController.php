@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class RekapTahunanController extends Controller
+class RekapPeriodikController extends Controller
 {
     private const MONTH_NAMES = [
         1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
@@ -24,46 +24,66 @@ class RekapTahunanController extends Controller
 
     public function __invoke(Request $request): Response
     {
-        $year = $this->resolveYear($request->query('year'));
+        [$year, $dari, $sampai] = $this->resolveParams(
+            $request->query('year'),
+            $request->query('dari'),
+            $request->query('sampai')
+        );
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
-        return Inertia::render('admin/rekap/tahunan', array_merge(
-            $this->payloadWithMode($year, $tampilan),
-            $this->filterPayload($year, $tampilan)
+        return Inertia::render('admin/rekap/periodik', array_merge(
+            $this->payloadWithMode($year, $dari, $sampai, $tampilan),
+            $this->filterPayload($year, $dari, $sampai, $tampilan)
         ));
     }
 
     public function print(Request $request): View
     {
-        $year = $this->resolveYear($request->query('year'));
+        [$year, $dari, $sampai] = $this->resolveParams(
+            $request->query('year'),
+            $request->query('dari'),
+            $request->query('sampai')
+        );
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
-        return view('rekap.tahunan-print', array_merge(
-            $this->payloadWithMode($year, $tampilan),
-            $this->filterPayload($year, $tampilan)
+        return view('rekap.periodik-print', array_merge(
+            $this->payloadWithMode($year, $dari, $sampai, $tampilan),
+            $this->filterPayload($year, $dari, $sampai, $tampilan)
         ));
     }
 
     public function excel(Request $request): \Illuminate\Http\Response
     {
-        $year = $this->resolveYear($request->query('year'));
+        [$year, $dari, $sampai] = $this->resolveParams(
+            $request->query('year'),
+            $request->query('dari'),
+            $request->query('sampai')
+        );
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
-        $periodeStr = $year.($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
-        $filename = ExportFilename::make('Rekap-Tahunan', $periodeStr, 'xls');
+        $dariNama = self::MONTH_NAMES[$dari];
+        $sampaiNama = self::MONTH_NAMES[$sampai];
+        $periodeStr = $dari === $sampai 
+            ? sprintf('%s-%s', $dariNama, $year)
+            : sprintf('%s-%s-%s', $dariNama, $sampaiNama, $year);
+        if ($tampilan === RekapReport::VIEW_MODE_RINGKAS) {
+            $periodeStr .= '-ringkas';
+        }
+
+        $filename = ExportFilename::make('Rekap-Periodik', $periodeStr, 'xls');
 
         return response()
-            ->view('rekap.tahunan-excel', array_merge(
-                $this->payloadWithMode($year, $tampilan),
-                $this->filterPayload($year, $tampilan)
+            ->view('rekap.periodik-excel', array_merge(
+                $this->payloadWithMode($year, $dari, $sampai, $tampilan),
+                $this->filterPayload($year, $dari, $sampai, $tampilan)
             ))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 
-    private function payloadWithMode(string $year, string $tampilan): array
+    private function payloadWithMode(int $year, int $dari, int $sampai, string $tampilan): array
     {
-        $payload = $this->payload($year);
+        $payload = $this->payload($year, $dari, $sampai);
         $extra = [
             'tampilan' => $tampilan,
             'penandaTangan' => RekapReport::signatory(),
@@ -79,34 +99,66 @@ class RekapTahunanController extends Controller
         ]);
     }
 
-    private function payload(string $year): array
+    private function payload(int $year, int $dari, int $sampai): array
     {
-        $currentYear = (string) now()->year;
+        $currentYear = (int) now()->year;
         $ttl = ($year < $currentYear) ? RekapCache::TTL : 60;
+        $cacheKey = sprintf('periodik:%d:%d-%d', $year, $dari, $sampai);
 
         return Cache::remember(
-            RekapCache::key('tahunan', $year),
+            RekapCache::key('periodik', $cacheKey),
             $ttl,
-            fn (): array => $this->buildReport($year),
+            fn (): array => $this->buildReport($year, $dari, $sampai),
         );
     }
 
-    private function resolveYear(mixed $yearInput): string
+    /**
+     * @return array{0: int, 1: int, 2: int}
+     */
+    private function resolveParams(mixed $yearInput, mixed $dariInput, mixed $sampaiInput): array
     {
         $currentYear = (int) now()->year;
+        $currentMonth = (int) now()->month;
+
         $years = RekapYears::get();
-        $minYear = (int) min($years);
+        $minYear = min(2024, (int) min($years));
         $maxYear = $currentYear;
 
         $year = filter_var($yearInput, FILTER_VALIDATE_INT);
         if ($year === false || $year < $minYear || $year > $maxYear) {
-            return (string) $currentYear;
+            $year = $currentYear;
         }
 
-        return (string) $year;
+        $dari = filter_var($dariInput, FILTER_VALIDATE_INT);
+        if ($dari === false || $dari < 1 || $dari > 12) {
+            $dari = 1;
+        }
+
+        $sampai = filter_var($sampaiInput, FILTER_VALIDATE_INT);
+        if ($sampai === false || $sampai < 1 || $sampai > 12) {
+            $sampai = 12;
+        }
+
+        if ($dari > $sampai) {
+            $sampai = $dari;
+        }
+
+        if ($year === $currentYear) {
+            if ($dari > $currentMonth) {
+                $dari = $currentMonth;
+            }
+            if ($sampai > $currentMonth) {
+                $sampai = $currentMonth;
+            }
+            if ($dari > $sampai) {
+                $sampai = $dari;
+            }
+        }
+
+        return [$year, $dari, $sampai];
     }
 
-    private function filterPayload(string $selectedYear, string $tampilan): array
+    private function filterPayload(int $selectedYear, int $selectedDari, int $selectedSampai, string $tampilan): array
     {
         $years = RekapYears::get();
         $yearOptions = array_map(fn (string $y): array => [
@@ -114,17 +166,39 @@ class RekapTahunanController extends Controller
             'label' => 'Tahun ' . $y,
         ], $years);
 
+        $currentYear = (int) now()->year;
+        $currentMonth = (int) now()->month;
+
+        $months = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $disabled = ($selectedYear === $currentYear && $m > $currentMonth);
+            $months[] = [
+                'value' => (string) $m,
+                'label' => self::MONTH_NAMES[$m],
+                'disabled' => $disabled,
+            ];
+        }
+
+        $dariNama = self::MONTH_NAMES[$selectedDari];
+        $sampaiNama = self::MONTH_NAMES[$selectedSampai];
+        $periodeLabel = $selectedDari === $selectedSampai 
+            ? sprintf('%s %s', $dariNama, $selectedYear)
+            : sprintf('%s - %s %s', $dariNama, $sampaiNama, $selectedYear);
+
         return [
-            'year' => $selectedYear,
+            'year' => (string) $selectedYear,
+            'dari' => (string) $selectedDari,
+            'sampai' => (string) $selectedSampai,
             'years' => $yearOptions,
-            'yearLabel' => $this->yearLabel($selectedYear),
+            'monthOptions' => $months,
+            'periodeLabel' => $periodeLabel,
             'tampilan' => $tampilan,
         ];
     }
 
-    private function buildReport(string $year): array
+    private function buildReport(int $year, int $dari, int $sampai): array
     {
-        $periods = $this->periodsFor($year);
+        $periods = $this->periodsFor($year, $dari, $sampai);
         $counts = RekapReport::countsByChannelPerPeriod($periods);
 
         $rows = Channel::with('children')
@@ -163,6 +237,14 @@ class RekapTahunanController extends Controller
         ];
     }
 
+    private function periodsFor(int $year, int $dari, int $sampai): array
+    {
+        return array_map(
+            fn (int $month): string => sprintf('%04d-%02d', $year, $month),
+            range($dari, $sampai),
+        );
+    }
+
     private function accumulate(array &$totals, array $row): void
     {
         foreach ($row['perPeriod'] as $period => $values) {
@@ -171,19 +253,6 @@ class RekapTahunanController extends Controller
             }
         }
         $totals['jumlah'] += $row['jumlah'];
-    }
-
-    private function periodsFor(string $year): array
-    {
-        return array_map(
-            fn (int $month): string => sprintf('%04d-%02d', (int) $year, $month),
-            range(1, 12),
-        );
-    }
-
-    private function yearLabel(string $year): string
-    {
-        return sprintf('Tahun %s', $year);
     }
 
     private function rowFor(Channel $channel, bool $isParent, array $periods, array $counts): array

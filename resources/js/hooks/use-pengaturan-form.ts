@@ -12,6 +12,7 @@ export function usePengaturanForm({ settings, flashSuccess }: { settings: Settin
         auto_close_pengaduan_days: settings?.auto_close_pengaduan_days || '3',
         auto_close_aspirasi_days: settings?.auto_close_aspirasi_days || '1',
         auto_close_permintaan_informasi_days: settings?.auto_close_permintaan_informasi_days || '5',
+        auto_close_berkadar_pengawasan_days: settings?.auto_close_berkadar_pengawasan_days || '30',
     });
 
     useEffect(() => {

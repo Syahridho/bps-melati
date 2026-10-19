@@ -19,7 +19,7 @@ export function TicketSuccessDialog({ open, ticketNumber, copied, onCopy, onClos
                         <CheckCircle2 className="size-8 text-green-600 dark:text-green-400" />
                     </div>
                     <DialogTitle className="text-center">Laporan berhasil dikirim</DialogTitle>
-                    <DialogDescription className="text-center">Simpan nomor tiket berikut untuk memantau status laporan Anda.</DialogDescription>
+                    <DialogDescription className="text-center">Simpan nomor tiket berikut untuk memantau status laporan Anda. Salinan konfirmasi telah <span className="font-bold">dikirim ke email Anda</span>.</DialogDescription>
                 </DialogHeader>
 
                 {ticketNumber && (

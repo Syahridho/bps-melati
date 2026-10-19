@@ -7,6 +7,7 @@ use App\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -79,6 +80,11 @@ class User extends Authenticatable
         return $this->hasMany(AuthLog::class);
     }
 
+    public function bookmarkedTickets(): BelongsToMany
+    {
+        return $this->belongsToMany(Ticket::class, 'ticket_bookmarks')->withTimestamps();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
@@ -87,6 +93,11 @@ class User extends Authenticatable
     public function isOperator(): bool
     {
         return $this->role === UserRole::Operator;
+    }
+
+    public function isOperatorTim(): bool
+    {
+        return $this->role === UserRole::OperatorTim;
     }
 
     /*

@@ -19,6 +19,7 @@ interface LaporanMasukDetailCardProps {
     ticketStatus: Status;
     canEdit: boolean;
     canDelete: boolean;
+    routePrefix?: string;
     onEdit: () => void;
     onDelete: () => void;
     onPreviewAttachment: (attachment: Attachment, list: Attachment[]) => void;

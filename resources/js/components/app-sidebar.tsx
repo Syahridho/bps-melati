@@ -63,7 +63,7 @@ export function AppSidebar() {
 
     // Dengarkan pembaruan inbox (tiket selesai/dibalas/auto close) untuk sinkronisasi badge
     useEcho(
-        auth?.user ? 'inbox.laporan-masuk' : '',
+        auth?.user && auth.user.role !== 'operator_tim' ? 'inbox.laporan-masuk' : '',
         '.inbox.updated',
         () => {
             scheduleReload();
@@ -72,7 +72,7 @@ export function AppSidebar() {
     );
 
     useEcho(
-        auth?.user ? 'inbox.laporan-masuk' : '',
+        auth?.user && auth.user.role !== 'operator_tim' ? 'inbox.laporan-masuk' : '',
         '.inbox.changed',
         () => {
             scheduleReload();
@@ -119,12 +119,8 @@ export function AppSidebar() {
                     url: '/dashboard/admin/rekap-bulanan',
                 },
                 {
-                    title: 'Rekap Semesteran',
-                    url: '/dashboard/admin/rekap-semesteran',
-                },
-                {
-                    title: 'Rekap Tahunan',
-                    url: '/dashboard/admin/rekap-tahunan',
+                    title: 'Rekap Periodik',
+                    url: '/dashboard/admin/rekap-periodik',
                 },
             ],
         },
@@ -133,12 +129,6 @@ export function AppSidebar() {
             url: '/settings/application',
             icon: Settings,
         },
-        // {
-        //     title: 'Antrean',
-        //     url: '/horizon',
-        //     icon: Activity,
-        //     external: true,
-        // },
     ];
 
     const operatorNavItems: NavItem[] = [
@@ -175,18 +165,29 @@ export function AppSidebar() {
                     url: '/dashboard/operator/rekap-bulanan',
                 },
                 {
-                    title: 'Rekap Semesteran',
-                    url: '/dashboard/operator/rekap-semesteran',
-                },
-                {
-                    title: 'Rekap Tahunan',
-                    url: '/dashboard/operator/rekap-tahunan',
+                    title: 'Rekap Periodik',
+                    url: '/dashboard/operator/rekap-periodik',
                 },
             ],
         },
     ];
 
-    const mainNavItems = auth.user.role === 'admin' ? adminNavItems : operatorNavItems;
+    const operatorTimNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            url: '/dashboard/operator-tim',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Input Data',
+            url: '/dashboard/operator-tim/input-data',
+            icon: FilePlus2,
+        },
+    ];
+
+    const mainNavItems = auth.user.role === 'admin' 
+        ? adminNavItems 
+        : (auth.user.role === 'operator_tim' ? operatorTimNavItems : operatorNavItems);
 
     return (
         <Sidebar collapsible="icon" variant="inset">

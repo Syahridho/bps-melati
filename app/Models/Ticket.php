@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Actions\AutoCloseTickets;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Cache;
@@ -39,7 +40,9 @@ class Ticket extends Model
     {
         return [
             'is_read' => 'boolean',
+            'berkadar_pengawasan' => 'boolean',
             'completed_at' => 'datetime',
+            'berkadar_pengawasan_at' => 'datetime',
             'last_staff_response_at' => 'datetime',
             'sequence' => 'integer',
             'version' => 'integer',
@@ -56,6 +59,11 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function berkadarPengawasanModifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'berkadar_pengawasan_by');
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(TicketAttachment::class);
@@ -64,6 +72,11 @@ class Ticket extends Model
     public function responses(): HasMany
     {
         return $this->hasMany(TicketResponse::class);
+    }
+
+    public function bookmarkedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'ticket_bookmarks')->withTimestamps();
     }
 
     /**

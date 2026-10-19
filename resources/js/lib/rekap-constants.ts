@@ -16,7 +16,7 @@ export const REKAP_COLUMNS: RekapTableColumn[] = [
 export const REKAP_MATRIX_COLUMNS: RekapMatrixColumnKey[] = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'];
 
 /** Label ringkas pada header tabel matriks periode. */
-export const REKAP_MATRIX_SUB_COLUMNS = ['PST', 'Lain', 'Asp', 'Inf'];
+export const REKAP_MATRIX_SUB_COLUMNS = ['PST', 'Non PST', 'Asp', 'Inf'];
 
 export const REKAP_PRINT_FRAME_ID = 'rekap-print-frame';
 
@@ -39,7 +39,7 @@ export const REKAP_VIEW_MODE_OPTIONS: PeriodOption[] = [
 /** Catatan kaki di bawah tabel rekap, per mode tampilan. */
 export const REKAP_TABLE_NOTES: Record<RekapViewMode, string> = {
     [REKAP_VIEW_MODE_DETAIL]:
-        'PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi. Baris kanal induk berwarna abu-abu karena tidak dapat dipilih saat input data.',
+        'PST = Pengaduan Layanan PST, Non PST = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi. Baris kanal induk berwarna abu-abu karena tidak dapat dipilih saat input data.',
     [REKAP_VIEW_MODE_RINGKAS]:
-        'Angka menunjukkan jumlah PST + Lain + Asp + Inf. Baris kanal induk berwarna abu-abu karena tidak dapat dipilih saat input data.',
+        'Angka menunjukkan jumlah PST + Non PST + Asp + Inf. Baris kanal induk berwarna abu-abu karena tidak dapat dipilih saat input data.',
 };

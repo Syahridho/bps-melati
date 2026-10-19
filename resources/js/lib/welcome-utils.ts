@@ -1,4 +1,11 @@
 import { type StoredTicket } from '@/types/welcome';
+import { toast } from 'sonner';
+
+export function warnJenisLaporan() {
+    toast.warning("Pilih jenis laporan, lalu lengkapi detailnya.", {
+        id: "pilih-jenis-laporan",
+    });
+}
 
 export function getStoredTickets(): StoredTicket[] {
     try {

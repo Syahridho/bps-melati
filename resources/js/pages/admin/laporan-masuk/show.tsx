@@ -3,17 +3,25 @@ import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk-delete-dial
 import { LaporanMasukDetailCard } from '@/components/laporan-masuk-detail-card';
 import { LaporanMasukEditDialog } from '@/components/laporan-masuk-edit-dialog';
 import { LaporanMasukResponseHistory } from '@/components/laporan-masuk-response-history';
+import { ReplyCountdownBadge } from '@/components/reply-countdown-badge';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
+import { cn } from '@/lib/utils';
 import AdminPage from '@/pages/admin/page';
 import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketResponseItem } from '@/types/laporan-masuk';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Bookmark, CheckCircle2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
 export default function Show() {
-    const { auth, ticket, can, from, flash } = usePage<ShowProps>().props;
-    const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+    const { auth, ticket, can, from, flash, server_now } = usePage<ShowProps>().props;
+    const routePrefix = auth.user.role === 'admin' 
+        ? 'dashboard.admin' 
+        : auth.user.role === 'operator_tim' 
+        ? 'dashboard.operator-tim' 
+        : 'dashboard.operator';
 
     const isInputData = from === 'input-data' || ticket.source_app === 'admin';
     const backRouteName = isInputData ? `${routePrefix}.input-data.index` : `${routePrefix}.laporan-masuk.index`;
@@ -32,6 +40,7 @@ export default function Show() {
     const [highlightLast, setHighlightLast] = useState(false);
     const [conflict, setConflict] = useState<ReplyConflict | null>(flash?.conflict ?? null);
     const [pendingNotice, setPendingNotice] = useState<string | null>(null);
+    const [bookmarkInfo, setBookmarkInfo] = useState(ticket.bookmark_info);
 
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -64,6 +73,7 @@ export default function Show() {
         setResponses(ticket.responses);
         setTicketStatus(ticket.status);
         setTicketVersion(ticket.version ?? 0);
+        setBookmarkInfo(ticket.bookmark_info);
     }, [ticket]);
 
     // Auto-refresh polling when there are responses with email_status === 'pending'
@@ -91,7 +101,6 @@ export default function Show() {
 
             router.reload({
                 only: ['ticket'],
-                preserveScroll: true,
             });
         }, 4000);
 
@@ -170,7 +179,28 @@ export default function Show() {
                 description: 'Status berubah menjadi Selesai. Balasan baru tidak dapat dikirim.',
             });
         },
+        onBookmarkersChange: (event) => {
+            setBookmarkInfo({
+                by_me: Boolean(ticket.is_bookmarked),
+                others: event.others,
+                others_count: event.others_count,
+            });
+        },
     });
+
+    const toggleBookmark = () => {
+        const isBookmarked = ticket.is_bookmarked;
+        const routeName = `${routePrefix}.laporan-masuk.bookmark.${isBookmarked ? 'destroy' : 'store'}`;
+        const method = isBookmarked ? 'delete' : 'put';
+
+        router[method](route(routeName, { ticketNumber: ticket.ticket_number }), {}, {
+            preserveScroll: true,
+            preserveState: false,
+            onSuccess: () => {
+                toast.success(isBookmarked ? 'Tanda dihapus' : 'Tiket ditandai');
+            },
+        });
+    };
 
     const handleEditSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -218,8 +248,7 @@ export default function Show() {
 
     return (
         <AdminPage
-            title={ticket.ticket_number}
-            description="Detail laporan"
+            
             breadcrumbs={[
                 { title: backLabel, href: route(backRouteName) },
                 { title: ticket.ticket_number, href: '#' },
@@ -233,7 +262,7 @@ export default function Show() {
                     </div>
                 )}
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <Link
                         href={route(backRouteName)}
                         className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
@@ -241,13 +270,65 @@ export default function Show() {
                         <ArrowLeft className="size-4" />
                         Kembali ke {backLabel}
                     </Link>
+                    <div className="flex items-center gap-2">
+                        {ticket.reply_deadline_at && (
+                            <ReplyCountdownBadge
+                                deadline={ticket.reply_deadline_at}
+                                classification={ticket.classification}
+                                serverNow={server_now}
+                            />
+                        )}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={toggleBookmark}
+                            className="gap-2"
+                        >
+                            <Bookmark className={cn('size-4', ticket.is_bookmarked && 'fill-primary text-primary')} />
+                            {ticket.is_bookmarked ? 'Ditandai' : 'Tandai untuk nanti'}
+                        </Button>
+                    </div>
                 </div>
+
+                {bookmarkInfo && (bookmarkInfo.by_me || bookmarkInfo.others_count > 0) && (
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/40 px-3 py-2 rounded-md border">
+                        <Bookmark className="size-3.5 text-primary fill-primary shrink-0" />
+                        <div>
+                            {bookmarkInfo.by_me && <span className="font-medium text-foreground">Ditandai oleh Anda</span>}
+                            {bookmarkInfo.by_me && bookmarkInfo.others_count > 0 && <span> • </span>}
+                            {bookmarkInfo.others_count > 0 && (
+                                <span>
+                                    Juga ditandai oleh{' '}
+                                    {bookmarkInfo.others_count === 1
+                                        ? bookmarkInfo.others[0].name
+                                        : bookmarkInfo.others_count === 2
+                                        ? `${bookmarkInfo.others[0].name} dan ${bookmarkInfo.others[1].name}`
+                                        : `${bookmarkInfo.others[0].name}, ${bookmarkInfo.others[1].name} dan ${bookmarkInfo.others_count - 2} lainnya`}
+                                </span>
+                            )}
+                        </div>
+                        {bookmarkInfo.others_count > 2 && (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button className="text-primary hover:underline font-medium ml-auto">Lihat semua</button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-64 p-3 text-xs space-y-1">
+                                    <p className="font-medium text-foreground mb-1">Petugas yang menandai:</p>
+                                    {bookmarkInfo.others.map((o) => (
+                                        <div key={o.id} className="text-muted-foreground">• {o.name}</div>
+                                    ))}
+                                </PopoverContent>
+                            </Popover>
+                        )}
+                    </div>
+                )}
 
                 <LaporanMasukDetailCard
                     ticket={ticket}
                     ticketStatus={ticketStatus}
                     canEdit={canEdit}
                     canDelete={canDelete}
+                    routePrefix={routePrefix}
                     onEdit={() => setIsEditOpen(true)}
                     onDelete={() => setIsDeleteOpen(true)}
                     onPreviewAttachment={handlePreviewAttachment}

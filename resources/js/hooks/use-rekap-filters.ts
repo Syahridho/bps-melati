@@ -103,5 +103,6 @@ export function useRekapFilters({
         handleParamChange,
         handleViewModeChange,
         handlePrint,
+        navigate,
     };
 }

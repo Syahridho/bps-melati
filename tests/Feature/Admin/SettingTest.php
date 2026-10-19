@@ -47,6 +47,7 @@ test('admin can update signatory settings and update redis cache', function () {
             'auto_close_pengaduan_days' => 4,
             'auto_close_aspirasi_days' => 2,
             'auto_close_permintaan_informasi_days' => 7,
+            'auto_close_berkadar_pengawasan_days' => 30,
         ])
         ->assertRedirect()
         ->assertSessionHas('flash.success');

@@ -1,4 +1,5 @@
 import { type ClassificationType } from '@/types/welcome';
+import { warnJenisLaporan } from '@/lib/welcome-utils';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 
@@ -38,6 +39,10 @@ export function useWelcomeForm() {
 
     function handleSubmit(e: FormEvent) {
         e.preventDefault();
+        if (!data.classification) {
+            warnJenisLaporan();
+            return;
+        }
         post(route('tickets.store'), {
             forceFormData: true,
         });

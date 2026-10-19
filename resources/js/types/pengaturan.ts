@@ -7,6 +7,7 @@ export interface SettingValues {
     auto_close_pengaduan_days: string;
     auto_close_aspirasi_days: string;
     auto_close_permintaan_informasi_days: string;
+    auto_close_berkadar_pengawasan_days: string;
 }
 
 export interface SettingPageProps extends SharedData {

@@ -26,7 +26,11 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth, inbox_open_count } = page.props;
     const getInitials = useInitials();
-    const dashboardUrl = auth.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/operator';
+    const dashboardUrl = auth.user.role === 'admin' 
+        ? '/dashboard/admin' 
+        : auth.user.role === 'operator_tim' 
+        ? '/dashboard/operator-tim' 
+        : '/dashboard/operator';
 
     const [openCount, setOpenCount] = useState(inbox_open_count ?? 0);
 
@@ -47,6 +51,11 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                   { title: 'Input Data', url: '/dashboard/admin/input-data', icon: FilePlus2 },
                   { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox, badge: openCount },
                   { title: 'Laporan Selesai', url: '/dashboard/admin/laporan-selesai', icon: ClipboardList },
+              ]
+            : auth.user.role === 'operator_tim'
+            ? [
+                  { title: 'Dashboard', url: '/dashboard/operator-tim', icon: LayoutGrid },
+                  { title: 'Input Data', url: '/dashboard/operator-tim/input-data', icon: FilePlus2 },
               ]
             : [{ title: 'Dashboard', url: '/dashboard/operator', icon: LayoutGrid }];
     return (

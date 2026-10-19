@@ -16,7 +16,7 @@ export function PengaturanAutoCloseFields({ data, setData, errors }: PengaturanA
                 description="Jumlah hari tanpa balasan dari pelapor setelah petugas memberikan respon sebelum tiket secara otomatis ditandai selesai. Isi 0 untuk menonaktifkan."
             />
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <PengaturanFormField
                     id="auto_close_pengaduan_days"
                     label="Pengaduan (Hari)"
@@ -51,6 +51,18 @@ export function PengaturanAutoCloseFields({ data, setData, errors }: PengaturanA
                     value={data.auto_close_permintaan_informasi_days}
                     onChange={(value) => setData('auto_close_permintaan_informasi_days', value)}
                     error={errors.auto_close_permintaan_informasi_days}
+                />
+
+                <PengaturanFormField
+                    id="auto_close_berkadar_pengawasan_days"
+                    label="Berkadar Pengawasan (Hari)"
+                    type="number"
+                    min={0}
+                    max={365}
+                    required
+                    value={data.auto_close_berkadar_pengawasan_days}
+                    onChange={(value) => setData('auto_close_berkadar_pengawasan_days', value)}
+                    error={errors.auto_close_berkadar_pengawasan_days}
                 />
             </div>
         </div>

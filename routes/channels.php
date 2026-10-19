@@ -23,8 +23,7 @@ Broadcast::channel('user.{userId}', function (User $user, int $userId) {
 
 /**
  * Presence channel detail tiket — dipakai halaman Laporan Masuk / Input Data.
- * Hanya admin & operator aktif yang boleh masuk. Return array (bukan true)
- * karena presence channel butuh data anggota untuk `.here()` di frontend.
+ * Hanya admin & operator aktif yang boleh masuk (operator_tim tidak boleh akses laporan masuk).
  */
 Broadcast::channel('ticket.{ticketId}', function (User $user, int $ticketId) {
     if (! ($user->isAdmin() || $user->isOperator())) {
@@ -48,6 +47,11 @@ Broadcast::channel('ticket.{ticketId}', function (User $user, int $ticketId) {
  */
 Broadcast::channel('inbox.{scope}', function (User $user, string $scope) {
     if (! in_array($scope, ['laporan-masuk'], true)) {
+        return false;
+    }
+
+    // Operator Tim tidak boleh akses inbox laporan masuk
+    if ($user->isOperatorTim()) {
         return false;
     }
 

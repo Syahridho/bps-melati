@@ -7,7 +7,7 @@
         <x:ExcelWorkbook>
             <x:ExcelWorksheets>
                 <x:ExcelWorksheet>
-                    <x:Name>Rekap Semesteran</x:Name>
+                    <x:Name>Rekap Periodik</x:Name>
                     <x:WorksheetOptions>
                         <x:DisplayGridlines/>
                     </x:WorksheetOptions>
@@ -32,7 +32,6 @@
 <body>
     @php
         $classificationColumns = ['pengaduan_pst', 'pengaduan_lainnya', 'aspirasi', 'permintaan_informasi'];
-
         $ringkas = ($tampilan ?? 'detail') === 'ringkas';
         $tableRows = $ringkas ? ($ringkasRows ?? $rows) : $rows;
         $tableTotals = $ringkas ? ($ringkasTotals ?? $totals) : $totals;
@@ -41,10 +40,10 @@
     @endphp
     <table>
         <tr>
-            <td colspan="{{ $totalCols }}" class="title">REKAP PENGADUAN BPS PROVINSI RIAU</td>
+            <td colspan="{{ $totalCols }}" class="title">REKAP LAPORAN PERIODIK BPS PROVINSI RIAU</td>
         </tr>
         <tr>
-            <td colspan="{{ $totalCols }}" class="subtitle">{{ mb_strtoupper($semesterLabel) }}</td>
+            <td colspan="{{ $totalCols }}" class="subtitle">{{ mb_strtoupper($periodeLabel) }}</td>
         </tr>
         <tr>
             <td colspan="{{ $totalCols }}"></td>
@@ -85,32 +84,50 @@
                         @endforeach
                         <td class="angka"></td>
                     @else
+                        @php $rowSum = 0; @endphp
                         @foreach ($months as $month)
                             @if ($ringkas)
-                                <td class="angka">{{ $row['perPeriod'][$month['key']] ?? 0 }}</td>
+                                @php
+                                    $val = $row['perPeriod'][$month['key']] ?? 0;
+                                    $rowSum += $val;
+                                @endphp
+                                <td class="angka">{{ $val }}</td>
                             @else
                                 @foreach ($classificationColumns as $column)
-                                    <td class="angka">{{ $row['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                                    @php
+                                        $val = $row['perPeriod'][$month['key']][$column] ?? 0;
+                                        $rowSum += $val;
+                                    @endphp
+                                    <td class="angka">{{ $val }}</td>
                                 @endforeach
                             @endif
                         @endforeach
-                        <td class="angka">{{ $row['jumlah'] }}</td>
+                        <td class="angka">{{ $rowSum }}</td>
                     @endif
                 </tr>
 
                 @foreach ($row['children'] as $child)
                     <tr>
                         <td class="kanal">&nbsp;&nbsp;&nbsp;&nbsp;{{ $child['channel'] }}</td>
+                        @php $childSum = 0; @endphp
                         @foreach ($months as $month)
                             @if ($ringkas)
-                                <td class="angka">{{ $child['perPeriod'][$month['key']] ?? 0 }}</td>
+                                @php
+                                    $val = $child['perPeriod'][$month['key']] ?? 0;
+                                    $childSum += $val;
+                                @endphp
+                                <td class="angka">{{ $val }}</td>
                             @else
                                 @foreach ($classificationColumns as $column)
-                                    <td class="angka">{{ $child['perPeriod'][$month['key']][$column] ?? 0 }}</td>
+                                    @php
+                                        $val = $child['perPeriod'][$month['key']][$column] ?? 0;
+                                        $childSum += $val;
+                                    @endphp
+                                    <td class="angka">{{ $val }}</td>
                                 @endforeach
                             @endif
                         @endforeach
-                        <td class="angka">{{ $child['jumlah'] }}</td>
+                        <td class="angka">{{ $childSum }}</td>
                     </tr>
                 @endforeach
             @empty
@@ -139,17 +156,17 @@
     <br/>
     <div>
         @if ($ringkas)
-            Keterangan: Angka menunjukkan jumlah PST + Lain + Asp + Inf.
+            Keterangan: Angka menunjukkan jumlah PST + Non PST + Asp + Inf.
         @else
-            Keterangan: PST = Pengaduan Layanan PST, Lain = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
+            Keterangan: PST = Pengaduan Layanan PST, Non PST = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
         @endif
     </div>
 
     <br/><br/>
     <table>
         <tr>
-            <td colspan="{{ $totalCols - 4 }}"></td>
-            <td colspan="4" style="text-align: center;">
+            <td colspan="{{ max($totalCols - 6, 1) }}"></td>
+            <td colspan="6" style="text-align: center;">
                 {{ $penandaTangan['kota'] }}, {{ $penandaTangan['tanggal'] }}<br/>
                 <b>{{ $penandaTangan['jabatan'] }}</b><br/><br/><br/><br/>
                 <u><b>{{ $penandaTangan['nama'] ?: 'NAMA NYA' }}</b></u>

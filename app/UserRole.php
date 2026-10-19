@@ -8,6 +8,8 @@ enum UserRole: string
 
     case Operator = 'operator';
 
+    case OperatorTim = 'operator_tim';
+
     /**
      * @return list<string>
      */

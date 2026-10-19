@@ -14,18 +14,17 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 
-// Halaman utama dashboard harus cocok persis, kalau tidak akan menyala di semua halaman turunannya
-const EXACT_MATCH_URLS = ['/dashboard/admin', '/dashboard/operator'];
+const EXACT_MATCH_URLS = ['/dashboard/admin', '/dashboard/operator', '/dashboard/operator-tim'];
 
 function getPath(url: string): string {
-    return url.split('?')[0].split('#')[0];
+    return url.split('?')[0].split('#')[0].replace(/\/+$/, '');
 }
 
-function isUrlActive(itemUrl: string, currentUrl: string): boolean {
+function isActivePath(currentUrl: string, itemUrl: string, options?: { exact?: boolean }): boolean {
     const currentPath = getPath(currentUrl);
     const itemPath = getPath(itemUrl);
 
-    if (EXACT_MATCH_URLS.includes(itemPath)) {
+    if (options?.exact || EXACT_MATCH_URLS.includes(itemPath)) {
         return currentPath === itemPath;
     }
 
@@ -37,11 +36,11 @@ function isUrlActive(itemUrl: string, currentUrl: string): boolean {
 }
 
 function isItemActive(item: NavItem, currentUrl: string): boolean {
-    if (isUrlActive(item.url, currentUrl)) {
+    if (isActivePath(currentUrl, item.url)) {
         return true;
     }
 
-    return item.items?.some((subItem) => isUrlActive(subItem.url, currentUrl)) ?? false;
+    return item.items?.some((subItem) => isActivePath(currentUrl, subItem.url)) ?? false;
 }
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
@@ -65,7 +64,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                     <SidebarMenuSub>
                                         {item.items.map((subItem) => (
                                             <SidebarMenuSubItem key={subItem.title}>
-                                                <SidebarMenuSubButton asChild isActive={isUrlActive(subItem.url, page.url)}>
+                                                <SidebarMenuSubButton asChild isActive={isActivePath(page.url, subItem.url)}>
                                                     <Link href={subItem.url} prefetch>
                                                         <span>{subItem.title}</span>
                                                     </Link>
@@ -78,7 +77,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                         </Collapsible>
                     ) : (
                         <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild isActive={isUrlActive(item.url, page.url)}>
+                            <SidebarMenuButton asChild isActive={isActivePath(page.url, item.url)}>
                                 {item.external ? (
                                     <a href={item.url} target="_blank" rel="noopener noreferrer">
                                         {item.icon && <item.icon />}

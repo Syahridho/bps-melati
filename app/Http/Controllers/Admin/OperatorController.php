@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\SessionTerminator;
 use App\Support\IpMasker;
 use App\Support\UserAgentParser;
+use App\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -18,11 +19,8 @@ use Inertia\Response;
 class OperatorController extends Controller
 {
     /**
-     * Tampilkan daftar pengguna (admin & operator) dengan paginasi, pencarian,
+     * Tampilkan daftar pengguna dengan paginasi, pencarian,
      * dan status online.
-     *
-     * Sengaja TIDAK di-cache: status online berubah setiap detik, dan cache
-     * akan membuat badge "Online" berbohong.
      */
     public function index(Request $request): Response
     {
@@ -63,19 +61,19 @@ class OperatorController extends Controller
     }
 
     /**
-     * Tambah pengguna baru (Admin atau Operator).
+     * Tambah pengguna baru.
      */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:admin,operator'],
+            'role' => ['required', Rule::enum(UserRole::class)],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
             'role.required' => 'Role wajib dipilih.',
-            'role.in' => 'Role tidak valid.',
+            'role.enum' => 'Role tidak valid.',
             'email.required' => 'Email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email sudah terdaftar.',
@@ -92,7 +90,12 @@ class OperatorController extends Controller
 
         self::clearCache();
 
-        $roleLabel = ucfirst($validated['role']);
+        $roleLabel = match ($validated['role']) {
+            'admin' => 'Admin',
+            'operator' => 'Operator',
+            'operator_tim' => 'Operator Tim',
+            default => ucfirst($validated['role']),
+        };
 
         return redirect()->back()->with('flash', [
             'success' => "{$roleLabel} {$validated['name']} berhasil ditambahkan!",
@@ -100,22 +103,20 @@ class OperatorController extends Controller
     }
 
     /**
-     * Perbarui data pengguna (Admin atau Operator).
-     *
-     * Menonaktifkan akun atau mengganti password ikut mengakhiri sesi aktif.
+     * Perbarui data pengguna.
      */
     public function update(Request $request, User $operator): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:admin,operator'],
+            'role' => ['required', Rule::enum(UserRole::class)],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($operator->id)],
             'is_active' => ['nullable', 'boolean'],
             'password' => ['nullable', 'string', 'min:8'],
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
             'role.required' => 'Role wajib dipilih.',
-            'role.in' => 'Role tidak valid.',
+            'role.enum' => 'Role tidak valid.',
             'email.required' => 'Email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email sudah digunakan oleh akun lain.',
@@ -126,6 +127,16 @@ class OperatorController extends Controller
             return redirect()->back()->withErrors([
                 'role' => 'Anda tidak dapat mengubah role Anda sendiri dari Admin.',
             ]);
+        }
+
+        // Jangan izinkan menurunkan/menghapus admin terakhir
+        if ($operator->isAdmin() && $validated['role'] !== 'admin') {
+            $adminCount = User::where('role', UserRole::Admin)->where('is_active', true)->count();
+            if ($adminCount <= 1) {
+                return redirect()->back()->withErrors([
+                    'role' => 'Sistem harus memiliki setidaknya satu Admin aktif.',
+                ]);
+            }
         }
 
         $wasActive = $operator->is_active;
@@ -148,22 +159,23 @@ class OperatorController extends Controller
 
         self::clearCache();
 
-        // Akun dinonaktifkan atau password diganti → putuskan sesi & cabut token.
+        $roleChanged = $operator->getOriginal('role') !== $validated['role'];
+
         $reason = match (true) {
             $wasActive && ! $willBeActive => SessionTerminator::REASON_DEACTIVATED,
             $passwordChanged => SessionTerminator::REASON_PASSWORD_CHANGED,
+            $roleChanged => SessionTerminator::REASON_FORCED_LOGOUT,
             default => null,
         };
 
         if ($reason !== null) {
-            // SessionTerminator sudah mencatat audit log (reason + forced_by).
             app(SessionTerminator::class)->terminate($operator, $reason, actor: auth()->user(), request: $request);
         }
 
         return redirect()->back()->with('flash', [
             'success' => $reason === SessionTerminator::REASON_DEACTIVATED
                 ? "Akun {$operator->name} dinonaktifkan dan sesi aktifnya telah diakhiri."
-                : "Data pengguna {$operator->name} berhasil diperbarui!",
+                : ($roleChanged ? "Role akun {$operator->name} diubah dan sesinya diakhiri." : "Data pengguna {$operator->name} berhasil diperbarui!"),
         ]);
     }
 
@@ -178,9 +190,17 @@ class OperatorController extends Controller
             ]);
         }
 
+        if ($operator->isAdmin()) {
+            $adminCount = User::where('role', UserRole::Admin)->where('is_active', true)->count();
+            if ($adminCount <= 1) {
+                return redirect()->back()->withErrors([
+                    'error' => 'Sistem harus memiliki setidaknya satu Admin aktif.',
+                ]);
+            }
+        }
+
         $name = $operator->name;
 
-        // Akun yang dihapus tetap boleh memutus sesinya sebelum baris hilang.
         app(SessionTerminator::class)->terminate($operator, SessionTerminator::REASON_FORCED_LOGOUT, actor: auth()->user(), request: $request);
 
         $operator->delete();
@@ -193,7 +213,7 @@ class OperatorController extends Controller
     }
 
     /**
-     * Paksa logout operator lain. Hanya admin, hanya akun lain.
+     * Paksa logout operator lain.
      */
     public function forceLogout(Request $request, User $operator): RedirectResponse
     {
@@ -209,8 +229,6 @@ class OperatorController extends Controller
 
         $hadSession = filled($operator->current_session_id);
 
-        // SessionTerminator sudah mencatat audit log (reason + forced_by),
-        // jadi jangan tulis ulang di sini atau akan dobel.
         app(SessionTerminator::class)->terminate($operator, SessionTerminator::REASON_FORCED_LOGOUT, actor: $actor, request: $request);
 
         self::clearCache();
@@ -222,9 +240,6 @@ class OperatorController extends Controller
         ]);
     }
 
-    /**
-     * Invalidate operator Redis cache.
-     */
     public static function clearCache(): void
     {
         if (Cache::has('operators:version')) {
@@ -235,8 +250,6 @@ class OperatorController extends Controller
     }
 
     /**
-     * Ringkasan status online untuk UI admin.
-     *
      * @return array<string, mixed>
      */
     public static function presenceFor(User $user): array

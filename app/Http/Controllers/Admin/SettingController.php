@@ -24,6 +24,7 @@ class SettingController extends Controller
                 'auto_close_pengaduan_days' => Setting::get('auto_close_pengaduan_days', '3'),
                 'auto_close_aspirasi_days' => Setting::get('auto_close_aspirasi_days', '1'),
                 'auto_close_permintaan_informasi_days' => Setting::get('auto_close_permintaan_informasi_days', '5'),
+                'auto_close_berkadar_pengawasan_days' => Setting::get('auto_close_berkadar_pengawasan_days', '30'),
             ],
         ]);
     }
@@ -40,16 +41,20 @@ class SettingController extends Controller
             'auto_close_pengaduan_days' => ['required', 'integer', 'min:0', 'max:365'],
             'auto_close_aspirasi_days' => ['required', 'integer', 'min:0', 'max:365'],
             'auto_close_permintaan_informasi_days' => ['required', 'integer', 'min:0', 'max:365'],
+            'auto_close_berkadar_pengawasan_days' => ['required', 'integer', 'min:0', 'max:365'],
         ], [
             'auto_close_pengaduan_days.min' => 'Batas waktu pengaduan minimal 0 hari. Isi 0 untuk menonaktifkan.',
             'auto_close_aspirasi_days.min' => 'Batas waktu aspirasi minimal 0 hari. Isi 0 untuk menonaktifkan.',
             'auto_close_permintaan_informasi_days.min' => 'Batas waktu permintaan informasi minimal 0 hari. Isi 0 untuk menonaktifkan.',
+            'auto_close_berkadar_pengawasan_days.min' => 'Batas waktu berkadar pengawasan minimal 0 hari. Isi 0 untuk menonaktifkan.',
             'auto_close_pengaduan_days.max' => 'Batas waktu pengaduan maksimal 365 hari.',
             'auto_close_aspirasi_days.max' => 'Batas waktu aspirasi maksimal 365 hari.',
             'auto_close_permintaan_informasi_days.max' => 'Batas waktu permintaan informasi maksimal 365 hari.',
+            'auto_close_berkadar_pengawasan_days.max' => 'Batas waktu berkadar pengawasan maksimal 365 hari.',
             'auto_close_pengaduan_days.required' => 'Batas waktu pengaduan wajib diisi. Isi 0 untuk menonaktifkan.',
             'auto_close_aspirasi_days.required' => 'Batas waktu aspirasi wajib diisi. Isi 0 untuk menonaktifkan.',
             'auto_close_permintaan_informasi_days.required' => 'Batas waktu permintaan informasi wajib diisi. Isi 0 untuk menonaktifkan.',
+            'auto_close_berkadar_pengawasan_days.required' => 'Batas waktu berkadar pengawasan wajib diisi. Isi 0 untuk menonaktifkan.',
         ]);
 
         foreach ($validated as $key => $value) {

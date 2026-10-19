@@ -38,7 +38,11 @@ interface InputDataPageProps extends SharedData {
 
 export default function InputData() {
     const { auth, tickets, channels, filters, counts, flash } = usePage<InputDataPageProps>().props;
-    const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+    const routePrefix = auth.user.role === 'admin' 
+        ? 'dashboard.admin' 
+        : auth.user.role === 'operator_tim' 
+        ? 'dashboard.operator-tim' 
+        : 'dashboard.operator';
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);

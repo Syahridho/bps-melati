@@ -2,11 +2,13 @@ import { FieldError } from '@/components/report/field-error';
 import { InfoHint } from '@/components/report/info-hint';
 import type { ReportFormData } from '@/components/report/types';
 import { Button } from '@/components/ui/button';
-import { formatFileSize } from '@/lib/welcome-utils';
+import { cn } from '@/lib/utils';
+import { formatFileSize, warnJenisLaporan } from '@/lib/welcome-utils';
 import { Eye, Paperclip, X } from 'lucide-react';
 import type { ChangeEvent, RefObject } from 'react';
 
 interface AttachmentFieldProps {
+    classification: string;
     attachments: File[];
     errors: Partial<Record<keyof ReportFormData | string, string>>;
     fileInputRef: RefObject<HTMLInputElement | null>;
@@ -15,8 +17,17 @@ interface AttachmentFieldProps {
     onRemoveFile: (index: number) => void;
 }
 
-export function AttachmentField({ attachments, errors, fileInputRef, onFileChange, onPreviewFile, onRemoveFile }: AttachmentFieldProps) {
+export function AttachmentField({
+    classification,
+    attachments,
+    errors,
+    fileInputRef,
+    onFileChange,
+    onPreviewFile,
+    onRemoveFile,
+}: AttachmentFieldProps) {
     const fieldErrors = errors as Record<string, string | undefined>;
+    const terkunci = !classification;
 
     return (
         <div className="space-y-3">
@@ -41,7 +52,22 @@ export function AttachmentField({ attachments, errors, fileInputRef, onFileChang
             />
 
             {attachments.length < 3 && (
-                <Button type="button" variant="outline" size="sm" className="w-full border-dashed" onClick={() => fileInputRef.current?.click()}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-disabled={terkunci}
+                    tabIndex={terkunci ? -1 : 0}
+                    className={cn('w-full border-dashed', terkunci && 'opacity-60 cursor-not-allowed')}
+                    onClick={(e) => {
+                        if (terkunci) {
+                            e.preventDefault();
+                            warnJenisLaporan();
+                            return;
+                        }
+                        fileInputRef.current?.click();
+                    }}
+                >
                     <Paperclip className="size-4" />
                     Pilih file lampiran ({attachments.length}/3)
                 </Button>

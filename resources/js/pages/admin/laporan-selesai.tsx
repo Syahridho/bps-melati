@@ -13,7 +13,11 @@ import { RotateCcw, Search, X } from 'lucide-react';
 
 export default function LaporanSelesai() {
     const { auth, tickets, filters, counts } = usePage<LaporanSelesaiProps>().props;
-    const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+    const routePrefix = auth.user.role === 'admin' 
+        ? 'dashboard.admin' 
+        : auth.user.role === 'operator_tim' 
+        ? 'dashboard.operator-tim' 
+        : 'dashboard.operator';
 
     const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
         useLaporanSelesaiFilters(routePrefix, filters);

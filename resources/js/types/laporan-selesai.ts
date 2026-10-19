@@ -68,6 +68,14 @@ export interface ShowProps extends SharedData {
         satuan_tugas: string | null;
         version: number;
         is_read: boolean;
+        berkadar_pengawasan: boolean;
+        berkadar_pengawasan_by_name?: string | null;
+        berkadar_pengawasan_at?: string | null;
+        auto_close?: {
+            type_days: number | null;
+            flagged_days: number | null;
+            effective_days: number | null;
+        };
         created_by_name: string | null;
         closed_reason: ClosedReason | null;
         auto_close_at: string | null;

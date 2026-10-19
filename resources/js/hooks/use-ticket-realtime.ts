@@ -19,6 +19,7 @@ export interface UseTicketRealtimeOptions {
     onEmailStatusUpdate?: (event: { response_id: number; email_status: string; email_sent_at?: string | null; email_failed_at?: string | null; email_error?: string | null }) => void;
     onStatusChange: (status: TicketBroadcastEvent['status'], version: number) => void;
     onCompleted?: () => void;
+    onBookmarkersChange?: (event: { others: Array<{ id: number; name: string }>; others_count: number }) => void;
 }
 
 export interface UseTicketRealtimeResult {
@@ -58,6 +59,7 @@ export function useTicketRealtime({
     onEmailStatusUpdate,
     onStatusChange,
     onCompleted,
+    onBookmarkersChange,
 }: UseTicketRealtimeOptions): UseTicketRealtimeResult {
     const connection = useConnectionStatus();
     const [viewers, setViewers] = useState<PresenceMember[]>([]);
@@ -65,8 +67,8 @@ export function useTicketRealtime({
     const [version, setVersion] = useState(initialVersion);
 
     // Callback disimpan di ref agar event Echo tidak perlu re-subscribe tiap render.
-    const handlers = useRef({ onResponse, onEmailStatusUpdate, onStatusChange, onCompleted });
-    handlers.current = { onResponse, onEmailStatusUpdate, onStatusChange, onCompleted };
+    const handlers = useRef({ onResponse, onEmailStatusUpdate, onStatusChange, onCompleted, onBookmarkersChange });
+    handlers.current = { onResponse, onEmailStatusUpdate, onStatusChange, onCompleted, onBookmarkersChange };
 
     // Satu balasan di-broadcast dua kali di kanal presence: `.ticket.updated`
     // dan `.ticket.response.created` membawa response yang sama. Efek samping
@@ -75,8 +77,13 @@ export function useTicketRealtime({
 
     const { channel } = useEchoPresence<TicketBroadcastEvent>(
         `ticket.${ticketId}`,
-        ['.ticket.response.created', '.ticket.updated', '.ticket.response.email-status-updated'],
-        (event: Record<string, unknown>) => {
+        ['.ticket.response.created', '.ticket.updated', '.ticket.response.email-status-updated', '.ticket.bookmarkers.changed'],
+        (event: Record<string, any>) => {
+            if (event.others !== undefined && typeof event.others_count === 'number') {
+                handlers.current.onBookmarkersChange?.(event as Parameters<NonNullable<UseTicketRealtimeOptions['onBookmarkersChange']>>[0]);
+                return;
+            }
+
             if (event.response_id && event.email_status) {
                 handlers.current.onEmailStatusUpdate?.(event as Parameters<NonNullable<UseTicketRealtimeOptions['onEmailStatusUpdate']>>[0]);
                 return;

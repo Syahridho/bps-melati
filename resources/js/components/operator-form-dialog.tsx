@@ -32,8 +32,8 @@ export function OperatorFormDialog({ open, onOpenChange, mode, data, setData, er
                     </DialogTitle>
                     <DialogDescription>
                         {isCreate
-                            ? 'Isi formulir di bawah ini untuk membuat akun Admin atau Operator baru.'
-                            : 'Perbarui informasi nama, role (Admin/Operator), email, atau atur ulang password.'}
+                            ? 'Isi formulir di bawah ini untuk membuat akun Admin, Operator, atau Operator Tim baru.'
+                            : 'Perbarui informasi nama, role (Admin/Operator/Operator Tim), email, atau atur ulang password.'}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={onSubmit} className="space-y-4">
@@ -57,6 +57,7 @@ export function OperatorFormDialog({ open, onOpenChange, mode, data, setData, er
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="operator">Operator</SelectItem>
+                                <SelectItem value="operator_tim">Operator Tim</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
                             </SelectContent>
                         </Select>

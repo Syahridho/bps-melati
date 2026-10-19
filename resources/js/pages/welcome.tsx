@@ -6,6 +6,7 @@ import { ReportForm } from '@/components/report-form';
 import { SERVICE_CARDS, ServiceCard } from '@/components/service-cards';
 import { TicketHistoryCard } from '@/components/ticket-history-card';
 import { TicketSuccessDialog } from '@/components/ticket-success-dialog';
+import { Toaster } from '@/components/ui/toaster';
 import { WelcomeAttachmentPreviewDialog } from '@/components/welcome-attachment-preview-dialog';
 import { WelcomeHeader } from '@/components/welcome-header';
 import { WelcomeHero } from '@/components/welcome-hero';
@@ -110,6 +111,8 @@ export default function Welcome() {
             <DeleteTicketDialog ticket={ticketToDelete} onConfirm={handleDeleteTicket} onCancel={() => setTicketToDelete(null)} />
 
             <FloatingServiceLinks />
+
+            <Toaster position="bottom-right" closeButton richColors />
         </>
     );
 }

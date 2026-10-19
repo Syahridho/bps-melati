@@ -6,7 +6,7 @@ export type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 export type ResponseType = 'respon_awal' | 'respon_substantif' | 'balasan_pelapor';
 export type RealtimeStatus = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 export type ClosedReason = 'reporter' | 'staff' | 'auto_close';
-export type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif';
+export type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif' | 'ditandai';
 
 export interface Attachment {
     id: number;
@@ -36,7 +36,7 @@ export interface TicketResponseItem {
 export interface PresenceMember {
     id: number;
     name: string;
-    role: 'admin' | 'operator';
+    role: 'admin' | 'operator' | 'operator_tim';
 }
 
 /** Client event (whisper) "sedang mengetik balasan". */
@@ -60,7 +60,7 @@ export interface TicketUpdatedEvent {
  * Payload `.ticket.response.created` (App\Events\TicketResponseCreated).
  */
 export interface TicketResponseCreatedEvent extends Omit<TicketUpdatedEvent, 'response'> {
-    response: TicketResponseItem & { user_role?: 'admin' | 'operator' };
+    response: TicketResponseItem & { user_role?: 'admin' | 'operator' | 'operator_tim' };
 }
 
 /** Bentuk gabungan yang diterima listener di presence channel. */
@@ -104,6 +104,9 @@ export interface InboxTicketItem {
     status: Status;
     version: number;
     is_read: boolean;
+    is_bookmarked?: boolean;
+    berkadar_pengawasan: boolean;
+    reply_deadline_at?: string | null;
     source_app: string;
     channel: string;
     created_at: string;
@@ -127,8 +130,10 @@ export interface LaporanMasukProps extends SharedData {
         permintaan: number;
         respon_awal: number;
         respon_substantif: number;
+        ditandai: number;
     };
     inbox_open_count: number;
+    server_now: string;
 }
 
 export interface TicketDetail {
@@ -147,6 +152,16 @@ export interface TicketDetail {
     status: Status;
     version: number;
     is_read: boolean;
+    is_bookmarked?: boolean;
+    berkadar_pengawasan: boolean;
+    berkadar_pengawasan_by_name?: string | null;
+    berkadar_pengawasan_at?: string | null;
+    auto_close?: {
+        type_days: number | null;
+        flagged_days: number | null;
+        effective_days: number | null;
+    };
+    reply_deadline_at?: string | null;
     source_app: string;
     channel: string;
     created_by_name: string | null;
@@ -157,6 +172,11 @@ export interface TicketDetail {
     updated_at: string;
     attachments: Attachment[];
     responses: TicketResponseItem[];
+    bookmark_info?: {
+        by_me: boolean;
+        others: Array<{ id: number; name: string }>;
+        others_count: number;
+    };
 }
 
 export interface ShowProps extends SharedData {
@@ -170,4 +190,5 @@ export interface ShowProps extends SharedData {
         success?: string;
         conflict?: ReplyConflict;
     };
+    server_now: string;
 }

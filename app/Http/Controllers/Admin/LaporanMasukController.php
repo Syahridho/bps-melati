@@ -9,6 +9,7 @@ use App\Models\Ticket;
 use App\Support\LaporanCache;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
+use App\Support\ReplyDeadline;
 use App\Support\TicketResponsePayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ class LaporanMasukController extends Controller
         $filter = new LaporanFilter($request, 'semua', 10);
 
         // Whitelist filter
-        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif'];
+        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'ditandai'];
         if (! in_array($filter->tab, $allowedFilters, true)) {
             $filter->tab = 'semua';
         }
@@ -62,6 +63,8 @@ class LaporanMasukController extends Controller
                     $query->where('status', 'respon_awal');
                 } elseif ($filter->tab === 'respon_substantif') {
                     $query->where('status', 'respon_substantif');
+                } elseif ($filter->tab === 'ditandai') {
+                    $query->whereHas('bookmarkedBy', fn ($q) => $q->where('users.id', auth()->id()));
                 }
             }
 
@@ -70,6 +73,8 @@ class LaporanMasukController extends Controller
 
         $fetchTickets = function () use ($baseQueryBuilder, $filter) {
             return $baseQueryBuilder()
+                ->with(['responses' => fn ($q) => $q->where('is_system', false)->orderByDesc('created_at')->orderByDesc('id')])
+                ->withExists(['bookmarkedBy as is_bookmarked' => fn ($q) => $q->where('users.id', auth()->id())])
                 ->orderByDesc('created_at')
                 ->paginate($filter->perPage)
                 ->withQueryString()
@@ -87,6 +92,9 @@ class LaporanMasukController extends Controller
                     'status' => $ticket->status,
                     'version' => $ticket->version,
                     'is_read' => $ticket->is_read,
+                    'is_bookmarked' => (bool) $ticket->is_bookmarked,
+                    'berkadar_pengawasan' => $ticket->berkadar_pengawasan,
+                    'reply_deadline_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
                     'source_app' => $ticket->source_app,
                     'channel' => $ticket->channel?->name ?? '-',
                     'created_at' => $ticket->created_at->toIso8601String(),
@@ -105,7 +113,7 @@ class LaporanMasukController extends Controller
         }
 
         // Agregat counts per tab mengikuti rentang tanggal, TIDAK mengikuti search/tab
-        $countParams = ['tab_counts', 'from' => $filter->from, 'to' => $filter->to];
+        $countParams = ['tab_counts', 'user_id' => auth()->id(), 'from' => $filter->from, 'to' => $filter->to];
         $fetchCounts = function () use ($filter) {
             $countBaseQuery = Ticket::query()
                 ->where('source_app', '!=', 'admin')
@@ -127,6 +135,10 @@ class LaporanMasukController extends Controller
                 ")
                 ->first();
 
+            $ditandaiCount = (clone $countBaseQuery)
+                ->whereHas('bookmarkedBy', fn ($q) => $q->where('users.id', auth()->id()))
+                ->count();
+
             return [
                 'semua' => (int) ($countsData->semua ?? 0),
                 'belum_dibaca' => (int) ($countsData->belum_dibaca ?? 0),
@@ -135,6 +147,7 @@ class LaporanMasukController extends Controller
                 'permintaan' => (int) ($countsData->permintaan ?? 0),
                 'respon_awal' => (int) ($countsData->respon_awal ?? 0),
                 'respon_substantif' => (int) ($countsData->respon_substantif ?? 0),
+                'ditandai' => (int) $ditandaiCount,
             ];
         };
 
@@ -144,6 +157,7 @@ class LaporanMasukController extends Controller
             'tickets' => $tickets,
             'filters' => $filter->toFilterProps($frontendFilterKey),
             'counts' => $counts,
+            'server_now' => now()->toIso8601String(),
         ]);
     }
 
@@ -158,16 +172,30 @@ class LaporanMasukController extends Controller
         $ticket = Ticket::with([
             'channel',
             'creator',
+            'berkadarPengawasanModifier',
             'attachments',
             'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
         ])
             ->where('ticket_number', $ticketNumber)
             ->firstOrFail();
 
+        $action = app(AutoCloseTickets::class);
+        $windows = $action->resolveWindows();
+        $typeDays = $windows[$ticket->classification] ?? null;
+        $flaggedDays = $windows['berkadar_pengawasan'] ?? 30;
+        $effectiveDays = $ticket->berkadar_pengawasan ? $flaggedDays : $typeDays;
+
         // Tandai sudah dibaca
         if (! $ticket->is_read) {
             $ticket->update(['is_read' => true]);
         }
+
+        $bookmarkedUsers = $ticket->bookmarkedBy()->select('users.id', 'users.name')->get();
+        $byMe = $bookmarkedUsers->contains('id', auth()->id());
+        $others = $bookmarkedUsers->reject(fn ($u) => $u->id === auth()->id())->values()->map(fn ($u) => [
+            'id' => $u->id,
+            'name' => $u->name,
+        ]);
 
         return Inertia::render('admin/laporan-masuk/show', [
             'from' => 'laporan-masuk',
@@ -191,12 +219,26 @@ class LaporanMasukController extends Controller
                 'status' => $ticket->status,
                 'version' => $ticket->version,
                 'is_read' => $ticket->is_read,
+                'is_bookmarked' => $byMe,
+                'bookmark_info' => [
+                    'by_me' => $byMe,
+                    'others' => $others,
+                    'others_count' => $others->count(),
+                ],
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'created_by_name' => $ticket->creator?->name,
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
                 'closed_reason' => $ticket->closed_reason,
-                'auto_close_at' => AutoCloseTickets::deadlineFor($ticket)?->toIso8601String(),
+                'berkadar_pengawasan' => $ticket->berkadar_pengawasan,
+                'berkadar_pengawasan_by_name' => $ticket->berkadarPengawasanModifier?->name,
+                'berkadar_pengawasan_at' => $ticket->berkadar_pengawasan_at?->toIso8601String(),
+                'auto_close' => [
+                    'type_days' => $typeDays,
+                    'flagged_days' => $flaggedDays,
+                    'effective_days' => $effectiveDays,
+                ],
+                'reply_deadline_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
                 'created_at' => $ticket->created_at->toIso8601String(),
                 'updated_at' => $ticket->updated_at->toIso8601String(),
                 'attachments' => $ticket->attachments->map(fn ($attachment) => [
@@ -210,6 +252,7 @@ class LaporanMasukController extends Controller
                     fn ($response) => TicketResponsePayload::from($response, $ticket)
                 )->values()->all(),
             ],
+            'server_now' => now()->toIso8601String(),
         ]);
     }
 
