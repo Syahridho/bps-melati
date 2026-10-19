@@ -17,7 +17,7 @@ class ReplyDeadline
             return null;
         }
 
-        $settingKey = $ticket->berkadar_pengawasan
+        $settingKey = $ticket->is_berkadar_pengawasan
             ? 'auto_close_berkadar_pengawasan_days'
             : (self::SETTING_KEYS[$ticket->classification] ?? null);
 
@@ -25,7 +25,7 @@ class ReplyDeadline
             return null;
         }
 
-        $rawDays = Setting::get($settingKey, $ticket->berkadar_pengawasan ? '30' : null);
+        $rawDays = Setting::get($settingKey, $ticket->is_berkadar_pengawasan ? '30' : null);
         if ($rawDays === null || trim((string) $rawDays) === '' || ! ctype_digit(trim((string) $rawDays))) {
             return null;
         }

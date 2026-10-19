@@ -26,8 +26,8 @@ class SetTicketBerkadarPengawasan extends Controller
 
         $enabled = (bool) $request->validated('enabled');
 
-        if ($ticket->berkadar_pengawasan !== $enabled) {
-            $ticket->berkadar_pengawasan = $enabled;
+        if ($ticket->is_berkadar_pengawasan !== $enabled) {
+            $ticket->is_berkadar_pengawasan = $enabled;
             $ticket->berkadar_pengawasan_by = $request->user()->id;
             $ticket->berkadar_pengawasan_at = now();
             $ticket->timestamps = false;
@@ -42,7 +42,7 @@ class SetTicketBerkadarPengawasan extends Controller
                 'success' => true,
                 'message' => 'Status berkadar pengawasan diperbarui.',
                 'data' => [
-                    'berkadar_pengawasan' => $ticket->berkadar_pengawasan,
+                    'berkadar_pengawasan' => $ticket->is_berkadar_pengawasan,
                     'berkadar_pengawasan_by_name' => $ticket->berkadarPengawasanModifier?->name,
                     'berkadar_pengawasan_at' => $ticket->berkadar_pengawasan_at?->toIso8601String(),
                 ],

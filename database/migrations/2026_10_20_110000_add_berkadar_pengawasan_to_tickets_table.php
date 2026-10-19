@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->boolean('berkadar_pengawasan')->default(false)->after('closed_reason');
-            $table->foreignId('berkadar_pengawasan_by')->nullable()->after('berkadar_pengawasan')->constrained('users')->nullOnDelete();
+            $table->boolean('is_berkadar_pengawasan')->default(false)->after('closed_reason');
+            $table->foreignId('berkadar_pengawasan_by')->nullable()->after('is_berkadar_pengawasan')->constrained('users')->nullOnDelete();
             $table->timestamp('berkadar_pengawasan_at')->nullable()->after('berkadar_pengawasan_by');
         });
     }
@@ -19,7 +19,7 @@ return new class extends Migration
     {
         Schema::table('tickets', function (Blueprint $table) {
             $table->dropForeign(['berkadar_pengawasan_by']);
-            $table->dropColumn(['berkadar_pengawasan', 'berkadar_pengawasan_by', 'berkadar_pengawasan_at']);
+            $table->dropColumn(['is_berkadar_pengawasan', 'berkadar_pengawasan_by', 'berkadar_pengawasan_at']);
         });
     }
 };

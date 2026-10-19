@@ -120,8 +120,8 @@ class ReplyToTicket
                     $updates = [];
                     if (isset($payload['berkadar_pengawasan'])) {
                         $berkadar = (bool) $payload['berkadar_pengawasan'];
-                        if ($locked->berkadar_pengawasan !== $berkadar) {
-                            $locked->berkadar_pengawasan = $berkadar;
+                        if ($locked->is_berkadar_pengawasan !== $berkadar) {
+                            $locked->is_berkadar_pengawasan = $berkadar;
                             $locked->berkadar_pengawasan_by = $actor->id;
                             $locked->berkadar_pengawasan_at = now();
                         }

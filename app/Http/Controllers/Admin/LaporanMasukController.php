@@ -93,7 +93,7 @@ class LaporanMasukController extends Controller
                     'version' => $ticket->version,
                     'is_read' => $ticket->is_read,
                     'is_bookmarked' => (bool) $ticket->is_bookmarked,
-                    'berkadar_pengawasan' => $ticket->berkadar_pengawasan,
+                    'berkadar_pengawasan' => $ticket->is_berkadar_pengawasan,
                     'reply_deadline_at' => ReplyDeadline::for($ticket)?->toIso8601String(),
                     'source_app' => $ticket->source_app,
                     'channel' => $ticket->channel?->name ?? '-',
@@ -202,6 +202,12 @@ class LaporanMasukController extends Controller
             'can' => [
                 'edit' => false,
                 'delete' => false,
+            ],
+            'autoCloseDays' => [
+                'pengaduan' => $windows['pengaduan'] ?? 7,
+                'aspirasi' => $windows['aspirasi'] ?? 3,
+                'permintaan_informasi' => $windows['permintaan_informasi'] ?? 5,
+                'berkadar_pengawasan' => $flaggedDays,
             ],
             'ticket' => [
                 'id' => $ticket->id,

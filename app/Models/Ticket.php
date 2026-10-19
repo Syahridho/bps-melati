@@ -29,6 +29,7 @@ class Ticket extends Model
         'status',
         'version',
         'is_read',
+        'is_berkadar_pengawasan',
         'source_app',
         'created_by',
         'completed_at',
@@ -40,7 +41,7 @@ class Ticket extends Model
     {
         return [
             'is_read' => 'boolean',
-            'berkadar_pengawasan' => 'boolean',
+            'is_berkadar_pengawasan' => 'boolean',
             'completed_at' => 'datetime',
             'berkadar_pengawasan_at' => 'datetime',
             'last_staff_response_at' => 'datetime',

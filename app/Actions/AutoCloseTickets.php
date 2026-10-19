@@ -166,9 +166,9 @@ class AutoCloseTickets
             });
 
         if ($classification === 'berkadar_pengawasan') {
-            $query->where('berkadar_pengawasan', true);
+            $query->where('is_berkadar_pengawasan', true);
         } else {
-            $query->where('berkadar_pengawasan', false)
+            $query->where('is_berkadar_pengawasan', false)
                 ->where('classification', $classification);
         }
 
