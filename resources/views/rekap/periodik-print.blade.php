@@ -65,7 +65,7 @@
                         <tr>
                             @foreach ($chunkMonths as $month)
                                 <th>PST</th>
-                                <th>NonPST</th>
+                                <th>Non<br>PST</th>
                                 <th>Asp</th>
                                 <th>Inf</th>
                             @endforeach

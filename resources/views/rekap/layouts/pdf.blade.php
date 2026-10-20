@@ -160,9 +160,9 @@
 
         th, td {
             border: 0.75pt solid #111111;
-            padding: 2.5px 4px;
+            padding: 2.5px 2px;
             vertical-align: middle;
-            font-size: 8pt;
+            font-size: 7.5pt;
             background: #ffffff !important;
             color: #000000;
             white-space: nowrap;
