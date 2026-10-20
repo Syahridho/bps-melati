@@ -1,4 +1,4 @@
-<x-mail::message>
+@component('mail::message')
 # Tanggapan Laporan Tiket #{{ $ticket->ticket_number }}
 
 Yth. **{{ $ticket->reporter_name ?? 'Pelapor' }}**,
@@ -7,11 +7,11 @@ Terima kasih telah menyampaikan laporan melalui sistem **Melati (Layanan Aspiras
 
 Berikut adalah **{{ $response->type === 'respon_awal' ? 'Respon Awal' : 'Respon Substantif' }}** dari tim kami:
 
-<x-mail::panel>
+@component('mail::panel')
 **Pesan Tanggapan:**
 
 {!! nl2br(e($response->message)) !!}
-</x-mail::panel>
+@endcomponent
 
 ### Ringkasan Laporan Anda:
 - **Nomor Tiket:** `{{ $ticket->ticket_number }}`
@@ -33,10 +33,10 @@ Berikut adalah **{{ $response->type === 'respon_awal' ? 'Respon Awal' : 'Respon 
 
 Jika Anda memiliki pertanyaan lebih lanjut, silakan hubungi kami melalui layanan informasi resmi.
 
-<x-mail::button :url="url('/check') . '?' . http_build_query(['ticket_number' => $ticket->ticket_number])" color="primary">
+@component('mail::button', ['url' => url('/check') . '?' . http_build_query(['ticket_number' => $ticket->ticket_number]), 'color' => 'primary'])
 Cek Status Tiket
-</x-mail::button>
+@endcomponent
 
 Terima kasih,<br>
 **{{ config('app.name', 'Melati') }} - BPS Provinsi Riau**
-</x-mail::message>
+@endcomponent

@@ -73,14 +73,23 @@ class SendTicketResponseNotification implements ShouldQueue
             return;
         }
 
-        Mail::to($ticket->reporter_email)->queue(new TicketResponseSubmitted($ticket, $response));
+        try {
+            Mail::to($ticket->reporter_email)->send(new TicketResponseSubmitted($ticket, $response));
 
-        $response->forceFill([
-            'email_sent_at' => now(),
-            'email_status' => 'sent',
-            'email_failed_at' => null,
-            'email_error' => null,
-        ])->save();
+            $response->forceFill([
+                'email_sent_at' => now(),
+                'email_status' => 'sent',
+                'email_failed_at' => null,
+                'email_error' => null,
+            ])->save();
+        } catch (\Throwable $e) {
+            $response->forceFill([
+                'email_status' => 'failed',
+                'email_failed_at' => now(),
+                'email_error' => Str::limit($e->getMessage(), 500),
+            ])->save();
+            throw $e;
+        }
 
         $this->clearCacheAndBroadcast($response, $ticket);
     }

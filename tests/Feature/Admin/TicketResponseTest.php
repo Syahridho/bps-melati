@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\SendTicketResponseNotification;
 use App\Mail\TicketResponseSubmitted;
 use App\Models\Channel;
 use App\Models\Ticket;
@@ -9,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -30,7 +32,7 @@ beforeEach(function () {
 });
 
 test('admin can respond to a ticket and email is queued to reporter', function () {
-    Mail::fake();
+    Queue::fake();
 
     $ticket = Ticket::create([
         'ticket_number' => 'L-1400/092026/0001',
@@ -63,14 +65,13 @@ test('admin can respond to a ticket and email is queued to reporter', function (
         'message' => 'Terima kasih atas laporan Anda. Laporan telah kami tindak lanjuti.',
     ]);
 
-    Mail::assertQueued(TicketResponseSubmitted::class, function ($mail) use ($ticket) {
-        return $mail->hasTo('budi@example.com') &&
-            $mail->ticket->id === $ticket->id;
+    Queue::assertPushed(SendTicketResponseNotification::class, function ($job) use ($ticket) {
+        return $job->response->ticket_id === $ticket->id;
     });
 });
 
 test('admin response includes attachments and updates redis cache', function () {
-    Mail::fake();
+    Queue::fake();
     Storage::fake('public');
 
     $ticket = Ticket::create([
@@ -103,7 +104,7 @@ test('admin response includes attachments and updates redis cache', function () 
     $responseModel = $ticket->responses()->first();
     expect(Cache::has("response:{$responseModel->id}"))->toBeTrue();
 
-    Mail::assertQueued(TicketResponseSubmitted::class);
+    Queue::assertPushed(SendTicketResponseNotification::class);
 });
 
 test('response does not downgrade a higher ticket status', function () {

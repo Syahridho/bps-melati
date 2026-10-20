@@ -14,16 +14,14 @@ use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 
-class TicketResponseSubmitted extends Mailable implements ShouldQueue
+class TicketResponseSubmitted extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public function __construct(
         public Ticket $ticket,
         public TicketResponse $response
-    ) {
-        $this->onQueue('notifications');
-    }
+    ) {}
 
     public function headers(): Headers
     {
@@ -57,8 +55,6 @@ class TicketResponseSubmitted extends Mailable implements ShouldQueue
     }
 
     /**
-     * Get the attachments for the message.
-     *
      * @return array<int, Attachment>
      */
     public function attachments(): array
