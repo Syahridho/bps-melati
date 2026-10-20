@@ -66,7 +66,7 @@ export function LaporanMasukDetailCard({
     const isCompleted = ticketStatus === 'selesai';
 
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [pendingValue, setPendingValue] = useState<boolean>(ticket.is_berkadar_pengawasan);
+    const [pendingValue, setPendingValue] = useState<boolean>(ticket.berkadar_pengawasan);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSwitchChange = (checked: boolean) => {
@@ -126,7 +126,7 @@ export function LaporanMasukDetailCard({
                         <h2 className="text-xl font-bold">{ticket.ticket_number}</h2>
                         <Badge variant={classificationVariant(ticket.classification)}>{classificationLabel(ticket.classification)}</Badge>
                         <Badge variant={statusVariant(ticketStatus)}>{statusLabel(ticketStatus)}</Badge>
-                        {ticket.is_berkadar_pengawasan && (
+                        {ticket.berkadar_pengawasan && (
                             <Badge variant="outline" className="gap-1 border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
                                 <Eye className="size-3" />
                                 Berkadar Pengawasan
@@ -146,7 +146,7 @@ export function LaporanMasukDetailCard({
                     <div className="flex items-center space-x-3">
                         <Switch
                             id="berkadar_pengawasan_switch"
-                            checked={ticket.is_berkadar_pengawasan}
+                            checked={ticket.berkadar_pengawasan}
                             disabled={isCompleted}
                             onCheckedChange={handleSwitchChange}
                             aria-label="Berkadar Pengawasan"

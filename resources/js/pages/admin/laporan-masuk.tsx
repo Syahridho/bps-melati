@@ -34,7 +34,9 @@ export default function LaporanMasuk() {
         auth?.user ? `user.${auth.user.id}` : '',
         '.ticket.bookmark.changed',
         (event) => {
-            const socketId = (window as any).Echo?.socketId?.();
+           const socketId = (
+                window as unknown as { Echo?: { socketId?: () => string | undefined } }
+            ).Echo?.socketId?.();
             if (event.origin && socketId && event.origin === socketId) {
                 return;
             }

@@ -1,7 +1,7 @@
 import { AlurPelaporan } from '@/components/alur-pelaporan';
 import { BpsFooter } from '@/components/bps-footer';
 import { DeleteTicketDialog } from '@/components/delete-ticket-dialog';
-import { FloatingServiceLinks } from '@/components/floating-service-links';
+// import { FloatingServiceLinks } from '@/components/floating-service-links';
 import { ReportForm } from '@/components/report-form';
 import { SERVICE_CARDS, ServiceCard } from '@/components/service-cards';
 import { TicketHistoryCard } from '@/components/ticket-history-card';
@@ -110,7 +110,8 @@ export default function Welcome() {
 
             <DeleteTicketDialog ticket={ticketToDelete} onConfirm={handleDeleteTicket} onCancel={() => setTicketToDelete(null)} />
 
-            <FloatingServiceLinks />
+            {/* logo wbs dan lapor.go.id */}
+            {/* <FloatingServiceLinks /> */}
 
             <Toaster position="bottom-right" closeButton richColors />
         </>

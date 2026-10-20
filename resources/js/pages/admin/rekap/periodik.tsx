@@ -21,6 +21,7 @@ interface RekapPeriodikProps {
     monthOptions: PeriodOption[];
     periodeLabel: string;
     tampilan: RekapViewMode;
+    chat: string;
 }
 
 const PRINT_FRAME_ID = 'rekap-periodik-print-frame';
@@ -40,14 +41,14 @@ const MONTH_NAMES: Record<string, string> = {
     '12': 'Desember',
 };
 
-export default function RekapPeriodik({ rows, totals, months, year, dari, sampai, years, monthOptions, periodeLabel, tampilan }: RekapPeriodikProps) {
-    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleParamChange, handleViewModeChange, handlePrint, navigate } = useRekapFilters({
+export default function RekapPeriodik({ rows, totals, months, year, dari, sampai, years, monthOptions, periodeLabel, tampilan, chat }: RekapPeriodikProps) {
+    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleViewModeChange, handlePrint, navigate } = useRekapFilters({
         routeKey: 'rekap-periodik',
-        queryParams: { year, dari, sampai },
+        queryParams: { year, dari, sampai, chat },
         frameId: PRINT_FRAME_ID,
         viewMode: tampilan,
         exportPrefix: 'Rekap-Periodik',
-        exportPeriode: dari === sampai ? `${MONTH_NAMES[dari]}-${year}` : `${MONTH_NAMES[dari]}-${MONTH_NAMES[sampai]}-${year}`,
+        exportPeriode: (dari === sampai ? `${MONTH_NAMES[dari]}-${year}` : `${MONTH_NAMES[dari]}-${MONTH_NAMES[sampai]}-${year}`) + (chat === 'dengan' ? '-DenganChat' : chat === 'tanpa' ? '-TanpaChat' : ''),
     });
 
     const currentYear = new Date().getFullYear().toString();
@@ -68,11 +69,15 @@ export default function RekapPeriodik({ rows, totals, months, year, dari, sampai
     };
 
     const handleYearChange = (newYear: string) => {
-        navigate({ year: newYear, dari, sampai });
+        navigate({ year: newYear, dari, sampai, chat });
+    };
+
+    const handleChatChange = (newChat: string) => {
+        navigate({ year, dari, sampai, chat: newChat });
     };
 
     const handleReset = () => {
-        navigate({ year: currentYear, dari: '1', sampai: '12' });
+        navigate({ year: currentYear, dari: '1', sampai: '12', chat: 'semua' });
     };
 
     return (
@@ -85,76 +90,108 @@ export default function RekapPeriodik({ rows, totals, months, year, dari, sampai
             ]}
         >
             <div className="flex flex-col gap-4 pb-10">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <RekapViewModeSelect value={tampilan} onValueChange={handleViewModeChange} />
+                <div className="bg-card flex flex-col gap-4 rounded-lg border p-4 shadow-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                            {/* Tampilan */}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-muted-foreground text-xs font-medium">Tampilan</span>
+                                <RekapViewModeSelect value={tampilan} onValueChange={handleViewModeChange} />
+                            </div>
 
-                        <Select value={year} onValueChange={handleYearChange}>
-                            <SelectTrigger className="w-32">
-                                <SelectValue placeholder="Pilih tahun" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {years.map((y) => (
-                                    <SelectItem key={y.value} value={y.value}>
-                                        {y.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            {/* Tahun */}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-muted-foreground text-xs font-medium">Tahun</span>
+                                <Select value={year} onValueChange={handleYearChange}>
+                                    <SelectTrigger className="w-32">
+                                        <SelectValue placeholder="Pilih tahun" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {years.map((y) => (
+                                            <SelectItem key={y.value} value={y.value}>
+                                                {y.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                        <div className="flex items-center gap-1.5 text-sm">
-                            <span className="text-muted-foreground">Dari:</span>
-                            <Select value={dari} onValueChange={handleDariChange}>
-                                <SelectTrigger className="w-32">
-                                    <SelectValue placeholder="Dari bulan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {monthOptions.map((m) => (
-                                        <SelectItem key={`dari-${m.value}`} value={m.value} disabled={m.disabled}>
-                                            {m.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            {/* Filter Chat */}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-muted-foreground text-xs font-medium">Chat</span>
+                                <Select value={chat} onValueChange={handleChatChange}>
+                                    <SelectTrigger className="w-36">
+                                        <SelectValue placeholder="Filter Chat" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="semua">Semua Chat</SelectItem>
+                                        <SelectItem value="dengan">Dengan Chat</SelectItem>
+                                        <SelectItem value="tanpa">Tanpa Chat</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                            <span className="text-muted-foreground ml-1">S/d:</span>
-                            <Select value={sampai} onValueChange={handleSampaiChange}>
-                                <SelectTrigger className="w-32">
-                                    <SelectValue placeholder="Sampai bulan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {monthOptions.map((m) => {
-                                        const isBeforeDari = parseInt(m.value, 10) < parseInt(dari, 10);
-                                        return (
-                                            <SelectItem key={`sampai-${m.value}`} value={m.value} disabled={m.disabled || isBeforeDari}>
+                            {/* Dari Bulan */}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-muted-foreground text-xs font-medium">Dari Bulan</span>
+                                <Select value={dari} onValueChange={handleDariChange}>
+                                    <SelectTrigger className="w-36">
+                                        <SelectValue placeholder="Dari bulan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {monthOptions.map((m) => (
+                                            <SelectItem key={`dari-${m.value}`} value={m.value} disabled={m.disabled}>
                                                 {m.label}
                                             </SelectItem>
-                                        );
-                                    })}
-                                </SelectContent>
-                            </Select>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Sampai Bulan */}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-muted-foreground text-xs font-medium">Sampai Bulan</span>
+                                <Select value={sampai} onValueChange={handleSampaiChange}>
+                                    <SelectTrigger className="w-36">
+                                        <SelectValue placeholder="Sampai bulan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {monthOptions.map((m) => {
+                                            const isBeforeDari = parseInt(m.value, 10) < parseInt(dari, 10);
+                                            return (
+                                                <SelectItem key={`sampai-${m.value}`} value={m.value} disabled={m.disabled || isBeforeDari}>
+                                                    {m.label}
+                                                </SelectItem>
+                                            );
+                                        })}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
-                        {!isDefault && (
-                            <Button variant="outline" size="sm" onClick={handleReset} className="gap-1.5 h-10">
-                                <RotateCcw className="size-3.5" />
-                                Reset
-                            </Button>
-                        )}
-                    </div>
+                        {/* Actions (Reset & Export) */}
+                        <div className="flex items-center gap-2 pt-4 sm:pt-0">
+                            {!isDefault && (
+                                <Button variant="outline" size="sm" onClick={handleReset} className="h-9 gap-1.5">
+                                    <RotateCcw className="size-3.5" />
+                                    Reset
+                                </Button>
+                            )}
 
-                    <RekapPrintActions
-                        excelUrl={excelUrl}
-                        printUrl={printUrl}
-                        exportOpen={exportOpen}
-                        onExportOpenChange={setExportOpen}
-                        onPrint={handlePrint}
-                        dialogTitle={`Export PDF — Rekap Periodik ${periodeLabel}`}
-                        frameTitle={`Pratinjau rekap ${periodeLabel}`}
-                        frameId={PRINT_FRAME_ID}
-                        dialogContentClassName="max-w-6xl"
-                        dialogDescription="Pratinjau di bawah adalah dokumen berorientasi landscape lengkap dengan kop surat. Gunakan tombol Cetak lalu pilih “Save as PDF” pada dialog printer untuk menyimpan berkas."
-                    />
+                            <RekapPrintActions
+                                excelUrl={excelUrl}
+                                printUrl={printUrl}
+                                exportOpen={exportOpen}
+                                onExportOpenChange={setExportOpen}
+                                onPrint={handlePrint}
+                                dialogTitle={`Export PDF — Rekap Periodik ${periodeLabel}`}
+                                frameTitle={`Pratinjau rekap ${periodeLabel}`}
+                                frameId={PRINT_FRAME_ID}
+                                dialogContentClassName="max-w-6xl"
+                                dialogDescription="Pratinjau di bawah adalah dokumen berorientasi landscape lengkap dengan kop surat. Gunakan tombol Cetak lalu pilih “Save as PDF” pada dialog printer untuk menyimpan berkas."
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {tampilan === REKAP_VIEW_MODE_RINGKAS ? (

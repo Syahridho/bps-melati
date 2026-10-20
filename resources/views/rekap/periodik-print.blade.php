@@ -65,7 +65,7 @@
                         <tr>
                             @foreach ($chunkMonths as $month)
                                 <th>PST</th>
-                                <th>Non PST</th>
+                                <th>NonPST</th>
                                 <th>Asp</th>
                                 <th>Inf</th>
                             @endforeach
@@ -171,9 +171,9 @@
             @if ($isLastPage)
                 <div class="keterangan">
                     @if ($ringkas)
-                        Keterangan: Angka menunjukkan jumlah PST + Non PST + Asp + Inf.
+                        Keterangan: Angka menunjukkan jumlah PST + NonPST + Asp + Inf.
                     @else
-                        Keterangan: PST = Pengaduan Layanan PST, Non PST = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
+                        Keterangan: PST = Pengaduan Layanan PST, NonPST = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
                     @endif
                 </div>
 
@@ -190,4 +190,41 @@
             @endif
         </div>
     @endforeach
+
+    @if (($chatMode ?? 'semua') === 'dengan' && !empty($ticketsData))
+        <div style="page-break-before: always;"></div>
+        <div style="font-size: 14pt; font-weight: bold; margin-bottom: 15px; text-align: center; text-transform: uppercase;">
+            RIWAYAT PERCAKAPAN TIKET (DENGAN CHAT)
+        </div>
+        @foreach ($ticketsData as $ticket)
+            <div style="page-break-inside: avoid; margin-bottom: 20px; border: 1px solid #ccc; padding: 12px; border-radius: 6px; background: #fafafa;">
+                <div style="font-weight: bold; font-size: 11pt; margin-bottom: 4px; color: #005fb6;">
+                    No. Tiket: {{ $ticket['ticket_number'] }} &nbsp;|&nbsp; Klasifikasi: {{ ucfirst($ticket['classification']) }} &nbsp;|&nbsp; Kanal: {{ $ticket['channel']['name'] ?? '-' }}
+                </div>
+                <div style="font-size: 9pt; color: #555; margin-bottom: 8px;">
+                    Pelapor: {{ $ticket['reporter_name'] }} | Tanggal Masuk: {{ \Carbon\Carbon::parse($ticket['created_at'])->format('d/m/Y H:i') }}
+                </div>
+                <div style="background: #fff; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px; margin-bottom: 10px;">
+                    <strong style="font-size: 9pt; color: #111;">Isi Laporan:</strong>
+                    <div style="font-size: 9pt; margin-top: 2px; white-space: pre-wrap;">{{ $ticket['content'] }}</div>
+                </div>
+
+                @if (!empty($ticket['responses']))
+                    <div style="margin-top: 8px; font-weight: bold; font-size: 9.5pt; border-bottom: 1px solid #ddd; padding-bottom: 3px;">Riwayat Percakapan / Tanggapan:</div>
+                    @foreach ($ticket['responses'] as $resp)
+                        <div style="margin-top: 6px; background: {{ $resp['user_id'] ? '#f0fdf4' : '#fffbeb' }}; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                            <div style="font-size: 8.5pt; font-weight: bold; color: {{ $resp['user_id'] ? '#166534' : '#b45309' }}; margin-bottom: 2px;">
+                                {{ $resp['user_id'] ? 'Petugas BPS (' . ($resp['user']['name'] ?? 'Staff') . ')' : 'Pelapor (' . $ticket['reporter_name'] . ')' }} 
+                                &bull; <span style="font-weight: normal; color: #666;">{{ ucfirst(str_replace('_', ' ', $resp['type'])) }}</span>
+                                &bull; <span style="font-weight: normal; color: #666;">{{ \Carbon\Carbon::parse($resp['created_at'])->format('d/m/Y H:i') }}</span>
+                            </div>
+                            <div style="font-size: 9pt; white-space: pre-wrap;">{{ $resp['message'] }}</div>
+                        </div>
+                    @endforeach
+                @else
+                    <div style="font-size: 8.5pt; font-style: italic; color: #666; margin-top: 6px;">Belum ada balasan/tanggapan.</div>
+                @endif
+            </div>
+        @endforeach
+    @endif
 @endcomponent

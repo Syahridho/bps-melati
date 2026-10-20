@@ -156,9 +156,9 @@
     <br/>
     <div>
         @if ($ringkas)
-            Keterangan: Angka menunjukkan jumlah PST + Non PST + Asp + Inf.
+            Keterangan: Angka menunjukkan jumlah PST + NonPST + Asp + Inf.
         @else
-            Keterangan: PST = Pengaduan Layanan PST, Non PST = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
+            Keterangan: PST = Pengaduan Layanan PST, NonPST = Pengaduan Layanan Lainnya, Asp = Aspirasi, Inf = Permintaan Informasi.
         @endif
     </div>
 

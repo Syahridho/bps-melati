@@ -12,7 +12,7 @@ export function WelcomeHeader({ user }: WelcomeHeaderProps) {
         <header className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-30 border-b backdrop-blur">
             <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6">
                 <img src="/logo-melati.webp" alt="Logo BPS Melati" className="size-9 shrink-0 object-contain sm:size-10" />
-                <img src="/desc-melati.webp" alt="Logo BPS" className="h-[26px] w-[74px] shrink-0 object-contain sm:h-[30px] sm:w-[84px]" />
+                <img src="/desc-melati.webp" alt="Logo BPS" className="h-[26px] w-[74px] shrink-0 object-contain sm:h-[50px] sm:w-[110px]" />
 
                 <nav className="ml-auto flex items-center gap-1.5 sm:gap-2">
                     <Button asChild variant="outline" size="sm">

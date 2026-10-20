@@ -16,7 +16,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { toast } from 'sonner';
 
 export default function Show() {
-    const { auth, ticket, can, from, flash, server_now, autoCloseDays } = usePage<ShowProps>().props;
+    // autoCloseDays
+    const { auth, ticket, can, from, flash, server_now,  } = usePage<ShowProps>().props;
     const routePrefix = auth.user.role === 'admin' 
         ? 'dashboard.admin' 
         : auth.user.role === 'operator_tim' 
@@ -329,6 +330,7 @@ export default function Show() {
                     canEdit={canEdit}
                     canDelete={canDelete}
                     routePrefix={routePrefix}
+                    serverNow={server_now}
                     onEdit={() => setIsEditOpen(true)}
                     onDelete={() => setIsDeleteOpen(true)}
                     onPreviewAttachment={handlePreviewAttachment}

@@ -1,6 +1,7 @@
 import { type SettingPageProps } from '@/types/pengaturan';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 
 export function usePengaturanForm({ settings, flashSuccess }: { settings: SettingPageProps['settings']; flashSuccess?: string }) {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -18,6 +19,10 @@ export function usePengaturanForm({ settings, flashSuccess }: { settings: Settin
     useEffect(() => {
         if (flashSuccess) {
             setSuccessMessage(flashSuccess);
+            toast.success('Pengaturan Berhasil Disimpan', {
+                description: flashSuccess,
+                position: 'bottom-right',
+            });
             const timer = setTimeout(() => setSuccessMessage(null), 5000);
             return () => clearTimeout(timer);
         }
@@ -25,7 +30,14 @@ export function usePengaturanForm({ settings, flashSuccess }: { settings: Settin
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        post(route('settings.application.update'));
+        post(route('settings.application.update'), {
+            onSuccess: () => {
+                toast.success('Pengaturan Berhasil Disimpan', {
+                    description: 'Pengaturan aplikasi dan penanda tangan rekap berhasil diperbarui.',
+                    position: 'bottom-right',
+                });
+            },
+        });
     };
 
     return { data, setData, errors, processing, recentlySuccessful, successMessage, handleSubmit };

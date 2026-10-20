@@ -9,6 +9,7 @@ const TYPING_IDLE_MS = 4000;
 const POLL_INTERVAL_MS = 30000;
 const BOTTOM_THRESHOLD_PX = 160;
 
+
 export interface UseTicketRealtimeOptions {
     ticketId: number;
     currentUserId: number;
@@ -75,10 +76,11 @@ export function useTicketRealtime({
     // (toast, scroll otomatis, sorotan) harus jalan sekali saja per balasan.
     const seenResponseIds = useRef(new Set<number>());
 
-    const { channel } = useEchoPresence<TicketBroadcastEvent>(
+    const { channel } = useEchoPresence(
         `ticket.${ticketId}`,
         ['.ticket.response.created', '.ticket.updated', '.ticket.response.email-status-updated', '.ticket.bookmarkers.changed'],
-        (event: Record<string, any>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (event: any) => {
             if (event.others !== undefined && typeof event.others_count === 'number') {
                 handlers.current.onBookmarkersChange?.(event as Parameters<NonNullable<UseTicketRealtimeOptions['onBookmarkersChange']>>[0]);
                 return;

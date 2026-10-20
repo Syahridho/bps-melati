@@ -143,13 +143,19 @@ class RekapReport
      * @param  list<string>  $periods
      * @return array<int, array<string, array<string, int>>>
      */
-    public static function countsByChannelPerPeriod(array $periods): array
+    public static function countsByChannelPerPeriodWithChat(array $periods, string $chat = 'semua'): array
     {
-        $aggregates = Ticket::query()
+        $query = Ticket::query()
             ->selectRaw('channel_id, period, classification, service_type, COUNT(*) as total')
-            ->whereIn('period', $periods)
-            ->groupBy('channel_id', 'period', 'classification', 'service_type')
-            ->get();
+            ->whereIn('period', $periods);
+
+        if ($chat === 'dengan') {
+            $query->whereHas('responses');
+        } elseif ($chat === 'tanpa') {
+            $query->whereDoesntHave('responses');
+        }
+
+        $aggregates = $query->groupBy('channel_id', 'period', 'classification', 'service_type')->get();
 
         $counts = [];
 

@@ -51,7 +51,7 @@
             </tr>
             <tr>
                 <th class="header">Layanan PST <span class="sub-header">(Pelayanan Statistik Terpadu)</span></th>
-                <th class="header">Layanan Non PST</th>
+                <th class="header">Layanan NonPST</th>
             </tr>
         </thead>
         <tbody>

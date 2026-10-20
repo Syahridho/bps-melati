@@ -30,10 +30,11 @@ class RekapPeriodikController extends Controller
             $request->query('sampai')
         );
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
+        $chat = in_array($request->query('chat'), ['semua', 'dengan', 'tanpa'], true) ? $request->query('chat') : 'semua';
 
         return Inertia::render('admin/rekap/periodik', array_merge(
-            $this->payloadWithMode($year, $dari, $sampai, $tampilan),
-            $this->filterPayload($year, $dari, $sampai, $tampilan)
+            $this->payloadWithMode($year, $dari, $sampai, $tampilan, $chat),
+            $this->filterPayload($year, $dari, $sampai, $tampilan, $chat)
         ));
     }
 
@@ -45,10 +46,12 @@ class RekapPeriodikController extends Controller
             $request->query('sampai')
         );
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
+        $chat = in_array($request->query('chat'), ['semua', 'dengan', 'tanpa'], true) ? $request->query('chat') : 'semua';
 
         return view('rekap.periodik-print', array_merge(
-            $this->payloadWithMode($year, $dari, $sampai, $tampilan),
-            $this->filterPayload($year, $dari, $sampai, $tampilan)
+            $this->payloadWithMode($year, $dari, $sampai, $tampilan, $chat),
+            $this->filterPayload($year, $dari, $sampai, $tampilan, $chat),
+            ['chatMode' => $chat]
         ));
     }
 
@@ -60,6 +63,7 @@ class RekapPeriodikController extends Controller
             $request->query('sampai')
         );
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
+        $chat = in_array($request->query('chat'), ['semua', 'dengan', 'tanpa'], true) ? $request->query('chat') : 'semua';
 
         $dariNama = self::MONTH_NAMES[$dari];
         $sampaiNama = self::MONTH_NAMES[$sampai];
@@ -69,23 +73,30 @@ class RekapPeriodikController extends Controller
         if ($tampilan === RekapReport::VIEW_MODE_RINGKAS) {
             $periodeStr .= '-ringkas';
         }
+        if ($chat === 'dengan') {
+            $periodeStr .= '-DenganChat';
+        } elseif ($chat === 'tanpa') {
+            $periodeStr .= '-TanpaChat';
+        }
 
         $filename = ExportFilename::make('Rekap-Periodik', $periodeStr, 'xls');
 
         return response()
             ->view('rekap.periodik-excel', array_merge(
-                $this->payloadWithMode($year, $dari, $sampai, $tampilan),
-                $this->filterPayload($year, $dari, $sampai, $tampilan)
+                $this->payloadWithMode($year, $dari, $sampai, $tampilan, $chat),
+                $this->filterPayload($year, $dari, $sampai, $tampilan, $chat),
+                ['chatMode' => $chat]
             ))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 
-    private function payloadWithMode(int $year, int $dari, int $sampai, string $tampilan): array
+    private function payloadWithMode(int $year, int $dari, int $sampai, string $tampilan, string $chat): array
     {
-        $payload = $this->payload($year, $dari, $sampai);
+        $payload = $this->payload($year, $dari, $sampai, $chat);
         $extra = [
             'tampilan' => $tampilan,
+            'chat' => $chat,
             'penandaTangan' => RekapReport::signatory(),
         ];
 
@@ -99,16 +110,16 @@ class RekapPeriodikController extends Controller
         ]);
     }
 
-    private function payload(int $year, int $dari, int $sampai): array
+    private function payload(int $year, int $dari, int $sampai, string $chat): array
     {
         $currentYear = (int) now()->year;
         $ttl = ($year < $currentYear) ? RekapCache::TTL : 60;
-        $cacheKey = sprintf('periodik:%d:%d-%d', $year, $dari, $sampai);
+        $cacheKey = sprintf('periodik:%d:%d-%d:%s', $year, $dari, $sampai, $chat);
 
         return Cache::remember(
             RekapCache::key('periodik', $cacheKey),
             $ttl,
-            fn (): array => $this->buildReport($year, $dari, $sampai),
+            fn (): array => $this->buildReport($year, $dari, $sampai, $chat),
         );
     }
 
@@ -158,7 +169,7 @@ class RekapPeriodikController extends Controller
         return [$year, $dari, $sampai];
     }
 
-    private function filterPayload(int $selectedYear, int $selectedDari, int $selectedSampai, string $tampilan): array
+    private function filterPayload(int $selectedYear, int $selectedDari, int $selectedSampai, string $tampilan, string $chat): array
     {
         $years = RekapYears::get();
         $yearOptions = array_map(fn (string $y): array => [
@@ -193,13 +204,14 @@ class RekapPeriodikController extends Controller
             'monthOptions' => $months,
             'periodeLabel' => $periodeLabel,
             'tampilan' => $tampilan,
+            'chat' => $chat,
         ];
     }
 
-    private function buildReport(int $year, int $dari, int $sampai): array
+    private function buildReport(int $year, int $dari, int $sampai, string $chat): array
     {
         $periods = $this->periodsFor($year, $dari, $sampai);
-        $counts = RekapReport::countsByChannelPerPeriod($periods);
+        $counts = RekapReport::countsByChannelPerPeriodWithChat($periods, $chat);
 
         $rows = Channel::with('children')
             ->whereNull('parent_id')
@@ -227,6 +239,16 @@ class RekapPeriodikController extends Controller
             }
         }
 
+        $ticketsData = [];
+        if ($chat === 'dengan') {
+            $ticketsData = \App\Models\Ticket::with(['channel', 'responses.user', 'responses.attachments', 'attachments'])
+                ->whereIn('period', $periods)
+                ->whereHas('responses')
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->toArray();
+        }
+
         return [
             'rows' => $rows,
             'totals' => $totals,
@@ -234,6 +256,7 @@ class RekapPeriodikController extends Controller
                 'key' => $period,
                 'label' => self::MONTH_NAMES[(int) substr($period, 5, 2)],
             ], $periods),
+            'ticketsData' => $ticketsData,
         ];
     }
 

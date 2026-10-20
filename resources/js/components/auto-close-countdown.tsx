@@ -1,7 +1,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatFullDate } from '@/lib/laporan-masuk-utils';
 import { cn } from '@/lib/utils';
-import { Clock, TimerOff } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface AutoCloseCountdownProps {
@@ -11,10 +11,6 @@ interface AutoCloseCountdownProps {
 }
 
 export function AutoCloseCountdown({ autoCloseAt, serverNow, ticketStatus }: AutoCloseCountdownProps) {
-    if (ticketStatus === 'selesai' || !autoCloseAt) {
-        return null;
-    }
-
     const [timeLeft, setTimeLeft] = useState<{
         days: number;
         hours: number;
@@ -24,6 +20,7 @@ export function AutoCloseCountdown({ autoCloseAt, serverNow, ticketStatus }: Aut
     }>({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: false });
 
     useEffect(() => {
+        if (!autoCloseAt) return;
         const targetTime = new Date(autoCloseAt).getTime();
         // Hitung selisih waktu klien dan server saat load pertama
         const serverTime = new Date(serverNow).getTime();
@@ -51,6 +48,10 @@ export function AutoCloseCountdown({ autoCloseAt, serverNow, ticketStatus }: Aut
         const interval = setInterval(calculate, 1000);
         return () => clearInterval(interval);
     }, [autoCloseAt, serverNow]);
+
+    if (ticketStatus === 'selesai' || !autoCloseAt) {
+        return null;
+    }
 
     const formatString = () => {
         if (timeLeft.isExpired) {

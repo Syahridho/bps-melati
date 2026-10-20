@@ -32,7 +32,7 @@ class LaporanSelesaiController extends Controller
         $toInput = $request->query('to');
 
         // Whitelist filter / tab
-        $allowedFilters = ['semua', 'respon_awal', 'respon_substantif', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
+        $allowedFilters = ['semua', 'respon_awal', 'respon_substantif', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'ditandai', 'berkadar_pengawasan'];
         if (! in_array($filter, $allowedFilters, true)) {
             $filter = 'semua';
         }
@@ -108,6 +108,10 @@ class LaporanSelesaiController extends Controller
                     $query->where('classification', 'aspirasi');
                 } elseif ($filter === 'permintaan' || $filter === 'permintaan_informasi') {
                     $query->where('classification', 'permintaan_informasi');
+                } elseif ($filter === 'ditandai') {
+                    $query->whereHas('bookmarkedBy', fn ($q) => $q->where('users.id', auth()->id()));
+                } elseif ($filter === 'berkadar_pengawasan') {
+                    $query->where('is_berkadar_pengawasan', true);
                 }
             });
 
@@ -130,6 +134,7 @@ class LaporanSelesaiController extends Controller
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'closed_reason' => $ticket->closed_reason,
+                'berkadar_pengawasan' => $ticket->is_berkadar_pengawasan,
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
                 'created_at' => $ticket->created_at->toIso8601String(),
                 'updated_at' => $ticket->updated_at->toIso8601String(),
@@ -143,6 +148,14 @@ class LaporanSelesaiController extends Controller
                     ->whereDate('updated_at', '<=', $toInput);
             })
             ->tap($searchQueryClosure);
+
+        $ditandaiCount = (clone $countBaseQuery)
+            ->whereHas('bookmarkedBy', fn ($q) => $q->where('users.id', auth()->id()))
+            ->count();
+
+        $berkadarCount = (clone $countBaseQuery)
+            ->where('is_berkadar_pengawasan', true)
+            ->count();
 
         $countsData = (clone $countBaseQuery)
             ->selectRaw("
@@ -162,6 +175,8 @@ class LaporanSelesaiController extends Controller
             'pengaduan' => (int) ($countsData->pengaduan ?? 0),
             'aspirasi' => (int) ($countsData->aspirasi ?? 0),
             'permintaan' => (int) ($countsData->permintaan ?? 0),
+            'ditandai' => (int) $ditandaiCount,
+            'berkadar_pengawasan' => (int) $berkadarCount,
         ];
 
         return Inertia::render('admin/laporan-selesai', [

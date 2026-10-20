@@ -77,6 +77,11 @@ export function LaporanSelesaiTicketList({ tickets, isLoading, routePrefix }: La
                                         <CheckCircle2 className="size-3" />
                                         {statusLabel(ticket.status)}
                                     </Badge>
+                                    {ticket.berkadar_pengawasan && (
+                                        <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400">
+                                            Berkadar Pengawasan
+                                        </Badge>
+                                    )}
                                     <span className="text-muted-foreground text-[10px]">{ticket.channel}</span>
                                 </div>
                             </Link>

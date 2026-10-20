@@ -7,7 +7,7 @@ export default function AppLogo() {
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
                 {/* <span className="mb-0.5 truncate leading-none font-semibold">Melati</span> */}
-                <img src="/desc-melati.webp" alt="Logo BPS" className="h-[34px] w-[88px]" />
+                <img src="/desc-melati.webp" alt="Logo BPS" className="h-[50px] w-[100px]" />
             </div>
         </>
     );

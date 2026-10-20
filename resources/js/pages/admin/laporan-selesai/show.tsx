@@ -8,7 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Show() {
-    const { auth, ticket } = usePage<ShowProps>().props;
+    const { auth, ticket, server_now } = usePage<ShowProps>().props;
     const routePrefix = auth.user.role === 'admin' 
         ? 'dashboard.admin' 
         : auth.user.role === 'operator_tim' 
@@ -54,6 +54,7 @@ export default function Show() {
                 <LaporanMasukDetailCard
                     ticket={ticket}
                     ticketStatus={ticket.status}
+                    serverNow={server_now ?? new Date().toISOString()}
                     canEdit={false}
                     canDelete={false}
                     routePrefix={routePrefix}

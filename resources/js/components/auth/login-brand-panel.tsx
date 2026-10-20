@@ -7,7 +7,7 @@ export function LoginBrandPanel() {
 
                 {/* Logo teks di bawahnya dengan absolute yang terukur */}
                 <img
-                    src="/desc-melati.webp"
+                    src="/desc-melati2.webp"
                     alt="Logo Desc"
                     className="absolute -bottom-20 h-28 w-auto object-contain drop-shadow-md dark:brightness-90"
                 />

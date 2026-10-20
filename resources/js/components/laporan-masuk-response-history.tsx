@@ -45,8 +45,6 @@ export function LaporanMasukResponseHistory({
     conflict,
     canResend = false,
     reporterEmail,
-    isBerkadarPengawasan = false,
-    autoCloseDays,
     onDismissConflict,
     onToggleReply,
     onCancelReply,

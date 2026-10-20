@@ -10,6 +10,8 @@ import { AlertTriangle, Paperclip, RefreshCw, TimerOff } from 'lucide-react';
 
 interface ResponseItemProps {
     response: TicketResponseItem;
+    routePrefix?: string;
+    canResend?: boolean;
     onPreviewAttachment: (attachment: Attachment, list?: Attachment[]) => void;
     resendUrl?: string;
     reporterEmail?: string;
