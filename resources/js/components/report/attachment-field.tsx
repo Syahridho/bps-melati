@@ -47,7 +47,7 @@ export function AttachmentField({
                 type="file"
                 className="hidden"
                 multiple
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.zip"
+                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={onFileChange}
             />
 

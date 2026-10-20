@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Rekap\RekapPeriodikController;
 use App\Http\Controllers\Admin\SetTicketBerkadarPengawasan;
 use App\Http\Controllers\Admin\TicketBookmarkController;
 use App\Http\Controllers\Admin\TicketResponseController;
+use App\Http\Controllers\AttachmentShareController;
 use App\Http\Controllers\CheckAttachmentDownloadController;
 use App\Http\Controllers\CheckTicketController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
@@ -24,6 +25,7 @@ Route::post('/tickets', [TicketController::class, 'store'])->middleware('throttl
 Route::get('/check', CheckTicketController::class)->middleware('throttle:ticket-check')->name('tickets.check');
 Route::post('/check/{ticketNumber}/reply', [CheckTicketController::class, 'reply'])->middleware('throttle:ticket-reply')->name('tickets.check.reply')->where('ticketNumber', '.*');
 Route::post('/check/{ticketNumber}/complete', [CheckTicketController::class, 'complete'])->middleware('throttle:ticket-reply')->name('tickets.check.complete')->where('ticketNumber', '.*');
+Route::get('/lampiran/share/{token}', AttachmentShareController::class)->middleware('throttle:60,1')->name('lampiran.share');
 Route::get('/check/lampiran/{type}/{id}', CheckAttachmentDownloadController::class)->middleware(['signed', 'throttle:30,1'])->whereIn('type', ['ticket', 'response'])->whereNumber('id')->name('check.attachments.download');
 
 Route::middleware(['auth'])->group(function () {

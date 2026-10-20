@@ -246,7 +246,35 @@ class RekapPeriodikController extends Controller
                 ->whereHas('responses')
                 ->orderBy('created_at', 'asc')
                 ->get()
-                ->toArray();
+                ->map(function ($ticket) {
+                    $arr = $ticket->toArray();
+                    $arr['attachments'] = $ticket->attachments->map(function ($att) {
+                        return [
+                            'id' => $att->id,
+                            'original_name' => $att->original_name,
+                            'mime_type' => $att->mime_type,
+                            'size' => $att->size,
+                            'url' => route('lampiran.share', $att->getShareToken()),
+                        ];
+                    })->all();
+
+                    $arr['responses'] = $ticket->responses->map(function ($resp) {
+                        $respArr = $resp->toArray();
+                        $respArr['attachments'] = $resp->attachments->map(function ($att) {
+                            return [
+                                'id' => $att->id,
+                                'original_name' => $att->original_name,
+                                'mime_type' => $att->mime_type,
+                                'size' => $att->size,
+                                'url' => route('lampiran.share', $att->getShareToken()),
+                            ];
+                        })->all();
+                        return $respArr;
+                    })->all();
+
+                    return $arr;
+                })
+                ->all();
         }
 
         return [
