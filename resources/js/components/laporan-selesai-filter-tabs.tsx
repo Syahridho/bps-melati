@@ -10,8 +10,6 @@ interface LaporanSelesaiFilterTabsProps {
 export function LaporanSelesaiFilterTabs({ currentFilter, counts, onFilterChange }: LaporanSelesaiFilterTabsProps) {
     const filterTabs: { key: FilterTab; label: string; count?: number }[] = [
         { key: 'semua', label: 'Semua', count: counts.semua },
-        { key: 'respon_awal', label: 'Respon Awal', count: counts.respon_awal },
-        { key: 'respon_substantif', label: 'Respon Substantif', count: counts.respon_substantif },
         { key: 'pengaduan', label: 'Pengaduan', count: counts.pengaduan },
         { key: 'aspirasi', label: 'Aspirasi', count: counts.aspirasi },
         { key: 'permintaan', label: 'Permintaan Info', count: counts.permintaan },

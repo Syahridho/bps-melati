@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Events\TicketCreated;
 use App\Http\Requests\StoreTicketRequest;
+use App\Mail\TicketCreatedMail;
 use App\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 
 class TicketController extends Controller
 {
@@ -69,6 +71,10 @@ class TicketController extends Controller
 
         // Dispatch event real-time broadcasting ke admin
         TicketCreated::dispatch($ticket);
+
+        if (! blank($ticket->reporter_email)) {
+            Mail::to($ticket->reporter_email)->queue(new TicketCreatedMail($ticket));
+        }
 
         return redirect()->back()->with([
             'ticket_number' => $ticket->ticket_number,

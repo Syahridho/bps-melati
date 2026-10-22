@@ -7,6 +7,7 @@ use App\Events\TicketCreated;
 use App\Events\TicketUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTicketRequest;
+use App\Mail\TicketCreatedMail;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
@@ -14,6 +15,7 @@ use App\Support\SafeBroadcast;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -121,6 +123,10 @@ class TicketApiController extends Controller
 
         Cache::forget('dashboard:admin:version');
         TicketCreated::dispatch($ticket);
+
+        if (! blank($ticket->reporter_email)) {
+            Mail::to($ticket->reporter_email)->queue(new TicketCreatedMail($ticket));
+        }
 
         return response()->json([
             'success' => true,

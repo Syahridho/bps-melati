@@ -18,7 +18,7 @@ class LaporanSelesaiController extends Controller
      *
      * @var array<int, string>
      */
-    private const COMPLETED_STATUSES = ['respon_awal', 'respon_substantif', 'selesai'];
+    private const COMPLETED_STATUSES = ['selesai'];
 
     /**
      * Daftar laporan selesai dengan paginasi, pencarian, dan rentang tanggal (Date Range).
@@ -32,7 +32,7 @@ class LaporanSelesaiController extends Controller
         $toInput = $request->query('to');
 
         // Whitelist filter / tab
-        $allowedFilters = ['semua', 'respon_awal', 'respon_substantif', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
+        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
         if (! in_array($filter, $allowedFilters, true)) {
             $filter = 'semua';
         }
@@ -98,11 +98,7 @@ class LaporanSelesaiController extends Controller
             })
             ->tap($searchQueryClosure)
             ->when($filter !== 'semua', function ($query) use ($filter) {
-                if ($filter === 'respon_awal') {
-                    $query->where('status', 'respon_awal');
-                } elseif ($filter === 'respon_substantif') {
-                    $query->where('status', 'respon_substantif');
-                } elseif ($filter === 'pengaduan') {
+                if ($filter === 'pengaduan') {
                     $query->where('classification', 'pengaduan');
                 } elseif ($filter === 'aspirasi') {
                     $query->where('classification', 'aspirasi');
@@ -147,8 +143,6 @@ class LaporanSelesaiController extends Controller
         $countsData = (clone $countBaseQuery)
             ->selectRaw("
                 COUNT(*) as semua,
-                SUM(CASE WHEN status = 'respon_awal' THEN 1 ELSE 0 END) as respon_awal,
-                SUM(CASE WHEN status = 'respon_substantif' THEN 1 ELSE 0 END) as respon_substantif,
                 SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
                 SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
                 SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan
@@ -157,8 +151,6 @@ class LaporanSelesaiController extends Controller
 
         $counts = [
             'semua' => (int) ($countsData->semua ?? 0),
-            'respon_awal' => (int) ($countsData->respon_awal ?? 0),
-            'respon_substantif' => (int) ($countsData->respon_substantif ?? 0),
             'pengaduan' => (int) ($countsData->pengaduan ?? 0),
             'aspirasi' => (int) ($countsData->aspirasi ?? 0),
             'permintaan' => (int) ($countsData->permintaan ?? 0),

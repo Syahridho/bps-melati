@@ -3,7 +3,7 @@ import { type SharedData } from '@/types';
 
 export type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 export type Status = 'respon_awal' | 'respon_substantif' | 'selesai';
-export type FilterTab = 'semua' | 'respon_awal' | 'respon_substantif' | 'pengaduan' | 'aspirasi' | 'permintaan';
+export type FilterTab = 'semua' | 'pengaduan' | 'aspirasi' | 'permintaan';
 export type ClosedReason = 'reporter' | 'staff' | 'auto_close';
 
 export interface Attachment {
@@ -52,8 +52,6 @@ export interface LaporanSelesaiProps extends SharedData {
     };
     counts: {
         semua: number;
-        respon_awal: number;
-        respon_substantif: number;
         pengaduan: number;
         aspirasi: number;
         permintaan: number;

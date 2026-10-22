@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTicketRequest;
+use App\Mail\TicketCreatedMail;
 use App\Mail\TicketResponseSubmitted;
 use App\Models\Channel;
 use App\Models\Ticket;
@@ -280,10 +281,20 @@ class InputDataController extends Controller
                 try {
                     Mail::to($ticket->reporter_email)
                         ->send(new TicketResponseSubmitted($ticket, $response->load('attachments')));
-                    $response->update(['email_sent_at' => now()]);
+                    $response->update([
+                        'email_sent_at' => now(),
+                        'email_status' => 'sent',
+                    ]);
                 } catch (\Throwable $e) {
                     Log::error("Gagal mengirim email tanggapan: {$e->getMessage()}");
+                    $response->update([
+                        'email_status' => 'failed',
+                        'email_failed_at' => now(),
+                        'email_error' => \Illuminate\Support\Str::limit($e->getMessage(), 500),
+                    ]);
                 }
+            } else {
+                $response->update(['email_status' => 'skipped']);
             }
         }
 
@@ -299,6 +310,14 @@ class InputDataController extends Controller
             'status' => $ticket->status,
             'created_at' => $ticket->created_at->toIso8601String(),
         ], now()->addHours(24));
+
+        if (! empty($ticket->reporter_email) && empty($validated['response_message'])) {
+            try {
+                Mail::to($ticket->reporter_email)->queue(new TicketCreatedMail($ticket));
+            } catch (\Throwable $e) {
+                Log::error("Gagal mengirim email konfirmasi pembuatan tiket: {$e->getMessage()}");
+            }
+        }
 
         return redirect()->back()->with('flash', [
             'ticket_number' => $ticket->ticket_number,
