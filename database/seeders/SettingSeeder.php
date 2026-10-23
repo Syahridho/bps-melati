@@ -16,6 +16,7 @@ class SettingSeeder extends Seeder
             ['key' => 'auto_close_pengaduan_days', 'value' => '3'],
             ['key' => 'auto_close_aspirasi_days', 'value' => '1'],
             ['key' => 'auto_close_permintaan_informasi_days', 'value' => '5'],
+            ['key' => 'kadar_pengawasan_hari', 'value' => '30'],
         ];
 
         foreach ($settings as $setting) {

@@ -9,6 +9,7 @@ import { TicketSuccessDialog } from '@/components/ticket-success-dialog';
 import { WelcomeAttachmentPreviewDialog } from '@/components/welcome-attachment-preview-dialog';
 import { WelcomeHeader } from '@/components/welcome-header';
 import { WelcomeHero } from '@/components/welcome-hero';
+import { Toaster } from '@/components/ui/toaster';
 import { useSuccessDialog } from '@/hooks/use-success-dialog';
 import { useTicketHistory } from '@/hooks/use-ticket-history';
 import { useWelcomeForm } from '@/hooks/use-welcome-form';
@@ -109,7 +110,9 @@ export default function Welcome() {
 
             <DeleteTicketDialog ticket={ticketToDelete} onConfirm={handleDeleteTicket} onCancel={() => setTicketToDelete(null)} />
 
-            <FloatingServiceLinks />
+            {/* <FloatingServiceLinks /> */}
+
+            <Toaster position="bottom-right" richColors />
         </>
     );
 }

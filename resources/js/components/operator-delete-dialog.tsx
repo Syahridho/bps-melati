@@ -20,7 +20,7 @@ export function OperatorDeleteDialog({ operator, onClose, onConfirm }: OperatorD
                     </DialogTitle>
                     <DialogDescription>
                         Apakah Anda yakin ingin menghapus pengguna <strong className="text-foreground">{operator?.name}</strong> ({operator?.email})?
-                        Tindakan ini tidak dapat dibatalkan.
+                        Akun akan dinonaktifkan, dan data yang pernah dibuat atau ditangani tetap tersimpan dalam sistem.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="mt-4">

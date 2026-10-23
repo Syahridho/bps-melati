@@ -186,7 +186,25 @@ export function AppSidebar() {
         },
     ];
 
-    const mainNavItems = auth.user.role === 'admin' ? adminNavItems : operatorNavItems;
+    const operatorTimNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            url: '/dashboard/operator',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Input Data',
+            url: '/dashboard/operator/input-data',
+            icon: FilePlus2,
+        },
+    ];
+
+    const mainNavItems =
+        auth.user.role === 'admin'
+            ? adminNavItems
+            : auth.user.role === 'operator_tim'
+              ? operatorTimNavItems
+              : operatorNavItems;
 
     return (
         <Sidebar collapsible="icon" variant="inset">

@@ -102,14 +102,12 @@ class AuthenticateUser
 
     private function verifyCredentials(string $email, string $password): User
     {
-        $provider = Auth::guard('web')->getProvider();
-
-        $user = $provider->retrieveByCredentials(['email' => $email]);
+        $user = User::where('email', $email)->whereNull('deleted_at')->first();
 
         // Selalu jalankan Hash::check, baik user ditemukan maupun tidak, supaya
         // lama proses tidak menjadi side channel.
         $valid = $user !== null
-            ? $provider->validateCredentials($user, ['password' => $password])
+            ? Hash::check($password, $user->password)
             : Hash::check($password, self::DUMMY_HASH);
 
         if ($user === null || ! $valid) {

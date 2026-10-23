@@ -53,6 +53,21 @@ export function PengaturanAutoCloseFields({ data, setData, errors }: PengaturanA
                     error={errors.auto_close_permintaan_informasi_days}
                 />
             </div>
+
+            <div className="max-w-xs">
+                <PengaturanFormField
+                    id="kadar_pengawasan_hari"
+                    label="Kadar Pengawasan (Hari)"
+                    type="number"
+                    min={0}
+                    max={365}
+                    required
+                    value={data.kadar_pengawasan_hari}
+                    onChange={(value) => setData('kadar_pengawasan_hari', value)}
+                    error={errors.kadar_pengawasan_hari}
+                    hint="Jumlah hari sebagai batas kadar pengawasan tiket. Default 30 hari."
+                />
+            </div>
         </div>
     );
 }

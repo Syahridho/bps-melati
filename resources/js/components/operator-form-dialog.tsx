@@ -57,6 +57,7 @@ export function OperatorFormDialog({ open, onOpenChange, mode, data, setData, er
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="operator">Operator</SelectItem>
+                                <SelectItem value="operator_tim">Operator Tim</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
                             </SelectContent>
                         </Select>

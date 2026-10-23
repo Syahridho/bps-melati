@@ -36,7 +36,7 @@ export interface TicketResponseItem {
 export interface PresenceMember {
     id: number;
     name: string;
-    role: 'admin' | 'operator';
+    role: 'admin' | 'operator' | 'operator_tim';
 }
 
 /** Client event (whisper) "sedang mengetik balasan". */

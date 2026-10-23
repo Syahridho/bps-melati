@@ -64,11 +64,14 @@ Route::middleware(['auth'])->group(function () {
         Route::post('operator/{operator}/force-logout', [OperatorController::class, 'forceLogout'])->name('operator.force-logout');
     });
 
-    Route::middleware('role:operator')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
+    Route::middleware('role:operator,operator_tim')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
         Route::get('/', OperatorDashboardController::class)->name('index');
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
         Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');
+    });
+
+    Route::middleware('role:operator')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
         Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');

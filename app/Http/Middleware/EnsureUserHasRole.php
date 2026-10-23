@@ -22,9 +22,19 @@ class EnsureUserHasRole
             abort(403);
         }
 
+        $flatRoles = [];
+        foreach ($roles as $roleArg) {
+            foreach (explode(',', $roleArg) as $r) {
+                $trimmed = trim($r);
+                if ($trimmed !== '') {
+                    $flatRoles[] = $trimmed;
+                }
+            }
+        }
+
         $allowedRoles = array_map(
             fn (string $role): string => UserRole::tryFrom($role)?->value ?? $role,
-            $roles
+            $flatRoles
         );
 
         if (! in_array($user->role->value, $allowedRoles, true)) {

@@ -69,8 +69,8 @@ class OperatorController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:admin,operator'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', 'in:admin,operator,operator_tim'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->whereNull('deleted_at')],
             'password' => ['required', 'string', 'min:8'],
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
@@ -92,7 +92,7 @@ class OperatorController extends Controller
 
         self::clearCache();
 
-        $roleLabel = ucfirst($validated['role']);
+        $roleLabel = str_replace('_', ' ', ucfirst($validated['role']));
 
         return redirect()->back()->with('flash', [
             'success' => "{$roleLabel} {$validated['name']} berhasil ditambahkan!",
@@ -108,8 +108,8 @@ class OperatorController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:admin,operator'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($operator->id)],
+            'role' => ['required', 'in:admin,operator,operator_tim'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->whereNull('deleted_at')->ignore($operator->id)],
             'is_active' => ['nullable', 'boolean'],
             'password' => ['nullable', 'string', 'min:8'],
         ], [
@@ -175,6 +175,12 @@ class OperatorController extends Controller
         if ($operator->id === auth()->id()) {
             return redirect()->back()->withErrors([
                 'error' => 'Anda tidak dapat menghapus akun Anda sendiri.',
+            ]);
+        }
+
+        if ($operator->isAdmin() && User::where('role', 'admin')->count() <= 1) {
+            return redirect()->back()->withErrors([
+                'error' => 'Sistem harus menyisakan setidaknya satu akun admin.',
             ]);
         }
 

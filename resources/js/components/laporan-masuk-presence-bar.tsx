@@ -5,6 +5,7 @@ const MAX_AVATARS = 3;
 const ROLE_LABEL: Record<PresenceMember['role'], string> = {
     admin: 'Admin',
     operator: 'Operator',
+    operator_tim: 'Operator Tim',
 };
 
 interface PresenceBarProps {

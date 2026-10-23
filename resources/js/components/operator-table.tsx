@@ -90,8 +90,17 @@ export function OperatorTable({
                                         <TableCell className="text-foreground font-semibold">{op.name}</TableCell>
                                         <TableCell>{op.email}</TableCell>
                                         <TableCell>
-                                            <Badge variant={op.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
-                                                {op.role}
+                                            <Badge
+                                                variant={
+                                                    op.role === 'admin'
+                                                        ? 'default'
+                                                        : op.role === 'operator_tim'
+                                                          ? 'outline'
+                                                          : 'secondary'
+                                                }
+                                                className="capitalize"
+                                            >
+                                                {op.role === 'operator_tim' ? 'Operator Tim' : op.role}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
