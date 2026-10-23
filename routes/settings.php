@@ -19,8 +19,6 @@ Route::middleware('auth')->group(function () {
     })->name('appearance');
 });
 
-// Pengaturan aplikasi hanya untuk admin: middleware role:admin berada di sini,
-// bukan di dalam grup auth di atas, sehingga operator tetap mendapat 403.
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('settings/application', [SettingController::class, 'index'])->name('settings.application.edit');
     Route::post('settings/application', [SettingController::class, 'update'])->name('settings.application.update');
