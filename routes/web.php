@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Rekap\RekapBulananController;
 use App\Http\Controllers\Admin\Rekap\RekapSemesteranController;
 use App\Http\Controllers\Admin\Rekap\RekapTahunanController;
 use App\Http\Controllers\Admin\TicketResponseController;
+use App\Http\Controllers\Admin\TicketPengawasanController;
 use App\Http\Controllers\CheckAttachmentDownloadController;
 use App\Http\Controllers\CheckTicketController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
@@ -44,6 +45,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('laporan-masuk.responses.store');
         Route::post('laporan-masuk/{ticket}/responses/{response}/resend', [TicketResponseController::class, 'resend'])
             ->name('laporan-masuk.responses.resend');
+        Route::patch('laporan-masuk/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('laporan-masuk.pengawasan')->where('ticketNumber', '.*');
         Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
         Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
@@ -79,6 +81,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])
             ->middleware('throttle:ticket-response')
             ->name('laporan-masuk.responses.store');
+        Route::patch('laporan-masuk/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('laporan-masuk.pengawasan')->where('ticketNumber', '.*');
         Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
         Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');

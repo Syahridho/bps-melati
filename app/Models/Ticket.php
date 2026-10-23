@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Actions\AutoCloseTickets;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 
 class Ticket extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'ticket_number',
         'period',
@@ -33,13 +35,18 @@ class Ticket extends Model
         'completed_at',
         'closed_reason',
         'last_staff_response_at',
+        'is_pengawasan',
+        'pengawasan_at',
+        'pengawasan_by',
     ];
 
     protected function casts(): array
     {
         return [
             'is_read' => 'boolean',
+            'is_pengawasan' => 'boolean',
             'completed_at' => 'datetime',
+            'pengawasan_at' => 'datetime',
             'last_staff_response_at' => 'datetime',
             'sequence' => 'integer',
             'version' => 'integer',
@@ -54,6 +61,11 @@ class Ticket extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by')->withTrashed();
+    }
+
+    public function pengawasanBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pengawasan_by')->withTrashed();
     }
 
     public function attachments(): HasMany

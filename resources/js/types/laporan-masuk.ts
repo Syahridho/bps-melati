@@ -152,6 +152,11 @@ export interface TicketDetail {
     created_by_name: string | null;
     completed_at: string | null;
     closed_reason: ClosedReason | null;
+    is_pengawasan: boolean;
+    pengawasan_at: string | null;
+    pengawasan_by_name: string | null;
+    kadar_pengawasan_days: number;
+    classification_default_days: number;
     auto_close_at: string | null;
     created_at: string;
     updated_at: string;

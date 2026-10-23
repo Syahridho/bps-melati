@@ -55,13 +55,56 @@ class AutoCloseTickets
      */
     public function handle(?int $limit = null, bool $dryRun = false): AutoCloseResult
     {
+        $result = AutoCloseResult::empty();
+        $stopped = false;
+
+        // 1. Process pengawasan tickets
+        $pengawasanRaw = trim((string) Setting::get('kadar_pengawasan_hari', '30'));
+        if ($pengawasanRaw !== '' && ctype_digit($pengawasanRaw) && (int) $pengawasanRaw > 0) {
+            $pengawasanDays = (int) $pengawasanRaw;
+            $this->pengawasanCandidateQuery($pengawasanDays)->chunkById(
+                200,
+                function ($tickets) use ($result, $limit, $dryRun, $pengawasanDays, &$stopped): bool {
+                    foreach ($tickets as $ticket) {
+                        if ($limit !== null && $result->total() >= $limit) {
+                            $stopped = true;
+
+                            return false;
+                        }
+
+                        $result->consider($ticket);
+
+                        if ($dryRun) {
+                            continue;
+                        }
+
+                        try {
+                            if ($this->closeOne((int) $ticket->id, $pengawasanDays)) {
+                                $result->markClosed((int) $ticket->id);
+                            }
+                        } catch (Throwable $e) {
+                            report($e);
+
+                            Log::error('Gagal memproses kandidat auto close pengawasan.', [
+                                'ticket_id' => $ticket->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+
+                    return true;
+                }
+            );
+
+            if ($stopped) {
+                return $result;
+            }
+        }
+
+        // 2. Process regular tickets by classification windows
         $windows = $this->resolveWindows();
 
-        $result = AutoCloseResult::empty();
-
         foreach ($windows as $classification => $days) {
-            $stopped = false;
-
             $this->candidateQuery($classification, $days)->chunkById(
                 200,
                 function ($tickets) use ($result, $limit, $dryRun, $days, &$stopped): bool {
@@ -153,6 +196,23 @@ class AutoCloseTickets
     {
         return Ticket::query()
             ->where('classification', $classification)
+            ->where('is_pengawasan', false)
+            ->whereIn('status', self::CANDIDATE_STATUSES)
+            ->whereNotNull('last_staff_response_at')
+            ->where('last_staff_response_at', '<=', now()->subDays($days))
+            ->whereDoesntHave('responses', function ($query): void {
+                $query->where('is_system', false)
+                    ->whereNull('user_id')
+                    ->whereRaw(
+                        'COALESCE(ticket_responses.sent_at, ticket_responses.created_at) >= tickets.last_staff_response_at'
+                    );
+            });
+    }
+
+    public function pengawasanCandidateQuery(int $days): Builder
+    {
+        return Ticket::query()
+            ->where('is_pengawasan', true)
             ->whereIn('status', self::CANDIDATE_STATUSES)
             ->whereNotNull('last_staff_response_at')
             ->where('last_staff_response_at', '<=', now()->subDays($days))
@@ -261,7 +321,15 @@ class AutoCloseTickets
             return null;
         }
 
-        $days = self::windows()[$ticket->classification] ?? null;
+        $days = null;
+        if ($ticket->is_pengawasan) {
+            $raw = trim((string) Setting::get('kadar_pengawasan_hari', '30'));
+            if ($raw !== '' && ctype_digit($raw) && (int) $raw > 0) {
+                $days = (int) $raw;
+            }
+        } else {
+            $days = self::windows()[$ticket->classification] ?? null;
+        }
 
         if ($days === null) {
             return null;

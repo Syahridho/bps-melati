@@ -3,11 +3,21 @@ import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk-delete-dial
 import { LaporanMasukDetailCard } from '@/components/laporan-masuk-detail-card';
 import { LaporanMasukEditDialog } from '@/components/laporan-masuk-edit-dialog';
 import { LaporanMasukResponseHistory } from '@/components/laporan-masuk-response-history';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
 import AdminPage from '@/pages/admin/page';
 import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketResponseItem } from '@/types/laporan-masuk';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
@@ -36,6 +46,45 @@ export default function Show() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isPengawasanModalOpen, setIsPengawasanModalOpen] = useState(false);
+    const [pendingPengawasanValue, setPendingPengawasanValue] = useState<boolean | null>(null);
+    const [isProcessingPengawasan, setIsProcessingPengawasan] = useState(false);
+
+    const handleTogglePengawasanAttempt = (aktif: boolean) => {
+        setPendingPengawasanValue(aktif);
+        setIsPengawasanModalOpen(true);
+    };
+
+    const handleConfirmPengawasan = () => {
+        if (pendingPengawasanValue === null) {
+            return;
+        }
+        setIsProcessingPengawasan(true);
+        router.patch(
+            route(`${routePrefix}.laporan-masuk.pengawasan`, { ticketNumber: ticket.ticket_number }),
+            { aktif: pendingPengawasanValue },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsPengawasanModalOpen(false);
+                    toast.success(pendingPengawasanValue ? 'Kadar pengawasan berhasil diaktifkan' : 'Kadar pengawasan berhasil dinonaktifkan', {
+                        position: 'bottom-right',
+                    });
+                },
+                onError: (errs) => {
+                    const firstError = Object.values(errs)[0];
+                    toast.error('Gagal mengubah kadar pengawasan', {
+                        description: typeof firstError === 'string' ? firstError : 'Terjadi kesalahan.',
+                        position: 'bottom-right',
+                    });
+                },
+                onFinish: () => {
+                    setIsProcessingPengawasan(false);
+                    setPendingPengawasanValue(null);
+                },
+            },
+        );
+    };
 
     const editForm = useForm({
         reporter_name: ticket.reporter_name ?? '',
@@ -251,6 +300,8 @@ export default function Show() {
                     onEdit={() => setIsEditOpen(true)}
                     onDelete={() => setIsDeleteOpen(true)}
                     onPreviewAttachment={handlePreviewAttachment}
+                    onTogglePengawasan={handleTogglePengawasanAttempt}
+                    processingPengawasan={isProcessingPengawasan}
                 />
 
                 <LaporanMasukResponseHistory
@@ -300,6 +351,28 @@ export default function Show() {
                     onConfirm={handleDeleteSubmit}
                 />
             )}
+
+            <AlertDialog open={isPengawasanModalOpen} onOpenChange={setIsPengawasanModalOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <ShieldAlert className="size-5 text-amber-500" />
+                            {pendingPengawasanValue ? 'Aktifkan Kadar Pengawasan?' : 'Nonaktifkan Kadar Pengawasan?'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {pendingPengawasanValue
+                                ? `Batas auto close tiket ${ticket.ticket_number} akan diubah dari ${ticket.classification_default_days} hari menjadi ${ticket.kadar_pengawasan_days} hari.`
+                                : `Batas auto close tiket ${ticket.ticket_number} akan dikembalikan dari ${ticket.kadar_pengawasan_days} hari menjadi batas default klasifikasi (${ticket.classification_default_days} hari).`}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isProcessingPengawasan}>Batal</AlertDialogCancel>
+                        <AlertDialogAction disabled={isProcessingPengawasan} onClick={handleConfirmPengawasan}>
+                            {isProcessingPengawasan ? 'Memproses...' : pendingPengawasanValue ? 'Ya, Aktifkan' : 'Ya, Nonaktifkan'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <AttachmentPreviewDialog
                 item={previewItem}
