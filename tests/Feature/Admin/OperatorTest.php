@@ -89,7 +89,7 @@ test('admin can delete an operator or user', function () {
         ->delete(route('dashboard.admin.operator.destroy', $operator))
         ->assertRedirect();
 
-    $this->assertDatabaseMissing('users', [
+    $this->assertSoftDeleted('users', [
         'id' => $operator->id,
     ]);
 });
