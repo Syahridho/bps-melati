@@ -6,7 +6,7 @@ export type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 export type ResponseType = 'respon_awal' | 'respon_substantif' | 'balasan_pelapor';
 export type RealtimeStatus = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 export type ClosedReason = 'reporter' | 'staff' | 'auto_close';
-export type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif';
+export type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif' | 'berkadar_pengawasan';
 
 export interface Attachment {
     id: number;
@@ -102,6 +102,7 @@ export interface InboxTicketItem {
     reporter_wa: string | null;
     content: string;
     status: Status;
+    is_pengawasan?: boolean;
     version: number;
     is_read: boolean;
     source_app: string;
@@ -127,6 +128,7 @@ export interface LaporanMasukProps extends SharedData {
         permintaan: number;
         respon_awal: number;
         respon_substantif: number;
+        berkadar_pengawasan: number;
     };
     inbox_open_count: number;
 }

@@ -4,7 +4,7 @@ import { classificationLabel, classificationVariant, formatDate, statusLabel } f
 import { cn } from '@/lib/utils';
 import { type InboxTicketItem } from '@/types/laporan-masuk';
 import { Link } from '@inertiajs/react';
-import { CheckCircle2, Inbox } from 'lucide-react';
+import { CheckCircle2, Inbox, ShieldAlert } from 'lucide-react';
 
 interface LaporanMasukTicketListProps {
     tickets: PaginatedData<InboxTicketItem>;
@@ -68,6 +68,15 @@ export function LaporanMasukTicketList({ tickets, isLoading, routePrefix, recent
                                     <Badge variant={classificationVariant(ticket.classification)} className="text-[10px]">
                                         {classificationLabel(ticket.classification)}
                                     </Badge>
+                                    {ticket.is_pengawasan && (
+                                        <Badge
+                                            variant="outline"
+                                            className="gap-1 border-amber-500/40 bg-amber-500/10 text-[10px] text-amber-700 dark:text-amber-400"
+                                        >
+                                            <ShieldAlert className="size-3" />
+                                            Pengawasan
+                                        </Badge>
+                                    )}
                                     {ticket.status === 'selesai' ? (
                                         <Badge
                                             variant="outline"

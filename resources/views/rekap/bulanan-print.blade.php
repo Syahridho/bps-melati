@@ -38,7 +38,7 @@
             </tr>
             <tr>
                 <th>Layanan PST</th>
-                <th>Layanan Lainnya</th>
+                <th>Layanan NonPST</th>
             </tr>
         </thead>
 
@@ -92,7 +92,7 @@
     </table>
 
     <div class="keterangan">
-        Keterangan: PST = Pengaduan Layanan PST, Lainnya = Pengaduan Layanan Lainnya, Aspirasi = Aspirasi, Permintaan Informasi = Permintaan Informasi.
+        Keterangan: PST = Pengaduan Layanan PST, NonPST = Pengaduan Layanan NonPST, Aspirasi = Aspirasi, Permintaan Informasi = Permintaan Informasi.
     </div>
 
     @isset($penandaTangan)

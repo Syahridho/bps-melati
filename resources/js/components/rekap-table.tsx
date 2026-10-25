@@ -50,7 +50,7 @@ export function RekapTable({ rows, totals, periodLabel }: RekapTableProps) {
                     </TableRow>
                     <TableRow className="hover:bg-transparent">
                         <TableHead className="text-muted-foreground py-1 text-center text-xs font-normal whitespace-nowrap">PST</TableHead>
-                        <TableHead className="text-muted-foreground border-r py-1 text-center text-xs font-normal whitespace-nowrap">Lainnya</TableHead>
+                        <TableHead className="text-muted-foreground border-r py-1 text-center text-xs font-normal whitespace-nowrap">NonPST</TableHead>
                     </TableRow>
                 </TableHeader>
 

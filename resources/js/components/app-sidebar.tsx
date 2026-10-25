@@ -119,12 +119,8 @@ export function AppSidebar() {
                     url: '/dashboard/admin/rekap-bulanan',
                 },
                 {
-                    title: 'Rekap Semesteran',
-                    url: '/dashboard/admin/rekap-semesteran',
-                },
-                {
-                    title: 'Rekap Tahunan',
-                    url: '/dashboard/admin/rekap-tahunan',
+                    title: 'Rekap Periodik',
+                    url: '/dashboard/admin/rekap-periodik',
                 },
             ],
         },
@@ -175,12 +171,8 @@ export function AppSidebar() {
                     url: '/dashboard/operator/rekap-bulanan',
                 },
                 {
-                    title: 'Rekap Semesteran',
-                    url: '/dashboard/operator/rekap-semesteran',
-                },
-                {
-                    title: 'Rekap Tahunan',
-                    url: '/dashboard/operator/rekap-tahunan',
+                    title: 'Rekap Periodik',
+                    url: '/dashboard/operator/rekap-periodik',
                 },
             ],
         },

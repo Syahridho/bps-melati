@@ -44,7 +44,7 @@ export function ReportForm({
     };
 
     return (
-        <form onSubmit={handleFormSubmit} className="mx-auto w-full max-w-2xl min-w-0">
+        <form onSubmit={handleFormSubmit} autoComplete="off" className="mx-auto w-full max-w-2xl min-w-0">
             <Card className="shadow-xs">
                 <CardHeader>
                     <CardTitle>Formulir Laporan</CardTitle>

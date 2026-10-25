@@ -6,8 +6,7 @@ use App\Http\Controllers\Admin\LaporanMasukController;
 use App\Http\Controllers\Admin\LaporanSelesaiController;
 use App\Http\Controllers\Admin\OperatorController;
 use App\Http\Controllers\Admin\Rekap\RekapBulananController;
-use App\Http\Controllers\Admin\Rekap\RekapSemesteranController;
-use App\Http\Controllers\Admin\Rekap\RekapTahunanController;
+use App\Http\Controllers\Admin\Rekap\RekapPeriodikController;
 use App\Http\Controllers\Admin\TicketResponseController;
 use App\Http\Controllers\Admin\TicketPengawasanController;
 use App\Http\Controllers\CheckAttachmentDownloadController;
@@ -51,12 +50,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
         Route::get('rekap-bulanan/print', [RekapBulananController::class, 'print'])->name('rekap-bulanan.print');
         Route::get('rekap-bulanan/excel', [RekapBulananController::class, 'excel'])->name('rekap-bulanan.excel');
-        Route::get('rekap-semesteran', RekapSemesteranController::class)->name('rekap-semesteran.index');
-        Route::get('rekap-semesteran/print', [RekapSemesteranController::class, 'print'])->name('rekap-semesteran.print');
-        Route::get('rekap-semesteran/excel', [RekapSemesteranController::class, 'excel'])->name('rekap-semesteran.excel');
-        Route::get('rekap-tahunan', RekapTahunanController::class)->name('rekap-tahunan.index');
-        Route::get('rekap-tahunan/print', [RekapTahunanController::class, 'print'])->name('rekap-tahunan.print');
-        Route::get('rekap-tahunan/excel', [RekapTahunanController::class, 'excel'])->name('rekap-tahunan.excel');
+        Route::get('rekap-periodik', RekapPeriodikController::class)->name('rekap-periodik.index');
+        Route::get('rekap-periodik/print', [RekapPeriodikController::class, 'print'])->name('rekap-periodik.print');
+        Route::get('rekap-periodik/excel', [RekapPeriodikController::class, 'excel'])->name('rekap-periodik.excel');
+        Route::permanentRedirect('rekap-semesteran', '/dashboard/admin/rekap-periodik');
+        Route::permanentRedirect('rekap-tahunan', '/dashboard/admin/rekap-periodik');
         // URL lama -> URL baru pengaturan aplikasi (lihat routes/settings.php).
         Route::permanentRedirect('pengaturan', '/settings/application');
         Route::get('operator', [OperatorController::class, 'index'])->name('operator.index');
@@ -87,12 +85,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
         Route::get('rekap-bulanan/print', [RekapBulananController::class, 'print'])->name('rekap-bulanan.print');
         Route::get('rekap-bulanan/excel', [RekapBulananController::class, 'excel'])->name('rekap-bulanan.excel');
-        Route::get('rekap-semesteran', RekapSemesteranController::class)->name('rekap-semesteran.index');
-        Route::get('rekap-semesteran/print', [RekapSemesteranController::class, 'print'])->name('rekap-semesteran.print');
-        Route::get('rekap-semesteran/excel', [RekapSemesteranController::class, 'excel'])->name('rekap-semesteran.excel');
-        Route::get('rekap-tahunan', RekapTahunanController::class)->name('rekap-tahunan.index');
-        Route::get('rekap-tahunan/print', [RekapTahunanController::class, 'print'])->name('rekap-tahunan.print');
-        Route::get('rekap-tahunan/excel', [RekapTahunanController::class, 'excel'])->name('rekap-tahunan.excel');
+        Route::get('rekap-periodik', RekapPeriodikController::class)->name('rekap-periodik.index');
+        Route::get('rekap-periodik/print', [RekapPeriodikController::class, 'print'])->name('rekap-periodik.print');
+        Route::get('rekap-periodik/excel', [RekapPeriodikController::class, 'excel'])->name('rekap-periodik.excel');
+        Route::permanentRedirect('rekap-semesteran', '/dashboard/operator/rekap-periodik');
+        Route::permanentRedirect('rekap-tahunan', '/dashboard/operator/rekap-periodik');
     });
 });
 

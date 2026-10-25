@@ -32,7 +32,7 @@ class LaporanSelesaiController extends Controller
         $toInput = $request->query('to');
 
         // Whitelist filter / tab
-        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
+        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'berkadar_pengawasan'];
         if (! in_array($filter, $allowedFilters, true)) {
             $filter = 'semua';
         }
@@ -104,6 +104,8 @@ class LaporanSelesaiController extends Controller
                     $query->where('classification', 'aspirasi');
                 } elseif ($filter === 'permintaan' || $filter === 'permintaan_informasi') {
                     $query->where('classification', 'permintaan_informasi');
+                } elseif ($filter === 'berkadar_pengawasan') {
+                    $query->where('is_pengawasan', true);
                 }
             });
 
@@ -123,6 +125,7 @@ class LaporanSelesaiController extends Controller
                 'reporter_wa' => $ticket->reporter_wa,
                 'content' => $ticket->content,
                 'status' => $ticket->status,
+                'is_pengawasan' => (bool) $ticket->is_pengawasan,
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'closed_reason' => $ticket->closed_reason,
@@ -145,7 +148,8 @@ class LaporanSelesaiController extends Controller
                 COUNT(*) as semua,
                 SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
                 SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
-                SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan
+                SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan,
+                SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan
             ")
             ->first();
 
@@ -154,6 +158,7 @@ class LaporanSelesaiController extends Controller
             'pengaduan' => (int) ($countsData->pengaduan ?? 0),
             'aspirasi' => (int) ($countsData->aspirasi ?? 0),
             'permintaan' => (int) ($countsData->permintaan ?? 0),
+            'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
         ];
 
         return Inertia::render('admin/laporan-selesai', [
@@ -199,6 +204,7 @@ class LaporanSelesaiController extends Controller
                 'reporter_wa' => $ticket->reporter_wa,
                 'content' => $ticket->content,
                 'status' => $ticket->status,
+                'is_pengawasan' => (bool) $ticket->is_pengawasan,
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'created_by_name' => $ticket->creator?->name,

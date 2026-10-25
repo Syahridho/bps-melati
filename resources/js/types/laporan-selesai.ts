@@ -3,7 +3,7 @@ import { type SharedData } from '@/types';
 
 export type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 export type Status = 'respon_awal' | 'respon_substantif' | 'selesai';
-export type FilterTab = 'semua' | 'pengaduan' | 'aspirasi' | 'permintaan';
+export type FilterTab = 'semua' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'berkadar_pengawasan';
 export type ClosedReason = 'reporter' | 'staff' | 'auto_close';
 
 export interface Attachment {
@@ -34,6 +34,7 @@ export interface TicketItem {
     reporter_wa: string | null;
     content: string;
     status: Status;
+    is_pengawasan?: boolean;
     source_app: string;
     channel: string;
     completed_at: string | null;
@@ -55,6 +56,7 @@ export interface LaporanSelesaiProps extends SharedData {
         pengaduan: number;
         aspirasi: number;
         permintaan: number;
+        berkadar_pengawasan: number;
     };
 }
 

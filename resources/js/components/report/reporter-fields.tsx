@@ -12,13 +12,24 @@ export function ReporterFields({ data, setData, errors }: ReporterFieldsProps) {
     return (
         <div className="!mb-4 space-y-4">
             <LabeledField id="nama" label="Nama" hint="Opsional" error={errors.reporter_name}>
-                <Input id="nama" placeholder="Masukkan nama" value={data.reporter_name} onChange={(e) => setData('reporter_name', e.target.value)} />
+                <Input
+                    id="nama"
+                    placeholder="Masukkan nama"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={data.reporter_name}
+                    onChange={(e) => setData('reporter_name', e.target.value)}
+                />
             </LabeledField>
             <LabeledField id="email" label="Email" hint="Opsional" error={errors.reporter_email}>
                 <Input
                     id="email"
                     type="email"
                     placeholder="nama@email.com"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={data.reporter_email}
                     onChange={(e) => setData('reporter_email', e.target.value)}
                 />
@@ -30,6 +41,7 @@ export function ReporterFields({ data, setData, errors }: ReporterFieldsProps) {
                     inputMode="numeric"
                     pattern="[0-9]*"
                     placeholder="08********"
+                    autoComplete="off"
                     value={data.reporter_wa}
                     onChange={(e) => setData('reporter_wa', e.target.value.replace(/\D/g, ''))}
                 />

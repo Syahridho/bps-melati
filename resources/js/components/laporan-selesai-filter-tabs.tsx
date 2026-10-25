@@ -13,6 +13,7 @@ export function LaporanSelesaiFilterTabs({ currentFilter, counts, onFilterChange
         { key: 'pengaduan', label: 'Pengaduan', count: counts.pengaduan },
         { key: 'aspirasi', label: 'Aspirasi', count: counts.aspirasi },
         { key: 'permintaan', label: 'Permintaan Info', count: counts.permintaan },
+        { key: 'berkadar_pengawasan', label: 'Berkadar Pengawasan', count: counts.berkadar_pengawasan },
     ];
 
     return (

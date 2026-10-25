@@ -69,6 +69,7 @@ export function ReportDetailFields({ data, setData, errors }: ReportDetailFields
                         <Input
                             id="judul"
                             placeholder={`Tuliskan judul ${selectedLabel?.toLowerCase()} Anda`}
+                            autoComplete="off"
                             value={data.title}
                             onChange={(e) => setData('title', e.target.value)}
                             required

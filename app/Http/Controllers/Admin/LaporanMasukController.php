@@ -29,7 +29,7 @@ class LaporanMasukController extends Controller
         $filter = new LaporanFilter($request, 'semua', 10);
 
         // Whitelist filter
-        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif'];
+        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'berkadar_pengawasan'];
         if (! in_array($filter->tab, $allowedFilters, true)) {
             $filter->tab = 'semua';
         }
@@ -62,6 +62,8 @@ class LaporanMasukController extends Controller
                     $query->where('status', 'respon_awal');
                 } elseif ($filter->tab === 'respon_substantif') {
                     $query->where('status', 'respon_substantif');
+                } elseif ($filter->tab === 'berkadar_pengawasan') {
+                    $query->where('is_pengawasan', true);
                 }
             }
 
@@ -85,6 +87,7 @@ class LaporanMasukController extends Controller
                     'reporter_wa' => $ticket->reporter_wa,
                     'content' => $ticket->content,
                     'status' => $ticket->status,
+                    'is_pengawasan' => (bool) $ticket->is_pengawasan,
                     'version' => $ticket->version,
                     'is_read' => $ticket->is_read,
                     'source_app' => $ticket->source_app,
@@ -123,7 +126,8 @@ class LaporanMasukController extends Controller
                     SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
                     SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan,
                     SUM(CASE WHEN status = 'respon_awal' THEN 1 ELSE 0 END) as respon_awal,
-                    SUM(CASE WHEN status = 'respon_substantif' THEN 1 ELSE 0 END) as respon_substantif
+                    SUM(CASE WHEN status = 'respon_substantif' THEN 1 ELSE 0 END) as respon_substantif,
+                    SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan
                 ")
                 ->first();
 
@@ -135,6 +139,7 @@ class LaporanMasukController extends Controller
                 'permintaan' => (int) ($countsData->permintaan ?? 0),
                 'respon_awal' => (int) ($countsData->respon_awal ?? 0),
                 'respon_substantif' => (int) ($countsData->respon_substantif ?? 0),
+                'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
             ];
         };
 

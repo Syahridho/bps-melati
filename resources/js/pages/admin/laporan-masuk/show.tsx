@@ -3,21 +3,20 @@ import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk-delete-dial
 import { LaporanMasukDetailCard } from '@/components/laporan-masuk-detail-card';
 import { LaporanMasukEditDialog } from '@/components/laporan-masuk-edit-dialog';
 import { LaporanMasukResponseHistory } from '@/components/laporan-masuk-response-history';
+import { Button } from '@/components/ui/button';
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
 import AdminPage from '@/pages/admin/page';
 import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketResponseItem } from '@/types/laporan-masuk';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, LoaderCircle, ShieldAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
@@ -352,27 +351,76 @@ export default function Show() {
                 />
             )}
 
-            <AlertDialog open={isPengawasanModalOpen} onOpenChange={setIsPengawasanModalOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2">
-                            <ShieldAlert className="size-5 text-amber-500" />
-                            {pendingPengawasanValue ? 'Aktifkan Kadar Pengawasan?' : 'Nonaktifkan Kadar Pengawasan?'}
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {pendingPengawasanValue
-                                ? `Batas auto close tiket ${ticket.ticket_number} akan diubah dari ${ticket.classification_default_days} hari menjadi ${ticket.kadar_pengawasan_days} hari.`
-                                : `Batas auto close tiket ${ticket.ticket_number} akan dikembalikan dari ${ticket.kadar_pengawasan_days} hari menjadi batas default klasifikasi (${ticket.classification_default_days} hari).`}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isProcessingPengawasan}>Batal</AlertDialogCancel>
-                        <AlertDialogAction disabled={isProcessingPengawasan} onClick={handleConfirmPengawasan}>
-                            {isProcessingPengawasan ? 'Memproses...' : pendingPengawasanValue ? 'Ya, Aktifkan' : 'Ya, Nonaktifkan'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <Dialog open={isPengawasanModalOpen} onOpenChange={setIsPengawasanModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                <ShieldAlert className="size-5" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-base font-semibold">
+                                    {pendingPengawasanValue ? 'Aktifkan Kadar Pengawasan?' : 'Nonaktifkan Kadar Pengawasan?'}
+                                </DialogTitle>
+                                <p className="text-muted-foreground text-xs">{ticket.ticket_number}</p>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <DialogDescription asChild>
+                        <div className="space-y-3 pt-2 text-sm text-foreground">
+                            <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1.5">
+                                <div className="flex items-center justify-between text-muted-foreground">
+                                    <span>Batas auto close saat ini:</span>
+                                    <span className="font-semibold text-foreground">
+                                        {pendingPengawasanValue ? `${ticket.classification_default_days} hari` : `${ticket.kadar_pengawasan_days} hari`}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between text-muted-foreground">
+                                    <span>Batas auto close setelah diubah:</span>
+                                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                                        {pendingPengawasanValue ? `${ticket.kadar_pengawasan_days} hari` : `${ticket.classification_default_days} hari`}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p className="text-muted-foreground text-xs leading-relaxed">
+                                {pendingPengawasanValue
+                                    ? `Tiket ini akan diberi waktu respon lebih lama (${ticket.kadar_pengawasan_days} hari tanpa balasan pelapor) sebelum ditutup otomatis oleh sistem.`
+                                    : `Batas waktu auto close akan dikembalikan ke default (${ticket.classification_default_days} hari).`}
+                            </p>
+                        </div>
+                    </DialogDescription>
+
+                    <DialogFooter className="gap-2 pt-2 sm:gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsPengawasanModalOpen(false)}
+                            disabled={isProcessingPengawasan}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            className={pendingPengawasanValue ? 'bg-amber-600 text-white hover:bg-amber-700' : ''}
+                            onClick={handleConfirmPengawasan}
+                            disabled={isProcessingPengawasan}
+                        >
+                            {isProcessingPengawasan ? (
+                                <>
+                                    <LoaderCircle className="mr-2 size-4 animate-spin" />
+                                    Memproses...
+                                </>
+                            ) : pendingPengawasanValue ? (
+                                'Ya, Aktifkan'
+                            ) : (
+                                'Ya, Nonaktifkan'
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <AttachmentPreviewDialog
                 item={previewItem}

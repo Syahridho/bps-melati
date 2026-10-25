@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { classificationLabel, classificationVariant, statusLabel } from '@/lib/laporan-masuk-utils';
 import { type TicketItem } from '@/types/laporan-selesai';
 import { Link } from '@inertiajs/react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ShieldAlert } from 'lucide-react';
 
 interface LaporanSelesaiTicketListProps {
     tickets: PaginatedData<TicketItem>;
@@ -73,6 +73,15 @@ export function LaporanSelesaiTicketList({ tickets, isLoading, routePrefix }: La
                                     <Badge variant={classificationVariant(ticket.classification)} className="text-[10px]">
                                         {classificationLabel(ticket.classification)}
                                     </Badge>
+                                    {ticket.is_pengawasan && (
+                                        <Badge
+                                            variant="outline"
+                                            className="gap-1 border-amber-500/40 bg-amber-500/10 text-[10px] text-amber-700 dark:text-amber-400"
+                                        >
+                                            <ShieldAlert className="size-3" />
+                                            Pengawasan
+                                        </Badge>
+                                    )}
                                     <Badge variant="outline" className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600">
                                         <CheckCircle2 className="size-3" />
                                         {statusLabel(ticket.status)}

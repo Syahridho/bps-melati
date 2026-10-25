@@ -78,6 +78,9 @@ export function InputDataTicketFormBlock({
                                 id="name"
                                 className="text-base sm:text-sm"
                                 placeholder="Masukkan nama"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck={false}
                                 value={data.reporter_name}
                                 onChange={(e) => setData('reporter_name', e.target.value)}
                             />
@@ -91,6 +94,9 @@ export function InputDataTicketFormBlock({
                                 type="email"
                                 className="text-base sm:text-sm"
                                 placeholder="contoh@domain.com"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck={false}
                                 value={data.reporter_email}
                                 onChange={(e) => setData('reporter_email', e.target.value)}
                             />
@@ -104,6 +110,7 @@ export function InputDataTicketFormBlock({
                                 type="tel"
                                 className="text-base sm:text-sm"
                                 placeholder="08xxxxxxxxxx"
+                                autoComplete="off"
                                 value={data.reporter_wa}
                                 onChange={(e) => setData('reporter_wa', e.target.value)}
                             />

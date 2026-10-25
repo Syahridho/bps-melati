@@ -53,7 +53,7 @@ export function InputDataAddTicketDialog({ open, onOpenChange, channels, routePr
                         </DialogDescription>
                     </DialogHeader>
 
-                    <form id="input-data-form" onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+                    <form id="input-data-form" onSubmit={handleSubmit} autoComplete="off" className="flex min-h-0 flex-1 flex-col">
                         <div
                             ref={bodyRef}
                             className={cn(

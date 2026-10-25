@@ -66,8 +66,7 @@ class DashboardTest extends TestCase
         $this->get(route('dashboard.admin.laporan-masuk.index'))->assertForbidden();
         $this->get(route('dashboard.admin.laporan-selesai.index'))->assertForbidden();
         $this->get(route('dashboard.admin.rekap-bulanan.index'))->assertForbidden();
-        $this->get(route('dashboard.admin.rekap-semesteran.index'))->assertForbidden();
-        $this->get(route('dashboard.admin.rekap-tahunan.index'))->assertForbidden();
+        $this->get(route('dashboard.admin.rekap-periodik.index'))->assertForbidden();
     }
 
     public function test_admin_can_visit_admin_pages()
@@ -78,7 +77,6 @@ class DashboardTest extends TestCase
         $this->get(route('dashboard.admin.laporan-masuk.index'))->assertOk();
         $this->get(route('dashboard.admin.laporan-selesai.index'))->assertOk();
         $this->get(route('dashboard.admin.rekap-bulanan.index'))->assertOk();
-        $this->get(route('dashboard.admin.rekap-semesteran.index'))->assertOk();
-        $this->get(route('dashboard.admin.rekap-tahunan.index'))->assertOk();
+        $this->get(route('dashboard.admin.rekap-periodik.index'))->assertOk();
     }
 }
