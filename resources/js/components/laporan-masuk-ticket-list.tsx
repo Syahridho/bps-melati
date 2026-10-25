@@ -57,6 +57,7 @@ function FlagButton({ ticket, routePrefix }: { ticket: InboxTicketItem; routePre
                         'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({ aktif: false }),
                 });
                 if (!res.ok) throw new Error();
@@ -88,6 +89,7 @@ function FlagButton({ ticket, routePrefix }: { ticket: InboxTicketItem; routePre
                     'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
                     Accept: 'application/json',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ aktif: true, note: note || null }),
             });
             if (!res.ok) throw new Error();

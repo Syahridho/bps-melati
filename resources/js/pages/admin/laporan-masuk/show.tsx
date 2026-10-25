@@ -47,6 +47,7 @@ function DetailFlagButton({ ticket, routePrefix }: { ticket: TicketDetail; route
                         'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({ aktif: false }),
                 });
                 if (!res.ok) throw new Error();
@@ -78,6 +79,7 @@ function DetailFlagButton({ ticket, routePrefix }: { ticket: TicketDetail; route
                     'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
                     Accept: 'application/json',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ aktif: true, note: note || null }),
             });
             if (!res.ok) throw new Error();
