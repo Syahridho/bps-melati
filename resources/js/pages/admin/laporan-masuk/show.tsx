@@ -3,6 +3,7 @@ import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk-delete-dial
 import { LaporanMasukDetailCard } from '@/components/laporan-masuk-detail-card';
 import { LaporanMasukEditDialog } from '@/components/laporan-masuk-edit-dialog';
 import { LaporanMasukResponseHistory } from '@/components/laporan-masuk-response-history';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -12,13 +13,142 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
 import AdminPage from '@/pages/admin/page';
-import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketResponseItem } from '@/types/laporan-masuk';
+import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketDetail, type TicketResponseItem } from '@/types/laporan-masuk';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle2, Clock, LoaderCircle, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, Flag, LoaderCircle, ShieldAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
+
+function DetailFlagButton({ ticket, routePrefix }: { ticket: TicketDetail; routePrefix: string }) {
+    const [flagged, setFlagged] = useState(ticket.is_flagged ?? false);
+    const [note, setNote] = useState(ticket.flag_note ?? '');
+    const [flagNote, setFlagNote] = useState(ticket.flag_note ?? '');
+    const [flaggedByName, setFlaggedByName] = useState(ticket.flagged_by_name ?? '');
+    const [open, setOpen] = useState(false);
+    const [processing, setProcessing] = useState(false);
+    const { auth } = usePage<{ auth: { user: { name: string } } }>().props;
+
+    const handleToggle = async () => {
+        if (flagged) {
+            setFlagged(false);
+            setFlagNote('');
+            setFlaggedByName('');
+            setProcessing(true);
+            try {
+                const res = await fetch(route(`${routePrefix}.laporan-masuk.tandai`, ticket.ticket_number), {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({ aktif: false }),
+                });
+                if (!res.ok) throw new Error();
+                toast.success('Tandai berhasil dilepas');
+            } catch {
+                setFlagged(true);
+                setFlagNote(ticket.flag_note ?? '');
+                setFlaggedByName(ticket.flagged_by_name ?? '');
+                toast.error('Gagal melepas tandai');
+            } finally {
+                setProcessing(false);
+            }
+        } else {
+            setOpen(true);
+        }
+    };
+
+    const handleFlag = async () => {
+        setFlagged(true);
+        setFlagNote(note);
+        setFlaggedByName(auth.user.name);
+        setOpen(false);
+        setProcessing(true);
+        try {
+            const res = await fetch(route(`${routePrefix}.laporan-masuk.tandai`, ticket.ticket_number), {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ aktif: true, note: note || null }),
+            });
+            if (!res.ok) throw new Error();
+            toast.success('Laporan berhasil ditandai');
+        } catch {
+            setFlagged(false);
+            setFlagNote('');
+            setFlaggedByName('');
+            toast.error('Gagal menandai laporan');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-2">
+            {flagged && (
+                <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Badge variant="outline" className="border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400">
+                                <Flag className="mr-1 size-3 fill-orange-500" />
+                                Ditandai
+                            </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs">
+                            <p className="text-xs">
+                                Ditandai oleh {flaggedByName || 'Petugas'}
+                                {flagNote && <span className="block mt-1 text-muted-foreground">"{flagNote}"</span>}
+                            </p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )}
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant={flagged ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={handleToggle}
+                        disabled={processing}
+                        aria-label={flagged ? 'Lepas tandai' : 'Tandai laporan'}
+                    >
+                        <Flag className={`mr-1.5 size-4 ${flagged ? 'fill-orange-500 text-orange-500' : ''}`} />
+                        {flagged ? 'Lepas Tandai' : 'Tandai'}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72" align="end">
+                    <div className="space-y-3">
+                        <p className="text-sm font-medium">Tandai Laporan</p>
+                        <Textarea
+                            placeholder="Catatan alasan (opsional, maks 255 karakter)"
+                            maxLength={255}
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            className="min-h-[60px] text-sm"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                                Batal
+                            </Button>
+                            <Button size="sm" onClick={handleFlag} disabled={processing}>
+                                Tandai
+                            </Button>
+                        </div>
+                    </div>
+                </PopoverContent>
+            </Popover>
+        </div>
+    );
+}
 
 export default function Show() {
     const { auth, ticket, can, from, flash } = usePage<ShowProps>().props;
@@ -289,6 +419,7 @@ export default function Show() {
                         <ArrowLeft className="size-4" />
                         Kembali ke {backLabel}
                     </Link>
+                    <DetailFlagButton ticket={ticket} routePrefix={routePrefix} />
                 </div>
 
                 <LaporanMasukDetailCard

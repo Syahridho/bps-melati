@@ -29,7 +29,7 @@ class LaporanMasukController extends Controller
         $filter = new LaporanFilter($request, 'semua', 10);
 
         // Whitelist filter
-        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'berkadar_pengawasan'];
+        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'berkadar_pengawasan', 'ditandai'];
         if (! in_array($filter->tab, $allowedFilters, true)) {
             $filter->tab = 'semua';
         }
@@ -40,7 +40,7 @@ class LaporanMasukController extends Controller
 
         // Query utama daftar tiket laporan masuk (kecuali tiket yang diinput manual dari admin dan yang sudah selesai)
         $baseQueryBuilder = function () use ($filter, $searchClosure) {
-            $query = Ticket::with(['channel', 'lastResponse.user'])
+            $query = Ticket::with(['channel', 'lastResponse.user', 'flaggedBy'])
                 ->where('source_app', '!=', 'admin')
                 ->where('status', '!=', 'selesai')
                 ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
@@ -64,6 +64,8 @@ class LaporanMasukController extends Controller
                     $query->where('status', 'respon_substantif');
                 } elseif ($filter->tab === 'berkadar_pengawasan') {
                     $query->where('is_pengawasan', true);
+                } elseif ($filter->tab === 'ditandai') {
+                    $query->where('is_flagged', true);
                 }
             }
 
@@ -88,6 +90,10 @@ class LaporanMasukController extends Controller
                     'content' => $ticket->content,
                     'status' => $ticket->status,
                     'is_pengawasan' => (bool) $ticket->is_pengawasan,
+                    'is_flagged' => (bool) $ticket->is_flagged,
+                    'flagged_at' => $ticket->flagged_at?->toIso8601String(),
+                    'flagged_by_name' => $ticket->flaggedBy?->name,
+                    'flag_note' => $ticket->flag_note,
                     'version' => $ticket->version,
                     'is_read' => $ticket->is_read,
                     'source_app' => $ticket->source_app,
@@ -127,7 +133,8 @@ class LaporanMasukController extends Controller
                     SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan,
                     SUM(CASE WHEN status = 'respon_awal' THEN 1 ELSE 0 END) as respon_awal,
                     SUM(CASE WHEN status = 'respon_substantif' THEN 1 ELSE 0 END) as respon_substantif,
-                    SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan
+                    SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan,
+                    SUM(CASE WHEN is_flagged = 1 THEN 1 ELSE 0 END) as ditandai
                 ")
                 ->first();
 
@@ -140,6 +147,7 @@ class LaporanMasukController extends Controller
                 'respon_awal' => (int) ($countsData->respon_awal ?? 0),
                 'respon_substantif' => (int) ($countsData->respon_substantif ?? 0),
                 'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
+                'ditandai' => (int) ($countsData->ditandai ?? 0),
             ];
         };
 
@@ -163,6 +171,7 @@ class LaporanMasukController extends Controller
         $ticket = Ticket::with([
             'channel',
             'creator',
+            'flaggedBy',
             'attachments',
             'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
         ])

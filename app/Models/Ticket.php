@@ -38,6 +38,10 @@ class Ticket extends Model
         'is_pengawasan',
         'pengawasan_at',
         'pengawasan_by',
+        'is_flagged',
+        'flagged_at',
+        'flagged_by',
+        'flag_note',
     ];
 
     protected function casts(): array
@@ -50,6 +54,8 @@ class Ticket extends Model
             'last_staff_response_at' => 'datetime',
             'sequence' => 'integer',
             'version' => 'integer',
+            'is_flagged' => 'boolean',
+            'flagged_at' => 'datetime',
         ];
     }
 
@@ -66,6 +72,11 @@ class Ticket extends Model
     public function pengawasanBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pengawasan_by')->withTrashed();
+    }
+
+    public function flaggedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'flagged_by')->withTrashed();
     }
 
     public function attachments(): HasMany

@@ -6,7 +6,7 @@ export type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 export type ResponseType = 'respon_awal' | 'respon_substantif' | 'balasan_pelapor';
 export type RealtimeStatus = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 export type ClosedReason = 'reporter' | 'staff' | 'auto_close';
-export type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif' | 'berkadar_pengawasan';
+export type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif' | 'berkadar_pengawasan' | 'ditandai';
 
 export interface Attachment {
     id: number;
@@ -103,6 +103,10 @@ export interface InboxTicketItem {
     content: string;
     status: Status;
     is_pengawasan?: boolean;
+    is_flagged?: boolean;
+    flagged_at?: string | null;
+    flagged_by_name?: string | null;
+    flag_note?: string | null;
     version: number;
     is_read: boolean;
     source_app: string;
@@ -129,6 +133,7 @@ export interface LaporanMasukProps extends SharedData {
         respon_awal: number;
         respon_substantif: number;
         berkadar_pengawasan: number;
+        ditandai: number;
     };
     inbox_open_count: number;
 }
@@ -157,6 +162,10 @@ export interface TicketDetail {
     is_pengawasan: boolean;
     pengawasan_at: string | null;
     pengawasan_by_name: string | null;
+    is_flagged?: boolean;
+    flagged_at?: string | null;
+    flagged_by_name?: string | null;
+    flag_note?: string | null;
     kadar_pengawasan_days: number;
     classification_default_days: number;
     auto_close_at: string | null;

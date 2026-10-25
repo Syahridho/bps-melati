@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
-use App\Support\TicketResponsePayload;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
+
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,7 +32,7 @@ class LaporanSelesaiController extends Controller
         $toInput = $request->query('to');
 
         // Whitelist filter / tab
-        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'berkadar_pengawasan'];
+        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'berkadar_pengawasan', 'ditandai'];
         if (! in_array($filter, $allowedFilters, true)) {
             $filter = 'semua';
         }
@@ -90,7 +90,7 @@ class LaporanSelesaiController extends Controller
         };
 
         // Query utama daftar tiket laporan selesai
-        $ticketsQuery = Ticket::with('channel')
+        $ticketsQuery = Ticket::with(['channel', 'flaggedBy'])
             ->whereIn('status', self::COMPLETED_STATUSES)
             ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($query) use ($fromInput, $toInput) {
                 $query->whereDate('updated_at', '>=', $fromInput)
@@ -106,6 +106,8 @@ class LaporanSelesaiController extends Controller
                     $query->where('classification', 'permintaan_informasi');
                 } elseif ($filter === 'berkadar_pengawasan') {
                     $query->where('is_pengawasan', true);
+                } elseif ($filter === 'ditandai') {
+                    $query->where('is_flagged', true);
                 }
             });
 
@@ -126,6 +128,10 @@ class LaporanSelesaiController extends Controller
                 'content' => $ticket->content,
                 'status' => $ticket->status,
                 'is_pengawasan' => (bool) $ticket->is_pengawasan,
+                'is_flagged' => (bool) $ticket->is_flagged,
+                'flagged_at' => $ticket->flagged_at?->toIso8601String(),
+                'flagged_by_name' => $ticket->flaggedBy?->name,
+                'flag_note' => $ticket->flag_note,
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'closed_reason' => $ticket->closed_reason,
@@ -149,7 +155,8 @@ class LaporanSelesaiController extends Controller
                 SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
                 SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
                 SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan,
-                SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan
+                SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan,
+                SUM(CASE WHEN is_flagged = 1 THEN 1 ELSE 0 END) as ditandai
             ")
             ->first();
 
@@ -159,6 +166,7 @@ class LaporanSelesaiController extends Controller
             'aspirasi' => (int) ($countsData->aspirasi ?? 0),
             'permintaan' => (int) ($countsData->permintaan ?? 0),
             'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
+            'ditandai' => (int) ($countsData->ditandai ?? 0),
         ];
 
         return Inertia::render('admin/laporan-selesai', [
@@ -182,6 +190,8 @@ class LaporanSelesaiController extends Controller
         $ticket = Ticket::with([
             'channel',
             'creator',
+            'flaggedBy',
+            'pengawasanBy',
             'attachments',
             'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
         ])
@@ -190,39 +200,12 @@ class LaporanSelesaiController extends Controller
             ->firstOrFail();
 
         return Inertia::render('admin/laporan-selesai/show', [
-            'ticket' => [
-                'id' => $ticket->id,
-                'ticket_number' => $ticket->ticket_number,
-                'period' => $ticket->period,
-                'sequence' => $ticket->sequence,
-                'classification' => $ticket->classification,
-                'title' => $ticket->title,
-                'service_type' => $ticket->service_type,
-                'satuan_tugas' => $ticket->satuan_tugas,
-                'reporter_name' => $ticket->reporter_name,
-                'reporter_email' => $ticket->reporter_email,
-                'reporter_wa' => $ticket->reporter_wa,
-                'content' => $ticket->content,
-                'status' => $ticket->status,
-                'is_pengawasan' => (bool) $ticket->is_pengawasan,
-                'source_app' => $ticket->source_app,
-                'channel' => $ticket->channel?->name ?? '-',
-                'created_by_name' => $ticket->creator?->name,
-                'closed_reason' => $ticket->closed_reason,
-                'completed_at' => $ticket->completed_at?->toIso8601String(),
-                'created_at' => $ticket->created_at->toIso8601String(),
-                'updated_at' => $ticket->updated_at->toIso8601String(),
-                'attachments' => $ticket->attachments->map(fn ($attachment) => [
-                    'id' => $attachment->id,
-                    'original_name' => $attachment->original_name,
-                    'mime_type' => $attachment->mime_type,
-                    'size' => $attachment->size,
-                    'url' => Storage::url($attachment->path),
-                ]),
-                'responses' => $ticket->responses->map(
-                    fn ($response) => TicketResponsePayload::from($response, $ticket)
-                )->values()->all(),
-            ],
+            'ticket' => array_merge($this->ticketPayload($ticket), [
+                'is_flagged' => (bool) $ticket->is_flagged,
+                'flagged_at' => $ticket->flagged_at?->toIso8601String(),
+                'flagged_by_name' => $ticket->flaggedBy?->name,
+                'flag_note' => $ticket->flag_note,
+            ]),
         ]);
     }
 }
