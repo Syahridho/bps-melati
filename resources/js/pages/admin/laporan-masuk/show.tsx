@@ -114,40 +114,53 @@ function DetailFlagButton({ ticket, routePrefix }: { ticket: TicketDetail; route
                     </Tooltip>
                 </TooltipProvider>
             )}
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant={flagged ? 'secondary' : 'outline'}
-                        size="sm"
-                        onClick={handleToggle}
-                        disabled={processing}
-                        aria-label={flagged ? 'Lepas tandai' : 'Tandai laporan'}
-                    >
-                        <Flag className={`mr-1.5 size-4 ${flagged ? 'fill-orange-500 text-orange-500' : ''}`} />
-                        {flagged ? 'Lepas Tandai' : 'Tandai'}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72" align="end">
-                    <div className="space-y-3">
-                        <p className="text-sm font-medium">Tandai Laporan</p>
-                        <Textarea
-                            placeholder="Catatan alasan (opsional, maks 255 karakter)"
-                            maxLength={255}
-                            value={note}
-                            onChange={(e) => setNote(e.target.value)}
-                            className="min-h-[60px] text-sm"
-                        />
-                        <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                                Batal
-                            </Button>
-                            <Button size="sm" onClick={handleFlag} disabled={processing}>
-                                Tandai
-                            </Button>
+            {flagged ? (
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleToggle}
+                    disabled={processing}
+                    aria-label="Lepas tandai"
+                >
+                    <Flag className="mr-1.5 size-4 fill-orange-500 text-orange-500" />
+                    Lepas Tandai
+                </Button>
+            ) : (
+                <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setOpen(true)}
+                            disabled={processing}
+                            aria-label="Tandai laporan"
+                        >
+                            <Flag className="mr-1.5 size-4" />
+                            Tandai
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72" align="end">
+                        <div className="space-y-3">
+                            <p className="text-sm font-medium">Tandai Laporan</p>
+                            <Textarea
+                                placeholder="Catatan alasan (opsional, maks 255 karakter)"
+                                maxLength={255}
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                className="min-h-[60px] text-sm"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                                    Batal
+                                </Button>
+                                <Button size="sm" onClick={handleFlag} disabled={processing}>
+                                    Tandai
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </PopoverContent>
-            </Popover>
+                    </PopoverContent>
+                </Popover>
+            )}
         </div>
     );
 }
