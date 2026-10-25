@@ -50,6 +50,12 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('laporan-selesai/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('laporan-selesai.tandai')->where('ticketNumber', '.*');
         Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
         Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
+        Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
+        Route::get('rekap-bulanan/print', [RekapBulananController::class, 'print'])->name('rekap-bulanan.print');
+        Route::get('rekap-bulanan/excel', [RekapBulananController::class, 'excel'])->name('rekap-bulanan.excel');
+        Route::get('rekap-periodik', RekapPeriodikController::class)->name('rekap-periodik.index');
+        Route::get('rekap-periodik/print', [RekapPeriodikController::class, 'print'])->name('rekap-periodik.print');
+        Route::get('rekap-periodik/excel', [RekapPeriodikController::class, 'excel'])->name('rekap-periodik.excel');
         Route::get('operator', [OperatorController::class, 'index'])->name('operator.index');
         Route::post('operator', [OperatorController::class, 'store'])->name('operator.store');
         Route::put('operator/{operator}', [OperatorController::class, 'update'])->name('operator.update');
