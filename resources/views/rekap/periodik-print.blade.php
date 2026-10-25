@@ -44,6 +44,178 @@
             letter-spacing: -0.2px;
             padding: 2px 0.5px;
         }
+
+        /* Lampiran Percakapan */
+        .lampiran-chat-container {
+            page-break-before: always;
+            break-before: page;
+            margin-top: 5mm;
+        }
+        .lampiran-header {
+            border-bottom: 2pt solid #000;
+            padding-bottom: 2.5mm;
+            margin-bottom: 5mm;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+        .lampiran-judul {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #000;
+        }
+        .lampiran-subjudul {
+            font-size: 8.5pt;
+            color: #333;
+            margin-top: 1mm;
+        }
+        .lampiran-warning {
+            border: 1pt solid #b45309;
+            background-color: #fffbeb;
+            padding: 2.5mm 3.5mm;
+            font-size: 7.5pt;
+            color: #92400e;
+            margin-bottom: 4mm;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .lampiran-empty {
+            border: 1pt dashed #888;
+            padding: 8mm;
+            text-align: center;
+            font-size: 8.5pt;
+            color: #555;
+            font-style: italic;
+            background: #fafafa;
+        }
+        .chat-card {
+            border: 0.75pt solid #555;
+            margin-bottom: 5mm;
+            background: #ffffff;
+            page-break-inside: auto;
+            break-inside: auto;
+        }
+        .chat-card-header {
+            background: #f1f5f9;
+            border-bottom: 0.75pt solid #555;
+            padding: 2.5mm 3.5mm;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+        .chat-card-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 8pt;
+            font-weight: bold;
+        }
+        .chat-ticket-num {
+            font-family: monospace;
+            font-size: 8.5pt;
+            color: #000;
+        }
+        .chat-ticket-date {
+            font-size: 7.5pt;
+            color: #444;
+        }
+        .chat-ticket-subject {
+            font-size: 8.5pt;
+            font-weight: bold;
+            margin-top: 1mm;
+            color: #000;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        .chat-ticket-meta {
+            font-size: 7pt;
+            color: #444;
+            margin-top: 1mm;
+        }
+        .chat-card-body {
+            padding: 2.5mm 3.5mm;
+        }
+        .chat-message-row {
+            margin-bottom: 2.5mm;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .chat-message-row:last-child {
+            margin-bottom: 0;
+        }
+        .msg-pelapor {
+            border: 0.75pt solid #94a3b8;
+            border-left: 3.5pt solid #1e293b;
+            background: #f8fafc;
+            padding: 2mm 3mm;
+        }
+        .msg-petugas {
+            border: 0.75pt solid #94a3b8;
+            border-left: 3.5pt solid #047857;
+            background: #f0fdf4;
+            padding: 2mm 3mm;
+        }
+        .msg-sistem {
+            border: 0.75pt dashed #94a3b8;
+            border-left: 3.5pt solid #64748b;
+            background: #f8fafc;
+            padding: 1.5mm 2.5mm;
+        }
+        .msg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 7pt;
+            margin-bottom: 1.5mm;
+            border-bottom: 0.5pt solid #cbd5e1;
+            padding-bottom: 0.8mm;
+        }
+        .msg-badge {
+            display: inline-block;
+            font-weight: bold;
+            font-size: 6.5pt;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            padding: 0.5px 3.5px;
+            border: 0.5pt solid #000;
+            border-radius: 2px;
+        }
+        .msg-badge-pelapor {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .msg-badge-petugas {
+            background: #dcfce7;
+            color: #14532d;
+        }
+        .msg-badge-sistem {
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .msg-sender-name {
+            font-weight: bold;
+            font-size: 7.5pt;
+            margin-left: 4px;
+            color: #000;
+        }
+        .msg-time {
+            font-size: 7pt;
+            color: #555;
+        }
+        .msg-content {
+            font-size: 7.5pt;
+            line-height: 1.35;
+            color: #000;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        .msg-attachment-info {
+            margin-top: 1.2mm;
+            font-size: 7pt;
+            color: #475569;
+            font-style: italic;
+        }
     </style>
 
     @foreach ($monthChunks as $chunkIndex => $chunkMonths)
@@ -199,4 +371,108 @@
             @endif
         </div>
     @endforeach
+
+    @if ($withChat ?? false)
+        <div class="lampiran-chat-container">
+            <div class="lampiran-header">
+                <div class="lampiran-judul">Lampiran: Daftar Percakapan Laporan</div>
+                <div class="lampiran-subjudul">Periode: {{ $periodeLabel }}</div>
+            </div>
+
+            @if ($chatLimitReached ?? false)
+                <div class="lampiran-warning">
+                    <strong>Perhatian:</strong> Menampilkan {{ count($chatTickets) }} dari total {{ $chatTotalCount }} tiket dalam periode ini karena batas kapasitas dokumen. Untuk melihat percakapan selengkapnya, filter periode bulan yang lebih spesifik.
+                </div>
+            @endif
+
+            @forelse ($chatTickets as $ticket)
+                <div class="chat-card">
+                    <div class="chat-card-header">
+                        <div class="chat-card-title-row">
+                            <span class="chat-ticket-num">{{ $ticket->ticket_number }}</span>
+                            <span class="chat-ticket-date">{{ $ticket->created_at->translatedFormat('d F Y, H:i') }} WIB</span>
+                        </div>
+                        <div class="chat-ticket-subject">{{ $ticket->title }}</div>
+                        <div class="chat-ticket-meta">
+                            Klasifikasi: <strong>{{ ucfirst(str_replace('_', ' ', $ticket->classification)) }}</strong> &bull;
+                            Kanal: <strong>{{ $ticket->channel?->name ?? '-' }}</strong> &bull;
+                            Pelapor: <strong>{{ $ticket->reporter_name ?: 'Anonim' }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="chat-card-body">
+                        {{-- Pesan Awal Pelapor --}}
+                        <div class="chat-message-row msg-pelapor">
+                            <div class="msg-header">
+                                <div>
+                                    <span class="msg-badge msg-badge-pelapor">PELAPOR</span>
+                                    <span class="msg-sender-name">{{ $ticket->reporter_name ?: 'Pelapor' }}</span>
+                                </div>
+                                <span class="msg-time">{{ $ticket->created_at->translatedFormat('d M Y, H:i') }} WIB</span>
+                            </div>
+                            <div class="msg-content">{{ $ticket->content }}</div>
+                            @if ($ticket->attachments && $ticket->attachments->isNotEmpty())
+                                <div class="msg-attachment-info">
+                                    @foreach ($ticket->attachments as $att)
+                                        <div>[Lampiran: {{ $att->original_name }}]</div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Rangkaian Balasan Tanggapan --}}
+                        @if ($ticket->responses && $ticket->responses->isNotEmpty())
+                            @foreach ($ticket->responses as $response)
+                                @php
+                                    $isSystem = (bool) $response->is_system;
+                                    $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
+                                    if ($isSystem) {
+                                        $rowClass = 'msg-sistem';
+                                        $badgeClass = 'msg-badge-sistem';
+                                        $badgeLabel = 'SISTEM';
+                                        $senderName = 'Sistem Otomatis';
+                                    } elseif ($isReporter) {
+                                        $rowClass = 'msg-pelapor';
+                                        $badgeClass = 'msg-badge-pelapor';
+                                        $badgeLabel = 'PELAPOR';
+                                        $senderName = $ticket->reporter_name ?: 'Pelapor';
+                                    } else {
+                                        $rowClass = 'msg-petugas';
+                                        $badgeClass = 'msg-badge-petugas';
+                                        $badgeLabel = 'PETUGAS';
+                                        $senderName = $response->user?->name ?? 'Petugas BPS';
+                                    }
+                                    $msgDate = $response->sent_at ?? $response->created_at;
+                                @endphp
+
+                                <div class="chat-message-row {{ $rowClass }}">
+                                    <div class="msg-header">
+                                        <div>
+                                            <span class="msg-badge {{ $badgeClass }}">{{ $badgeLabel }}</span>
+                                            <span class="msg-sender-name">{{ $senderName }}</span>
+                                        </div>
+                                        @if ($msgDate)
+                                            <span class="msg-time">{{ $msgDate->translatedFormat('d M Y, H:i') }} WIB</span>
+                                        @endif
+                                    </div>
+                                    <div class="msg-content">{{ $response->message }}</div>
+                                    @if ($response->attachments && $response->attachments->isNotEmpty())
+                                        <div class="msg-attachment-info">
+                                            @foreach ($response->attachments as $att)
+                                                <div>[Lampiran: {{ $att->original_name }}]</div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="lampiran-empty">
+                    Tidak ada percakapan pada periode ini.
+                </div>
+            @endforelse
+        </div>
+    @endif
 @endcomponent

@@ -1,3 +1,4 @@
+import { RekapChatSelect } from '@/components/rekap-chat-select';
 import { RekapPeriodMatrixTable } from '@/components/rekap-period-matrix-table';
 import { RekapPeriodikFilter } from '@/components/rekap-periodik-filter';
 import { RekapPrintActions } from '@/components/rekap-print-actions';
@@ -13,6 +14,7 @@ import {
     type RekapMatrixTotals,
     type RekapViewMode,
 } from '@/types/rekap';
+import { Info } from 'lucide-react';
 
 interface RekapPeriodikProps {
     rows: RekapMatrixRow[];
@@ -24,6 +26,7 @@ interface RekapPeriodikProps {
     monthOptions: PeriodOption[];
     periodeLabel: string;
     tampilan: RekapViewMode;
+    chat?: string;
 }
 
 const PRINT_FRAME_ID = 'rekap-periodik-print-frame';
@@ -38,6 +41,7 @@ export default function RekapPeriodik({
     monthOptions,
     periodeLabel,
     tampilan,
+    chat = '0',
 }: RekapPeriodikProps) {
     const monthsParam = selectedMonths.join(',');
 
@@ -52,7 +56,7 @@ export default function RekapPeriodik({
         handlePrint,
     } = useRekapFilters({
         routeKey: 'rekap-periodik',
-        queryParams: { year, months: monthsParam },
+        queryParams: { year, months: monthsParam, chat },
         frameId: PRINT_FRAME_ID,
         viewMode: tampilan,
         exportPrefix: 'Rekap-Periodik',
@@ -90,13 +94,18 @@ export default function RekapPeriodik({
                             onMonthsChange={handleMonthsChange}
                         />
 
+                        <RekapChatSelect
+                            value={chat}
+                            onValueChange={(val) => handleParamChange('chat', val)}
+                        />
+
                         <RekapPrintActions
                             excelUrl={excelUrl}
                             printUrl={printUrl}
                             exportOpen={exportOpen}
                             onExportOpenChange={setExportOpen}
                             onPrint={handlePrint}
-                            dialogTitle={`Export PDF — Rekap Periodik ${periodeLabel}`}
+                            dialogTitle={`Export PDF — Rekap Periodik ${periodeLabel}${chat === '1' ? ' (dengan chat)' : ''}`}
                             frameTitle={`Pratinjau rekap ${periodeLabel}`}
                             frameId={PRINT_FRAME_ID}
                             dialogContentClassName="max-w-6xl"
@@ -104,6 +113,15 @@ export default function RekapPeriodik({
                         />
                     </div>
                 </div>
+
+                {chat === '1' && (
+                    <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+                        <Info className="size-4 shrink-0" />
+                        <span>
+                            <strong>Perhatian Privasi:</strong> PDF akan memuat data pelapor dan seluruh isi percakapan tiket. Gunakan dengan hati-hati untuk menjaga kerahasiaan data pelapor. Chat hanya ditampilkan pada export PDF (tabel rekap dan Excel tetap tanpa chat).
+                        </span>
+                    </div>
+                )}
 
                 {rows.length === 0 || months.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-16 text-muted-foreground">

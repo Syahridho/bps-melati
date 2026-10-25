@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Rekap;
 
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
+use App\Models\Ticket;
 use App\Support\ExportFilename;
 use App\Support\RekapCache;
 use App\Support\RekapReport;
@@ -22,14 +23,18 @@ class RekapPeriodikController extends Controller
         9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
     ];
 
+    /** Batas aman jumlah tiket yang dimuat percakapannya pada export PDF */
+    private const MAX_CHAT_TICKETS = 500;
+
     public function __invoke(Request $request): Response
     {
         [$year, $months] = $this->resolveParams($request->query('year'), $request->query('months'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
+        $chat = $this->resolveChatParam($request->query('chat'));
 
         return Inertia::render('admin/rekap/periodik', array_merge(
             $this->payloadWithMode($year, $months, $tampilan),
-            $this->filterPayload($year, $months, $tampilan)
+            $this->filterPayload($year, $months, $tampilan, $chat)
         ));
     }
 
@@ -37,11 +42,21 @@ class RekapPeriodikController extends Controller
     {
         [$year, $months] = $this->resolveParams($request->query('year'), $request->query('months'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
+        $chat = $this->resolveChatParam($request->query('chat'));
+        $withChat = ($chat === '1');
 
-        return view('rekap.periodik-print', array_merge(
+        $data = array_merge(
             $this->payloadWithMode($year, $months, $tampilan),
-            $this->filterPayload($year, $months, $tampilan)
-        ));
+            $this->filterPayload($year, $months, $tampilan, $chat),
+            [
+                'withChat' => $withChat,
+                'chatTickets' => $withChat ? $this->getChatTickets($year, $months) : collect(),
+                'chatTotalCount' => $withChat ? $this->getChatTotalCount($year, $months) : 0,
+                'chatLimitReached' => $withChat ? $this->isChatLimitReached($year, $months) : false,
+            ]
+        );
+
+        return view('rekap.periodik-print', $data);
     }
 
     public function excel(Request $request): \Illuminate\Http\Response
@@ -56,7 +71,7 @@ class RekapPeriodikController extends Controller
         return response()
             ->view('rekap.periodik-excel', array_merge(
                 $this->payloadWithMode($year, $months, $tampilan),
-                $this->filterPayload($year, $months, $tampilan)
+                $this->filterPayload($year, $months, $tampilan, '0')
             ))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
@@ -143,7 +158,7 @@ class RekapPeriodikController extends Controller
     /**
      * @param list<int> $months
      */
-    private function filterPayload(int $selectedYear, array $selectedMonths, string $tampilan): array
+    private function filterPayload(int $selectedYear, array $selectedMonths, string $tampilan, string $chat = '0'): array
     {
         $years = RekapYears::get();
         $yearOptions = array_map(fn (string $y): array => [
@@ -166,7 +181,54 @@ class RekapPeriodikController extends Controller
             'monthOptions' => $monthOptions,
             'periodeLabel' => $this->periodeLabel($selectedYear, $selectedMonths),
             'tampilan' => $tampilan,
+            'chat' => $chat,
         ];
+    }
+
+    private function resolveChatParam(mixed $chatInput): string
+    {
+        return ($chatInput === '1' || $chatInput === 'true' || $chatInput === 1) ? '1' : '0';
+    }
+
+    /**
+     * Memuat tiket beserta seluruh riwayat balasan dan lampiran untuk cetak PDF.
+     * Menggunakan eager loading untuk menghindari N+1.
+     *
+     * @param list<int> $months
+     * @return \Illuminate\Database\Eloquent\Collection<int, Ticket>
+     */
+    private function getChatTickets(int $year, array $months)
+    {
+        $periods = array_map(fn (int $m): string => sprintf('%04d-%02d', $year, $m), $months);
+
+        return Ticket::with([
+            'channel',
+            'attachments',
+            'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
+        ])
+            ->whereIn('period', $periods)
+            ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->limit(self::MAX_CHAT_TICKETS)
+            ->get();
+    }
+
+    /**
+     * @param list<int> $months
+     */
+    private function getChatTotalCount(int $year, array $months): int
+    {
+        $periods = array_map(fn (int $m): string => sprintf('%04d-%02d', $year, $m), $months);
+
+        return Ticket::whereIn('period', $periods)->count();
+    }
+
+    /**
+     * @param list<int> $months
+     */
+    private function isChatLimitReached(int $year, array $months): bool
+    {
+        return $this->getChatTotalCount($year, $months) > self::MAX_CHAT_TICKETS;
     }
 
     /**

@@ -56,6 +56,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('rekap-periodik', RekapPeriodikController::class)->name('rekap-periodik.index');
         Route::get('rekap-periodik/print', [RekapPeriodikController::class, 'print'])->name('rekap-periodik.print');
         Route::get('rekap-periodik/excel', [RekapPeriodikController::class, 'excel'])->name('rekap-periodik.excel');
+        Route::permanentRedirect('rekap-semesteran', '/dashboard/admin/rekap-periodik');
+        Route::permanentRedirect('rekap-tahunan', '/dashboard/admin/rekap-periodik');
         Route::get('operator', [OperatorController::class, 'index'])->name('operator.index');
         Route::post('operator', [OperatorController::class, 'store'])->name('operator.store');
         Route::put('operator/{operator}', [OperatorController::class, 'update'])->name('operator.update');
