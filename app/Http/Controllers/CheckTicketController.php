@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Actions\AutoCloseTickets;
+use App\Actions\ReplyFromReporter;
 use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
-use App\Models\TicketResponse;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -132,7 +132,7 @@ class CheckTicketController extends Controller
     /**
      * Pelapor membalas tanggapan dari petugas BPS.
      */
-    public function reply(Request $request, string $ticketNumber): RedirectResponse
+    public function reply(Request $request, string $ticketNumber, ReplyFromReporter $replyFromReporter): RedirectResponse
     {
         $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
 
@@ -148,49 +148,9 @@ class CheckTicketController extends Controller
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
 
-        $response = TicketResponse::create([
-            'ticket_id' => $ticket->id,
-            'user_id' => null,
-            'type' => 'balasan_pelapor',
-            'message' => $validated['message'],
-            'sent_at' => now(),
-        ]);
-
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store("response_attachments/{$response->id}", 'public');
-
-                $response->attachments()->create([
-                    'path' => $path,
-                    'original_name' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getClientMimeType(),
-                    'size' => $file->getSize(),
-                ]);
-            }
-        }
-
-        // Tandai tiket belum dibaca oleh admin/operator agar muncul pemberitahuan
-        $ticket->update([
-            'is_read' => false,
-            'completed_at' => null,
-            'closed_reason' => null,
-        ]);
-
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
-
-        // Balasan pelapor sudah tersimpan; kegagalan broadcast tidak boleh membalikkan
-        // hasil ke pengguna (event dikirim inline, tanpa antrean).
-        SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket, $response->load(['user', 'attachments'])), [
-            'ticket_id' => $ticket->id,
-            'ticket_number' => $ticket->ticket_number,
-            'response_id' => $response->id,
-        ]);
-        SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), [
-            'ticket_id' => $ticket->id,
-            'ticket_number' => $ticket->ticket_number,
-            'response_id' => $response->id,
-        ]);
+        // Penyimpanan, invalidasi cache, dan broadcast ditangani satu action agar
+        // jalur web dan API mobile tidak lagi berperilaku berbeda.
+        $replyFromReporter->handle($ticket, $validated['message'], (array) $request->file('attachments', []));
 
         return redirect()->back()->with('flash', [
             'success' => 'Balasan Anda berhasil terkirim!',

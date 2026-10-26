@@ -6,7 +6,16 @@ export type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 export type ResponseType = 'respon_awal' | 'respon_substantif' | 'balasan_pelapor';
 export type RealtimeStatus = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
 export type ClosedReason = 'reporter' | 'staff' | 'auto_close';
-export type FilterTab = 'semua' | 'belum_dibaca' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif' | 'berkadar_pengawasan' | 'ditandai';
+export type FilterTab =
+    | 'semua'
+    | 'belum_dibaca'
+    | 'pengaduan'
+    | 'aspirasi'
+    | 'permintaan'
+    | 'respon_awal'
+    | 'respon_substantif'
+    | 'berkadar_pengawasan'
+    | 'ditandai';
 
 export interface Attachment {
     id: number;
@@ -65,6 +74,24 @@ export interface TicketResponseCreatedEvent extends Omit<TicketUpdatedEvent, 're
 
 /** Bentuk gabungan yang diterima listener di presence channel. */
 export type TicketBroadcastEvent = TicketResponseCreatedEvent | TicketUpdatedEvent;
+
+/**
+ * Payload `.ticket.reply.from.reporter` (App\Events\TicketReplyFromReporter).
+ *
+ * Dikirim ke kanal privat per pengguna, bukan presence channel tiket, agar
+ * toast muncul di halaman dashboard mana pun.
+ */
+export interface ReporterReplyEvent {
+    ticket_id: number;
+    ticket_number: string;
+    reply_id: number;
+    reporter_name: string;
+    excerpt: string;
+    has_attachment: boolean;
+    created_at: string;
+    is_input_data: boolean;
+    url: string;
+}
 
 /** Payload `.inbox.updated` (App\Events\InboxUpdated). */
 export interface InboxUpdatedEvent {

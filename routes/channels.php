@@ -4,8 +4,17 @@ use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+/**
+ * Kanal privat per pengguna. Dipakai antara lain oleh notifikasi
+ * `.ticket.reply.from.reporter` (toast "Balasan baru dari pelapor") dan
+ * `.session.terminated` / `.login.attempt.blocked`.
+ *
+ * Hanya pemilik id yang boleh berlangganan dan akunnya harus masih aktif —
+ * scoping role/tiket dihitung di server saat event disiarkan
+ * (lihat App\Events\TicketReplyFromReporter::broadcastOn()).
+ */
+Broadcast::channel('App.Models.User.{id}', function (User $user, int $id) {
+    return (int) $user->id === (int) $id && $user->is_active === true;
 });
 
 /**

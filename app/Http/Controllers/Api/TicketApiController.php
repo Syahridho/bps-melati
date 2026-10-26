@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\ReplyFromReporter;
 use App\Events\InboxUpdated;
 use App\Events\TicketCreated;
 use App\Events\TicketUpdated;
@@ -10,7 +11,6 @@ use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketCreatedMail;
 use App\Models\Channel;
 use App\Models\Ticket;
-use App\Models\TicketResponse;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -236,7 +236,7 @@ class TicketApiController extends Controller
      * POST /api/check/{ticketNumber}/reply
      * Pelapor membalas tanggapan tiket.
      */
-    public function reply(Request $request, string $ticketNumber): JsonResponse
+    public function reply(Request $request, string $ticketNumber, ReplyFromReporter $replyFromReporter): JsonResponse
     {
         $ticketNumber = trim($ticketNumber);
         $ticket = Ticket::where('ticket_number', $ticketNumber)->first();
@@ -271,45 +271,20 @@ class TicketApiController extends Controller
 
         $validated = $validator->validated();
 
-        $response = TicketResponse::create([
-            'ticket_id' => $ticket->id,
-            'user_id' => null,
-            'type' => 'balasan_pelapor',
-            'message' => trim($validated['message']),
-            'sent_at' => now(),
-        ]);
+        // Satu action untuk web & API: simpan balasan + lampiran, bersihkan cache,
+        // lalu siarkan setelah commit (aman bila Reverb sedang mati).
+        $response = $replyFromReporter->handle($ticket, trim($validated['message']), (array) $request->file('attachments', []));
 
-        $attachmentsData = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store("response_attachments/{$response->id}", 'public');
-
-                $att = $response->attachments()->create([
-                    'path' => $path,
-                    'original_name' => $file->getClientOriginalName(),
-                    'mime_type' => $file->getClientMimeType(),
-                    'size' => $file->getSize(),
-                ]);
-
-                $attachmentsData[] = [
-                    'id' => $att->id,
-                    'original_name' => $att->original_name,
-                    'mime_type' => $att->mime_type,
-                    'size' => $att->size,
-                    'url' => Storage::url($att->path),
-                ];
-            }
-        }
-
-        $ticket->update([
-            'is_read' => false,
-            'completed_at' => null,
-            'closed_reason' => null,
-        ]);
-
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget('dashboard:admin:version');
+        $attachmentsData = $response->attachments
+            ->map(fn ($att) => [
+                'id' => $att->id,
+                'original_name' => $att->original_name,
+                'mime_type' => $att->mime_type,
+                'size' => $att->size,
+                'url' => Storage::url($att->path),
+            ])
+            ->values()
+            ->all();
 
         return response()->json([
             'success' => true,

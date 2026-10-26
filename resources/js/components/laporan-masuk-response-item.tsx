@@ -2,11 +2,11 @@ import { EmailStatusBadge } from '@/components/laporan/email-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatFullDate, responseTypeLabel, responseTypeVariant } from '@/lib/laporan-masuk-utils';
+import { formatFileSize, formatFullDate, isImageMime, isPdfMime, responseTypeLabel, responseTypeVariant } from '@/lib/laporan-masuk-utils';
 import { cn } from '@/lib/utils';
 import { type Attachment, type TicketResponseItem } from '@/types/laporan-masuk';
 import { useForm } from '@inertiajs/react';
-import { AlertTriangle, Paperclip, RefreshCw, TimerOff } from 'lucide-react';
+import { AlertTriangle, Download, FileText, ImageIcon, Paperclip, RefreshCw, TimerOff } from 'lucide-react';
 
 interface ResponseItemProps {
     response: TicketResponseItem;
@@ -22,9 +22,9 @@ export function LaporanMasukResponseItem({ response, onPreviewAttachment, resend
 
     return (
         <div className={cn('space-y-2 rounded-lg border p-4', isSystem ? 'bg-muted/40 border-dashed' : 'bg-muted/20')}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                    <span className={cn('text-sm font-medium', isSystem && 'text-muted-foreground')}>
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span className={cn('text-sm font-medium break-words', isSystem && 'text-muted-foreground')}>
                         {isSystem && <TimerOff className="mr-1 inline size-3.5" />}
                         {response.user_name}
                     </span>
@@ -33,11 +33,11 @@ export function LaporanMasukResponseItem({ response, onPreviewAttachment, resend
                     </Badge>
                 </div>
                 {dateSource && (
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
                         <span>{formatFullDate(dateSource)}</span>
                         {response.email_status && !response.is_reporter && (
                             <>
-                                <span>·</span>
+                                <span className="hidden sm:inline">·</span>
                                 <EmailStatusBadge
                                     status={response.email_status}
                                     sentAt={response.email_sent_at}
@@ -70,17 +70,32 @@ export function LaporanMasukResponseItem({ response, onPreviewAttachment, resend
                     <p className="text-muted-foreground mb-1 text-xs font-medium">Lampiran:</p>
                     <div className="flex flex-wrap gap-2">
                         {response.attachments.map((att) => (
-                            <Button
-                                key={att.id}
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 gap-1.5 text-xs"
-                                onClick={() => onPreviewAttachment(att, response.attachments)}
-                            >
-                                <Paperclip className="size-3" />
-                                <span className="max-w-[150px] truncate">{att.original_name}</span>
-                            </Button>
+                            <div key={att.id} className="bg-background flex items-center rounded-md border">
+                                <button
+                                    type="button"
+                                    onClick={() => onPreviewAttachment(att, response.attachments)}
+                                    className="hover:bg-accent flex min-w-0 items-center gap-1.5 rounded-l-md py-1.5 pr-1.5 pl-2 text-xs transition-colors"
+                                >
+                                    {isImageMime(att.mime_type, att.original_name) ? (
+                                        <ImageIcon className="size-3 shrink-0 text-blue-500" />
+                                    ) : isPdfMime(att.mime_type, att.original_name) ? (
+                                        <FileText className="size-3 shrink-0 text-red-500" />
+                                    ) : (
+                                        <Paperclip className="text-muted-foreground size-3 shrink-0" />
+                                    )}
+                                    <span className="max-w-[150px] truncate">{att.original_name}</span>
+                                    {att.size ? <span className="text-muted-foreground text-[10px]">{formatFileSize(att.size)}</span> : null}
+                                </button>
+                                <a
+                                    href={att.url}
+                                    download
+                                    aria-label={`Unduh ${att.original_name}`}
+                                    title="Unduh lampiran"
+                                    className="text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 rounded-r-md border-l p-1.5 transition-colors"
+                                >
+                                    <Download className="size-3.5" />
+                                </a>
+                            </div>
                         ))}
                     </div>
                 </div>
