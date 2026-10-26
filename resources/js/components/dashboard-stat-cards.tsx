@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { type DashboardStats } from '@/types/dashboard';
-import { AlertCircle, FileText, HelpCircle, Lightbulb } from 'lucide-react';
+import { AlertCircle, FileText, HelpCircle, Lightbulb, ShieldAlert } from 'lucide-react';
 
 interface DashboardStatCardsProps {
     stats: DashboardStats;
@@ -11,7 +11,7 @@ export function DashboardStatCards({ stats }: DashboardStatCardsProps) {
     return (
         <div>
             <p className="mb-2 text-xs font-semibold">Klasifikasi Laporan</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
                 {/* Jumlah Total - Slate */}
                 <Card className="min-w-0 border border-slate-400/30 bg-slate-400/5 shadow-xs transition-shadow hover:shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
@@ -62,6 +62,20 @@ export function DashboardStatCards({ stats }: DashboardStatCardsProps) {
                         <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{stats.permintaan_informasi}</div>
                         <Badge className="mt-1 border-transparent bg-indigo-500 px-1.5 py-0 text-[10px] text-white hover:bg-indigo-500">
                             Permohonan Data
+                        </Badge>
+                    </CardContent>
+                </Card>
+
+                {/* Berkadar Pengawasan - Amber */}
+                <Card className="min-w-0 border border-amber-400/40 bg-amber-400/5 shadow-xs transition-shadow hover:shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+                        <CardTitle className="text-sm leading-tight font-medium text-amber-700 dark:text-amber-400">Berkadar Pengawasan</CardTitle>
+                        <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-3xl font-bold text-amber-700 dark:text-amber-400">{stats.berkadar_pengawasan ?? 0}</div>
+                        <Badge className="mt-1 border-transparent bg-amber-500 px-1.5 py-0 text-[10px] text-amber-950 hover:bg-amber-500">
+                            Pengawasan Khusus
                         </Badge>
                     </CardContent>
                 </Card>

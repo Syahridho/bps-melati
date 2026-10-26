@@ -11,6 +11,7 @@ export interface DashboardStats {
     pengaduan: number;
     aspirasi: number;
     permintaan_informasi: number;
+    berkadar_pengawasan: number;
     span_lapor: number;
     sosial_media: number;
     kunjungan_langsung: number;

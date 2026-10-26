@@ -89,6 +89,7 @@ class DashboardStats
                 SUM(classification = 'pengaduan') as pengaduan,
                 SUM(classification = 'aspirasi') as aspirasi,
                 SUM(classification = 'permintaan_informasi') as permintaan_informasi,
+                SUM(is_pengawasan = 1) as berkadar_pengawasan,
                 SUM(status = 'baru') as baru,
                 SUM(status = 'respon_awal') as respon_awal,
                 SUM(status = 'respon_substantif') as respon_substantif,
@@ -110,6 +111,7 @@ class DashboardStats
             'pengaduan' => (int) $summary->pengaduan,
             'aspirasi' => (int) $summary->aspirasi,
             'permintaan_informasi' => (int) $summary->permintaan_informasi,
+            'berkadar_pengawasan' => (int) $summary->berkadar_pengawasan,
         ];
 
         foreach (self::CHANNEL_KEYS as $slug => $key) {
