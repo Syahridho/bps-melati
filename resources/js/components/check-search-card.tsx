@@ -14,9 +14,9 @@ export function CheckSearchCard({ inputQuery, onInputChange, onSubmit }: CheckSe
     return (
         <Card className="border shadow-sm">
             <CardHeader className="pb-4 text-center">
-                <div className="bg-primary/10 text-primary mx-auto mb-3 flex size-12 items-center justify-center rounded-full">
+                {/* <div className="bg-primary/10 text-primary mx-auto mb-3 flex size-12 items-center justify-center rounded-full">
                     <Ticket className="size-6" aria-hidden="true" />
-                </div>
+                </div> */}
                 <CardTitle className="text-2xl font-bold">Lacak & Cek Status Laporan</CardTitle>
                 <CardDescription className="text-sm">Masukkan kode tiket laporan Anda</CardDescription>
             </CardHeader>

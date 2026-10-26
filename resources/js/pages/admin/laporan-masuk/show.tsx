@@ -411,8 +411,8 @@ export default function Show() {
 
     return (
         <AdminPage
-            title={ticket.ticket_number}
-            description="Detail laporan"
+            // title={ticket.ticket_number}
+            // description="Detail laporan"
             breadcrumbs={[
                 { title: backLabel, href: route(backRouteName) },
                 { title: ticket.ticket_number, href: '#' },
