@@ -165,6 +165,36 @@ class Ticket extends Model
     }
 
     /**
+     * Kata sebutan jenis laporan dalam huruf kecil untuk konteks kalimat:
+     * pengaduan | aspirasi | permintaan informasi | laporan (fallback).
+     */
+    public function classificationNoun(): string
+    {
+        return self::classificationNounFor($this->classification);
+    }
+
+    /**
+     * Kata sebutan jenis laporan dengan huruf kapital di awal untuk awal kalimat.
+     */
+    public function classificationNounTitle(): string
+    {
+        return ucfirst($this->classificationNoun());
+    }
+
+    /**
+     * Pemetaan nilai klasifikasi ke kata sebutan kalimat dengan fallback aman ke 'laporan'.
+     */
+    public static function classificationNounFor(?string $classification): string
+    {
+        return match ($classification) {
+            'pengaduan' => 'pengaduan',
+            'aspirasi' => 'aspirasi',
+            'permintaan_informasi' => 'permintaan informasi',
+            default => 'laporan',
+        };
+    }
+
+    /**
      * Nama kanal publik (broadcast) untuk sebuah nomor tiket.
      *
      * Nomor tiket selalu memuat `/` (mis. `L-1400/102026/EE18`), sedangkan

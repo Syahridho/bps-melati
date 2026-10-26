@@ -3,12 +3,12 @@
 
 Yth. **{{ $ticket->reporter_name ?? 'Pelapor' }}**,
 
-Terima kasih telah menyampaikan laporan melalui sistem **Melati (Layanan Aspirasi & Pengaduan Online)**. Laporan Anda telah kami terima dan akan segera diproses oleh petugas terkait.
+Terima kasih telah menyampaikan {{ $reportTypeNoun ?? $ticket->classificationNoun() }} melalui sistem **Melati (Manajemen Lapor, Aspirasi, dan Transparansi Informasi)**. {{ $reportTypeNounTitle ?? $ticket->classificationNounTitle() }} Anda telah kami terima dan akan segera diproses oleh petugas terkait.
 
 <x-mail::panel>
 **Ringkasan Laporan:**
 - **Nomor Tiket:** `{{ $ticket->ticket_number }}`
-- **Klasifikasi:** {{ ucfirst(str_replace('_', ' ', $ticket->classification)) }}
+- **Klasifikasi:** {{ ucfirst(str_replace('_', ' ', $ticket->classification ?? 'laporan')) }}
 @if($ticket->service_type)
 - **Jenis Layanan:** {{ strtoupper($ticket->service_type) }}
 @endif

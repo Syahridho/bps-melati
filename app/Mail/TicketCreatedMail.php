@@ -35,6 +35,8 @@ class TicketCreatedMail extends Mailable implements ShouldQueue
             markdown: 'emails.ticket-created',
             with: [
                 'ticket' => $this->ticket,
+                'reportTypeNoun' => $this->ticket->classificationNoun(),
+                'reportTypeNounTitle' => $this->ticket->classificationNounTitle(),
             ],
         );
     }

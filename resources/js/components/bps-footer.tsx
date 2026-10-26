@@ -26,14 +26,6 @@ const TENTANG_KAMI_LINKS: FooterLink[] = [
     { label: 'Masuk', href: '/login' },
 ];
 
-const TAUTAN_LAINNYA_LINKS: FooterLink[] = [
-    { label: 'ASEAN Stats', href: 'https://www.aseanstats.org/' },
-    { label: 'Reformasi Birokrasi', href: 'https://rb.bps.go.id/' },
-    { label: 'Layanan Pengadaan Secara Elektronik', href: 'https://lpse.bps.go.id/' },
-    { label: 'Politeknik Statistika STIS', href: 'https://stis.ac.id/' },
-    { label: 'Pusdiklat BPS', href: 'https://pusdiklat.bps.go.id/' },
-    { label: 'JDIH BPS', href: 'https://jdih.bps.go.id/public/' },
-];
 
 function LogoLockup({ src, alt, imgClassName, children }: LogoLockupProps) {
     return (
@@ -88,9 +80,9 @@ export function BpsFooter({ className }: BpsFooterProps) {
     return (
         <footer className={cn('bg-footer dark:bg-muted text-footer-muted border-footer-border mt-auto w-full border-t py-10 lg:py-12', className)}>
             <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:gap-x-16">
+                <div className="flex flex-col gap-8 lg:flex-row lg:justify-between">
                     {/* Kolom Kiri: Identitas & Alamat */}
-                    <div className="flex w-full max-w-md flex-col items-start gap-4 sm:col-span-2 lg:col-span-1">
+                    <div className="flex w-full max-w-md flex-col items-start gap-4">
                         {/* Baris 1: Logo BPS + Teks dua baris */}
                         <LogoLockup src="/logo-bps.svg" alt="Logo BPS" imgClassName="w-14">
                             <span className="text-footer-accent text-lg leading-tight font-bold tracking-wide uppercase italic sm:text-xl">
@@ -98,14 +90,6 @@ export function BpsFooter({ className }: BpsFooterProps) {
                             </span>
                             <span className="text-footer-accent text-base leading-tight font-semibold tracking-wide uppercase italic sm:text-lg">
                                 PROVINSI RIAU
-                            </span>
-                        </LogoLockup>
-
-                        {/* Baris 2: Logo Melati + Teks dua baris */}
-                        <LogoLockup src="/logo-melati.webp" alt="Logo Melati" imgClassName="w-10 rounded">
-                            <span className="text-footer-accent text-lg leading-tight font-bold tracking-wider uppercase italic">MELATI</span>
-                            <span className="text-footer-muted text-xs leading-snug sm:text-sm">
-                                Manajemen Lapor, Aspirasi, dan Transparansi Informasi
                             </span>
                         </LogoLockup>
 
@@ -128,14 +112,20 @@ export function BpsFooter({ className }: BpsFooterProps) {
                         </address>
                     </div>
 
-                    {/* Kolom Kanan: Tentang Kami */}
-                    <div className="w-full lg:w-auto">
-                        <LinkColumn title="Tentang Kami" links={TENTANG_KAMI_LINKS} />
-                    </div>
+                    {/* Kolom Kanan (Logo Melati di atas Tentang Kami, menumpuk vertikal) */}
+                    <div className="flex flex-col gap-6">
+                        <div className="flex w-full max-w-sm flex-col items-start">
+                            <LogoLockup src="/logo-melati.webp" alt="Logo Melati" imgClassName="w-10 rounded">
+                                <span className="text-footer-accent text-lg leading-tight font-bold tracking-wider uppercase italic">MELATI</span>
+                                <span className="text-footer-muted text-xs leading-snug whitespace-nowrap sm:text-sm">
+                                    Manajemen Lapor, Aspirasi, dan Transparansi Informasi
+                                </span>
+                            </LogoLockup>
+                        </div>
 
-                    {/* Kolom Kanan: Tautan Lainnya */}
-                    <div className="w-full lg:w-auto">
-                        <LinkColumn title="Tautan Lainnya" links={TAUTAN_LAINNYA_LINKS} />
+                        <div className="w-full lg:w-auto">
+                            <LinkColumn title="Tentang Kami" links={TENTANG_KAMI_LINKS} />
+                        </div>
                     </div>
                 </div>
 

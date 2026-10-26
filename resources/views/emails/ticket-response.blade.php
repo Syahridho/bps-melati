@@ -3,7 +3,7 @@
 
 Yth. **{{ $ticket->reporter_name ?? 'Pelapor' }}**,
 
-Terima kasih telah menyampaikan laporan melalui sistem **Melati (Layanan Aspirasi & Pengaduan Online)**.
+Terima kasih telah menyampaikan laporan melalui sistem **Melati (Manajemen Lapor, Aspirasi, dan Transparansi Informasi)**.
 
 Berikut adalah **{{ $response->type === 'respon_awal' ? 'Respon Awal' : 'Respon Substantif' }}** dari tim kami:
 
@@ -15,7 +15,7 @@ Berikut adalah **{{ $response->type === 'respon_awal' ? 'Respon Awal' : 'Respon 
 
 ### Ringkasan Laporan Anda:
 - **Nomor Tiket:** `{{ $ticket->ticket_number }}`
-- **Klasifikasi:** {{ ucfirst(str_replace('_', ' ', $ticket->classification)) }}
+- **Klasifikasi:** {{ ucfirst(str_replace('_', ' ', $ticket->classification ?? 'laporan')) }}
 @if($ticket->service_type)
 - **Jenis Layanan:** {{ strtoupper($ticket->service_type) }}
 @endif
