@@ -1,15 +1,15 @@
 import { AlurPelaporan } from '@/components/alur-pelaporan';
 import { BpsFooter } from '@/components/bps-footer';
 import { DeleteTicketDialog } from '@/components/delete-ticket-dialog';
-import { FloatingServiceLinks } from '@/components/floating-service-links';
 import { ReportForm } from '@/components/report-form';
 import { SERVICE_CARDS, ServiceCard } from '@/components/service-cards';
 import { TicketHistoryCard } from '@/components/ticket-history-card';
 import { TicketSuccessDialog } from '@/components/ticket-success-dialog';
+import { Toaster } from '@/components/ui/toaster';
 import { WelcomeAttachmentPreviewDialog } from '@/components/welcome-attachment-preview-dialog';
+import { WelcomeBackdrop } from '@/components/welcome-backdrop';
 import { WelcomeHeader } from '@/components/welcome-header';
 import { WelcomeHero } from '@/components/welcome-hero';
-import { Toaster } from '@/components/ui/toaster';
 import { useSuccessDialog } from '@/hooks/use-success-dialog';
 import { useTicketHistory } from '@/hooks/use-ticket-history';
 import { useWelcomeForm } from '@/hooks/use-welcome-form';
@@ -54,19 +54,24 @@ export default function Welcome() {
                 <WelcomeHeader user={auth.user} />
 
                 <main className="mx-auto max-w-5xl flex-1 px-4 pt-8 pb-12 sm:px-6 sm:pt-12">
-                    <WelcomeHero />
+                    {/* hero + form share the ambient backdrop band */}
+                    <div className="relative isolate">
+                        <WelcomeBackdrop />
 
-                    <ReportForm
-                        data={data}
-                        setData={setData}
-                        processing={processing}
-                        errors={errors}
-                        fileInputRef={fileInputRef}
-                        onSubmit={handleSubmit}
-                        onFileChange={handleFileChange}
-                        onRemoveFile={removeFile}
-                        onPreviewFile={setPreviewFile}
-                    />
+                        <WelcomeHero />
+
+                        <ReportForm
+                            data={data}
+                            setData={setData}
+                            processing={processing}
+                            errors={errors}
+                            fileInputRef={fileInputRef}
+                            onSubmit={handleSubmit}
+                            onFileChange={handleFileChange}
+                            onRemoveFile={removeFile}
+                            onPreviewFile={setPreviewFile}
+                        />
+                    </div>
 
                     <TicketHistoryCard ticketHistory={ticketHistory} onSelectToDelete={setTicketToDelete} />
 

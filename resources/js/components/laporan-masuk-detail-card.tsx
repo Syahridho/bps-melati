@@ -10,7 +10,7 @@ import {
     statusVariant,
 } from '@/lib/laporan-masuk-utils';
 import { type Attachment, type Status, type TicketDetail } from '@/types/laporan-masuk';
-import { Calendar, Clock, FileText, Globe, Layers, Mail, Pencil, Phone, ShieldAlert, TimerOff, Trash2, User } from 'lucide-react';
+import { Calendar, Clock, FileText, Globe, Layers, Mail, Paperclip, Pencil, Phone, ShieldAlert, TimerOff, Trash2, User } from 'lucide-react';
 
 interface LaporanMasukDetailCardProps {
     ticket: TicketDetail;

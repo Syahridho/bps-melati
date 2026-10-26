@@ -1,6 +1,11 @@
 import { type ClassificationType } from '@/types/welcome';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { toast } from 'sonner';
+
+const MAX_FILES = 3;
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'pdf'];
 
 export function useWelcomeForm() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -45,8 +50,31 @@ export function useWelcomeForm() {
 
     function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
         const files = Array.from(e.target.files ?? []);
-        const combined = [...data.attachments, ...files].slice(0, 3);
-        setData('attachments', combined);
+        const accepted: File[] = [];
+
+        for (const file of files) {
+            const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+
+            if (!ALLOWED_EXTENSIONS.includes(extension)) {
+                toast.error(`File "${file.name}" ditolak. Hanya format PDF, JPG/JPEG, atau PNG yang diizinkan.`);
+                continue;
+            }
+
+            if (file.size > MAX_FILE_SIZE) {
+                toast.error(`File "${file.name}" terlalu besar. Ukuran maksimal 2MB per file.`);
+                continue;
+            }
+
+            accepted.push(file);
+        }
+
+        const combined = [...data.attachments, ...accepted];
+
+        if (combined.length > MAX_FILES) {
+            toast.error(`Maksimal ${MAX_FILES} file lampiran.`);
+        }
+
+        setData('attachments', combined.slice(0, MAX_FILES));
 
         // Reset input agar bisa pilih file yang sama lagi
         if (fileInputRef.current) {

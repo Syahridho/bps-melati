@@ -26,7 +26,7 @@ export function AttachmentField({ attachments, errors, fileInputRef, onFileChang
                     <InfoHint>Opsional</InfoHint>
                 </div>
                 <p className="text-muted-foreground text-xs">
-                    Maksimal 3 file (PDF, gambar JPG/PNG). Ukuran maks 2MB per file.
+                    Maksimal 3 file. Format yang diizinkan: PDF, JPG/JPEG, atau PNG. Ukuran maks 2MB per file.
                 </p>
             </div>
 
@@ -36,7 +36,7 @@ export function AttachmentField({ attachments, errors, fileInputRef, onFileChang
                 type="file"
                 className="hidden"
                 multiple
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.zip"
+                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={onFileChange}
             />
 

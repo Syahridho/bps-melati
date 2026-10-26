@@ -1,3 +1,4 @@
+import { ScrollableTabs } from '@/components/scrollable-tabs';
 import { cn } from '@/lib/utils';
 import { type FilterTab, type LaporanMasukProps } from '@/types/laporan-masuk';
 
@@ -21,10 +22,11 @@ export function LaporanMasukFilterTabs({ currentFilter, counts, onFilterChange }
     ];
 
     return (
-        <div className="flex items-center gap-1 overflow-x-auto border-b px-4 py-2">
+        <ScrollableTabs activeIndex={filterTabs.findIndex((tab) => tab.key === currentFilter)} ariaLabel="Filter laporan masuk">
             {filterTabs.map((tab) => (
                 <button
                     key={tab.key}
+                    aria-pressed={currentFilter === tab.key}
                     onClick={() => onFilterChange(tab.key)}
                     className={cn(
                         'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
@@ -46,6 +48,6 @@ export function LaporanMasukFilterTabs({ currentFilter, counts, onFilterChange }
                     )}
                 </button>
             ))}
-        </div>
+        </ScrollableTabs>
     );
 }
