@@ -64,28 +64,28 @@ export function CheckTicketSummary({ ticket, copied, onCopy }: CheckTicketSummar
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                         <User className="text-muted-foreground h-4 w-4 shrink-0" />
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-muted-foreground text-xs">Pelapor</p>
-                            <p className="font-medium">{ticket.reporter_name || 'Anonim'}</p>
+                            <p className="font-medium [overflow-wrap:anywhere] break-words">{ticket.reporter_name || 'Anonim'}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                         <Inbox className="text-muted-foreground h-4 w-4 shrink-0" />
-                        <div>
+                        <div className="min-w-0">
                             <p className="text-muted-foreground text-xs">Saluran Pengaduan</p>
-                            <p className="font-medium">{ticket.channel}</p>
+                            <p className="font-medium [overflow-wrap:anywhere] break-words">{ticket.channel}</p>
                         </div>
                     </div>
 
                     {ticket.service_type && (
-                        <div className="flex items-center gap-3 border-t pt-3 sm:col-span-2 lg:col-span-3">
+                        <div className="flex min-w-0 items-center gap-3 border-t pt-3 sm:col-span-2 lg:col-span-3">
                             <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-muted-foreground text-xs">Jenis Layanan / Satuan Tugas</p>
-                                <p className="font-medium">
+                                <p className="font-medium [overflow-wrap:anywhere] break-words">
                                     {ticket.service_type} {ticket.satuan_tugas ? `(${ticket.satuan_tugas})` : ''}
                                 </p>
                             </div>
@@ -97,13 +97,15 @@ export function CheckTicketSummary({ ticket, copied, onCopy }: CheckTicketSummar
                 {ticket.title && (
                     <div className="space-y-1">
                         <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Judul Laporan</Label>
-                        <h3 className="text-foreground text-base font-semibold">{ticket.title}</h3>
+                        <h3 className="text-foreground text-base font-semibold [overflow-wrap:anywhere] break-words">{ticket.title}</h3>
                     </div>
                 )}
 
                 <div className="space-y-2">
                     <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Isi Laporan / Pesan Awal</Label>
-                    <div className="bg-muted/20 rounded-lg border p-4 text-sm leading-relaxed whitespace-pre-wrap">{ticket.content}</div>
+                    <div className="bg-muted/20 rounded-lg border p-4 text-sm leading-relaxed [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
+                        {ticket.content}
+                    </div>
                 </div>
 
                 {/* Report Attachments */}

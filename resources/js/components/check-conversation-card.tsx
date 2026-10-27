@@ -141,7 +141,7 @@ export function CheckConversationCard({
                                         </div>
 
                                         <div
-                                            className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                                            className={`text-sm leading-relaxed [overflow-wrap:anywhere] break-words whitespace-pre-wrap ${
                                                 isSystem ? 'text-muted-foreground italic' : 'text-foreground'
                                             }`}
                                         >

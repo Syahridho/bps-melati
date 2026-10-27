@@ -59,7 +59,7 @@ export function LaporanMasukDetailCard({
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 sm:py-5 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
                 <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-xl font-bold">{ticket.ticket_number}</h2>
+                        <h2 className="min-w-0 text-xl font-bold [overflow-wrap:anywhere] break-words">{ticket.ticket_number}</h2>
                         <Badge variant={classificationVariant(ticket.classification)}>{classificationLabel(ticket.classification)}</Badge>
                         <Badge variant={statusVariant(ticketStatus)}>{statusLabel(ticketStatus)}</Badge>
                         {ticket.is_pengawasan && (
@@ -140,7 +140,7 @@ export function LaporanMasukDetailCard({
                     </div>
                     <div className="min-w-0">
                         <p className="text-muted-foreground text-xs">Pelapor</p>
-                        <p className="text-sm font-medium break-words">{ticket.reporter_name ?? 'Anonim'}</p>
+                        <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{ticket.reporter_name ?? 'Anonim'}</p>
                     </div>
                 </div>
                 {ticket.reporter_email && (
@@ -150,7 +150,7 @@ export function LaporanMasukDetailCard({
                         </div>
                         <div className="min-w-0">
                             <p className="text-muted-foreground text-xs">Email</p>
-                            <p className="text-sm font-medium break-words">{ticket.reporter_email}</p>
+                            <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{ticket.reporter_email}</p>
                         </div>
                     </div>
                 )}
@@ -161,7 +161,7 @@ export function LaporanMasukDetailCard({
                         </div>
                         <div className="min-w-0">
                             <p className="text-muted-foreground text-xs">WhatsApp</p>
-                            <p className="text-sm font-medium break-words">{ticket.reporter_wa}</p>
+                            <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{ticket.reporter_wa}</p>
                         </div>
                     </div>
                 )}
@@ -171,7 +171,7 @@ export function LaporanMasukDetailCard({
                     </div>
                     <div className="min-w-0">
                         <p className="text-muted-foreground text-xs">Sumber / Aplikasi</p>
-                        <p className="text-sm font-medium break-words capitalize">{ticket.source_app}</p>
+                        <p className="text-sm font-medium [overflow-wrap:anywhere] break-words capitalize">{ticket.source_app}</p>
                     </div>
                 </div>
                 <div className="flex min-w-0 items-start gap-3">
@@ -180,7 +180,7 @@ export function LaporanMasukDetailCard({
                     </div>
                     <div className="min-w-0">
                         <p className="text-muted-foreground text-xs">Channel</p>
-                        <p className="text-sm font-medium break-words">{ticket.channel}</p>
+                        <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{ticket.channel}</p>
                     </div>
                 </div>
                 <div className="flex min-w-0 items-start gap-3">
@@ -188,8 +188,8 @@ export function LaporanMasukDetailCard({
                         <Calendar className="text-muted-foreground size-4" />
                     </div>
                     <div className="min-w-0">
-                        <p className="text-muted-foreground text-xs">Periode</p>
-                        <p className="text-sm font-medium break-words">{ticket.period}</p>
+                        <p className="text-muted-foreground text-xs">Tanggal Dibuat</p>
+                        <p className="text-sm font-medium break-words">{formatFullDate(ticket.created_at)}</p>
                     </div>
                 </div>
                 <div className="flex min-w-0 items-start gap-3">
@@ -198,7 +198,7 @@ export function LaporanMasukDetailCard({
                     </div>
                     <div className="min-w-0">
                         <p className="text-muted-foreground text-xs">Nomor Urut</p>
-                        <p className="text-sm font-medium break-words">{ticket.sequence}</p>
+                        <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{ticket.sequence}</p>
                     </div>
                 </div>
                 {ticket.created_by_name && (
@@ -208,7 +208,7 @@ export function LaporanMasukDetailCard({
                         </div>
                         <div className="min-w-0">
                             <p className="text-muted-foreground text-xs">Dibuat Oleh</p>
-                            <p className="text-sm font-medium break-words">{ticket.created_by_name}</p>
+                            <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{ticket.created_by_name}</p>
                         </div>
                     </div>
                 )}

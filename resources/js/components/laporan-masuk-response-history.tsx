@@ -78,7 +78,7 @@ export function LaporanMasukResponseHistory({
                     Riwayat Tanggapan ({responses.length})
                 </h3>
 
-                <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingName={typingName} />
+                <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingName={typingName} className="min-w-0" />
             </div>
 
             {responses.length === 0 ? (

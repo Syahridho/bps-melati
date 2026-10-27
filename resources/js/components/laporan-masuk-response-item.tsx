@@ -24,7 +24,7 @@ export function LaporanMasukResponseItem({ response, onPreviewAttachment, resend
         <div className={cn('space-y-2 rounded-lg border p-4', isSystem ? 'bg-muted/40 border-dashed' : 'bg-muted/20')}>
             <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <span className={cn('text-sm font-medium break-words', isSystem && 'text-muted-foreground')}>
+                    <span className={cn('text-sm font-medium [overflow-wrap:anywhere] break-words', isSystem && 'text-muted-foreground')}>
                         {isSystem && <TimerOff className="mr-1 inline size-3.5" />}
                         {response.user_name}
                     </span>
@@ -49,7 +49,9 @@ export function LaporanMasukResponseItem({ response, onPreviewAttachment, resend
                     </div>
                 )}
             </div>
-            <p className={cn('text-sm whitespace-pre-wrap', isSystem && 'text-muted-foreground italic')}>{response.message}</p>
+            <p className={cn('text-sm [overflow-wrap:anywhere] break-words whitespace-pre-wrap', isSystem && 'text-muted-foreground italic')}>
+                {response.message}
+            </p>
 
             {/* Peringatan email gagal/bounce + tombol kirim ulang */}
             {showEmailWarning && (
