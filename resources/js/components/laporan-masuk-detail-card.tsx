@@ -131,6 +131,7 @@ export function LaporanMasukDetailCard({
                 </div>
             </div>
 
+           
             <Separator />
 
             <div className="grid gap-x-4 gap-y-5 px-4 py-4 sm:grid-cols-2 sm:px-6 sm:py-5 xl:grid-cols-4">
@@ -213,6 +214,29 @@ export function LaporanMasukDetailCard({
                     </div>
                 )}
             </div>
+
+             {((ticket.title && ticket.title.trim()) || (ticket.content && ticket.content.trim())) && (
+                <>
+                    <Separator />
+                    <div className="space-y-5 px-4 py-4 sm:px-6 sm:py-5">
+                        {ticket.title && ticket.title.trim() && (
+                            <div>
+                                <h3 className="text-lg font-semibold [overflow-wrap:anywhere] break-words sm:text-xl">{ticket.title}</h3>
+                            </div>
+                        )}
+                        {ticket.content && ticket.content.trim() && (
+                            <div>
+                                <div className="bg-muted/20 rounded-lg border p-4 text-sm">
+                                    <p className="min-w-0 leading-relaxed [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
+                                        {ticket.content}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
 
             {ticket.attachments.length > 0 && (
                 <>
