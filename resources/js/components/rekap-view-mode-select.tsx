@@ -9,7 +9,7 @@ interface RekapViewModeSelectProps {
     triggerClassName?: string;
 }
 
-export function RekapViewModeSelect({ value, onValueChange, triggerClassName = 'w-[210px]' }: RekapViewModeSelectProps) {
+export function RekapViewModeSelect({ value, onValueChange, triggerClassName = 'w-[100px]' }: RekapViewModeSelectProps) {
     return (
         <Select value={value} onValueChange={(next) => onValueChange(next as RekapViewMode)}>
             <SelectTrigger className={triggerClassName} aria-label="Mode tampilan">

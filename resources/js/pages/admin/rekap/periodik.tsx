@@ -1,3 +1,4 @@
+import { RekapChatMultiSelect } from '@/components/rekap-chat-multi-select';
 import { RekapChatSelect } from '@/components/rekap-chat-select';
 import { RekapPeriodMatrixTable } from '@/components/rekap-period-matrix-table';
 import { RekapPeriodikFilter } from '@/components/rekap-periodik-filter';
@@ -7,13 +8,7 @@ import { RekapViewModeSelect } from '@/components/rekap-view-mode-select';
 import { useRekapFilters } from '@/hooks/use-rekap-filters';
 import { REKAP_TABLE_NOTES, REKAP_VIEW_MODE_RINGKAS } from '@/lib/rekap-constants';
 import AdminPage from '@/pages/admin/page';
-import {
-    type PeriodOption,
-    type RekapMatrixPeriodColumn,
-    type RekapMatrixRow,
-    type RekapMatrixTotals,
-    type RekapViewMode,
-} from '@/types/rekap';
+import { type PeriodOption, type RekapMatrixPeriodColumn, type RekapMatrixRow, type RekapMatrixTotals, type RekapViewMode } from '@/types/rekap';
 import { Info } from 'lucide-react';
 
 interface RekapPeriodikProps {
@@ -45,16 +40,7 @@ export default function RekapPeriodik({
 }: RekapPeriodikProps) {
     const monthsParam = selectedMonths.join(',');
 
-    const {
-        rolePrefix,
-        printUrl,
-        excelUrl,
-        exportOpen,
-        setExportOpen,
-        handleParamChange,
-        handleViewModeChange,
-        handlePrint,
-    } = useRekapFilters({
+    const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleParamChange, handleViewModeChange, handlePrint } = useRekapFilters({
         routeKey: 'rekap-periodik',
         queryParams: { year, months: monthsParam, chat },
         frameId: PRINT_FRAME_ID,
@@ -78,10 +64,6 @@ export default function RekapPeriodik({
         >
             <div className="flex flex-col gap-4 pb-10">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs text-muted-foreground">
-                        Periode aktif: <span className="font-semibold text-foreground">{periodeLabel}</span>
-                    </div>
-
                     <div className="flex flex-wrap items-center gap-2">
                         <RekapViewModeSelect value={tampilan} onValueChange={handleViewModeChange} />
 
@@ -95,9 +77,23 @@ export default function RekapPeriodik({
                         />
 
                         <RekapChatSelect
-                            value={chat}
-                            onValueChange={(val) => handleParamChange('chat', val)}
+                            value={chat === '0' ? '0' : '1'}
+                            onValueChange={(val) => {
+                                if (val === '0') {
+                                    handleParamChange('chat', '0');
+                                } else {
+                                    handleParamChange('chat', selectedMonths.join(','));
+                                }
+                            }}
                         />
+                        {chat !== '0' && (
+                            <RekapChatMultiSelect
+                                selectedMonths={selectedMonths}
+                                monthOptions={monthOptions}
+                                value={chat.split(',')}
+                                onChange={(vals) => handleParamChange('chat', vals.join(','))}
+                            />
+                        )}
 
                         <RekapPrintActions
                             excelUrl={excelUrl}
@@ -114,19 +110,25 @@ export default function RekapPeriodik({
                     </div>
                 </div>
 
-                {chat === '1' && (
+                <div className="text-muted-foreground text-xs">
+                    Periode aktif: <span className="text-foreground font-semibold">{periodeLabel}</span>
+                </div>
+
+                {chat !== '0' && (
                     <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
                         <Info className="size-4 shrink-0" />
                         <span>
-                            <strong>Perhatian Privasi:</strong> PDF akan memuat data pelapor dan seluruh isi percakapan tiket. Gunakan dengan hati-hati untuk menjaga kerahasiaan data pelapor. Chat hanya ditampilkan pada export PDF (tabel rekap dan Excel tetap tanpa chat).
+                            <strong>Perhatian Privasi:</strong> PDF akan memuat data pelapor dan seluruh isi percakapan tiket. Gunakan dengan
+                            hati-hati untuk menjaga kerahasiaan data pelapor. Chat hanya ditampilkan pada export PDF (tabel rekap dan Excel tetap
+                            tanpa chat).
                         </span>
                     </div>
                 )}
 
                 {rows.length === 0 || months.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-16 text-muted-foreground">
+                    <div className="text-muted-foreground flex flex-col items-center justify-center rounded-md border border-dashed py-16">
                         <p className="text-sm font-medium">Tidak ada data untuk periode ini</p>
-                        <p className="text-xs mt-1">Coba pilih tahun atau bulan lain.</p>
+                        <p className="mt-1 text-xs">Coba pilih tahun atau bulan lain.</p>
                     </div>
                 ) : tampilan === REKAP_VIEW_MODE_RINGKAS ? (
                     <RekapSummaryTable variant="period" rows={rows} totals={totals} periods={months} />

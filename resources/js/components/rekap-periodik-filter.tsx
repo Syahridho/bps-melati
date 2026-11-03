@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, ChevronDown, RotateCcw } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 interface PeriodOption {
@@ -81,10 +81,10 @@ export function RekapPeriodikFilter({
     }, [selectedMonths, monthOptions]);
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1">
             {/* Filter Tahun */}
             <Select value={year} onValueChange={onYearChange} disabled={isLoading}>
-                <SelectTrigger className="w-36 bg-background">
+                <SelectTrigger className="bg-background w-36">
                     <SelectValue placeholder="Pilih tahun" />
                 </SelectTrigger>
                 <SelectContent>
@@ -104,10 +104,10 @@ export function RekapPeriodikFilter({
                         role="combobox"
                         aria-expanded={open}
                         disabled={isLoading}
-                        className="w-56 justify-between bg-background font-normal"
+                        className="bg-background w-auto justify-between font-normal"
                     >
                         <span className="flex items-center gap-2 truncate text-sm">
-                            <Calendar className="size-4 shrink-0 text-muted-foreground" />
+                            <Calendar className="text-muted-foreground size-4 shrink-0" />
                             <span className="truncate">{monthSummaryLabel}</span>
                         </span>
                         <ChevronDown className="size-4 shrink-0 opacity-50" />
@@ -116,15 +116,9 @@ export function RekapPeriodikFilter({
                 <PopoverContent className="w-72 p-3" align="start">
                     <div className="space-y-3">
                         <div className="flex items-center justify-between border-b pb-2">
-                            <span className="text-xs font-semibold text-foreground">Pilih Bulan</span>
+                            <span className="text-foreground text-xs font-semibold">Pilih Bulan</span>
                             <div className="flex items-center gap-1.5">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={selectAll}
-                                    className="h-6 px-1.5 text-[11px] text-primary"
-                                >
+                                <Button type="button" variant="ghost" size="sm" onClick={selectAll} className="text-primary h-6 px-1.5 text-[11px]">
                                     Pilih Semua
                                 </Button>
                                 <Button
@@ -132,44 +126,31 @@ export function RekapPeriodikFilter({
                                     variant="ghost"
                                     size="sm"
                                     onClick={resetToOne}
-                                    className="h-6 px-1.5 text-[11px] text-muted-foreground"
+                                    className="text-muted-foreground h-6 px-1.5 text-[11px]"
                                 >
                                     Reset
                                 </Button>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                        <div className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1">
                             {monthOptions.map((month) => {
                                 const isChecked = localSelected.includes(month.value);
                                 return (
                                     <label
                                         key={month.value}
-                                        className="flex items-center gap-2 rounded-md p-1.5 hover:bg-muted/60 cursor-pointer text-xs select-none"
+                                        className="hover:bg-muted/60 flex cursor-pointer items-center gap-2 rounded-md p-1.5 text-xs select-none"
                                     >
-                                        <Checkbox
-                                            checked={isChecked}
-                                            onCheckedChange={() => toggleMonth(month.value)}
-                                        />
-                                        <span className={isChecked ? 'font-medium text-foreground' : 'text-muted-foreground'}>
-                                            {month.label}
-                                        </span>
+                                        <Checkbox checked={isChecked} onCheckedChange={() => toggleMonth(month.value)} />
+                                        <span className={isChecked ? 'text-foreground font-medium' : 'text-muted-foreground'}>{month.label}</span>
                                     </label>
                                 );
                             })}
                         </div>
 
-                        <div className="border-t pt-2 flex items-center justify-between">
-                            <span className="text-[11px] text-muted-foreground">
-                                {localSelected.length} dipilih
-                            </span>
-                            <Button
-                                type="button"
-                                size="sm"
-                                onClick={handleApply}
-                                disabled={localSelected.length === 0}
-                                className="h-7 text-xs px-3"
-                            >
+                        <div className="flex items-center justify-between border-t pt-2">
+                            <span className="text-muted-foreground text-[11px]">{localSelected.length} dipilih</span>
+                            <Button type="button" size="sm" onClick={handleApply} disabled={localSelected.length === 0} className="h-7 px-3 text-xs">
                                 Terapkan
                             </Button>
                         </div>

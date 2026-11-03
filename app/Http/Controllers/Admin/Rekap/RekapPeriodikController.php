@@ -43,16 +43,21 @@ class RekapPeriodikController extends Controller
         [$year, $months] = $this->resolveParams($request->query('year'), $request->query('months'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
         $chat = $this->resolveChatParam($request->query('chat'));
-        $withChat = ($chat === '1');
+        $withChat = ($chat !== '0');
+
+        $chatMonths = [];
+        if ($withChat) {
+            $chatMonths = array_map('intval', explode(',', $chat));
+        }
 
         $data = array_merge(
             $this->payloadWithMode($year, $months, $tampilan),
             $this->filterPayload($year, $months, $tampilan, $chat),
             [
                 'withChat' => $withChat,
-                'chatTickets' => $withChat ? $this->getChatTickets($year, $months) : collect(),
-                'chatTotalCount' => $withChat ? $this->getChatTotalCount($year, $months) : 0,
-                'chatLimitReached' => $withChat ? $this->isChatLimitReached($year, $months) : false,
+                'chatTickets' => $withChat ? $this->getChatTickets($year, $chatMonths) : collect(),
+                'chatTotalCount' => $withChat ? $this->getChatTotalCount($year, $chatMonths) : 0,
+                'chatLimitReached' => $withChat ? $this->isChatLimitReached($year, $chatMonths) : false,
             ]
         );
 
@@ -187,7 +192,24 @@ class RekapPeriodikController extends Controller
 
     private function resolveChatParam(mixed $chatInput): string
     {
-        return ($chatInput === '1' || $chatInput === 'true' || $chatInput === 1) ? '1' : '0';
+        // Accept '0' (tanpa chat) or comma‑separated month numbers like '1,2,3'.
+        if (is_string($chatInput) && $chatInput !== '' && $chatInput !== '0') {
+            // Validate each month 1‑12, remove duplicates, sort.
+            $parts = explode(',', $chatInput);
+            $months = [];
+            foreach ($parts as $p) {
+                $m = filter_var($p, FILTER_VALIDATE_INT);
+                if ($m !== false && $m >= 1 && $m <= 12) {
+                    $months[] = $m;
+                }
+            }
+            if (!empty($months)) {
+                $months = array_unique($months);
+                sort($months);
+                return implode(',', $months);
+            }
+        }
+        return '0';
     }
 
     /**
