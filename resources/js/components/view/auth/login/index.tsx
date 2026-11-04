@@ -3,14 +3,14 @@ import { type SessionConflictInfo } from '@/components/session/session-conflict-
 import { Head } from '@inertiajs/react';
 
 interface LoginPageProps {
-    canResetPassword: boolean;
+    canResetPassword?: boolean;
     status?: string;
     noticeReason?: string | null;
     throttleSeconds?: number;
     sessionConflict?: SessionConflictInfo | null;
 }
 
-export default function LoginView({ status, noticeReason, throttleSeconds, sessionConflict, canResetPassword }: LoginPageProps) {
+export default function LoginView({ status, noticeReason, throttleSeconds, sessionConflict }: LoginPageProps) {
     return (
         <div className="bg-background flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
             <Head title="Masuk">

@@ -18,18 +18,24 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
         try {
             localStorage.clear();
             sessionStorage.clear();
-        } catch {}
+        } catch {
+            // abaikan: storage bisa tidak tersedia (mode privat, dll.)
+        }
 
         if (typeof window !== 'undefined') {
             const win = window as unknown as { Echo?: { disconnect: () => void } };
             win.Echo?.disconnect();
         }
 
-        router.post(route('logout'), {}, {
-            onFinish: () => {
-                window.location.href = '/login';
+        router.post(
+            route('logout'),
+            {},
+            {
+                onFinish: () => {
+                    window.location.href = '/login';
+                },
             },
-        });
+        );
     };
 
     return (

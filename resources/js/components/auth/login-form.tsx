@@ -64,7 +64,9 @@ export default function LoginForm({ noticeReason, throttleSeconds, sessionConfli
             try {
                 localStorage.clear();
                 sessionStorage.clear();
-            } catch {}
+            } catch {
+                // abaikan: storage bisa tidak tersedia (mode privat, dll.)
+            }
 
             if (typeof window !== 'undefined') {
                 const win = window as unknown as { Echo?: { disconnect: () => void } };
