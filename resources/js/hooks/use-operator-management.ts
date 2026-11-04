@@ -9,6 +9,8 @@ export function useOperatorManagement(initialSearch: string, perPage: number, fl
 
     // Modal state
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [editingOperator, setEditingOperator] = useState<Operator | null>(null);
     const [deletingOperator, setDeletingOperator] = useState<Operator | null>(null);
 
@@ -64,13 +66,19 @@ export function useOperatorManagement(initialSearch: string, perPage: number, fl
         setIsCreateOpen(true);
     };
 
+    const closeCreateModal = () => {
+        setIsCreateOpen(false);
+        createForm.clearErrors();
+    };
+
     // Form Submit: Tambah Operator/User
     const handleCreateSubmit = (e: FormEvent) => {
         e.preventDefault();
         createForm.post(route('dashboard.admin.operator.store'), {
             onSuccess: () => {
                 createForm.reset();
-                setIsCreateOpen(false);
+                closeCreateModal();
+                toast.success('Berhasil membuat user baru');
             },
         });
     };
@@ -85,6 +93,15 @@ export function useOperatorManagement(initialSearch: string, perPage: number, fl
             password: '',
         });
         editForm.clearErrors();
+        setIsEditOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setIsEditOpen(false);
+        setTimeout(() => {
+            setEditingOperator(null);
+            editForm.clearErrors();
+        }, 200);
     };
 
     // Form Submit: Edit Operator/User
@@ -95,18 +112,32 @@ export function useOperatorManagement(initialSearch: string, perPage: number, fl
         editForm.put(route('dashboard.admin.operator.update', editingOperator.id), {
             onSuccess: () => {
                 editForm.reset();
-                setEditingOperator(null);
+                closeEditModal();
+                toast.success('Berhasil memperbarui user');
             },
         });
     };
 
     // Action: Delete Operator/User
+    const openDeleteModal = (op: Operator) => {
+        setDeletingOperator(op);
+        setIsDeleteOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        setIsDeleteOpen(false);
+        setTimeout(() => {
+            setDeletingOperator(null);
+        }, 200);
+    };
+
     const handleDeleteSubmit = () => {
         if (!deletingOperator) return;
 
         router.delete(route('dashboard.admin.operator.destroy', deletingOperator.id), {
             onSuccess: () => {
-                setDeletingOperator(null);
+                closeDeleteModal();
+                toast.success('Berhasil menghapus user');
             },
         });
     };
@@ -119,11 +150,19 @@ export function useOperatorManagement(initialSearch: string, perPage: number, fl
         isCreateOpen,
         setIsCreateOpen,
         openCreateModal,
+        closeCreateModal,
+        isEditOpen,
+        setIsEditOpen,
         editingOperator,
         setEditingOperator,
         openEditModal,
+        closeEditModal,
+        isDeleteOpen,
+        setIsDeleteOpen,
         deletingOperator,
         setDeletingOperator,
+        openDeleteModal,
+        closeDeleteModal,
         createForm,
         editForm,
         handleCreateSubmit,

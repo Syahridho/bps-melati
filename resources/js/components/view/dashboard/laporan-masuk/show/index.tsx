@@ -147,12 +147,11 @@ function DetailFlagButton({ ticket, routePrefix }: { ticket: TicketDetail; route
 }
 
 export default function ShowLaporanMasukView() {
-    const { auth, ticket, can, from, flash } = usePage<ShowProps>().props;
+    const { auth, ticket, can, flash } = usePage<ShowProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
-    const isInputData = from === 'input-data' || ticket.source_app === 'admin';
-    const backRouteName = isInputData ? `${routePrefix}.input-data.index` : `${routePrefix}.laporan-masuk.index`;
-    const backLabel = isInputData ? 'Input Data' : 'Laporan Masuk';
+    const backRouteName = `${routePrefix}.laporan-masuk.index`;
+    const backLabel = 'Laporan Masuk';
 
     const canEdit = can?.edit ?? auth.user.role === 'admin';
     const canDelete = can?.delete ?? auth.user.role === 'admin';

@@ -186,7 +186,7 @@ class LaporanMasukController extends Controller
             $ticket->update(['is_read' => true]);
         }
 
-        return $this->renderPage($request, 'laporan-masuk/show', [
+        return $this->renderPage($request, 'laporan-masuk/show/index', [
             'from' => 'laporan-masuk',
             'can' => [
                 'edit' => false,

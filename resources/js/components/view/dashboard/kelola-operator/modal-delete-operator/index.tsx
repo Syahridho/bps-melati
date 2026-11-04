@@ -4,14 +4,15 @@ import { type Operator } from '@/types/operator';
 import { Trash2 } from 'lucide-react';
 
 interface OperatorDeleteDialogProps {
+    open: boolean;
     operator: Operator | null;
     onClose: () => void;
     onConfirm: () => void;
 }
 
-export function OperatorDeleteDialog({ operator, onClose, onConfirm }: OperatorDeleteDialogProps) {
+export default function OperatorDeleteDialog({ open, operator, onClose, onConfirm }: OperatorDeleteDialogProps) {
     return (
-        <Dialog open={!!operator} onOpenChange={(open) => !open && onClose()}>
+        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle className="text-destructive flex items-center gap-2">

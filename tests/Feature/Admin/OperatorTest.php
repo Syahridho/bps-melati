@@ -31,7 +31,7 @@ test('admin can view user list with redis cache', function () {
         ->get(route('dashboard.admin.operator.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/operator/index')
+            ->component('dashboard/admin/operator/index')
             ->has('operators.data', 4) // 1 admin + 3 operators
         );
 });

@@ -1,11 +1,13 @@
-import { OperatorDeleteDialog } from '@/components/operator/operator-delete-dialog';
-import { OperatorFormDialog } from '@/components/operator/operator-form-dialog';
 import { OperatorTable } from '@/components/operator/operator-table';
+import OperatorFormDialog from '@/components/view/dashboard/kelola-operator/modal-add-operator';
+import OperatorDeleteDialog from '@/components/view/dashboard/kelola-operator/modal-delete-operator';
+import OperatorFormDialogUpdate from '@/components/view/dashboard/kelola-operator/modal-update-operator';
 import { useOperatorManagement } from '@/hooks/use-operator-management';
 import AdminPage from '@/layouts/dashboard/page';
 import { type OperatorPageProps } from '@/types/operator';
 import { usePage } from '@inertiajs/react';
 import { CheckCircle2 } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function KelolaOperatorView() {
     const { auth, operators, filters, flash } = usePage<OperatorPageProps>().props;
@@ -16,13 +18,15 @@ export default function KelolaOperatorView() {
         handlePerPageChange,
         successMessage,
         isCreateOpen,
-        setIsCreateOpen,
         openCreateModal,
-        editingOperator,
-        setEditingOperator,
+        closeCreateModal,
+        isEditOpen,
         openEditModal,
+        closeEditModal,
+        isDeleteOpen,
         deletingOperator,
-        setDeletingOperator,
+        openDeleteModal,
+        closeDeleteModal,
         createForm,
         editForm,
         handleCreateSubmit,
@@ -30,6 +34,22 @@ export default function KelolaOperatorView() {
         handleForceLogout,
         handleDeleteSubmit,
     } = useOperatorManagement(filters.search, filters.per_page, flash?.success);
+
+    useEffect(() => {
+        if (!isCreateOpen && !isEditOpen && !isDeleteOpen) {
+            if (document.body.style.pointerEvents === 'none') {
+                document.body.style.pointerEvents = '';
+            }
+        }
+    }, [isCreateOpen, isEditOpen, isDeleteOpen]);
+
+    useEffect(() => {
+        return () => {
+            if (document.body.style.pointerEvents === 'none') {
+                document.body.style.pointerEvents = '';
+            }
+        };
+    }, []);
 
     return (
         <AdminPage
@@ -55,14 +75,16 @@ export default function KelolaOperatorView() {
                     onOpenCreate={openCreateModal}
                     onEdit={openEditModal}
                     onForceLogout={handleForceLogout}
-                    onDelete={setDeletingOperator}
+                    onDelete={openDeleteModal}
                 />
             </div>
 
             {/* Modal Tambah Pengguna */}
             <OperatorFormDialog
                 open={isCreateOpen}
-                onOpenChange={setIsCreateOpen}
+                onOpenChange={(open) => {
+                    if (!open) closeCreateModal();
+                }}
                 mode="create"
                 data={createForm.data}
                 setData={createForm.setData}
@@ -72,9 +94,11 @@ export default function KelolaOperatorView() {
             />
 
             {/* Modal Edit Pengguna */}
-            <OperatorFormDialog
-                open={!!editingOperator}
-                onOpenChange={(open) => !open && setEditingOperator(null)}
+            <OperatorFormDialogUpdate
+                open={isEditOpen}
+                onOpenChange={(open) => {
+                    if (!open) closeEditModal();
+                }}
                 mode="edit"
                 data={editForm.data}
                 setData={editForm.setData}
@@ -84,7 +108,12 @@ export default function KelolaOperatorView() {
             />
 
             {/* Modal Hapus Pengguna */}
-            <OperatorDeleteDialog operator={deletingOperator} onClose={() => setDeletingOperator(null)} onConfirm={handleDeleteSubmit} />
+            <OperatorDeleteDialog
+                open={isDeleteOpen}
+                operator={deletingOperator}
+                onClose={closeDeleteModal}
+                onConfirm={handleDeleteSubmit}
+            />
         </AdminPage>
     );
 }

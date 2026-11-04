@@ -202,7 +202,7 @@ class LaporanSelesaiController extends Controller
             ->whereIn('status', self::COMPLETED_STATUSES)
             ->firstOrFail();
 
-        return $this->renderPage($request, 'laporan-selesai/show', [
+        return $this->renderPage($request, 'laporan-selesai/show/index', [
             'ticket' => array_merge($this->ticketPayload($ticket), [
                 'is_flagged' => (bool) $ticket->is_flagged,
                 'flagged_at' => $ticket->flagged_at?->toIso8601String(),

@@ -113,7 +113,7 @@ export function OperatorTable({
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <DropdownMenu>
+                                            <DropdownMenu modal={false}>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" className="h-8 w-8 p-0">
                                                         <span className="sr-only">Buka menu</span>
@@ -121,13 +121,19 @@ export function OperatorTable({
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => onEdit(op)}>
+                                                    <DropdownMenuItem
+                                                        onSelect={() => {
+                                                            setTimeout(() => onEdit(op), 0);
+                                                        }}
+                                                    >
                                                         <Edit className="mr-2 h-4 w-4" />
                                                         Edit
                                                     </DropdownMenuItem>
                                                     {op.has_session && op.id !== authUserId && (
                                                         <DropdownMenuItem
-                                                            onClick={() => onForceLogout(op)}
+                                                            onSelect={() => {
+                                                                setTimeout(() => onForceLogout(op), 0);
+                                                            }}
                                                             className="text-amber-600 focus:text-amber-600 dark:text-amber-400"
                                                         >
                                                             <LogOut className="mr-2 h-4 w-4" />
@@ -135,7 +141,9 @@ export function OperatorTable({
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuItem
-                                                        onClick={() => onDelete(op)}
+                                                        onSelect={() => {
+                                                            setTimeout(() => onDelete(op), 0);
+                                                        }}
                                                         className="text-destructive focus:text-destructive"
                                                     >
                                                         <Trash2 className="mr-2 h-4 w-4" />

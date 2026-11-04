@@ -155,7 +155,7 @@ class InputDataController extends Controller
             $ticket->update(['is_read' => true]);
         }
 
-       return $this->renderPage($request, 'laporan-masuk/show', [
+       return $this->renderPage($request, 'input-data/show/index', [
             'from' => 'input-data',
             'can' => [
                 'edit' => true,

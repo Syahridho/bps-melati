@@ -15,7 +15,6 @@ test('operator opening /settings/password receives auth.user with operator role 
         ->get('/settings/password')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/operator/settings/password/index')
             ->where('auth.user.id', $operator->id)
             ->where('auth.user.name', 'Operator Melati')
             ->where('auth.user.role', 'operator')

@@ -18,7 +18,7 @@ interface OperatorFormDialogProps {
     onSubmit: (e: FormEvent) => void;
 }
 
-export function OperatorFormDialog({ open, onOpenChange, mode, data, setData, errors, processing, onSubmit }: OperatorFormDialogProps) {
+export default function OperatorFormDialog({ open, onOpenChange, mode, data, setData, errors, processing, onSubmit }: OperatorFormDialogProps) {
     const isCreate = mode === 'create';
     const fieldPrefix = isCreate ? 'create' : 'edit';
 
