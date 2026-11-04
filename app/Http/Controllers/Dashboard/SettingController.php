@@ -68,7 +68,7 @@ class SettingController extends Controller
         ]);
     }
 
-    public function indexAppearce(Request $request) {
-        return Inertia::render('settings/appearance/index');
+    public function indexAppearce() {
+         return Inertia::render('settings/appearance/index');
     }
 }

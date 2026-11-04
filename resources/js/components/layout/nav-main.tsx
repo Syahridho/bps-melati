@@ -44,14 +44,17 @@ function isItemActive(item: NavItem, currentUrl: string): boolean {
     return item.items?.some((subItem) => isUrlActive(subItem.url, currentUrl)) ?? false;
 }
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+export function NavMain({ items = [] }: { items?: NavItem[] }) {
     const page = usePage();
+    const safeItems = Array.isArray(items) ? items : [];
+
     return (
         <SidebarGroup className="px-2 py-0">
             <SidebarGroupLabel>Menu</SidebarGroupLabel>
             <SidebarMenu>
-                {items.map((item) =>
-                    item.items?.length ? (
+                {safeItems.map((item) => {
+                    const subItems = item.items ?? [];
+                    return subItems.length > 0 ? (
                         <Collapsible key={item.title} asChild defaultOpen={isItemActive(item, page.url)} className="group/collapsible">
                             <SidebarMenuItem>
                                 <CollapsibleTrigger asChild>
@@ -63,10 +66,10 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
                                     <SidebarMenuSub>
-                                        {item.items.map((subItem) => (
+                                        {subItems.map((subItem) => (
                                             <SidebarMenuSubItem key={subItem.title}>
                                                 <SidebarMenuSubButton asChild isActive={isUrlActive(subItem.url, page.url)}>
-                                                    <Link href={subItem.url} prefetch>
+                                                    <Link href={subItem.url}>
                                                         <span>{subItem.title}</span>
                                                     </Link>
                                                 </SidebarMenuSubButton>
@@ -85,7 +88,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                         <span>{item.title}</span>
                                     </a>
                                 ) : (
-                                    <Link href={item.url} prefetch>
+                                    <Link href={item.url}>
                                         {item.icon && <item.icon />}
                                         <span>{item.title}</span>
                                     </Link>
@@ -97,8 +100,8 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                 </SidebarMenuBadge>
                             )}
                         </SidebarMenuItem>
-                    ),
-                )}
+                    );
+                })}
             </SidebarMenu>
         </SidebarGroup>
     );

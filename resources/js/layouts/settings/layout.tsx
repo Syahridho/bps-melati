@@ -1,8 +1,9 @@
 import Heading from '@/components/shared/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useAuthRole } from '@/hooks/use-auth-role';
 import { cn } from '@/lib/utils';
-import { type NavItem, type SharedData } from '@/types';
+import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 
 export default function SettingsLayout({
@@ -14,12 +15,11 @@ export default function SettingsLayout({
     description?: string;
     children: React.ReactNode;
 }) {
-    const { auth } = usePage<SharedData>().props;
+    const { isAdmin } = useAuthRole();
     const pageUrl = usePage().url;
     const currentPath = pageUrl.split('?')[0].split('#')[0];
 
-    const role = auth?.user?.role;
-    const appSettingUrl = role === 'admin' ? '/settings/application' : null;
+    const appSettingUrl = isAdmin ? '/settings/application' : null;
 
     const sidebarNavItems: NavItem[] = [
         ...(appSettingUrl
@@ -60,7 +60,7 @@ export default function SettingsLayout({
                                     'bg-muted font-medium': currentPath === item.url,
                                 })}
                             >
-                                <Link href={item.url} prefetch>
+                                <Link href={item.url}>
                                     {item.title}
                                 </Link>
                             </Button>

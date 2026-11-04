@@ -1,6 +1,7 @@
 import { NavMain } from '@/components/layout/nav-main';
 import { NavUser } from '@/components/layout/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { useAuthRole } from '@/hooks/use-auth-role';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEcho, useEchoPublic } from '@laravel/echo-react';
@@ -10,7 +11,8 @@ import { toast } from 'sonner';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
-    const { auth, inbox_open_count } = usePage<SharedData>().props;
+    const { inbox_open_count } = usePage<SharedData>().props;
+    const { user, isAdmin, isOperator, isOperatorTim, canAccessInbox } = useAuthRole();
 
     const [openCount, setOpenCount] = useState(inbox_open_count ?? 0);
     const reloadTimerRef = useRef<number | null>(null);
@@ -41,9 +43,8 @@ export function AppSidebar() {
         }, 400);
     }, []);
 
-    // Dengarkan event real-time tiket baru di posisi mana saja
     useEchoPublic('admin.notifications', '.ticket.created', (event: { ticket_number?: string }) => {
-        if (auth.user.role === 'admin' || auth.user.role === 'operator') {
+        if (canAccessInbox) {
             const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
 
             toast(`Laporan Masuk Baru${ticketNum}`, {
@@ -61,23 +62,22 @@ export function AppSidebar() {
         }
     });
 
-    // Dengarkan pembaruan inbox (tiket selesai/dibalas/auto close) untuk sinkronisasi badge
     useEcho(
-        auth?.user ? 'inbox.laporan-masuk' : '',
+        user && canAccessInbox ? 'inbox.laporan-masuk' : '',
         '.inbox.updated',
         () => {
             scheduleReload();
         },
-        [auth?.user],
+        [user?.id, canAccessInbox],
     );
 
     useEcho(
-        auth?.user ? 'inbox.laporan-masuk' : '',
+        user && canAccessInbox ? 'inbox.laporan-masuk' : '',
         '.inbox.changed',
         () => {
             scheduleReload();
         },
-        [auth?.user],
+        [user?.id, canAccessInbox],
     );
 
     const adminNavItems: NavItem[] = [
@@ -129,12 +129,6 @@ export function AppSidebar() {
             url: '/settings/application',
             icon: Settings,
         },
-        // {
-        //     title: 'Antrean',
-        //     url: '/horizon',
-        //     icon: Activity,
-        //     external: true,
-        // },
     ];
 
     const operatorNavItems: NavItem[] = [
@@ -191,7 +185,7 @@ export function AppSidebar() {
         },
     ];
 
-    const mainNavItems = auth.user.role === 'admin' ? adminNavItems : auth.user.role === 'operator_tim' ? operatorTimNavItems : operatorNavItems;
+    const mainNavItems = isAdmin ? adminNavItems : isOperatorTim ? operatorTimNavItems : isOperator ? operatorNavItems : [];
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -199,7 +193,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={'/'} prefetch>
+                            <Link href={'/'}>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

@@ -2,7 +2,7 @@ import { UserInfo } from '@/components/layout/user-info';
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { type User } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { KeyRound, LogOut, Palette } from 'lucide-react';
 
 interface UserMenuContentProps {
@@ -11,6 +11,26 @@ interface UserMenuContentProps {
 
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
+
+    const handleLogout = () => {
+        cleanup();
+
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+        } catch {}
+
+        if (typeof window !== 'undefined') {
+            const win = window as unknown as { Echo?: { disconnect: () => void } };
+            win.Echo?.disconnect();
+        }
+
+        router.post(route('logout'), {}, {
+            onFinish: () => {
+                window.location.href = '/login';
+            },
+        });
+    };
 
     return (
         <>
@@ -37,11 +57,15 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem asChild>
-                <Link className="block w-full" method="post" href={route('logout')} as="button" onClick={cleanup}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                </Link>
+            <DropdownMenuItem
+                className="cursor-pointer"
+                onSelect={(e) => {
+                    e.preventDefault();
+                    handleLogout();
+                }}
+            >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
             </DropdownMenuItem>
         </>
     );

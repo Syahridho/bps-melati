@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useAuthRole } from '@/hooks/use-auth-role';
 import { useInitials } from '@/hooks/use-initials';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
@@ -24,9 +25,10 @@ interface AppHeaderProps {
 
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
-    const { auth, inbox_open_count } = page.props;
+    const { inbox_open_count } = page.props;
+    const { user, isAdmin, isOperator, isOperatorTim, canAccessInbox } = useAuthRole();
     const getInitials = useInitials();
-    const dashboardUrl = auth.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/operator';
+    const dashboardUrl = isAdmin ? '/dashboard/admin' : '/dashboard/operator';
 
     const [openCount, setOpenCount] = useState(inbox_open_count ?? 0);
 
@@ -35,20 +37,33 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     }, [inbox_open_count]);
 
     useEchoPublic('admin.notifications', '.ticket.created', () => {
-        router.reload({
-            only: ['tickets', 'counts', 'inbox_open_count'],
-        });
+        if (canAccessInbox) {
+            router.reload({
+                only: ['tickets', 'counts', 'inbox_open_count'],
+            });
+        }
     });
 
-    const mainNavItems: NavItem[] =
-        auth.user.role === 'admin'
+    const mainNavItems: NavItem[] = isAdmin
+        ? [
+              { title: 'Dashboard', url: '/dashboard/admin', icon: LayoutGrid },
+              { title: 'Input Data', url: '/dashboard/admin/input-data', icon: FilePlus2 },
+              { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox, badge: openCount },
+              { title: 'Laporan Selesai', url: '/dashboard/admin/laporan-selesai', icon: ClipboardList },
+          ]
+        : isOperatorTim
+          ? [
+              { title: 'Dashboard', url: '/dashboard/operator', icon: LayoutGrid },
+              { title: 'Input Data', url: '/dashboard/operator/input-data', icon: FilePlus2 },
+          ]
+          : isOperator
             ? [
-                  { title: 'Dashboard', url: '/dashboard/admin', icon: LayoutGrid },
-                  { title: 'Input Data', url: '/dashboard/admin/input-data', icon: FilePlus2 },
-                  { title: 'Laporan Masuk', url: '/dashboard/admin/laporan-masuk', icon: Inbox, badge: openCount },
-                  { title: 'Laporan Selesai', url: '/dashboard/admin/laporan-selesai', icon: ClipboardList },
+                  { title: 'Dashboard', url: '/dashboard/operator', icon: LayoutGrid },
+                  { title: 'Input Data', url: '/dashboard/operator/input-data', icon: FilePlus2 },
+                  { title: 'Laporan Masuk', url: '/dashboard/operator/laporan-masuk', icon: Inbox, badge: openCount },
+                  { title: 'Laporan Selesai', url: '/dashboard/operator/laporan-selesai', icon: ClipboardList },
               ]
-            : [{ title: 'Dashboard', url: '/dashboard/operator', icon: LayoutGrid }];
+            : [];
     return (
         <>
             <div className="border-sidebar-border/80 border-b">
@@ -87,7 +102,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                         </Sheet>
                     </div>
 
-                    <Link href={dashboardUrl} prefetch className="flex items-center space-x-2">
+                    <Link href={dashboardUrl} className="flex items-center space-x-2">
                         <AppLogo />
                     </Link>
 
@@ -129,21 +144,23 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                             </Button>
                             <div className="hidden lg:flex"></div>
                         </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="size-10 rounded-full p-1">
-                                    <Avatar className="size-8 overflow-hidden rounded-full">
-                                        <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
-                                        <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                                            {getInitials(auth.user.name)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end">
-                                <UserMenuContent user={auth.user} />
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {user && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="size-10 rounded-full p-1">
+                                        <Avatar className="size-8 overflow-hidden rounded-full">
+                                            <AvatarImage src={user.avatar} alt={user.name} />
+                                            <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                                                {getInitials(user.name)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56" align="end">
+                                    <UserMenuContent user={user} />
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </div>
             </div>

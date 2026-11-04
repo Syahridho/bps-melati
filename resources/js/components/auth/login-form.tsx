@@ -61,6 +61,16 @@ export default function LoginForm({ noticeReason, throttleSeconds, sessionConfli
                 return;
             }
 
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+            } catch {}
+
+            if (typeof window !== 'undefined') {
+                const win = window as unknown as { Echo?: { disconnect: () => void } };
+                win.Echo?.disconnect();
+            }
+
             post(route('login'), {
                 preserveScroll: true,
                 onSuccess: () => {
