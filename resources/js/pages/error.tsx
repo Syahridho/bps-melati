@@ -1,4 +1,4 @@
-import AppLogo from '@/components/app-logo';
+import AppLogo from '@/components/layout/app-logo';
 import { Button } from '@/components/ui/button';
 import { Head, Link } from '@inertiajs/react';
 import { AlertOctagon, ArrowLeft, FileQuestion, HardHat, Home, Lock, LogOut, RotateCw, ServerCrash, ShieldAlert } from 'lucide-react';

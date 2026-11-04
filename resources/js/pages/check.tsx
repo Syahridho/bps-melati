@@ -1,10 +1,10 @@
-import { BpsFooter } from '@/components/bps-footer';
-import { CheckCompleteDialog } from '@/components/check-complete-dialog';
-import { CheckConversationCard } from '@/components/check-conversation-card';
-import { CheckGuideSection } from '@/components/check-guide';
-import { CheckHeader } from '@/components/check-header';
-import { CheckSearchCard } from '@/components/check-search-card';
-import { CheckTicketSummary } from '@/components/check-ticket-summary';
+import { CheckCompleteDialog } from '@/components/check/check-complete-dialog';
+import { CheckConversationCard } from '@/components/check/check-conversation-card';
+import { CheckGuideSection } from '@/components/check/check-guide';
+import { CheckHeader } from '@/components/check/check-header';
+import { CheckSearchCard } from '@/components/check/check-search-card';
+import { CheckTicketSummary } from '@/components/check/check-ticket-summary';
+import { BpsFooter } from '@/components/layout/bps-footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCheckReplyForm } from '@/hooks/use-check-reply-form';
 import { useCheckTicket } from '@/hooks/use-check-ticket';

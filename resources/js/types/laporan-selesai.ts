@@ -1,4 +1,4 @@
-import { type PaginatedData } from '@/components/pagination';
+import { type PaginatedData } from '@/components/shared/pagination';
 import { type SharedData } from '@/types';
 
 export type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';

@@ -9,6 +9,18 @@ const TYPING_IDLE_MS = 4000;
 const POLL_INTERVAL_MS = 30000;
 const BOTTOM_THRESHOLD_PX = 160;
 
+export interface EmailStatusEvent {
+    response_id: number;
+    email_status: string;
+    email_sent_at?: string | null;
+    email_failed_at?: string | null;
+    email_error?: string | null;
+}
+
+function isEmailStatusEvent(event: TicketBroadcastEvent | EmailStatusEvent): event is EmailStatusEvent {
+    return 'response_id' in event && 'email_status' in event;
+}
+
 export interface UseTicketRealtimeOptions {
     ticketId: number;
     currentUserId: number;
@@ -16,7 +28,7 @@ export interface UseTicketRealtimeOptions {
     /** Nama pengguna yang tampil di indikator "sedang mengetik". */
     currentUserName: string;
     onResponse: (response: TicketResponseItem) => void;
-    onEmailStatusUpdate?: (event: { response_id: number; email_status: string; email_sent_at?: string | null; email_failed_at?: string | null; email_error?: string | null }) => void;
+    onEmailStatusUpdate?: (event: EmailStatusEvent) => void;
     onStatusChange: (status: TicketBroadcastEvent['status'], version: number) => void;
     onCompleted?: () => void;
 }
@@ -73,30 +85,31 @@ export function useTicketRealtime({
     // (toast, scroll otomatis, sorotan) harus jalan sekali saja per balasan.
     const seenResponseIds = useRef(new Set<number>());
 
-    const { channel } = useEchoPresence<TicketBroadcastEvent>(
+    const { channel } = useEchoPresence<TicketBroadcastEvent | EmailStatusEvent>(
         `ticket.${ticketId}`,
         ['.ticket.response.created', '.ticket.updated', '.ticket.response.email-status-updated'],
-        (event: Record<string, unknown>) => {
-            if (event.response_id && event.email_status) {
-                handlers.current.onEmailStatusUpdate?.(event as Parameters<NonNullable<UseTicketRealtimeOptions['onEmailStatusUpdate']>>[0]);
+        (event) => {
+            if (isEmailStatusEvent(event)) {
+                handlers.current.onEmailStatusUpdate?.(event);
                 return;
             }
 
             const eventVersion = typeof event.version === 'number' ? event.version : 0;
-            const eventStatus = event.status as TicketBroadcastEvent['status'];
 
             setVersion((prev) => Math.max(prev, eventVersion));
-            handlers.current.onStatusChange(eventStatus, eventVersion);
+            handlers.current.onStatusChange(event.status, eventVersion);
 
-            if (eventStatus === 'selesai') {
+            if (event.status === 'selesai') {
                 handlers.current.onCompleted?.();
             }
 
-            if (!event.response) {
+            const response = 'response' in event ? event.response : null;
+
+            if (!response) {
                 return;
             }
 
-            const responseId = event.response.id;
+            const responseId = response.id;
 
             if (seenResponseIds.current.has(responseId)) {
                 return;
@@ -110,15 +123,15 @@ export function useTicketRealtime({
             seenResponseIds.current.add(responseId);
 
             const shouldScroll = isNearBottom();
-            handlers.current.onResponse(event.response);
+            handlers.current.onResponse(response);
 
             if (shouldScroll) {
                 window.setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 60);
             }
 
             if (event.actor_id !== null && event.actor_id !== currentUserId) {
-                toast.info(`${event.response.user_name} membalas`, {
-                    description: event.response.message.slice(0, 120),
+                toast.info(`${response.user_name} membalas`, {
+                    description: response.message.slice(0, 120),
                 });
             }
         },

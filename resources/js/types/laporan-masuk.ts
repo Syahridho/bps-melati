@@ -1,4 +1,4 @@
-import { type PaginatedData } from '@/components/pagination';
+import { type PaginatedData } from '@/components/shared/pagination';
 import { type SharedData } from '@/types';
 
 export type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
@@ -186,15 +186,15 @@ export interface TicketDetail {
     created_by_name: string | null;
     completed_at: string | null;
     closed_reason: ClosedReason | null;
-    is_pengawasan: boolean;
-    pengawasan_at: string | null;
-    pengawasan_by_name: string | null;
+    is_pengawasan?: boolean;
+    pengawasan_at?: string | null;
+    pengawasan_by_name?: string | null;
     is_flagged?: boolean;
     flagged_at?: string | null;
     flagged_by_name?: string | null;
     flag_note?: string | null;
-    kadar_pengawasan_days: number;
-    classification_default_days: number;
+    kadar_pengawasan_days?: number;
+    classification_default_days?: number;
     auto_close_at: string | null;
     created_at: string;
     updated_at: string;

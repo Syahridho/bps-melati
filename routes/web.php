@@ -1,18 +1,17 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\InputDataController;
-use App\Http\Controllers\Admin\LaporanMasukController;
-use App\Http\Controllers\Admin\LaporanSelesaiController;
-use App\Http\Controllers\Admin\OperatorController;
-use App\Http\Controllers\Admin\Rekap\RekapBulananController;
-use App\Http\Controllers\Admin\Rekap\RekapPeriodikController;
+use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\InputDataController;
+use App\Http\Controllers\Dashboard\LaporanMasukController;
+use App\Http\Controllers\Dashboard\LaporanSelesaiController;
+use App\Http\Controllers\Dashboard\OperatorController;
+use App\Http\Controllers\Dashboard\Rekap\RekapBulananController;
+use App\Http\Controllers\Dashboard\Rekap\RekapPeriodikController;
 use App\Http\Controllers\Admin\TicketResponseController;
 use App\Http\Controllers\Admin\TicketFlagController;
 use App\Http\Controllers\Admin\TicketPengawasanController;
 use App\Http\Controllers\CheckAttachmentDownloadController;
 use App\Http\Controllers\CheckTicketController;
-use App\Http\Controllers\Operator\DashboardController as OperatorDashboardController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Http\Request;
@@ -32,7 +31,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     Route::middleware('role:admin')->prefix('dashboard/admin')->name('dashboard.admin.')->group(function () {
-        Route::get('/', AdminDashboardController::class)->name('index');
+        Route::get('/', DashboardController::class)->name('index');
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
         Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');
@@ -66,7 +65,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware('role:operator,operator_tim')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
-        Route::get('/', OperatorDashboardController::class)->name('index');
+        Route::get('/', DashboardController::class)->name('index');
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
         Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');

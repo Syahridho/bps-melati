@@ -1,4 +1,4 @@
-import { type PublicStats } from '@/components/public-stats';
+import { type PublicStats } from '@/components/welcome/public-stats';
 import { type SharedData } from '@/types';
 import type { ElementType } from 'react';
 

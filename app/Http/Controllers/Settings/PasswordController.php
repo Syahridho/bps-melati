@@ -10,15 +10,17 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Http\Controllers\Concerns\RendersRolePage;
 
 class PasswordController extends Controller
 {
+    use RendersRolePage;
     /**
      * Show the user's password settings page.
      */
     public function edit(Request $request): Response
     {
-        return Inertia::render('settings/password', [
+        return Inertia::render('settings/password/index', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ]);

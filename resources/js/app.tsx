@@ -1,6 +1,7 @@
+// eslint-disable-next-line no-restricted-imports -- CSS ada di luar resources/js, tidak bisa lewat alias '@/'
 import '../css/app.css';
 
-import { SessionProvider } from '@/components/session-provider';
+import { SessionProvider } from '@/components/session/session-provider';
 import { createInertiaApp } from '@inertiajs/react';
 import { configureEcho } from '@laravel/echo-react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';

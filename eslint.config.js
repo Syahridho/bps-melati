@@ -38,6 +38,22 @@ export default [
         },
     },
     {
+        files: ['resources/js/**/*.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    patterns: [
+                        {
+                            group: ['../*', '../**'],
+                            message: "Gunakan alias '@/' untuk import lintas folder.",
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
         ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js'],
     },
     prettier, // Turn off all rules that might conflict with Prettier

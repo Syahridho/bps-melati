@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Dashboard\SettingController;
 use App\Http\Controllers\Settings\PasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -14,9 +14,7 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/password', [PasswordController::class, 'edit'])->name('password.edit');
     Route::put('settings/password', [PasswordController::class, 'update'])->name('password.update');
 
-    Route::get('settings/appearance', function () {
-        return Inertia::render('settings/appearance');
-    })->name('appearance');
+    Route::get('settings/appearance', [SettingController::class, 'indexAppearce'])->name('appearance');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {

@@ -1,4 +1,4 @@
-import { type TrendPoint } from '@/components/chart-area-linear';
+import { type TrendPoint } from '@/components/dashboard/chart-area-linear';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import type { ElementType } from 'react';
 

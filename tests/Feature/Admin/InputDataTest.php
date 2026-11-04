@@ -56,7 +56,7 @@ test('admin can access input-data page with filtered tabs and search counts', fu
         ->get(route('dashboard.admin.input-data.index', ['filter' => 'pengaduan']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/input-data')
+            ->component('dashboard/admin/input-data/index')
             ->where('filters.filter', 'pengaduan')
             ->where('counts.semua', 3)
             ->where('counts.pengaduan', 1)
@@ -90,7 +90,7 @@ test('counts follow search query but not active tab filter', function () {
         ->get(route('dashboard.admin.input-data.index', ['search' => 'Internet', 'filter' => 'pengaduan']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/input-data')
+            ->component('dashboard/admin/input-data/index')
             ->where('filters.search', 'Internet')
             ->where('filters.filter', 'pengaduan')
             ->where('counts.semua', 2)
@@ -111,7 +111,7 @@ test('invalid filter defaults to semua', function () {
         ->get(route('dashboard.admin.input-data.index', ['filter' => 'invalid_filter']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/input-data')
+            ->component('dashboard/admin/input-data/index')
             ->where('filters.filter', 'semua')
             ->has('tickets.data', 2)
         );

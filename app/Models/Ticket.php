@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Actions\AutoCloseTickets;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -96,6 +97,19 @@ class Ticket extends Model
     public function lastResponse(): HasOne
     {
         return $this->hasOne(TicketResponse::class)->latestOfMany('id');
+    }
+
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        if ($user->isAdmin() || $user->isOperator()) {
+            return $query;
+        }
+
+        if ($user->isOperatorTim()) {
+            return $query->where('created_by', $user->id);
+        }
+
+        return $query->whereRaw('1 = 0');
     }
 
     /**

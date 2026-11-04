@@ -46,7 +46,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->forget('session_conflict');
         $request->session()->forget('throttle_seconds');
 
-        return Inertia::render('auth/login', [
+        return Inertia::render('login/index', [
             'canResetPassword' => Route::has('password.request'),
             'status' => $request->session()->get('status'),
             // Alasan sesi berakhir diteruskan lewat query string agar tetap
