@@ -1,6 +1,7 @@
 import { type SettingPageProps } from '@/types/pengaturan';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 
 export function usePengaturanForm({ settings, flashSuccess }: { settings: SettingPageProps['settings']; flashSuccess?: string }) {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -25,7 +26,12 @@ export function usePengaturanForm({ settings, flashSuccess }: { settings: Settin
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        post(route('settings.application.update'));
+        post(route('settings.application.update'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.success('Pengaturan berhasil diperbarui!');
+            },
+        });
     };
 
     return { data, setData, errors, processing, recentlySuccessful, successMessage, handleSubmit };
