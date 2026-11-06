@@ -1,150 +1,26 @@
-import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk/laporan-masuk-delete-dialog';
-import { LaporanMasukDetailCard } from '@/components/laporan-masuk/laporan-masuk-detail-card';
-import { LaporanMasukEditDialog } from '@/components/laporan-masuk/laporan-masuk-edit-dialog';
-import { LaporanMasukResponseHistory } from '@/components/laporan-masuk/laporan-masuk-response-history';
+import { LaporanMasukReplyForm } from '@/components/laporan-masuk/laporan-masuk-reply-form';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Textarea } from '@/components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TicketFlagButton } from '@/components/shared/ticket-flag-button';
+import { mapLaporanMasukToDetailData } from '@/components/shared/ticket-detail/adapters';
+import { SupervisionToggle } from '@/components/shared/ticket-detail/supervision-toggle';
+import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
+import { TicketContentCard } from '@/components/shared/ticket-detail/ticket-content-card';
+import { TicketDetailHeader } from '@/components/shared/ticket-detail/ticket-detail-header';
+import { TicketDetailLayout } from '@/components/shared/ticket-detail/ticket-detail-layout';
+import { TicketEditDeleteActions } from '@/components/shared/ticket-detail/ticket-edit-delete-actions';
+import { TicketInfoGrid } from '@/components/shared/ticket-detail/ticket-info-grid';
+import { TicketResponseHistory } from '@/components/shared/ticket-detail/ticket-response-history';
+import { Separator } from '@/components/ui/separator';
 import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
-import AdminPage from '@/layouts/dashboard/page';
-import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketDetail, type TicketResponseItem } from '@/types/laporan-masuk';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle2, Flag, LoaderCircle, ShieldAlert } from 'lucide-react';
+import { formatFullDate } from '@/lib/laporan-masuk-utils';
+import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk/laporan-masuk-delete-dialog';
+import { LaporanMasukEditDialog } from '@/components/laporan-masuk/laporan-masuk-edit-dialog';
+import { LaporanMasukPresenceBar } from '@/components/laporan-masuk/laporan-masuk-presence-bar';
+import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketResponseItem } from '@/types/laporan-masuk';
+import { router, useForm, usePage } from '@inertiajs/react';
+import { Calendar, FileText, Globe, Layers, Mail, Phone, User } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
-
-function DetailFlagButton({ ticket, routePrefix }: { ticket: TicketDetail; routePrefix: string }) {
-    const [flagged, setFlagged] = useState(ticket.is_flagged ?? false);
-    const [note, setNote] = useState(ticket.flag_note ?? '');
-    const [flagNote, setFlagNote] = useState(ticket.flag_note ?? '');
-    const [flaggedByName, setFlaggedByName] = useState(ticket.flagged_by_name ?? '');
-    const [open, setOpen] = useState(false);
-    const [processing, setProcessing] = useState(false);
-    const { auth } = usePage<{ auth: { user: { name: string } } }>().props;
-
-    const handleToggle = async () => {
-        if (flagged) {
-            setFlagged(false);
-            setFlagNote('');
-            setFlaggedByName('');
-            setProcessing(true);
-            try {
-                const res = await fetch(route(`${routePrefix}.laporan-masuk.tandai`, ticket.ticket_number), {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-                        Accept: 'application/json',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ aktif: false }),
-                });
-                if (!res.ok) throw new Error();
-                toast.success('Tandai berhasil dilepas');
-            } catch {
-                setFlagged(true);
-                setFlagNote(ticket.flag_note ?? '');
-                setFlaggedByName(ticket.flagged_by_name ?? '');
-                toast.error('Gagal melepas tandai');
-            } finally {
-                setProcessing(false);
-            }
-        } else {
-            setOpen(true);
-        }
-    };
-
-    const handleFlag = async () => {
-        setFlagged(true);
-        setFlagNote(note);
-        setFlaggedByName(auth.user.name);
-        setOpen(false);
-        setProcessing(true);
-        try {
-            const res = await fetch(route(`${routePrefix}.laporan-masuk.tandai`, ticket.ticket_number), {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-                    Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ aktif: true, note: note || null }),
-            });
-            if (!res.ok) throw new Error();
-            toast.success('Laporan berhasil ditandai');
-        } catch {
-            setFlagged(false);
-            setFlagNote('');
-            setFlaggedByName('');
-            toast.error('Gagal menandai laporan');
-        } finally {
-            setProcessing(false);
-        }
-    };
-
-    return (
-        <div className="flex items-center gap-2">
-            {flagged && (
-                <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Badge variant="outline" className="border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                                <Flag className="mr-1 size-3 fill-orange-500" />
-                                Ditandai
-                            </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="max-w-xs">
-                            <p className="text-xs">
-                                Ditandai oleh {flaggedByName || 'Petugas'}
-                                {flagNote && <span className="text-muted-foreground mt-1 block">"{flagNote}"</span>}
-                            </p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )}
-            {flagged ? (
-                <Button variant="secondary" size="sm" onClick={handleToggle} disabled={processing} aria-label="Lepas tandai">
-                    <Flag className="mr-1.5 size-4 fill-orange-500 text-orange-500" />
-                    Lepas Tandai
-                </Button>
-            ) : (
-                <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => setOpen(true)} disabled={processing} aria-label="Tandai laporan">
-                            <Flag className="mr-1.5 size-4" />
-                            Tandai
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-72" align="end">
-                        <div className="space-y-3">
-                            <p className="text-sm font-medium">Tandai Laporan</p>
-                            <Textarea
-                                placeholder="Catatan alasan (opsional, maks 255 karakter)"
-                                maxLength={255}
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                className="min-h-[60px] text-sm"
-                            />
-                            <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                                    Batal
-                                </Button>
-                                <Button size="sm" onClick={handleFlag} disabled={processing}>
-                                    Tandai
-                                </Button>
-                            </div>
-                        </div>
-                    </PopoverContent>
-                </Popover>
-            )}
-        </div>
-    );
-}
 
 export default function ShowLaporanMasukView() {
     const { auth, ticket, can, flash } = usePage<ShowProps>().props;
@@ -170,45 +46,6 @@ export default function ShowLaporanMasukView() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isPengawasanModalOpen, setIsPengawasanModalOpen] = useState(false);
-    const [pendingPengawasanValue, setPendingPengawasanValue] = useState<boolean | null>(null);
-    const [isProcessingPengawasan, setIsProcessingPengawasan] = useState(false);
-
-    const handleTogglePengawasanAttempt = (aktif: boolean) => {
-        setPendingPengawasanValue(aktif);
-        setIsPengawasanModalOpen(true);
-    };
-
-    const handleConfirmPengawasan = () => {
-        if (pendingPengawasanValue === null) {
-            return;
-        }
-        setIsProcessingPengawasan(true);
-        router.patch(
-            route(`${routePrefix}.laporan-masuk.pengawasan`, { ticketNumber: ticket.ticket_number }),
-            { aktif: pendingPengawasanValue },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsPengawasanModalOpen(false);
-                    toast.success(pendingPengawasanValue ? 'Kadar pengawasan berhasil diaktifkan' : 'Kadar pengawasan berhasil dinonaktifkan', {
-                        position: 'bottom-right',
-                    });
-                },
-                onError: (errs) => {
-                    const firstError = Object.values(errs)[0];
-                    toast.error('Gagal mengubah kadar pengawasan', {
-                        description: typeof firstError === 'string' ? firstError : 'Terjadi kesalahan.',
-                        position: 'bottom-right',
-                    });
-                },
-                onFinish: () => {
-                    setIsProcessingPengawasan(false);
-                    setPendingPengawasanValue(null);
-                },
-            },
-        );
-    };
 
     const editForm = useForm({
         reporter_name: ticket.reporter_name ?? '',
@@ -255,7 +92,6 @@ export default function ShowLaporanMasukView() {
                 return;
             }
 
-            // Check if still has pending email in current responses
             const stillPending = responses.some((r) => r.email_status === 'pending');
             if (!stillPending) {
                 clearInterval(interval);
@@ -282,6 +118,15 @@ export default function ShowLaporanMasukView() {
             setPendingNotice(null);
         }
     }, [showReplyForm]);
+
+    const lastItemRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!highlightLast || !lastItemRef.current) {
+            return;
+        }
+
+        lastItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, [highlightLast, responses.length]);
 
     const handleIncomingResponse = useCallback((response: TicketResponseItem) => {
         setResponses((prev) => {
@@ -333,8 +178,6 @@ export default function ShowLaporanMasukView() {
             setTicketVersion((prev) => Math.max(prev, version));
         },
         onCompleted: () => {
-            // Pelapor menandai tiket selesai lewat /check. Jangan paksa pindah
-            // halaman: petugas mungkin sedang membaca atau menulis balasan.
             setShowReplyForm(false);
             setPendingNotice(null);
             setSuccessMessage('Pelapor menandai laporan ini selesai.');
@@ -388,173 +231,212 @@ export default function ShowLaporanMasukView() {
         setPreviewList(files);
     };
 
+    const detailData = mapLaporanMasukToDetailData({
+        ...ticket,
+        status: ticketStatus,
+        responses,
+    });
+
+    const hasResponAwal =
+        responses.some((response) => response.type === 'respon_awal') ||
+        ticketStatus === 'respon_awal' ||
+        ticketStatus === 'respon_substantif' ||
+        ticketStatus === 'selesai';
+
+    const infoFields = [
+        {
+            id: 'reporter',
+            label: 'Pelapor',
+            value: detailData.reporter_name ?? 'Anonim',
+            icon: User,
+        },
+        detailData.reporter_email
+            ? {
+                  id: 'email',
+                  label: 'Email',
+                  value: detailData.reporter_email,
+                  icon: Mail,
+                  className: 'min-[1280px]:max-[1399px]:col-span-2',
+              }
+            : null,
+        detailData.reporter_wa
+            ? {
+                  id: 'wa',
+                  label: 'WhatsApp',
+                  value: detailData.reporter_wa,
+                  icon: Phone,
+              }
+            : null,
+        {
+            id: 'source',
+            label: 'Sumber / Aplikasi',
+            value: <span className="capitalize">{detailData.source_app}</span>,
+            icon: Globe,
+        },
+        {
+            id: 'channel',
+            label: 'Channel',
+            value: detailData.channel,
+            icon: Layers,
+        },
+        {
+            id: 'created_at',
+            label: 'Tanggal Dibuat',
+            value: formatFullDate(detailData.created_at),
+            icon: Calendar,
+        },
+        {
+            id: 'sequence',
+            label: 'Nomor Urut',
+            value: detailData.sequence,
+            icon: FileText,
+        },
+        detailData.created_by_name
+            ? {
+                  id: 'created_by',
+                  label: 'Dibuat Oleh',
+                  value: detailData.created_by_name,
+                  icon: User,
+              }
+            : null,
+    ];
+
     return (
-        <AdminPage
-            // title={ticket.ticket_number}
-            // description="Detail laporan"
-            breadcrumbs={[
-                { title: backLabel, href: route(backRouteName) },
-                { title: ticket.ticket_number, href: '#' },
-            ]}
-        >
-            <Head title={ticket.ticket_number} />
-            <div className="space-y-6">
-                {successMessage && (
-                    <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle2 className="h-5 w-5 shrink-0" />
-                        <span>{successMessage}</span>
-                    </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                    <Link
-                        href={route(backRouteName)}
-                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
-                    >
-                        <ArrowLeft className="size-4" />
-                        Kembali ke {backLabel}
-                    </Link>
-                    <DetailFlagButton ticket={ticket} routePrefix={routePrefix} />
-                </div>
-
-                <LaporanMasukDetailCard
+        <TicketDetailLayout
+            ticketNumber={ticket.ticket_number}
+            backHref={route(backRouteName)}
+            backLabel={backLabel}
+            successMessage={successMessage}
+            headerActions={
+                <TicketFlagButton
                     ticket={ticket}
-                    ticketStatus={ticketStatus}
-                    canEdit={canEdit}
-                    canDelete={canDelete}
-                    onEdit={() => setIsEditOpen(true)}
-                    onDelete={() => setIsDeleteOpen(true)}
-                    onPreviewAttachment={handlePreviewAttachment}
-                    onTogglePengawasan={handleTogglePengawasanAttempt}
-                    processingPengawasan={isProcessingPengawasan}
+                    tandaiRoute={route(`${routePrefix}.laporan-masuk.tandai`, ticket.ticket_number)}
+                    variant="badge-button"
+                />
+            }
+            dialogs={
+                <>
+                    {canEdit && (
+                        <LaporanMasukEditDialog
+                            open={isEditOpen}
+                            onOpenChange={setIsEditOpen}
+                            ticket={ticket}
+                            data={editForm.data}
+                            setData={editForm.setData}
+                            errors={editForm.errors}
+                            processing={editForm.processing}
+                            onSubmit={handleEditSubmit}
+                        />
+                    )}
+
+                    {canDelete && (
+                        <LaporanMasukDeleteDialog
+                            open={isDeleteOpen}
+                            onOpenChange={setIsDeleteOpen}
+                            ticket={ticket}
+                            isDeleting={isDeleting}
+                            onConfirm={handleDeleteSubmit}
+                        />
+                    )}
+
+                    <AttachmentPreviewDialog
+                        item={previewItem}
+                        items={previewList}
+                        onClose={() => {
+                            setPreviewItem(null);
+                            setPreviewList([]);
+                        }}
+                    />
+                </>
+            }
+        >
+            <div className="bg-card rounded-lg border">
+                <TicketDetailHeader
+                    ticketNumber={detailData.ticket_number}
+                    classification={detailData.classification}
+                    status={detailData.status}
+                    createdAt={detailData.created_at}
+                    autoCloseAt={detailData.auto_close_at}
+                    isPengawasan={detailData.is_pengawasan}
+                    pengawasanAt={detailData.pengawasan_at}
+                    pengawasanByName={detailData.pengawasan_by_name}
+                    kadarPengawasanDays={detailData.kadar_pengawasan_days}
+                    actions={
+                        <>
+                            <SupervisionToggle
+                                ticketNumber={detailData.ticket_number}
+                                isPengawasan={detailData.is_pengawasan}
+                                disabled={ticketStatus === 'selesai'}
+                                kadarPengawasanDays={detailData.kadar_pengawasan_days}
+                                classificationDefaultDays={detailData.classification_default_days}
+                                updateRoute={route(`${routePrefix}.laporan-masuk.pengawasan`, {
+                                    ticketNumber: detailData.ticket_number,
+                                })}
+                            />
+                            <TicketEditDeleteActions
+                                canEdit={canEdit}
+                                canDelete={canDelete}
+                                onEdit={() => setIsEditOpen(true)}
+                                onDelete={() => setIsDeleteOpen(true)}
+                            />
+                        </>
+                    }
                 />
 
-                <LaporanMasukResponseHistory
-                    responses={responses}
-                    ticketId={ticket.id}
-                    ticketStatus={ticketStatus}
-                    expectedVersion={liveVersion}
-                    routePrefix={routePrefix}
-                    showReplyForm={showReplyForm}
-                    viewers={viewers}
-                    currentUserId={auth.user.id}
-                    typingName={typingName}
-                    pendingNotice={pendingNotice}
-                    conflict={conflict}
-                    canResend={auth.user.role === 'admin'}
-                    reporterEmail={ticket.reporter_email ?? ''}
-                    onDismissConflict={() => setConflict(null)}
-                    onToggleReply={() => setShowReplyForm((prev) => !prev)}
-                    onCancelReply={() => setShowReplyForm(false)}
-                    onReplySuccess={() => setShowReplyForm(false)}
-                    onPreviewAttachment={handlePreviewAttachment}
-                    onPreviewFile={handlePreviewFile}
-                    onTyping={broadcastTyping}
-                    highlightLast={highlightLast}
+                <Separator />
+
+                <TicketInfoGrid fields={infoFields} />
+
+                <TicketContentCard title={detailData.title} content={detailData.content} />
+
+                <TicketAttachments
+                    attachments={detailData.attachments}
+                    onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)}
                 />
             </div>
 
-            {canEdit && (
-                <LaporanMasukEditDialog
-                    open={isEditOpen}
-                    onOpenChange={setIsEditOpen}
-                    ticket={ticket}
-                    data={editForm.data}
-                    setData={editForm.setData}
-                    errors={editForm.errors}
-                    processing={editForm.processing}
-                    onSubmit={handleEditSubmit}
-                />
-            )}
-
-            {canDelete && (
-                <LaporanMasukDeleteDialog
-                    open={isDeleteOpen}
-                    onOpenChange={setIsDeleteOpen}
-                    ticket={ticket}
-                    isDeleting={isDeleting}
-                    onConfirm={handleDeleteSubmit}
-                />
-            )}
-
-            <Dialog open={isPengawasanModalOpen} onOpenChange={setIsPengawasanModalOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <div className="flex items-center gap-3">
-                            <div className="flex size-10 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                <ShieldAlert className="size-5" />
-                            </div>
-                            <div>
-                                <DialogTitle className="text-base font-semibold">
-                                    {pendingPengawasanValue ? 'Aktifkan Kadar Pengawasan?' : 'Nonaktifkan Kadar Pengawasan?'}
-                                </DialogTitle>
-                                <p className="text-muted-foreground text-xs">{ticket.ticket_number}</p>
-                            </div>
-                        </div>
-                    </DialogHeader>
-
-                    <DialogDescription asChild>
-                        <div className="text-foreground space-y-3 pt-2 text-sm">
-                            <div className="bg-muted/40 space-y-1.5 rounded-lg border p-3 text-xs">
-                                <div className="text-muted-foreground flex items-center justify-between">
-                                    <span>Batas auto close saat ini:</span>
-                                    <span className="text-foreground font-semibold">
-                                        {pendingPengawasanValue
-                                            ? `${ticket.classification_default_days} hari`
-                                            : `${ticket.kadar_pengawasan_days} hari`}
-                                    </span>
-                                </div>
-                                <div className="text-muted-foreground flex items-center justify-between">
-                                    <span>Batas auto close setelah diubah:</span>
-                                    <span className="font-semibold text-amber-600 dark:text-amber-400">
-                                        {pendingPengawasanValue
-                                            ? `${ticket.kadar_pengawasan_days} hari`
-                                            : `${ticket.classification_default_days} hari`}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <p className="text-muted-foreground text-xs leading-relaxed">
-                                {pendingPengawasanValue
-                                    ? `Tiket ini akan diberi waktu respon lebih lama (${ticket.kadar_pengawasan_days} hari tanpa balasan pelapor) sebelum ditutup otomatis oleh sistem.`
-                                    : `Batas waktu auto close akan dikembalikan ke default (${ticket.classification_default_days} hari).`}
-                            </p>
-                        </div>
-                    </DialogDescription>
-
-                    <DialogFooter className="gap-2 pt-2 sm:gap-2">
-                        <Button type="button" variant="outline" onClick={() => setIsPengawasanModalOpen(false)} disabled={isProcessingPengawasan}>
-                            Batal
-                        </Button>
-                        <Button
-                            type="button"
-                            className={pendingPengawasanValue ? 'bg-amber-600 text-white hover:bg-amber-700' : ''}
-                            onClick={handleConfirmPengawasan}
-                            disabled={isProcessingPengawasan}
-                        >
-                            {isProcessingPengawasan ? (
-                                <>
-                                    <LoaderCircle className="mr-2 size-4 animate-spin" />
-                                    Memproses...
-                                </>
-                            ) : pendingPengawasanValue ? (
-                                'Ya, Aktifkan'
-                            ) : (
-                                'Ya, Nonaktifkan'
-                            )}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            <AttachmentPreviewDialog
-                item={previewItem}
-                items={previewList}
-                onClose={() => {
-                    setPreviewItem(null);
-                    setPreviewList([]);
-                }}
+            <TicketResponseHistory
+                responses={detailData.responses}
+                ticketStatus={ticketStatus}
+                readOnly={false}
+                showReplyForm={showReplyForm}
+                canResend={auth.user.role === 'admin'}
+                reporterEmail={ticket.reporter_email ?? ''}
+                onToggleReply={() => setShowReplyForm((prev) => !prev)}
+                onPreviewAttachment={(att) => handlePreviewAttachment(att, detailData.attachments)}
+                lastItemRef={lastItemRef}
+                headerExtra={
+                    <LaporanMasukPresenceBar
+                        viewers={viewers}
+                        currentUserId={auth.user.id}
+                        typingName={typingName}
+                        className="min-w-0"
+                    />
+                }
+                getResendUrl={(response) =>
+                    route('dashboard.admin.laporan-masuk.responses.resend', {
+                        ticket: ticket.id,
+                        response: response.id,
+                    })
+                }
+                footerExtra={
+                    <LaporanMasukReplyForm
+                        ticketId={ticket.id}
+                        ticketStatus={ticketStatus}
+                        expectedVersion={liveVersion}
+                        hasResponAwal={hasResponAwal}
+                        routePrefix={routePrefix}
+                        open={showReplyForm && ticketStatus !== 'selesai'}
+                        pendingNotice={pendingNotice}
+                        conflict={conflict}
+                        onDismissConflict={() => setConflict(null)}
+                        onCancel={() => setShowReplyForm(false)}
+                        onSuccess={() => setShowReplyForm(false)}
+                        onPreviewFile={handlePreviewFile}
+                        onTyping={broadcastTyping}
+                    />
+                }
             />
-        </AdminPage>
+        </TicketDetailLayout>
     );
 }

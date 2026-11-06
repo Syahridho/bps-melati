@@ -3,11 +3,12 @@ import OperatorFormDialog from '@/components/view/dashboard/kelola-operator/moda
 import OperatorDeleteDialog from '@/components/view/dashboard/kelola-operator/modal-delete-operator';
 import OperatorFormDialogUpdate from '@/components/view/dashboard/kelola-operator/modal-update-operator';
 import { useOperatorManagement } from '@/hooks/use-operator-management';
+import { useOperatorPresence } from '@/hooks/use-operator-presence';
 import AdminPage from '@/layouts/dashboard/page';
 import { type OperatorPageProps } from '@/types/operator';
 import { usePage } from '@inertiajs/react';
 import { CheckCircle2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export default function KelolaOperatorView() {
     const { auth, operators, filters, flash } = usePage<OperatorPageProps>().props;
@@ -34,6 +35,13 @@ export default function KelolaOperatorView() {
         handleForceLogout,
         handleDeleteSubmit,
     } = useOperatorManagement(filters.search, filters.per_page, flash?.success);
+
+    const { operators: realtimeOperators, connectionStatus } = useOperatorPresence(operators.data, auth.user.role === 'admin');
+
+    const displayOperators = useMemo(() => ({
+        ...operators,
+        data: realtimeOperators,
+    }), [operators, realtimeOperators]);
 
     useEffect(() => {
         if (!isCreateOpen && !isEditOpen && !isDeleteOpen) {
@@ -67,9 +75,10 @@ export default function KelolaOperatorView() {
                 )}
 
                 <OperatorTable
-                    operators={operators}
+                    operators={displayOperators}
                     authUserId={auth.user.id}
                     search={search}
+                    connectionStatus={connectionStatus}
                     onSearchChange={handleSearchChange}
                     onPerPageChange={handlePerPageChange}
                     onOpenCreate={openCreateModal}

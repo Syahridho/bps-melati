@@ -1,6 +1,14 @@
 export type ClassificationType = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 export type StatusType = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
-export type FilterTab = 'semua' | 'pengaduan' | 'aspirasi' | 'permintaan';
+export type FilterTab =
+    | 'semua'
+    | 'pengaduan'
+    | 'aspirasi'
+    | 'permintaan'
+    | 'respon_awal'
+    | 'respon_substantif'
+    | 'berkadar_pengawasan'
+    | 'ditandai';
 export type ResponseType = 'respon_awal' | 'respon_substantif';
 
 export interface TicketItem {
@@ -15,6 +23,11 @@ export interface TicketItem {
     reporter_wa: string | null;
     content: string;
     status: StatusType;
+    is_pengawasan?: boolean;
+    is_flagged?: boolean;
+    flagged_at?: string | null;
+    flagged_by_name?: string | null;
+    flag_note?: string | null;
     is_read?: boolean;
     source_app: string;
     channel: string;

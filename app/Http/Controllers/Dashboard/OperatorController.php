@@ -55,7 +55,7 @@ class OperatorController extends Controller
                 ...self::presenceFor($user),
             ]);
 
-         return $this->renderPage($request, 'operator/index', [
+         return $this->renderPage($request, 'kelola-operator/index', [
             'operators' => $operators,
             'filters' => [
                 'search' => $search ?? '',

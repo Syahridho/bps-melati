@@ -303,4 +303,22 @@ class Ticket extends Model
             ];
         });
     }
+
+    /**
+     * Scope filter per tab yang dipakai bersama di Laporan Masuk dan Input Data.
+     */
+    public function scopeApplyTabFilter(Builder $query, string $tab): Builder
+    {
+        return match ($tab) {
+            'belum_dibaca' => $query->where('is_read', false),
+            'pengaduan' => $query->where('classification', 'pengaduan'),
+            'aspirasi' => $query->where('classification', 'aspirasi'),
+            'permintaan', 'permintaan_informasi' => $query->where('classification', 'permintaan_informasi'),
+            'respon_awal' => $query->where('status', 'respon_awal'),
+            'respon_substantif' => $query->where('status', 'respon_substantif'),
+            'berkadar_pengawasan' => $query->where('is_pengawasan', true),
+            'ditandai' => $query->where('is_flagged', true),
+            default => $query,
+        };
+    }
 }

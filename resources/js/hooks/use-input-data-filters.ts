@@ -43,11 +43,12 @@ export function useInputDataFilters(
                     preserveState: true,
                     preserveScroll: true,
                     replace: true,
+                    only: ['tickets', 'counts', 'filters'],
                     onStart: () => setIsLoading(true),
                     onFinish: () => setIsLoading(false),
                 },
             );
-        }, 400);
+        }, 300);
 
         return () => clearTimeout(timer);
     }, [searchQuery, initialFilters.filter, initialFilters.per_page, initialFilters.from, initialFilters.to, initialFilters.search, routePrefix]);
@@ -57,6 +58,7 @@ export function useInputDataFilters(
             preserveState: true,
             preserveScroll: true,
             replace: true,
+            only: ['tickets', 'counts', 'filters'],
             onStart: () => setIsLoading(true),
             onFinish: () => setIsLoading(false),
         });
@@ -67,6 +69,7 @@ export function useInputDataFilters(
             preserveState: true,
             preserveScroll: true,
             replace: true,
+            only: ['tickets', 'counts', 'filters'],
             onStart: () => setIsLoading(true),
             onFinish: () => setIsLoading(false),
         });
@@ -77,6 +80,7 @@ export function useInputDataFilters(
             preserveState: true,
             preserveScroll: true,
             replace: true,
+            only: ['tickets', 'counts', 'filters'],
             onStart: () => setIsLoading(true),
             onFinish: () => setIsLoading(false),
         });
@@ -97,6 +101,7 @@ export function useInputDataFilters(
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
+                only: ['tickets', 'counts', 'filters'],
                 onStart: () => setIsLoading(true),
                 onFinish: () => setIsLoading(false),
             },

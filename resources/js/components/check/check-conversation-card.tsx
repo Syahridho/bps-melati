@@ -61,6 +61,7 @@ export function CheckConversationCard({
     onRemoveFile,
     onSubmitReply,
 }: CheckConversationCardProps) {
+    console.log(ticket);
     return (
         <Card className="border shadow-sm">
             <CardHeader className="bg-muted/30 border-b pb-4">

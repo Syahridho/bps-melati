@@ -420,7 +420,7 @@ test('halaman kelola operator menampilkan status online dan data perangkat', fun
         ->get(route('dashboard.admin.operator.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('admin/operator/index')
+            ->component('admin/kelola-operator/index')
             ->where('operators.data.0.is_online', true)
             ->where('operators.data.0.last_login_ip', '203.0.xx.xx')
             ->where('operators.data.0.last_login_device', 'Chrome di Windows')

@@ -9,6 +9,10 @@ interface InputDataFilterTabsProps {
         pengaduan: number;
         aspirasi: number;
         permintaan: number;
+        respon_awal?: number;
+        respon_substantif?: number;
+        berkadar_pengawasan?: number;
+        ditandai?: number;
     };
     onFilterChange: (tab: FilterTab) => void;
 }
@@ -19,6 +23,10 @@ export function InputDataFilterTabs({ currentFilter, counts, onFilterChange }: I
         { key: 'pengaduan', label: 'Pengaduan', count: counts.pengaduan },
         { key: 'aspirasi', label: 'Aspirasi', count: counts.aspirasi },
         { key: 'permintaan', label: 'Permintaan Info', count: counts.permintaan },
+        { key: 'respon_awal', label: 'Respon Awal', count: counts.respon_awal ?? 0 },
+        { key: 'respon_substantif', label: 'Respon Substantif', count: counts.respon_substantif ?? 0 },
+        { key: 'berkadar_pengawasan', label: 'Berkadar Pengawasan', count: counts.berkadar_pengawasan ?? 0 },
+        { key: 'ditandai', label: 'Ditandai', count: counts.ditandai ?? 0 },
     ];
 
     return (

@@ -1,5 +1,6 @@
+import { toTicketListEntry } from '@/components/view/dashboard/laporan-selesai/adapter';
 import { LaporanSelesaiFilterTabs } from '@/components/laporan-selesai/laporan-selesai-filter-tabs';
-import { LaporanSelesaiTicketList } from '@/components/laporan-selesai/laporan-selesai-ticket-list';
+import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { DateRangeFilter } from '@/components/shared/date-range-filter';
 import { Pagination } from '@/components/shared/pagination';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,8 @@ export default function LaporanSelesaiView() {
         useLaporanSelesaiFilters(routePrefix, filters);
 
     const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
+
+    const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix));
 
     return (
         <AdminPage
@@ -83,7 +86,7 @@ export default function LaporanSelesaiView() {
                         </Button>
                     </div>
                 ) : (
-                    <LaporanSelesaiTicketList tickets={tickets} isLoading={isLoading} routePrefix={routePrefix} />
+                    <TicketList tickets={entries} isLoading={isLoading} />
                 )}
 
                 {/* Pagination Footer */}

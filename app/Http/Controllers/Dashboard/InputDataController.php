@@ -33,7 +33,7 @@ class InputDataController extends Controller
         $filter = new LaporanFilter($request, 'semua', 10);
 
         // Whitelist filter
-        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi'];
+        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'berkadar_pengawasan', 'ditandai'];
         if (! in_array($filter->tab, $allowedFilters, true)) {
             $filter->tab = 'semua';
         }
@@ -44,7 +44,30 @@ class InputDataController extends Controller
         $user = $request->user();
 
         // Query utama daftar tiket (hanya tiket yang diinput manual oleh admin/operator)
-        $ticketsQuery = Ticket::with('channel')
+        $ticketsQuery = Ticket::with(['channel', 'flaggedBy'])
+            ->select([
+                'id',
+                'ticket_number',
+                'classification',
+                'title',
+                'service_type',
+                'satuan_tugas',
+                'channel_id',
+                'reporter_name',
+                'reporter_email',
+                'reporter_wa',
+                'content',
+                'status',
+                'is_read',
+                'source_app',
+                'created_by',
+                'is_pengawasan',
+                'is_flagged',
+                'flagged_at',
+                'flagged_by',
+                'flag_note',
+                'created_at',
+            ])
             ->where('source_app', 'admin')
             ->visibleTo($user)
             ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
@@ -53,13 +76,7 @@ class InputDataController extends Controller
             })
             ->tap($searchClosure)
             ->when($filter->tab !== 'semua', function ($query) use ($filter) {
-                if ($filter->tab === 'pengaduan') {
-                    $query->where('classification', 'pengaduan');
-                } elseif ($filter->tab === 'aspirasi') {
-                    $query->where('classification', 'aspirasi');
-                } elseif ($filter->tab === 'permintaan' || $filter->tab === 'permintaan_informasi') {
-                    $query->where('classification', 'permintaan_informasi');
-                }
+                $query->applyTabFilter($filter->tab);
             });
 
         $tickets = $ticketsQuery
@@ -78,37 +95,54 @@ class InputDataController extends Controller
                 'reporter_wa' => $ticket->reporter_wa,
                 'content' => $ticket->content,
                 'status' => $ticket->status,
+                'is_pengawasan' => (bool) $ticket->is_pengawasan,
+                'is_flagged' => (bool) $ticket->is_flagged,
+                'flagged_at' => $ticket->flagged_at?->toIso8601String(),
+                'flagged_by_name' => $ticket->flaggedBy?->name,
+                'flag_note' => $ticket->flag_note,
                 'is_read' => $ticket->is_read,
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'created_at' => $ticket->created_at->toIso8601String(),
             ]);
 
-        // Counts mengikuti pencarian dan rentang tanggal, tapi TIDAK mengikuti tab
-        $countBaseQuery = Ticket::query()
-            ->where('source_app', 'admin')
-            ->visibleTo($user)
-            ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
-                $q->whereDate('created_at', '>=', $filter->from)
-                    ->whereDate('created_at', '<=', $filter->to);
-            })
-            ->tap($searchClosure);
+        // Cache counts 20 detik untuk user/role yang relevan
+        $userKey = $user->isOperatorTim() ? "user_{$user->id}" : 'shared';
+        $countCacheKey = sprintf('input_data:counts:%s:%s_%s', $userKey, $filter->from ?? 'all', $filter->to ?? 'all');
 
-        $countsData = (clone $countBaseQuery)
-            ->selectRaw("
-                COUNT(*) as semua,
-                SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
-                SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
-                SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan
-            ")
-            ->first();
+        $counts = Cache::remember($countCacheKey, 20, function () use ($user, $filter) {
+            $countBaseQuery = Ticket::query()
+                ->where('source_app', 'admin')
+                ->visibleTo($user)
+                ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
+                    $q->whereDate('created_at', '>=', $filter->from)
+                        ->whereDate('created_at', '<=', $filter->to);
+                });
 
-        $counts = [
-            'semua' => (int) ($countsData->semua ?? 0),
-            'pengaduan' => (int) ($countsData->pengaduan ?? 0),
-            'aspirasi' => (int) ($countsData->aspirasi ?? 0),
-            'permintaan' => (int) ($countsData->permintaan ?? 0),
-        ];
+            $countsData = $countBaseQuery
+                ->selectRaw("
+                    COUNT(*) as semua,
+                    SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
+                    SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
+                    SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan,
+                    SUM(CASE WHEN status = 'respon_awal' THEN 1 ELSE 0 END) as respon_awal,
+                    SUM(CASE WHEN status = 'respon_substantif' THEN 1 ELSE 0 END) as respon_substantif,
+                    SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan,
+                    SUM(CASE WHEN is_flagged = 1 THEN 1 ELSE 0 END) as ditandai
+                ")
+                ->first();
+
+            return [
+                'semua' => (int) ($countsData->semua ?? 0),
+                'pengaduan' => (int) ($countsData->pengaduan ?? 0),
+                'aspirasi' => (int) ($countsData->aspirasi ?? 0),
+                'permintaan' => (int) ($countsData->permintaan ?? 0),
+                'respon_awal' => (int) ($countsData->respon_awal ?? 0),
+                'respon_substantif' => (int) ($countsData->respon_substantif ?? 0),
+                'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
+                'ditandai' => (int) ($countsData->ditandai ?? 0),
+            ];
+        });
 
         $channels = Cache::remember('channels:tree', now()->addHours(24), function () {
             return Channel::with('children')
@@ -170,14 +204,23 @@ class InputDataController extends Controller
      */
     public function store(StoreTicketRequest $request): RedirectResponse
     {
+        // $validated = $request->validated();
+        // $period = now()->format('Y-m');
+
         $validated = $request->validated();
+
         $period = now()->format('Y-m');
+
+        $generated = Ticket::generateTicketNumber(
+            $validated['classification'],
+            $period
+        );
 
         $creator = $request->user();
         $creatorName = $creator?->name ?? 'Admin';
 
         // Untuk input-data admin/operator, nomor tiket dibuat menggunakan nama pembuat + tanggal + urutan periodik unik
-        $generated = Ticket::generateAdminTicketNumber($creatorName, $period);
+        // $generated = Ticket::generateAdminTicketNumber($creatorName, $period);
 
         $ticket = Ticket::create([
             'ticket_number' => $generated['ticket_number'],
@@ -298,4 +341,132 @@ class InputDataController extends Controller
             'success' => 'Data tiket berhasil ditambahkan!',
         ]);
     }
+
+    /**
+     * Tandai atau lepas tandai pada tiket input data.
+     */
+    public function tandai(Request $request, string $ticketNumber): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'aktif' => ['required', 'boolean'],
+            'note' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $ticket = Ticket::where('ticket_number', $ticketNumber)
+            ->where('source_app', 'admin')
+            ->visibleTo($request->user())
+            ->firstOrFail();
+
+        $aktif = $request->boolean('aktif');
+        $user = $request->user();
+        $userName = $user?->name ?? 'Petugas';
+
+        if ($aktif) {
+            $ticket->update([
+                'is_flagged' => true,
+                'flagged_at' => now(),
+                'flagged_by' => $user?->id,
+                'flag_note' => $request->input('note'),
+            ]);
+
+            $ticket->responses()->create([
+                'user_id' => $user?->id,
+                'type' => 'respon_substantif',
+                'is_system' => true,
+                'message' => "Laporan ditandai oleh {$userName}." . ($request->input('note') ? " Catatan: {$request->input('note')}" : ''),
+                'sent_at' => now(),
+            ]);
+        } else {
+            $ticket->update([
+                'is_flagged' => false,
+                'flagged_at' => null,
+                'flagged_by' => null,
+                'flag_note' => null,
+            ]);
+
+            $ticket->responses()->create([
+                'user_id' => $user?->id,
+                'type' => 'respon_substantif',
+                'is_system' => true,
+                'message' => "Tandai laporan dilepas oleh {$userName}.",
+                'sent_at' => now(),
+            ]);
+        }
+
+        Cache::forget('ticket_check:' . md5($ticket->ticket_number));
+        Cache::forget("ticket:{$ticket->ticket_number}");
+
+        return response()->json([
+            'success' => true,
+            'is_flagged' => (bool) $ticket->is_flagged,
+            'flagged_at' => $ticket->flagged_at?->toIso8601String(),
+            'flagged_by_name' => $aktif ? $userName : null,
+            'flag_note' => $ticket->flag_note,
+        ]);
+    }
+
+    /**
+     * Perbarui data tiket input data.
+     */
+    public function update(\App\Http\Requests\UpdateTicketRequest $request, string $ticketNumber): RedirectResponse
+    {
+        $ticket = Ticket::where('ticket_number', $ticketNumber)
+            ->where('source_app', 'admin')
+            ->visibleTo($request->user())
+            ->firstOrFail();
+
+        $ticket->update([
+            'reporter_name' => $request->validated('reporter_name'),
+            'reporter_email' => $request->validated('reporter_email'),
+            'reporter_wa' => $request->validated('reporter_wa'),
+            'title' => $request->validated('title'),
+            'content' => $request->validated('content'),
+        ]);
+
+        Cache::forget('ticket_check:' . md5($ticket->ticket_number));
+        Cache::forget("ticket:{$ticket->ticket_number}");
+        Cache::forget('dashboard:admin:version');
+
+        return back()->with('success', 'Data tiket berhasil diperbarui.');
+    }
+
+    /**
+     * Hapus tiket input data beserta lampiran.
+     */
+    public function destroy(Request $request, string $ticketNumber): RedirectResponse
+    {
+        $ticket = Ticket::with(['attachments', 'responses.attachments'])
+            ->where('ticket_number', $ticketNumber)
+            ->where('source_app', 'admin')
+            ->visibleTo($request->user())
+            ->firstOrFail();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($ticket) {
+            foreach ($ticket->attachments as $attachment) {
+                if ($attachment->path && Storage::disk('public')->exists($attachment->path)) {
+                    Storage::disk('public')->delete($attachment->path);
+                }
+            }
+
+            foreach ($ticket->responses as $response) {
+                foreach ($response->attachments as $respAttachment) {
+                    if ($respAttachment->path && Storage::disk('public')->exists($respAttachment->path)) {
+                        Storage::disk('public')->delete($respAttachment->path);
+                    }
+                }
+            }
+
+            $ticket->delete();
+        });
+
+        Cache::forget('ticket_check:' . md5($ticket->ticket_number));
+        Cache::forget("ticket:{$ticket->ticket_number}");
+        Cache::forget('dashboard:admin:version');
+
+        $routePrefix = $request->user()->isAdmin() ? 'dashboard.admin' : 'dashboard.operator';
+
+        return redirect()->route("{$routePrefix}.input-data.index")
+            ->with('success', 'Data tiket berhasil dihapus.');
+    }
 }
+

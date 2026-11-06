@@ -43,36 +43,17 @@ class LaporanMasukController extends Controller
 
         // Query utama daftar tiket laporan masuk (kecuali tiket yang diinput manual dari admin dan yang sudah selesai)
         $baseQueryBuilder = function () use ($filter, $searchClosure) {
-            $query = Ticket::with(['channel', 'lastResponse.user', 'flaggedBy'])
+            return Ticket::with(['channel', 'lastResponse.user', 'flaggedBy'])
                 ->where('source_app', '!=', 'admin')
                 ->where('status', '!=', 'selesai')
                 ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
                     $q->whereDate('created_at', '>=', $filter->from)
                         ->whereDate('created_at', '<=', $filter->to);
                 })
-                ->tap($searchClosure);
-
-            if ($filter->tab !== 'semua') {
-                if ($filter->tab === 'belum_dibaca') {
-                    $query->where('is_read', false);
-                } elseif ($filter->tab === 'pengaduan') {
-                    $query->where('classification', 'pengaduan');
-                } elseif ($filter->tab === 'aspirasi') {
-                    $query->where('classification', 'aspirasi');
-                } elseif ($filter->tab === 'permintaan' || $filter->tab === 'permintaan_informasi') {
-                    $query->where('classification', 'permintaan_informasi');
-                } elseif ($filter->tab === 'respon_awal') {
-                    $query->where('status', 'respon_awal');
-                } elseif ($filter->tab === 'respon_substantif') {
-                    $query->where('status', 'respon_substantif');
-                } elseif ($filter->tab === 'berkadar_pengawasan') {
-                    $query->where('is_pengawasan', true);
-                } elseif ($filter->tab === 'ditandai') {
-                    $query->where('is_flagged', true);
-                }
-            }
-
-            return $query;
+                ->tap($searchClosure)
+                ->when($filter->tab !== 'semua', function ($q) use ($filter) {
+                    $q->applyTabFilter($filter->tab);
+                });
         };
 
         $fetchTickets = function () use ($baseQueryBuilder, $filter) {

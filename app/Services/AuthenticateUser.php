@@ -79,6 +79,8 @@ class AuthenticateUser
             'session_id_suffix' => substr((string) $loggedIn->current_session_id, -8),
         ]);
 
+        \App\Events\UserLoggedIn::dispatch($loggedIn);
+
         return $loggedIn;
     }
 

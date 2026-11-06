@@ -1,5 +1,6 @@
+import { toTicketListEntry } from '@/components/view/dashboard/laporan-masuk/adapter';
 import { LaporanMasukFilterTabs } from '@/components/laporan-masuk/laporan-masuk-filter-tabs';
-import { LaporanMasukTicketList } from '@/components/laporan-masuk/laporan-masuk-ticket-list';
+import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { DateRangeFilter } from '@/components/shared/date-range-filter';
 import { Pagination } from '@/components/shared/pagination';
 import { Badge } from '@/components/ui/badge';
@@ -19,11 +20,12 @@ export default function LaporanMasukView() {
     const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
         useLaporanMasukFilters(routePrefix, filters);
 
-    // Jangan reload otomatis saat pengguna sedang mengetik di kolom pencarian.
     const isSearching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
     const { recentlyAnswered, clearRecentlyAnswered } = useInboxRealtime({ searching: isSearching });
 
     const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
+
+    const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix, recentlyAnswered));
 
     return (
         <AdminPage breadcrumbs={[{ title: 'Laporan Masuk', href: route(`${routePrefix}.laporan-masuk.index`) }]}>
@@ -96,11 +98,9 @@ export default function LaporanMasukView() {
                             </Button>
                         </div>
                     ) : (
-                        <LaporanMasukTicketList
-                            tickets={tickets}
+                        <TicketList
+                            tickets={entries}
                             isLoading={isLoading}
-                            routePrefix={routePrefix}
-                            recentlyAnswered={recentlyAnswered}
                             onSelectTicket={clearRecentlyAnswered}
                         />
                     )}

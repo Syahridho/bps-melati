@@ -3,7 +3,7 @@ import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/co
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { type User } from '@/types';
 import { Link, router } from '@inertiajs/react';
-import { KeyRound, LogOut, Palette } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 interface UserMenuContentProps {
     user: User;
@@ -23,7 +23,8 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
         }
 
         if (typeof window !== 'undefined') {
-            const win = window as unknown as { Echo?: { disconnect: () => void } };
+            const win = window as unknown as { Echo?: { disconnect: () => void; leave: (channel: string) => void } };
+            win.Echo?.leave('online-users');
             win.Echo?.disconnect();
         }
 
@@ -49,14 +50,12 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
 
             <DropdownMenuItem asChild>
                 <Link className="block w-full" href={route('password.edit')} onClick={cleanup}>
-                    <KeyRound className="mr-2 h-4 w-4" />
                     Kata Sandi
                 </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
                 <Link className="block w-full" href={route('appearance')} onClick={cleanup}>
-                    <Palette className="mr-2 h-4 w-4" />
                     Tema
                 </Link>
             </DropdownMenuItem>

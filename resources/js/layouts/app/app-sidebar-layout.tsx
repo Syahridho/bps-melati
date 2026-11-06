@@ -3,12 +3,15 @@ import { AppShell } from '@/components/layout/app-shell';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { AppSidebarHeader } from '@/components/layout/app-sidebar-header';
 import { Toaster } from '@/components/ui/toaster';
+import { useOnlinePresence } from '@/hooks/use-online-presence';
 import { useReporterReplyToast } from '@/hooks/use-reporter-reply-toast';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 
 export default function AppSidebarLayout({ children, breadcrumbs = [] }: { children: React.ReactNode; breadcrumbs?: BreadcrumbItem[] }) {
     const { auth } = usePage<SharedData>().props;
+
+    useOnlinePresence();
 
     // Dipasang sekali di layout agar toast "Balasan baru dari pelapor" muncul
     // di seluruh halaman dashboard tanpa perlu listener per halaman.

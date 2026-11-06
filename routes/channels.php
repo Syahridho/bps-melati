@@ -62,3 +62,26 @@ Broadcast::channel('inbox.{scope}', function (User $user, string $scope) {
 
     return $user->isAdmin() || $user->isOperator();
 });
+
+/**
+ * Presence channel global untuk melacak pengguna online secara realtime.
+ * Diikuti oleh semua pengguna terautentikasi (admin, operator, operator_tim).
+ * HANYA mengembalikan id pengguna agar tidak ada kebocoran data.
+ */
+Broadcast::channel('online-users', function (User $user) {
+    if (! $user->is_active) {
+        return false;
+    }
+
+    return [
+        'id' => $user->id,
+    ];
+});
+
+/**
+ * Private channel admin untuk pembaruan realtime data pengguna & operator (mis. login terakhir).
+ * Hanya role admin yang diizinkan.
+ */
+Broadcast::channel('admin.operators', function (User $user) {
+    return $user->isAdmin() && $user->is_active;
+});

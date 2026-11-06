@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 import { type ChannelGroup } from '@/types/input-data';
 import { LoaderCircle, Send } from 'lucide-react';
 import { useRef } from 'react';
-import { InputDataResponseFormBlock } from './input-data-response-form-block';
-import { InputDataTicketFormBlock } from './input-data-ticket-form-block';
+import { InputDataResponseFormBlock } from '@/components/input-data/input-data-response-form-block';
+import { InputDataTicketFormBlock } from '@/components/input-data/input-data-ticket-form-block';
 
 interface InputDataAddTicketDialogProps {
     open: boolean;
@@ -16,7 +16,7 @@ interface InputDataAddTicketDialogProps {
     routePrefix: string;
 }
 
-export function InputDataAddTicketDialog({ open, onOpenChange, channels, routePrefix }: InputDataAddTicketDialogProps) {
+export default function InputDataAddTicketDialog({ open, onOpenChange, channels, routePrefix }: InputDataAddTicketDialogProps) {
     const bodyRef = useRef<HTMLDivElement>(null);
 
     const {
@@ -104,5 +104,3 @@ export function InputDataAddTicketDialog({ open, onOpenChange, channels, routePr
         </>
     );
 }
-
-export { InputDataAddTicketDialog as AddTicketDialog };

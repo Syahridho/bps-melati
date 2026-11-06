@@ -1,11 +1,12 @@
-import { InputDataAddTicketDialog } from '@/components/input-data/input-data-add-ticket-dialog';
+import { toTicketListEntry } from '@/components/view/dashboard/input-data/adapter';
 import { InputDataFilterTabs } from '@/components/input-data/input-data-filter-tabs';
-import { InputDataTicketList } from '@/components/input-data/input-data-ticket-list';
+import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { DateRangeFilter } from '@/components/shared/date-range-filter';
 import { Pagination, type PaginatedData } from '@/components/shared/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import InputDataAddTicketDialog from '@/components/view/dashboard/input-data/modal-add-ticket';
 import { useInputDataFilters } from '@/hooks/use-input-data-filters';
 import AdminPage from '@/layouts/dashboard/page';
 import { type SharedData } from '@/types';
@@ -29,6 +30,10 @@ interface InputDataPageProps extends SharedData {
         pengaduan: number;
         aspirasi: number;
         permintaan: number;
+        respon_awal?: number;
+        respon_substantif?: number;
+        berkadar_pengawasan?: number;
+        ditandai?: number;
     };
     flash: {
         ticket_number?: string;
@@ -55,6 +60,8 @@ export default function InputDataView() {
     }, [flash]);
 
     const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
+
+    const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix));
 
     return (
         <AdminPage breadcrumbs={[{ title: 'Input Data', href: route(`${routePrefix}.input-data.index`) }]}>
@@ -142,7 +149,7 @@ export default function InputDataView() {
                             </Button>
                         </div>
                     ) : (
-                        <InputDataTicketList tickets={tickets} isLoading={isLoading} routePrefix={routePrefix} />
+                        <TicketList tickets={entries} isLoading={isLoading} />
                     )}
 
                     {/* Pagination Footer */}

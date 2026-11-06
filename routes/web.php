@@ -35,6 +35,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
         Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');
+        Route::put('input-data/{ticketNumber}', [InputDataController::class, 'update'])->name('input-data.update')->where('ticketNumber', '.*');
+        Route::delete('input-data/{ticketNumber}', [InputDataController::class, 'destroy'])->name('input-data.destroy')->where('ticketNumber', '.*');
+        Route::patch('input-data/{ticketNumber}/tandai', [InputDataController::class, 'tandai'])->middleware('throttle:60,1')->name('input-data.tandai')->where('ticketNumber', '.*');
         Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
@@ -69,6 +72,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
         Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');
+        Route::put('input-data/{ticketNumber}', [InputDataController::class, 'update'])->name('input-data.update')->where('ticketNumber', '.*');
+        Route::delete('input-data/{ticketNumber}', [InputDataController::class, 'destroy'])->name('input-data.destroy')->where('ticketNumber', '.*');
+        Route::patch('input-data/{ticketNumber}/tandai', [InputDataController::class, 'tandai'])->middleware('throttle:60,1')->name('input-data.tandai')->where('ticketNumber', '.*');
     });
 
     Route::middleware('role:operator')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {

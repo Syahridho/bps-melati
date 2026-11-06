@@ -14,6 +14,7 @@ interface OperatorTableProps {
     operators: PaginatedData<Operator>;
     authUserId: number;
     search: string;
+    connectionStatus?: string;
     onSearchChange: (value: string) => void;
     onPerPageChange: (perPage: number) => void;
     onOpenCreate: () => void;
@@ -26,6 +27,7 @@ export function OperatorTable({
     operators,
     authUserId,
     search,
+    connectionStatus,
     onSearchChange,
     onPerPageChange,
     onOpenCreate,
@@ -33,11 +35,20 @@ export function OperatorTable({
     onForceLogout,
     onDelete,
 }: OperatorTableProps) {
+    const isDisconnected = connectionStatus && connectionStatus !== 'connected';
+
     return (
         <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <CardTitle className="flex items-center gap-2 text-lg font-bold">Daftar Akun Pengguna</CardTitle>
+                    <div className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-lg font-bold">Daftar Akun Pengguna</CardTitle>
+                        {isDisconnected && (
+                            <Badge variant="outline" className="text-amber-600 border-amber-500/40 text-[10px]">
+                                Realtime offline
+                            </Badge>
+                        )}
+                    </div>
                     <CardDescription>Total {operators.total} akun terdaftar dalam sistem</CardDescription>
                 </div>
                 <Button onClick={onOpenCreate} className="gap-2">

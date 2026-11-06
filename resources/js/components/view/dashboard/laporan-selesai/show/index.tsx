@@ -1,148 +1,21 @@
-import { LaporanMasukDetailCard } from '@/components/laporan-masuk/laporan-masuk-detail-card';
-import { LaporanMasukResponseHistory } from '@/components/laporan-masuk/laporan-masuk-response-history';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Textarea } from '@/components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import AdminPage from '@/layouts/dashboard/page';
-import { type Attachment, type ShowProps, type TicketItem } from '@/types/laporan-selesai';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Flag } from 'lucide-react';
+import { TicketFlagButton } from '@/components/shared/ticket-flag-button';
+import { mapLaporanSelesaiToDetailData } from '@/components/shared/ticket-detail/adapters';
+import { SupervisionToggle } from '@/components/shared/ticket-detail/supervision-toggle';
+import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
+import { TicketContentCard } from '@/components/shared/ticket-detail/ticket-content-card';
+import { TicketDetailHeader } from '@/components/shared/ticket-detail/ticket-detail-header';
+import { TicketDetailLayout } from '@/components/shared/ticket-detail/ticket-detail-layout';
+import { TicketInfoGrid } from '@/components/shared/ticket-detail/ticket-info-grid';
+import { TicketResponseHistory } from '@/components/shared/ticket-detail/ticket-response-history';
+import { Separator } from '@/components/ui/separator';
+import { formatFullDate } from '@/lib/laporan-masuk-utils';
+import { type Attachment, type ShowProps } from '@/types/laporan-selesai';
+import { usePage } from '@inertiajs/react';
+import { Calendar, FileText, Globe, Layers, Mail, Phone, User } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
-function DetailFlagButton({ ticket, routePrefix }: { ticket: TicketItem; routePrefix: string }) {
-    const [flagged, setFlagged] = useState(ticket.is_flagged ?? false);
-    const [note, setNote] = useState(ticket.flag_note ?? '');
-    const [flagNote, setFlagNote] = useState(ticket.flag_note ?? '');
-    const [flaggedByName, setFlaggedByName] = useState(ticket.flagged_by_name ?? '');
-    const [open, setOpen] = useState(false);
-    const [processing, setProcessing] = useState(false);
-    const { auth } = usePage<{ auth: { user: { name: string } } }>().props;
-
-    const handleToggle = async () => {
-        if (flagged) {
-            setFlagged(false);
-            setFlagNote('');
-            setFlaggedByName('');
-            setProcessing(true);
-            try {
-                const res = await fetch(route(`${routePrefix}.laporan-selesai.tandai`, ticket.ticket_number), {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-                        Accept: 'application/json',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ aktif: false }),
-                });
-                if (!res.ok) throw new Error();
-                toast.success('Tandai berhasil dilepas');
-            } catch {
-                setFlagged(true);
-                setFlagNote(ticket.flag_note ?? '');
-                setFlaggedByName(ticket.flagged_by_name ?? '');
-                toast.error('Gagal melepas tandai');
-            } finally {
-                setProcessing(false);
-            }
-        } else {
-            setOpen(true);
-        }
-    };
-
-    const handleFlag = async () => {
-        setFlagged(true);
-        setFlagNote(note);
-        setFlaggedByName(auth.user.name);
-        setOpen(false);
-        setProcessing(true);
-        try {
-            const res = await fetch(route(`${routePrefix}.laporan-selesai.tandai`, ticket.ticket_number), {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-                    Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ aktif: true, note: note || null }),
-            });
-            if (!res.ok) throw new Error();
-            toast.success('Laporan berhasil ditandai');
-        } catch {
-            setFlagged(false);
-            setFlagNote('');
-            setFlaggedByName('');
-            toast.error('Gagal menandai laporan');
-        } finally {
-            setProcessing(false);
-        }
-    };
-
-    return (
-        <div className="flex items-center gap-2">
-            {flagged && (
-                <TooltipProvider delayDuration={200}>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Badge variant="outline" className="border-orange-500/50 bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                                <Flag className="mr-1 size-3 fill-orange-500" />
-                                Ditandai
-                            </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom" className="max-w-xs">
-                            <p className="text-xs">
-                                Ditandai oleh {flaggedByName || 'Petugas'}
-                                {flagNote && <span className="text-muted-foreground mt-1 block">"{flagNote}"</span>}
-                            </p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            )}
-            {flagged ? (
-                <Button variant="secondary" size="sm" onClick={handleToggle} disabled={processing} aria-label="Lepas tandai">
-                    <Flag className="mr-1.5 size-4 fill-orange-500 text-orange-500" />
-                    Lepas Tandai
-                </Button>
-            ) : (
-                <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => setOpen(true)} disabled={processing} aria-label="Tandai laporan">
-                            <Flag className="mr-1.5 size-4" />
-                            Tandai
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-72" align="end">
-                        <div className="space-y-3">
-                            <p className="text-sm font-medium">Tandai Laporan</p>
-                            <Textarea
-                                placeholder="Catatan alasan (opsional, maks 255 karakter)"
-                                maxLength={255}
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                                className="min-h-[60px] text-sm"
-                            />
-                            <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                                    Batal
-                                </Button>
-                                <Button size="sm" onClick={handleFlag} disabled={processing}>
-                                    Tandai
-                                </Button>
-                            </div>
-                        </div>
-                    </PopoverContent>
-                </Popover>
-            )}
-        </div>
-    );
-}
-
-export default function ShowLaporanMasukView() {
+export default function ShowLaporanSelesaiView() {
     const { auth, ticket } = usePage<ShowProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
@@ -157,74 +30,132 @@ export default function ShowLaporanMasukView() {
         setPreviewList(list);
     };
 
-    const handlePreviewFile = (file: File, files: File[] = []) => {
-        setPreviewItem(file);
-        setPreviewList(files);
-    };
+    const detailData = mapLaporanSelesaiToDetailData(ticket);
+
+    const infoFields = [
+        {
+            id: 'reporter',
+            label: 'Pelapor',
+            value: detailData.reporter_name ?? 'Anonim',
+            icon: User,
+        },
+        detailData.reporter_email
+            ? {
+                  id: 'email',
+                  label: 'Email',
+                  value: detailData.reporter_email,
+                  icon: Mail,
+                  className: 'min-[1280px]:max-[1399px]:col-span-2',
+              }
+            : null,
+        detailData.reporter_wa
+            ? {
+                  id: 'wa',
+                  label: 'WhatsApp',
+                  value: detailData.reporter_wa,
+                  icon: Phone,
+              }
+            : null,
+        {
+            id: 'source',
+            label: 'Sumber / Aplikasi',
+            value: <span className="capitalize">{detailData.source_app}</span>,
+            icon: Globe,
+        },
+        {
+            id: 'channel',
+            label: 'Channel',
+            value: detailData.channel,
+            icon: Layers,
+        },
+        {
+            id: 'created_at',
+            label: 'Tanggal Dibuat',
+            value: formatFullDate(detailData.created_at),
+            icon: Calendar,
+        },
+        {
+            id: 'sequence',
+            label: 'Nomor Urut',
+            value: detailData.sequence,
+            icon: FileText,
+        },
+        detailData.created_by_name
+            ? {
+                  id: 'created_by',
+                  label: 'Dibuat Oleh',
+                  value: detailData.created_by_name,
+                  icon: User,
+              }
+            : null,
+    ];
 
     return (
-        <AdminPage
-            // title={ticket.ticket_number}
-            // description="Detail laporan selesai"
-            breadcrumbs={[
-                { title: backLabel, href: route(backRouteName) },
-                { title: ticket.ticket_number, href: '#' },
-            ]}
-        >
-            <Head title={ticket.ticket_number} />
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <Link
-                        href={route(backRouteName)}
-                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
-                    >
-                        <ArrowLeft className="size-4" />
-                        Kembali ke {backLabel}
-                    </Link>
-                    <DetailFlagButton ticket={ticket} routePrefix={routePrefix} />
-                </div>
-
-                <LaporanMasukDetailCard
+        <TicketDetailLayout
+            ticketNumber={ticket.ticket_number}
+            backHref={route(backRouteName)}
+            backLabel={backLabel}
+            headerActions={
+                <TicketFlagButton
                     ticket={ticket}
-                    ticketStatus={ticket.status}
-                    canEdit={false}
-                    canDelete={false}
-                    onEdit={() => {}}
-                    onDelete={() => {}}
-                    onPreviewAttachment={handlePreviewAttachment}
+                    tandaiRoute={route(`${routePrefix}.laporan-selesai.tandai`, ticket.ticket_number)}
+                    variant="badge-button"
+                />
+            }
+            dialogs={
+                <AttachmentPreviewDialog
+                    item={previewItem}
+                    items={previewList}
+                    onClose={() => {
+                        setPreviewItem(null);
+                        setPreviewList([]);
+                    }}
+                />
+            }
+        >
+            <div className="bg-card rounded-lg border">
+                <TicketDetailHeader
+                    ticketNumber={detailData.ticket_number}
+                    classification={detailData.classification}
+                    status={detailData.status}
+                    createdAt={detailData.created_at}
+                    autoCloseAt={detailData.auto_close_at}
+                    isPengawasan={detailData.is_pengawasan}
+                    pengawasanAt={detailData.pengawasan_at}
+                    pengawasanByName={detailData.pengawasan_by_name}
+                    kadarPengawasanDays={detailData.kadar_pengawasan_days}
+                    actions={
+                        <SupervisionToggle
+                            ticketNumber={detailData.ticket_number}
+                            isPengawasan={detailData.is_pengawasan}
+                            disabled={true}
+                            kadarPengawasanDays={detailData.kadar_pengawasan_days}
+                            classificationDefaultDays={detailData.classification_default_days}
+                            updateRoute={route(`${routePrefix}.laporan-masuk.pengawasan`, {
+                                ticketNumber: detailData.ticket_number,
+                            })}
+                        />
+                    }
                 />
 
-                <LaporanMasukResponseHistory
-                    responses={ticket.responses}
-                    ticketId={ticket.id}
-                    ticketStatus={ticket.status}
-                    expectedVersion={ticket.version ?? 0}
-                    routePrefix={routePrefix}
-                    showReplyForm={false}
-                    viewers={[]}
-                    currentUserId={auth.user.id}
-                    typingName={null}
-                    pendingNotice={null}
-                    conflict={null}
-                    onDismissConflict={() => {}}
-                    onToggleReply={() => {}}
-                    onCancelReply={() => {}}
-                    onReplySuccess={() => {}}
-                    onPreviewAttachment={handlePreviewAttachment}
-                    onPreviewFile={handlePreviewFile}
-                    onTyping={() => {}}
-                    highlightLast={false}
+                <Separator />
+
+                <TicketInfoGrid fields={infoFields} />
+
+                <TicketContentCard title={detailData.title} content={detailData.content} />
+
+                <TicketAttachments
+                    attachments={detailData.attachments}
+                    onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)}
                 />
             </div>
 
-            <AttachmentPreviewDialog
-                item={previewItem}
-                items={previewList}
-                onClose={() => {
-                    setPreviewItem(null);
-                    setPreviewList([]);
-                }}
+            <TicketResponseHistory
+                responses={detailData.responses}
+                ticketStatus={detailData.status}
+                readOnly={true}
+                onPreviewAttachment={(att) => handlePreviewAttachment(att, detailData.attachments)}
             />
-        </AdminPage>
+        </TicketDetailLayout>
     );
 }
