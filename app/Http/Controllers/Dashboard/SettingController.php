@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Http\Controllers\Concerns\RendersRolePage;
@@ -27,6 +28,7 @@ class SettingController extends Controller
                 'auto_close_aspirasi_days' => Setting::get('auto_close_aspirasi_days', '1'),
                 'auto_close_permintaan_informasi_days' => Setting::get('auto_close_permintaan_informasi_days', '5'),
                 'kadar_pengawasan_hari' => Setting::get('kadar_pengawasan_hari', '30'),
+                'dashboard_live_enabled' => (bool) Setting::get('dashboard_live_enabled', true),
             ],
         ]);
     }
@@ -44,6 +46,7 @@ class SettingController extends Controller
             'auto_close_aspirasi_days' => ['required', 'integer', 'min:0', 'max:365'],
             'auto_close_permintaan_informasi_days' => ['required', 'integer', 'min:0', 'max:365'],
             'kadar_pengawasan_hari' => ['required', 'integer', 'min:0', 'max:365'],
+            'dashboard_live_enabled' => ['required', 'boolean'],
         ], [
             'auto_close_pengaduan_days.min' => 'Batas waktu pengaduan minimal 0 hari. Isi 0 untuk menonaktifkan.',
             'auto_close_aspirasi_days.min' => 'Batas waktu aspirasi minimal 0 hari. Isi 0 untuk menonaktifkan.',
@@ -60,8 +63,12 @@ class SettingController extends Controller
         ]);
 
         foreach ($validated as $key => $value) {
-            Setting::set($key, (string) $value);
+            Setting::set($key, is_bool($value) ? ($value ? '1' : '0') : (string) $value);
         }
+
+        // Bump versi cache dashboard agar saat setting diubah, payload langsung sinkron
+        Cache::add(\App\Support\DashboardStats::VERSION_KEY, 0);
+        Cache::increment(\App\Support\DashboardStats::VERSION_KEY);
 
         return redirect()->back()->with('flash', [
             'success' => 'Pengaturan berhasil diperbarui!',

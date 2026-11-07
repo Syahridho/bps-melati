@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Observers\TicketObserver;
 use App\Support\LaporanCache;
 use App\Support\RekapCache;
 use App\Support\RekapYears;
@@ -52,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login-ip', function (Request $request) {
             return Limit::perMinute(20)->by('login-ip|'.$request->ip());
         });
+
+        Ticket::observe(TicketObserver::class);
 
         // Rekap di-cache per periode. Rotasi token saat tiket/kanal berubah
         // supaya halaman rekap otomatis menghitung ulang pada request berikutnya.

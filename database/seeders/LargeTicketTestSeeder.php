@@ -31,7 +31,7 @@ class LargeTicketTestSeeder extends Seeder
         $endTs = max($startTs + 1, $endDate->timestamp);
 
         $statuses = ['baru', 'respon_awal', 'respon_substantif', 'selesai'];
-        $classifications = ['lapor', 'aspirasi', 'permintaan_informasi'];
+        $classifications = ['pengaduan', 'aspirasi', 'permintaan_informasi'];
         $serviceTypes = ['pst', 'lainnya'];
         $satuanTugasList = ['Bagian Umum', 'Fungsi Statistik Sosial', 'Fungsi Statistik Produksi', 'Fungsi Statistik Distribusi', 'Fungsi Neraca Wilayah', 'Fungsi IPDS'];
 
@@ -66,7 +66,7 @@ class LargeTicketTestSeeder extends Seeder
 
                 $classification = $classifications[array_rand($classifications)];
                 $prefix = match ($classification) {
-                    'lapor' => 'L',
+                    'pengaduan' => 'L',
                     'aspirasi' => 'A',
                     'permintaan_informasi' => 'I',
                 };
@@ -91,7 +91,7 @@ class LargeTicketTestSeeder extends Seeder
                     $isRead = (mt_rand(0, 1) === 1);
                 }
 
-                $serviceType = ($classification === 'lapor') ? $serviceTypes[array_rand($serviceTypes)] : null;
+                $serviceType = ($classification === 'pengaduan') ? $serviceTypes[array_rand($serviceTypes)] : null;
                 $satuanTugas = ($classification === 'aspirasi') ? $satuanTugasList[array_rand($satuanTugasList)] : null;
 
                 $records[] = [

@@ -17,6 +17,8 @@ class DashboardController extends Controller
      */
     public function __invoke(): Response
     {
-        return Inertia::render('operator/dashboard', DashboardStats::cached());
+        return Inertia::render('operator/dashboard', array_merge(DashboardStats::cached(), [
+            'isLiveEnabled' => (bool) \App\Models\Setting::get('dashboard_live_enabled', true),
+        ]));
     }
 }

@@ -20,6 +20,8 @@ class DashboardController extends Controller
      */
     public function __invoke(Request $request): Response
     {
-        return $this->renderPage($request, 'index', DashboardStats::cached());
+        return $this->renderPage($request, 'index', array_merge(DashboardStats::cached(), [
+            'isLiveEnabled' => (bool) \App\Models\Setting::get('dashboard_live_enabled', true),
+        ]));
     }
 }

@@ -85,3 +85,11 @@ Broadcast::channel('online-users', function (User $user) {
 Broadcast::channel('admin.operators', function (User $user) {
     return $user->isAdmin() && $user->is_active;
 });
+
+/**
+ * Private channel dashboard admin untuk pembaruan realtime kartu statistik, grafik, dan laporan terbaru.
+ * Hanya role admin yang diizinkan.
+ */
+Broadcast::channel('dashboard.admin', function (User $user) {
+    return $user->isAdmin() && $user->is_active;
+});

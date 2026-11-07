@@ -40,6 +40,7 @@ export interface DashboardProps extends SharedData {
     trend: TrendPoint[];
     recentTickets: TicketSummary[];
     periodLabel: string;
+    isLiveEnabled?: boolean;
 }
 
 export interface DashboardChannelCardConfig {
