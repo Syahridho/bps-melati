@@ -1,10 +1,10 @@
-import { ConnectionIndicator } from '@/components/header/ConnectionIndicator';
 import { ChartAreaLinear } from '@/components/dashboard/chart-area-linear';
 import { ChartBarDefault } from '@/components/dashboard/chart-bar';
 import { ChartPieLabel } from '@/components/dashboard/chart-pie-label';
 import { DashboardRecentTickets } from '@/components/dashboard/dashboard-recent-tickets';
 import { DashboardStatCards } from '@/components/dashboard/dashboard-stat-cards';
 import { DashboardStatusCards } from '@/components/dashboard/dashboard-status-cards';
+import { ConnectionIndicator } from '@/components/header/ConnectionIndicator';
 import AppLayout from '@/layouts/app-layout';
 import { type DashboardTemplateProps } from '@/types/dashboard';
 import { Head } from '@inertiajs/react';
@@ -34,7 +34,7 @@ export default function DashboardView({
             <Head title={title} />
             <div className="space-y-6 px-4 py-6">
                 {/* Header periode & Realtime Status */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-col gap-1">
                         <h2 className="text-sm leading-snug font-semibold break-words sm:text-base">{headerTitle}</h2>
                         <p className="text-muted-foreground text-xs">Menampilkan data: {periodLabel}</p>
@@ -60,8 +60,12 @@ export default function DashboardView({
                             <ChartBarDefault stats={stats} />
                         </div>
                     </div>
-
-                    <DashboardStatusCards stats={stats} />
+                    <div>
+                        <div className="flex flex-col gap-1">
+                            <p className="mb-2 text-xs font-semibold">Status Laporan</p>
+                        </div>
+                        <DashboardStatusCards stats={stats} />
+                    </div>
 
                     {/* Tren */}
                     <ChartAreaLinear data={trend} periodLabel={periodLabel} />

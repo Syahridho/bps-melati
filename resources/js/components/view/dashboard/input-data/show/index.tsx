@@ -16,7 +16,7 @@ import { formatFullDate } from '@/lib/laporan-masuk-utils';
 import { type InputDataAttachment, type InputDataResponseItem, type InputDataShowProps, type StatusType } from '@/types/input-data';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Calendar, FileText, Globe, Layers, Mail, Phone, User } from 'lucide-react';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
 export default function ShowInputDataView() {
@@ -31,6 +31,8 @@ export default function ShowInputDataView() {
     const [previewItem, setPreviewItem] = useState<AttachmentPreviewSource | null>(null);
     const [previewList, setPreviewList] = useState<AttachmentPreviewSource[]>([]);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const flashSuccessRef = useRef<string | null>(null);
+    const flashTimerRef = useRef<number | null>(null);
     const [responses, setResponses] = useState<InputDataResponseItem[]>(ticket.responses);
     const [ticketStatus, setTicketStatus] = useState<StatusType>(ticket.status);
     const [ticketVersion, setTicketVersion] = useState<number>(ticket.version ?? 0);
@@ -48,11 +50,29 @@ export default function ShowInputDataView() {
     });
 
     useEffect(() => {
-        if (flash?.success) {
-            setSuccessMessage(flash.success);
-            const timer = setTimeout(() => setSuccessMessage(null), 5000);
-            return () => clearTimeout(timer);
+        const message = flash?.success ?? null;
+        if (!message || message === flashSuccessRef.current) {
+            return;
         }
+
+        if (flashTimerRef.current !== null) {
+            window.clearTimeout(flashTimerRef.current);
+        }
+
+        flashSuccessRef.current = message;
+        setSuccessMessage(message);
+        flashTimerRef.current = window.setTimeout(() => {
+            setSuccessMessage(null);
+            flashSuccessRef.current = null;
+            flashTimerRef.current = null;
+        }, 5000);
+
+        return () => {
+            if (flashTimerRef.current !== null) {
+                window.clearTimeout(flashTimerRef.current);
+                flashTimerRef.current = null;
+            }
+        };
     }, [flash?.success]);
 
     useEffect(() => {

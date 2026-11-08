@@ -29,6 +29,11 @@ export default function SettingsLayout({
                       url: appSettingUrl,
                       icon: null,
                   },
+                  {
+                      title: 'API',
+                      url: '/settings/api',
+                      icon: null,
+                  },
               ]
             : []),
         {

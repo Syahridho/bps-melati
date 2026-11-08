@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Dashboard\SettingController;
+use App\Http\Controllers\Settings\ApiController;
 use App\Http\Controllers\Settings\PasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -20,4 +21,5 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('settings/application', [SettingController::class, 'index'])->name('settings.application.edit');
     Route::post('settings/application', [SettingController::class, 'update'])->name('settings.application.update');
+    Route::get('settings/api', [ApiController::class, 'index'])->name('settings.api');
 });

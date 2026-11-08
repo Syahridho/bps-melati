@@ -35,6 +35,8 @@ export function InputDataTicketFormBlock({
     removeFile,
     setPreviewFile,
 }: InputDataTicketFormBlockProps) {
+    const today = new Date();
+    const maxDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     return (
         <section className={cn('bg-background custom-scrollbar flex flex-col lg:min-h-0', showResponsePanel ? 'lg:overflow-y-auto lg:border-r' : '')}>
             {showResponsePanel && (
@@ -70,53 +72,49 @@ export function InputDataTicketFormBlock({
                     {errors.classification && <p className="text-destructive text-xs">{errors.classification}</p>}
                 </div>
 
-                <div className="@container">
-                    <div className="grid grid-cols-1 gap-4 @md:grid-cols-3">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Nama Pelapor (opsional)</Label>
-                            <Input
-                                id="name"
-                                className="text-base sm:text-sm"
-                                placeholder="Masukkan nama"
-                                autoComplete="off"
-                                autoCorrect="off"
-                                spellCheck={false}
-                                value={data.reporter_name}
-                                onChange={(e) => setData('reporter_name', e.target.value)}
-                            />
-                            {errors.reporter_name && <p className="text-destructive text-xs">{errors.reporter_name}</p>}
-                        </div>
+                <div className="space-y-2">
+                    <Label htmlFor="name">Nama Pelapor (opsional)</Label>
+                    <Input
+                        id="name"
+                        className="text-base sm:text-sm"
+                        placeholder="Masukkan nama"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        value={data.reporter_name}
+                        onChange={(e) => setData('reporter_name', e.target.value)}
+                    />
+                    {errors.reporter_name && <p className="text-destructive text-xs">{errors.reporter_name}</p>}
+                </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email (opsional)</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                className="text-base sm:text-sm"
-                                placeholder="contoh@domain.com"
-                                autoComplete="off"
-                                autoCorrect="off"
-                                spellCheck={false}
-                                value={data.reporter_email}
-                                onChange={(e) => setData('reporter_email', e.target.value)}
-                            />
-                            {errors.reporter_email && <p className="text-destructive text-xs">{errors.reporter_email}</p>}
-                        </div>
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email (opsional)</Label>
+                    <Input
+                        id="email"
+                        type="email"
+                        className="text-base sm:text-sm"
+                        placeholder="contoh@domain.com"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        value={data.reporter_email}
+                        onChange={(e) => setData('reporter_email', e.target.value)}
+                    />
+                    {errors.reporter_email && <p className="text-destructive text-xs">{errors.reporter_email}</p>}
+                </div>
 
-                        <div className="col-span-full space-y-2 @md:col-span-1">
-                            <Label htmlFor="wa">WhatsApp (opsional)</Label>
-                            <Input
-                                id="wa"
-                                type="tel"
-                                className="text-base sm:text-sm"
-                                placeholder="08xxxxxxxxxx"
-                                autoComplete="off"
-                                value={data.reporter_wa}
-                                onChange={(e) => setData('reporter_wa', e.target.value)}
-                            />
-                            {errors.reporter_wa && <p className="text-destructive text-xs">{errors.reporter_wa}</p>}
-                        </div>
-                    </div>
+                <div className="col-span-full space-y-2 @md:col-span-1">
+                    <Label htmlFor="wa">WhatsApp (opsional)</Label>
+                    <Input
+                        id="wa"
+                        type="tel"
+                        className="text-base sm:text-sm"
+                        placeholder="08xxxxxxxxxx"
+                        autoComplete="off"
+                        value={data.reporter_wa}
+                        onChange={(e) => setData('reporter_wa', e.target.value)}
+                    />
+                    {errors.reporter_wa && <p className="text-destructive text-xs">{errors.reporter_wa}</p>}
                 </div>
 
                 <InputDataChannelSelect
@@ -149,9 +147,17 @@ export function InputDataTicketFormBlock({
                             <Input
                                 id="tanggal_kejadian"
                                 type="date"
-                                className="text-base sm:text-sm"
+                                max={maxDate}
+                                className="cursor-pointer text-base sm:text-sm"
                                 value={data.tanggal_kejadian}
                                 onChange={(e) => setData('tanggal_kejadian', e.target.value)}
+                                onClick={(e) => {
+                                    try {
+                                        e.currentTarget.showPicker();
+                                    } catch {
+                                        // browser lama: biarkan perilaku bawaan
+                                    }
+                                }}
                             />
                             {errors.tanggal_kejadian && <p className="text-destructive text-xs">{errors.tanggal_kejadian}</p>}
                         </div>
@@ -216,7 +222,7 @@ export function InputDataTicketFormBlock({
                     onPreview={setPreviewFile}
                 />
 
-                <div className="border-border/60 bg-primary/10 mt-2 flex items-center justify-between rounded-lg border p-3">
+                <div className="border-border/60 mt-2 flex items-center justify-between rounded-lg border bg-white/10 p-3">
                     <div className="space-y-0.5">
                         <Label htmlFor="direct-response-toggle" className="text-sm font-medium">
                             Jawab / Selesaikan Langsung

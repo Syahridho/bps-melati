@@ -36,6 +36,8 @@ export default function ShowLaporanMasukView() {
     const [previewItem, setPreviewItem] = useState<AttachmentPreviewSource | null>(null);
     const [previewList, setPreviewList] = useState<AttachmentPreviewSource[]>([]);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const flashSuccessRef = useRef<string | null>(null);
+    const flashTimerRef = useRef<number | null>(null);
     const [responses, setResponses] = useState<TicketResponseItem[]>(ticket.responses);
     const [ticketStatus, setTicketStatus] = useState<Status>(ticket.status);
     const [ticketVersion, setTicketVersion] = useState<number>(ticket.version ?? 0);
@@ -56,11 +58,29 @@ export default function ShowLaporanMasukView() {
     });
 
     useEffect(() => {
-        if (flash?.success) {
-            setSuccessMessage(flash.success);
-            const timer = setTimeout(() => setSuccessMessage(null), 5000);
-            return () => clearTimeout(timer);
+        const message = flash?.success ?? null;
+        if (!message || message === flashSuccessRef.current) {
+            return;
         }
+
+        if (flashTimerRef.current !== null) {
+            window.clearTimeout(flashTimerRef.current);
+        }
+
+        flashSuccessRef.current = message;
+        setSuccessMessage(message);
+        flashTimerRef.current = window.setTimeout(() => {
+            setSuccessMessage(null);
+            flashSuccessRef.current = null;
+            flashTimerRef.current = null;
+        }, 5000);
+
+        return () => {
+            if (flashTimerRef.current !== null) {
+                window.clearTimeout(flashTimerRef.current);
+                flashTimerRef.current = null;
+            }
+        };
     }, [flash?.success]);
 
     useEffect(() => {

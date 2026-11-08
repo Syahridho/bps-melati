@@ -1,10 +1,12 @@
 import { type SettingPageProps } from '@/types/pengaturan';
 import { useForm } from '@inertiajs/react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
 export function usePengaturanForm({ settings, flashSuccess }: { settings: SettingPageProps['settings']; flashSuccess?: string }) {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const flashSuccessRef = useRef<string | null>(null);
+    const flashTimerRef = useRef<number | null>(null);
 
     const { data, setData, post, processing, recentlySuccessful, errors } = useForm({
         nama_penanda_tangan: settings?.nama_penanda_tangan || '',
@@ -18,11 +20,29 @@ export function usePengaturanForm({ settings, flashSuccess }: { settings: Settin
     });
 
     useEffect(() => {
-        if (flashSuccess) {
-            setSuccessMessage(flashSuccess);
-            const timer = setTimeout(() => setSuccessMessage(null), 5000);
-            return () => clearTimeout(timer);
+        const message = flashSuccess ?? null;
+        if (!message || message === flashSuccessRef.current) {
+            return;
         }
+
+        if (flashTimerRef.current !== null) {
+            window.clearTimeout(flashTimerRef.current);
+        }
+
+        flashSuccessRef.current = message;
+        setSuccessMessage(message);
+        flashTimerRef.current = window.setTimeout(() => {
+            setSuccessMessage(null);
+            flashSuccessRef.current = null;
+            flashTimerRef.current = null;
+        }, 5000);
+
+        return () => {
+            if (flashTimerRef.current !== null) {
+                window.clearTimeout(flashTimerRef.current);
+                flashTimerRef.current = null;
+            }
+        };
     }, [flashSuccess]);
 
     const handleSubmit = (e: FormEvent) => {

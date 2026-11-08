@@ -13,7 +13,7 @@ import { type SharedData } from '@/types';
 import { type ChannelGroup, type FilterTab, type TicketItem } from '@/types/input-data';
 import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, Plus, RotateCcw, Search, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface InputDataPageProps extends SharedData {
     tickets: PaginatedData<TicketItem>;
@@ -51,13 +51,34 @@ export default function InputDataView() {
     const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
         useInputDataFilters(routePrefix, filters);
 
+    const flashSuccessRef = useRef<string | null>(null);
+    const flashTimerRef = useRef<number | null>(null);
+
     useEffect(() => {
-        if (flash?.success) {
-            setSuccessMessage(flash.success);
-            const timer = setTimeout(() => setSuccessMessage(null), 5000);
-            return () => clearTimeout(timer);
+        const message = flash?.success ?? null;
+        if (!message || message === flashSuccessRef.current) {
+            return;
         }
-    }, [flash]);
+
+        if (flashTimerRef.current !== null) {
+            window.clearTimeout(flashTimerRef.current);
+        }
+
+        flashSuccessRef.current = message;
+        setSuccessMessage(message);
+        flashTimerRef.current = window.setTimeout(() => {
+            setSuccessMessage(null);
+            flashSuccessRef.current = null;
+            flashTimerRef.current = null;
+        }, 5000);
+
+        return () => {
+            if (flashTimerRef.current !== null) {
+                window.clearTimeout(flashTimerRef.current);
+                flashTimerRef.current = null;
+            }
+        };
+    }, [flash?.success]);
 
     const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
 

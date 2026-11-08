@@ -1,11 +1,13 @@
 import { type Operator, type OperatorFormData } from '@/types/operator';
 import { router, useForm } from '@inertiajs/react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
 export function useOperatorManagement(initialSearch: string, perPage: number, flashSuccess?: string) {
     const [search, setSearch] = useState(initialSearch || '');
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const flashSuccessRef = useRef<string | null>(null);
+    const flashTimerRef = useRef<number | null>(null);
 
     // Modal state
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -31,11 +33,29 @@ export function useOperatorManagement(initialSearch: string, perPage: number, fl
     });
 
     useEffect(() => {
-        if (flashSuccess) {
-            setSuccessMessage(flashSuccess);
-            const timer = setTimeout(() => setSuccessMessage(null), 5000);
-            return () => clearTimeout(timer);
+        const message = flashSuccess ?? null;
+        if (!message || message === flashSuccessRef.current) {
+            return;
         }
+
+        if (flashTimerRef.current !== null) {
+            window.clearTimeout(flashTimerRef.current);
+        }
+
+        flashSuccessRef.current = message;
+        setSuccessMessage(message);
+        flashTimerRef.current = window.setTimeout(() => {
+            setSuccessMessage(null);
+            flashSuccessRef.current = null;
+            flashTimerRef.current = null;
+        }, 5000);
+
+        return () => {
+            if (flashTimerRef.current !== null) {
+                window.clearTimeout(flashTimerRef.current);
+                flashTimerRef.current = null;
+            }
+        };
     }, [flashSuccess]);
 
     // Live search handler
