@@ -6,9 +6,14 @@ use App\Events\TicketCreated;
 use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketCreatedMail;
 use App\Models\Ticket;
+use App\Models\User;
+use App\UserRole;
+use App\Notifications\LaporanNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class TicketController extends Controller
 {
@@ -71,6 +76,31 @@ class TicketController extends Controller
 
         // Dispatch event real-time broadcasting ke admin
         TicketCreated::dispatch($ticket);
+
+        // Notifikasi laporan masuk ke admin dan semua operator aktif (database + broadcast).
+        $data = [
+            'ticket_number' => $ticket->ticket_number,
+            'type' => $ticket->classification,
+            'title' => 'Laporan baru masuk',
+            'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
+            'url' => '/dashboard/admin/laporan-masuk/' . $ticket->ticket_number,
+            'actor_name' => $ticket->reporter_name ?? null,
+        ];
+
+        $recipients = User::query()
+            ->where('is_active', true)
+            ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
+            ->get();
+
+        foreach ($recipients as $recipient) {
+            Log::info('[PUSH-TIMING] T0 dispatch notify', [
+                'ticket_number' => $ticket->ticket_number,
+                'user_id' => $recipient->id,
+                'user_role' => $recipient->role,
+                't0' => now()->format('Y-m-d H:i:s.u'),
+            ]);
+            $recipient->notify((new LaporanNotification('laporan_masuk', $data, [$recipient->id]))->onQueue('push'));
+        }
 
         if (! blank($ticket->reporter_email)) {
             Mail::to($ticket->reporter_email)->queue(new TicketCreatedMail($ticket));

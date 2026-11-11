@@ -62,7 +62,7 @@ export function useReporterReplyToast(userId: number | null) {
         // ${event.excerpt}${event.has_attachment ? ' · 📎 Lampiran' : ''}
         toast('Balasan baru dari pelapor', {
             id: `reply-${event.reply_id}`,
-            description: `#${event.ticket_number}S`,
+            description: `#${event.ticket_number}`,
             duration: TOAST_DURATION_MS,
             action: {
                 label: 'Lihat',

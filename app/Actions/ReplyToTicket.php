@@ -11,6 +11,7 @@ use App\Jobs\SendTicketResponseNotification;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
+use App\UserRole;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -181,6 +182,42 @@ class ReplyToTicket
         SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket, $response), $context);
         SafeBroadcast::send('TicketResponseCreated', fn () => TicketResponseCreated::dispatch($ticket, $response, $actor), $context);
         SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, $actor->name, $actor), $context);
+
+        // Notifikasi laporan_selesai jika status tiket menjadi selesai.
+        if ($ticket->status === 'selesai') {
+            $recipients = User::query()
+                ->where('is_active', true)
+                ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+
+            // Tambahkan pembuat tiket (created_by) jika operator dan belum termasuk.
+            if ($ticket->created_by && ! in_array((int) $ticket->created_by, $recipients, true)) {
+                $recipients[] = (int) $ticket->created_by;
+            }
+
+            foreach ($recipients as $recipientId) {
+                DB::table('notifications')->insert([
+                    'id' => Str::uuid()->toString(),
+                    'type' => 'laporan_selesai',
+                    'notifiable_type' => User::class,
+                    'notifiable_id' => $recipientId,
+                    'data' => json_encode([
+                        'id' => $ticket->id,
+                        'ticket_number' => $ticket->ticket_number,
+                        'type' => $ticket->classification,
+                        'title' => 'Laporan selesai',
+                        'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
+                        'url' => '/dashboard/admin/laporan-selesai/' . $ticket->ticket_number,
+                        'actor_name' => null,
+                    ]),
+                    'read_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
     }
 
     private function findByKey(int $ticketId, ?string $idempotencyKey): ?TicketResponse

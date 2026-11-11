@@ -1,5 +1,6 @@
 import { PengaturanAutoCloseFields } from '@/components/pengaturan/pengaturan-auto-close-fields';
 import { PengaturanSignatureFields } from '@/components/pengaturan/pengaturan-signature-fields';
+import { PushNotificationCard } from '@/components/settings/push-notification-card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -54,6 +55,8 @@ export default function ApplicationSettingsView() {
                             />
                         </div>
                     </div>
+
+                    <PushNotificationCard />
 
                     <Separator />
 

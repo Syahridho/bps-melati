@@ -29,6 +29,7 @@ export interface SharedData {
     quote: { message: string; author: string };
     auth: Auth;
     inbox_open_count: number;
+    vapid_public_key?: string;
     [key: string]: unknown;
 }
 

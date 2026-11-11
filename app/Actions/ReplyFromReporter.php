@@ -7,10 +7,14 @@ use App\Events\TicketReplyFromReporter;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
+use App\Models\User;
+use App\UserRole;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Sumber tunggal penyimpanan balasan pelapor (web /check dan API mobile).
@@ -85,6 +89,35 @@ class ReplyFromReporter
             SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket, $response), $context);
             SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);
             SafeBroadcast::send('TicketReplyFromReporter', fn () => TicketReplyFromReporter::dispatch($ticket, $response), $context);
+
+            // Notifikasi laporan_dibalas ke admin dan semua operator aktif.
+            $recipients = User::query()
+                ->where('is_active', true)
+                ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+
+            foreach ($recipients as $recipientId) {
+                DB::table('notifications')->insert([
+                    'id' => Str::uuid()->toString(),
+                    'type' => 'laporan_dibalas',
+                    'notifiable_type' => User::class,
+                    'notifiable_id' => $recipientId,
+                    'data' => json_encode([
+                        'id' => $ticket->id,
+                        'ticket_number' => $ticket->ticket_number,
+                        'type' => $ticket->classification,
+                        'title' => 'Balasan baru dari pelapor',
+                        'message' => 'Pelapor telah membalas tanggapan Anda.',
+                        'url' => '/dashboard/admin/laporan-masuk/' . $ticket->ticket_number,
+                        'actor_name' => $ticket->reporter_name ?? null,
+                    ]),
+                    'read_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         });
 
         return $response;

@@ -8,15 +8,19 @@ use App\Mail\TicketCreatedMail;
 use App\Mail\TicketResponseSubmitted;
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Models\User;
+use App\UserRole;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
 use App\Support\TicketResponsePayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Http\Controllers\Concerns\RendersRolePage;
@@ -244,6 +248,35 @@ class InputDataController extends Controller
             'source_app' => 'admin',
             'created_by' => $request->user()->id,
         ]);
+
+        // Notifikasi input_data ke admin dan semua operator aktif.
+        $recipients = User::query()
+            ->where('is_active', true)
+            ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        foreach ($recipients as $recipientId) {
+            DB::table('notifications')->insert([
+                'id' => Str::uuid()->toString(),
+                'type' => 'input_data',
+                'notifiable_type' => User::class,
+                'notifiable_id' => $recipientId,
+                'data' => json_encode([
+                    'id' => $ticket->id,
+                    'ticket_number' => $ticket->ticket_number,
+                    'type' => $ticket->classification,
+                    'title' => 'Data tiket baru ditambahkan',
+                    'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
+                    'url' => '/dashboard/admin/input-data/' . $ticket->ticket_number,
+                    'actor_name' => null,
+                ]),
+                'read_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
@@ -473,4 +506,3 @@ class InputDataController extends Controller
             ->with('success', 'Data tiket berhasil dihapus.');
     }
 }
-

@@ -7,13 +7,17 @@ use App\Actions\ReplyFromReporter;
 use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
+use App\Models\User;
+use App\UserRole;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Str;
 
 class CheckTicketController extends Controller
 {
@@ -181,6 +185,36 @@ class CheckTicketController extends Controller
 
             SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);
             SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket), $context);
+
+            // Notifikasi laporan_selesai ke admin dan semua operator aktif
+            // ketika pelapor menandai laporan sebagai selesai.
+            $recipients = User::query()
+                ->where('is_active', true)
+                ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
+                ->pluck('id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+
+            foreach ($recipients as $recipientId) {
+                DB::table('notifications')->insert([
+                    'id' => Str::uuid()->toString(),
+                    'type' => 'laporan_selesai',
+                    'notifiable_type' => User::class,
+                    'notifiable_id' => $recipientId,
+                    'data' => json_encode([
+                        'id' => $ticket->id,
+                        'ticket_number' => $ticket->ticket_number,
+                        'type' => $ticket->classification,
+                        'title' => 'Laporan selesai',
+                        'message' => 'Laporan telah ditandai selesai oleh pelapor.',
+                        'url' => '/dashboard/admin/laporan-selesai/' . $ticket->ticket_number,
+                        'actor_name' => null,
+                    ]),
+                    'read_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         return redirect()->back()->with('flash', [

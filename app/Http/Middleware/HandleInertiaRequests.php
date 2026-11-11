@@ -47,8 +47,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'inbox_open_count' => fn () => ($request->user()?->isAdmin() || $request->user()?->isOperator())
-                ? InboxCounter::getCounts($request->user())['semua']
+                ? InboxCounter::getCounts($request->user())['belum_dibaca']
                 : 0,
+            'vapid_public_key' => env('VAPID_PUBLIC_KEY'),
             'flash' => [
                 'ticket_number' => fn () => $request->session()->get('ticket_number'),
                 'success' => fn () => $request->session()->get('flash.success'),
