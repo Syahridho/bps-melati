@@ -13,7 +13,7 @@ interface RekapSummaryTableProps {
      * `table-fixed` + `colgroup`, dipakai tahunan).
      */
     variant: 'period' | 'fixed';
-    periodLabel: any;
+    periodLabel: string;
 }
 
 /**

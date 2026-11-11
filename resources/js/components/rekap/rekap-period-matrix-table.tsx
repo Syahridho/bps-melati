@@ -11,7 +11,7 @@ interface RekapPeriodMatrixTableProps {
     wrapperClassName?: string;
     tableClassName?: string;
     emptyCellClassName?: string;
-    periodLabel: any;
+    periodLabel: string;
 }
 
 export function RekapPeriodMatrixTable({
@@ -33,14 +33,17 @@ export function RekapPeriodMatrixTable({
                 <Table className={tableClassName}>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent">
-                            <TableHead colSpan={totalColumns} className="bg-muted/60 text-foreground py-2 text-center text-sm font-medium uppercase">
+                            <TableHead
+                                colSpan={totalColumns}
+                                className="text-foreground dark:bg-muted bg-white py-2 text-center text-sm font-medium uppercase"
+                            >
                                 Rekap Pengaduan BPS Provinsi Riau
                             </TableHead>
                         </TableRow>
                         <TableRow className="hover:bg-transparent">
                             <TableHead
                                 colSpan={totalColumns}
-                                className="bg-muted/60 text-foreground py-1.5 text-center text-sm font-medium uppercase"
+                                className="dark:bg-muted text-foreground bg-white py-1.5 text-center text-sm font-medium uppercase"
                             >
                                 {periodLabel}
                             </TableHead>
@@ -48,7 +51,7 @@ export function RekapPeriodMatrixTable({
                         <TableRow className="hover:bg-transparent">
                             <TableHead
                                 rowSpan={ringkas ? undefined : 2}
-                                className="text-foreground sticky left-0 z-20 min-w-[220px] border-r border-b bg-white px-4 py-2 text-center text-sm font-medium"
+                                className="text-foreground dark:bg-muted sticky left-0 z-20 min-w-[220px] border-r border-b bg-white px-4 py-2 text-center text-sm font-medium"
                             >
                                 Sumber Kanal
                             </TableHead>

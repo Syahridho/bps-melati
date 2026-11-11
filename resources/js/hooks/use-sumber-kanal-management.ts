@@ -11,7 +11,7 @@ export function useSumberKanalManagement(flashSuccess?: string) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [createParentId, setCreateParentId] = useState<string>('');
+    const [, setCreateParentId] = useState<string>('');
     const [editingChannel, setEditingChannel] = useState<ChannelItem | ChannelChildItem | null>(null);
     const [deletingChannel, setDeletingChannel] = useState<ChannelItem | ChannelChildItem | null>(null);
 
