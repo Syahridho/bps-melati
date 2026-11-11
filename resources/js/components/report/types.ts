@@ -1,5 +1,5 @@
 import { type ClassificationType } from '@/types/welcome';
-import { type ChangeEvent, type FormEvent, type RefObject } from 'react';
+import { type FormEvent } from 'react';
 
 export interface ReportFormData {
     classification: ClassificationType | '';
@@ -20,9 +20,8 @@ export interface ReportFormProps {
     setData: <K extends keyof ReportFormData>(key: K, value: ReportFormData[K]) => void;
     processing: boolean;
     errors: Partial<Record<keyof ReportFormData | string, string>>;
-    fileInputRef: RefObject<HTMLInputElement | null>;
     onSubmit: (e: FormEvent) => void;
-    onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    onChange: (files: File[]) => void;
     onRemoveFile: (index: number) => void;
     onPreviewFile: (file: File) => void;
 }

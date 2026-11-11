@@ -17,9 +17,7 @@ export function ReportForm({
     setData,
     processing,
     errors,
-    fileInputRef,
     onSubmit,
-    onFileChange,
     onRemoveFile,
     onPreviewFile,
 }: ReportFormProps) {
@@ -82,8 +80,7 @@ export function ReportForm({
                             <AttachmentField
                                 attachments={data.attachments}
                                 errors={errors}
-                                fileInputRef={fileInputRef}
-                                onFileChange={onFileChange}
+                                onChange={(files) => setData('attachments', files)}
                                 onPreviewFile={onPreviewFile}
                                 onRemoveFile={onRemoveFile}
                             />
