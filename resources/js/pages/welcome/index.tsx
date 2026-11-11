@@ -5,7 +5,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { AlurPelaporan } from '@/components/welcome/alur-pelaporan';
 import { ReportForm } from '@/components/welcome/report-form';
 import { SERVICE_CARDS, ServiceCard } from '@/components/welcome/service-cards';
-import { TicketSuccessDialog } from '@/components/welcome/ticket-success-dialog';
 import { WelcomeAttachmentPreviewDialog } from '@/components/welcome/welcome-attachment-preview-dialog';
 import { WelcomeBackdrop } from '@/components/welcome/welcome-backdrop';
 import { WelcomeHeader } from '@/components/welcome/welcome-header';
@@ -13,6 +12,7 @@ import { WelcomeHero } from '@/components/welcome/welcome-hero';
 import { useSuccessDialog } from '@/hooks/use-success-dialog';
 import { useTicketHistory } from '@/hooks/use-ticket-history';
 import { useWelcomeForm } from '@/hooks/use-welcome-form';
+import { TicketSuccessDialog } from '@/pages/welcome/ticket-success-dialog';
 import { type WelcomePageProps } from '@/types/welcome';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
@@ -26,12 +26,10 @@ export default function Welcome() {
         processing,
         errors,
         reset,
-        fileInputRef,
         previewFile,
         setPreviewFile,
         previewUrl,
         handleSubmit,
-        handleFileChange,
         removeFile,
     } = useWelcomeForm();
 
@@ -65,9 +63,8 @@ export default function Welcome() {
                             setData={setData}
                             processing={processing}
                             errors={errors}
-                            fileInputRef={fileInputRef}
                             onSubmit={handleSubmit}
-                            onFileChange={handleFileChange}
+                            onChange={(files) => setData('attachments', files)}
                             onRemoveFile={removeFile}
                             onPreviewFile={setPreviewFile}
                         />

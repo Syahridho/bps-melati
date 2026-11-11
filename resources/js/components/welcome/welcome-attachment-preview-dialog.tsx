@@ -11,7 +11,7 @@ interface WelcomeAttachmentPreviewDialogProps {
 export function WelcomeAttachmentPreviewDialog({ file, previewUrl, onClose }: WelcomeAttachmentPreviewDialogProps) {
     return (
         <Dialog open={!!file} onOpenChange={() => onClose()}>
-            <DialogContent className="max-h-[90vh] sm:max-w-3xl">
+            <DialogContent className="max-h-[95vh] max-w-[90vw]">
                 <DialogHeader>
                     <DialogTitle className="truncate pr-6">{file?.name}</DialogTitle>
                     <DialogDescription>{file && formatFileSize(file.size)}</DialogDescription>

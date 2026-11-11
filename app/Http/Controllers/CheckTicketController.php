@@ -122,7 +122,7 @@ class CheckTicketController extends Controller
             }
         }
 
-        return Inertia::render('check', [
+        return Inertia::render('check/index', [
             'ticketNumber' => $ticketNumber,
             'ticket' => $ticket,
             'searched' => $searched,

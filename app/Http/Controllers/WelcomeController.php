@@ -15,7 +15,7 @@ class WelcomeController extends Controller
      */
     public function __invoke(): Response
     {
-        return Inertia::render('welcome', [
+        return Inertia::render('welcome/index', [
             'channels' => $this->channelTree(),
             'stats' => $this->publicStats(),
         ]);
