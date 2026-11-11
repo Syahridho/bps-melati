@@ -22,12 +22,7 @@ export const TicketListItem = memo(function TicketListItem({ ticket, isPopoverOp
             <div className="flex gap-3 px-4 py-3">
                 <Link href={ticket.show_href} className="min-w-0 flex-1" onClick={() => onSelect?.(ticket.id)}>
                     <div className="mb-1">
-                        <span
-                            className={cn(
-                                'block truncate text-sm',
-                                unread ? 'text-foreground font-semibold' : 'text-foreground font-medium',
-                            )}
-                        >
+                        <span className={cn('block truncate text-sm', unread ? 'text-foreground font-semibold' : 'text-foreground font-medium')}>
                             {ticket.display_title}
                         </span>
                     </div>
@@ -41,7 +36,7 @@ export const TicketListItem = memo(function TicketListItem({ ticket, isPopoverOp
                             </>
                         )}
                     </div>
-                    <p className="text-muted-foreground mb-2 truncate text-xs">{ticket.content}</p>
+                    {/* <p className="text-muted-foreground mb-2 truncate text-xs">{ticket.content}</p> */}
                     <div className="flex items-center gap-1.5">
                         <Badge variant={classificationVariant(ticket.classification)} className="text-[10px]">
                             {classificationLabel(ticket.classification)}
@@ -56,10 +51,7 @@ export const TicketListItem = memo(function TicketListItem({ ticket, isPopoverOp
                             </Badge>
                         )}
                         {ticket.status === 'selesai' ? (
-                            <Badge
-                                variant="outline"
-                                className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600"
-                            >
+                            <Badge variant="outline" className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-600">
                                 <CheckCircle2 className="size-3" />
                                 Selesai
                             </Badge>

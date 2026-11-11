@@ -22,6 +22,7 @@ export default function DashboardView({
     trend,
     recentTickets,
     periodLabel,
+    sumberKanal,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     channelCards,
     allTicketsRoute,
@@ -57,19 +58,18 @@ export default function DashboardView({
                             <ChartPieLabel stats={stats} />
                         </div>
                         <div className="min-w-0 lg:col-span-8">
-                            <ChartBarDefault stats={stats} />
+                            <ChartBarDefault sumberKanal={sumberKanal} />
                         </div>
                     </div>
+
+                    {/* Tren */}
+                    <ChartAreaLinear data={trend} periodLabel={periodLabel} />
                     <div>
                         <div className="flex flex-col gap-1">
                             <p className="mb-2 text-xs font-semibold">Status Laporan</p>
                         </div>
                         <DashboardStatusCards stats={stats} />
                     </div>
-
-                    {/* Tren */}
-                    <ChartAreaLinear data={trend} periodLabel={periodLabel} />
-
                     {/* Laporan terbaru */}
                     <DashboardRecentTickets
                         recentTickets={recentTickets}

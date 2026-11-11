@@ -3,6 +3,14 @@ import { NumberTicker } from '@/components/ui/number-ticker';
 import { cn } from '@/lib/utils';
 import { AlertCircle, Globe, HelpCircle, Lightbulb, Mail, Megaphone, Share2, ShieldAlert, Users } from 'lucide-react';
 
+export interface PublicChannelStat {
+    id: number;
+    name: string;
+    slug: string;
+    color: string;
+    total: number;
+}
+
 export interface PublicStats {
     total: number;
     pengaduan: number;
@@ -14,10 +22,11 @@ export interface PublicStats {
     wbs: number;
     email: number;
     website: number;
+    channels?: PublicChannelStat[];
 }
 
 type StatItem = {
-    key: keyof PublicStats;
+    key: 'pengaduan' | 'aspirasi' | 'permintaan_informasi' | 'span_lapor' | 'sosial_media' | 'kunjungan_langsung' | 'wbs' | 'email' | 'website';
     label: string;
     icon: React.ElementType;
     card: string;
@@ -142,9 +151,17 @@ export function PublicStatsSection({ stats }: { stats: PublicStats }) {
             <div>
                 <h3 className="text-muted-foreground mb-3 text-center text-sm font-semibold tracking-widest uppercase">Sumber Kanal</h3>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-                    {channelItems.map((item) => (
-                        <StatCard key={item.key} item={item} value={stats[item.key]} compact />
-                    ))}
+                    {stats.channels && stats.channels.length > 0
+                        ? stats.channels.map((item) => (
+                              <Card key={item.id} className="border shadow-xs transition-shadow hover:shadow-sm">
+                                  <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
+                                      <span className="inline-block h-3 w-3 rounded-full border" style={{ backgroundColor: item.color }} />
+                                      <NumberTicker value={item.total} className="font-bold tracking-tight text-3xl" style={{ color: item.color }} />
+                                      <p className="text-muted-foreground text-xs font-medium">{item.name}</p>
+                                  </CardContent>
+                              </Card>
+                          ))
+                        : channelItems.map((item) => <StatCard key={item.key} item={item} value={stats[item.key]} compact />)}
                 </div>
             </div>
         </section>

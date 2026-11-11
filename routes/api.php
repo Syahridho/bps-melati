@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ChannelApiController;
 use App\Http\Controllers\Api\TicketApiController;
 use App\Http\Controllers\Auth\TokenApiController;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ Route::get('/user', function (Request $request) {
 // Login untuk klien non-browser (Flutter/Android).
 // Kebijakan: satu token aktif per akun per jenis klien — token web dan token
 // mobile tidak saling meniadakan; login mobile baru mencabut token mobile lama.
+Route::get('/sumber-kanal', [ChannelApiController::class, 'index'])->middleware('auth:sanctum');
 Route::post('/auth/token', [TokenApiController::class, 'store'])->middleware('throttle:10,1');
 Route::delete('/auth/token', [TokenApiController::class, 'destroy'])->middleware('auth:sanctum');
 

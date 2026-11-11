@@ -1,23 +1,25 @@
 import { OperatorStatusBadge } from '@/components/operator/operator-status-badge';
 import { type PaginatedData, Pagination } from '@/components/shared/pagination';
+import { RoleFilter } from '@/components/shared/role-filter';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatLastLogin } from '@/lib/operator-utils';
 import { type Operator } from '@/types/operator';
-import { Edit, LogOut, MoreHorizontal, Search, Trash2, UserPlus } from 'lucide-react';
+import { Edit, LogOut, MoreHorizontal, Search, Trash2 } from 'lucide-react';
 
 interface OperatorTableProps {
     operators: PaginatedData<Operator>;
     authUserId: number;
     search: string;
-    connectionStatus?: string;
+    roles: string[];
+    availableRoles: string[];
     onSearchChange: (value: string) => void;
+    onRolesChange: (roles: string[]) => void;
     onPerPageChange: (perPage: number) => void;
-    onOpenCreate: () => void;
     onEdit: (operator: Operator) => void;
     onForceLogout: (operator: Operator) => void;
     onDelete: (operator: Operator) => void;
@@ -27,49 +29,40 @@ export function OperatorTable({
     operators,
     authUserId,
     search,
-    connectionStatus,
+    roles,
+    availableRoles,
     onSearchChange,
+    onRolesChange,
     onPerPageChange,
-    onOpenCreate,
     onEdit,
     onForceLogout,
     onDelete,
 }: OperatorTableProps) {
-    const isDisconnected = connectionStatus && connectionStatus !== 'connected';
+
+    const hasRoleFilter = roles.length > 0;
 
     return (
         <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <CardTitle className="flex items-center gap-2 text-lg font-bold">Daftar Akun Pengguna</CardTitle>
-                        {isDisconnected && (
-                            <Badge variant="outline" className="text-amber-600 border-amber-500/40 text-[10px]">
-                                Realtime offline
-                            </Badge>
-                        )}
-                    </div>
-                    <CardDescription>Total {operators.total} akun terdaftar dalam sistem</CardDescription>
-                </div>
-                <Button onClick={onOpenCreate} className="gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    Tambah Pengguna Baru
-                </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {/* Search Bar */}
-                <div className="flex items-center gap-2">
-                    <div className="relative max-w-sm flex-1">
+                {/* Search Bar & Role Filter */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+                    <div className="relative max-w-md flex-1">
                         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                         <Input
                             placeholder="Cari berdasarkan nama atau email..."
                             value={search}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="pl-9"
+                            className="w-full pl-9"
                         />
                     </div>
+                    <RoleFilter
+                        roles={roles}
+                        availableRoles={availableRoles}
+                        onRolesChange={onRolesChange}
+                    />
                 </div>
-
+            </CardHeader>
+            <CardContent className="space-y-4">
                 {/* Tabel Pengguna */}
                 <div className="rounded-md border">
                     <Table>
@@ -85,13 +78,27 @@ export function OperatorTable({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {operators.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
-                                        Tidak ada data pengguna ditemukan.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
+                        {operators.data.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
+                                    {hasRoleFilter ? (
+                                        <>
+                                            Tidak ada pengguna yang cocok dengan filter.
+                                            <Button
+                                                variant="link"
+                                                size="sm"
+                                                onClick={() => onRolesChange([])}
+                                                className="ml-2 underline underline-offset-4 hover:text-accent"
+                                            >
+                                                Reset filter
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        'Tidak ada data pengguna ditemukan.'
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                        ) : (
                                 operators.data.map((op, idx) => (
                                     <TableRow key={op.id}>
                                         <TableCell className="font-medium">{(operators.current_page - 1) * operators.per_page + idx + 1}</TableCell>

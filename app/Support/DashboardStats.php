@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Channel;
 use App\Models\Ticket;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -27,7 +28,7 @@ class DashboardStats
     public const TTL = 300;
 
     /**
-     * Slug kanal induk yang tampil sebagai kartu di dashboard.
+     * Slug kanal induk legacy -> key stats lama (kompatibilitas komponen lama).
      *
      * @var array<string, string>
      */
@@ -40,10 +41,13 @@ class DashboardStats
         'website' => 'website',
     ];
 
+    /** Warna fallback bila kanal induk belum punya color di DB. */
+    private const FALLBACK_COLOR = '#6b7280';
+
     /**
      * Payload dashboard bulan berjalan, dari cache bila tersedia.
      *
-     * @return array{stats: array<string, int>, trend: list<array{label: string, total: int}>, recentTickets: list<array<string, mixed>>, periodLabel: string}
+     * @return array{stats: array<string, int>, trend: list<array{label: string, pengaduan: int, aspirasi: int, permintaan_informasi: int, total: int}>, recentTickets: list<array<string, mixed>>, periodLabel: string, sumberKanal: list<array{id: int, name: string, slug: string, color: string, total: int}>}
      */
     public static function cached(): array
     {
@@ -60,7 +64,7 @@ class DashboardStats
     }
 
     /**
-     * @return array{stats: array<string, int>, trend: list<array{label: string, total: int}>, recentTickets: list<array<string, mixed>>, periodLabel: string}
+     * @return array{stats: array<string, int>, trend: list<array{label: string, pengaduan: int, aspirasi: int, permintaan_informasi: int, total: int}>, recentTickets: list<array<string, mixed>>, periodLabel: string, sumberKanal: list<array{id: int, name: string, slug: string, color: string, total: int}>}
      */
     public static function build(): array
     {
@@ -71,7 +75,39 @@ class DashboardStats
             'trend' => self::trend($from),
             'recentTickets' => self::recentTickets($from),
             'periodLabel' => 'Bulan Ini ('.now()->locale('id')->translatedFormat('F Y').')',
+            'sumberKanal' => self::sumberKanal($from),
         ];
+    }
+
+    /**
+     * Daftar kanal induk aktif (dinamis dari DB) bersama jumlah tiket bulan
+     * berjalan yang sudah mengagregasi sub-kanal. Kanal 0 tiket tetap tampil.
+     *
+     * @return list<array{id: int, name: string, slug: string, color: string, total: int}>
+     */
+    public static function sumberKanal(Carbon $from): array
+    {
+        $counts = Ticket::query()
+            ->join('channels as c', 'c.id', '=', 'tickets.channel_id')
+            ->leftJoin('channels as p', 'p.id', '=', 'c.parent_id')
+            ->where('tickets.created_at', '>=', $from)
+            ->selectRaw('COALESCE(p.id, c.id) as root_id, COUNT(*) as total')
+            ->groupBy('root_id')
+            ->pluck('total', 'root_id');
+
+        return Channel::query()
+            ->whereNull('parent_id')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(fn ($ch) => [
+                'id' => (int) $ch->id,
+                'name' => (string) $ch->name,
+                'slug' => (string) $ch->slug,
+                'color' => (string) ($ch->color ?? self::FALLBACK_COLOR),
+                'total' => (int) ($counts[$ch->id] ?? 0),
+            ])
+            ->all();
     }
 
     /**
@@ -117,6 +153,9 @@ class DashboardStats
         foreach (self::CHANNEL_KEYS as $slug => $key) {
             $stats[$key] = (int) ($channels[$slug] ?? 0);
         }
+        if (isset($channels['android'])) {
+            $stats['android'] = (int) $channels['android'];
+        }
 
         return $stats + [
             'baru' => (int) $summary->baru,
@@ -127,24 +166,38 @@ class DashboardStats
     }
 
     /**
-     * Jumlah tiket per hari sejak awal bulan.
+     * Jumlah tiket per hari per jenis (pengaduan, aspirasi, permintaan_informasi)
+     * sejak awal bulan. Satu query group by DATE(created_at), classification.
      *
-     * @return list<array{label: string, total: int}>
+     * @return list<array{label: string, pengaduan: int, aspirasi: int, permintaan_informasi: int, total: int}>
      */
     private static function trend(Carbon $from): array
     {
         $rows = Ticket::query()
             ->where('created_at', '>=', $from)
-            ->selectRaw('DATE(created_at) as bucket, COUNT(*) as total')
-            ->groupBy('bucket')
-            ->pluck('total', 'bucket');
+            ->selectRaw('DATE(created_at) as bucket, classification, COUNT(*) as total')
+            ->groupBy('bucket', 'classification')
+            ->get()
+            ->groupBy('bucket');
 
         $points = [];
 
         foreach (CarbonPeriod::create($from->copy()->startOfDay(), now()->startOfDay()) as $day) {
+            $date = $day->toDateString();
+            $byClass = [];
+            foreach ($rows->get($date, collect()) as $row) {
+                $byClass[$row->classification] = (int) $row->total;
+            }
+            $pengaduan = $byClass['pengaduan'] ?? 0;
+            $aspirasi = $byClass['aspirasi'] ?? 0;
+            $permintaan = $byClass['permintaan_informasi'] ?? 0;
+
             $points[] = [
                 'label' => $day->format('d M'),
-                'total' => (int) ($rows[$day->toDateString()] ?? 0),
+                'pengaduan' => $pengaduan,
+                'aspirasi' => $aspirasi,
+                'permintaan_informasi' => $permintaan,
+                'total' => $pengaduan + $aspirasi + $permintaan,
             ];
         }
 

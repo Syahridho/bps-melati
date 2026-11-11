@@ -29,6 +29,8 @@ export interface OperatorPageProps extends SharedData {
     filters: {
         search: string;
         per_page: number;
+        roles: string[];
+        available_roles: string[];
     };
     flash: {
         success?: string;

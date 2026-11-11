@@ -1,4 +1,5 @@
 import { OperatorTable } from '@/components/operator/operator-table';
+import { Button } from '@/components/ui/button';
 import OperatorFormDialog from '@/components/view/dashboard/kelola-operator/modal-add-operator';
 import OperatorDeleteDialog from '@/components/view/dashboard/kelola-operator/modal-delete-operator';
 import OperatorFormDialogUpdate from '@/components/view/dashboard/kelola-operator/modal-update-operator';
@@ -7,7 +8,7 @@ import { useOperatorPresence } from '@/hooks/use-operator-presence';
 import AdminPage from '@/layouts/dashboard/page';
 import { type OperatorPageProps } from '@/types/operator';
 import { usePage } from '@inertiajs/react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, UserPlus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
 export default function KelolaOperatorView() {
@@ -17,6 +18,7 @@ export default function KelolaOperatorView() {
         search,
         handleSearchChange,
         handlePerPageChange,
+        handleRolesChange,
         successMessage,
         isCreateOpen,
         openCreateModal,
@@ -34,14 +36,17 @@ export default function KelolaOperatorView() {
         handleEditSubmit,
         handleForceLogout,
         handleDeleteSubmit,
-    } = useOperatorManagement(filters.search, filters.per_page, flash?.success);
+    } = useOperatorManagement(filters.search, filters.per_page, filters.roles, flash?.success);
 
-    const { operators: realtimeOperators, connectionStatus } = useOperatorPresence(operators.data, auth.user.role === 'admin');
+    const { operators: realtimeOperators } = useOperatorPresence(operators.data, auth.user.role === 'admin');
 
-    const displayOperators = useMemo(() => ({
-        ...operators,
-        data: realtimeOperators,
-    }), [operators, realtimeOperators]);
+    const displayOperators = useMemo(
+        () => ({
+            ...operators,
+            data: realtimeOperators,
+        }),
+        [operators, realtimeOperators],
+    );
 
     useEffect(() => {
         if (!isCreateOpen && !isEditOpen && !isDeleteOpen) {
@@ -61,10 +66,20 @@ export default function KelolaOperatorView() {
 
     return (
         <AdminPage
-            title="Kelola Pengguna & Operator"
-            description="Manajemen akun admin dan operator untuk pengelolaan laporan dan data sistem Melati"
+            // title="Kelola Pengguna & Operator"
+            // description="Manajemen akun admin dan operator untuk pengelolaan laporan dan data sistem Melati"
             breadcrumbs={[{ title: 'Kelola Operator', href: route('dashboard.admin.operator.index') }]}
         >
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 className="text-xl font-bold tracking-tight">Input Data</h2>
+                    <p className="text-muted-foreground text-sm">Kelola dan tambahkan laporan, aspirasi, atau permintaan informasi baru.</p>
+                </div>
+                <Button onClick={openCreateModal} className="shrink-0 gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Tambah Pengguna Baru
+                </Button>
+            </div>
             <div className="space-y-6">
                 {/* Alert Pesan Sukses */}
                 {successMessage && (
@@ -78,10 +93,11 @@ export default function KelolaOperatorView() {
                     operators={displayOperators}
                     authUserId={auth.user.id}
                     search={search}
-                    connectionStatus={connectionStatus}
+                    roles={filters.roles}
+                    availableRoles={filters.available_roles}
                     onSearchChange={handleSearchChange}
+                    onRolesChange={handleRolesChange}
                     onPerPageChange={handlePerPageChange}
-                    onOpenCreate={openCreateModal}
                     onEdit={openEditModal}
                     onForceLogout={handleForceLogout}
                     onDelete={openDeleteModal}
@@ -117,12 +133,7 @@ export default function KelolaOperatorView() {
             />
 
             {/* Modal Hapus Pengguna */}
-            <OperatorDeleteDialog
-                open={isDeleteOpen}
-                operator={deletingOperator}
-                onClose={closeDeleteModal}
-                onConfirm={handleDeleteSubmit}
-            />
+            <OperatorDeleteDialog open={isDeleteOpen} operator={deletingOperator} onClose={closeDeleteModal} onConfirm={handleDeleteSubmit} />
         </AdminPage>
     );
 }

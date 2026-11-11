@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\SessionTerminator;
 use App\Support\IpMasker;
 use App\Support\UserAgentParser;
+use App\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -35,12 +36,24 @@ class OperatorController extends Controller
             $perPage = 10;
         }
 
+        $requestedRoles = $request->query('roles', []);
+        if (! is_array($requestedRoles)) {
+            $requestedRoles = [$requestedRoles];
+        }
+
+        // Whitelist nilai role dari sumber yang sudah ada (UserRole enum).
+        $availableRoles = UserRole::values();
+        $roles = array_values(array_intersect($requestedRoles, $availableRoles));
+
         $operators = User::query()
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
                 });
+            })
+            ->when(! empty($roles), function ($query) use ($roles) {
+                $query->whereIn('role', $roles);
             })
             ->latest()
             ->paginate($perPage)
@@ -55,11 +68,13 @@ class OperatorController extends Controller
                 ...self::presenceFor($user),
             ]);
 
-         return $this->renderPage($request, 'kelola-operator/index', [
+        return $this->renderPage($request, 'kelola-operator/index', [
             'operators' => $operators,
             'filters' => [
                 'search' => $search ?? '',
                 'per_page' => $perPage,
+                'roles' => $roles,
+                'available_roles' => $availableRoles,
             ],
         ]);
     }

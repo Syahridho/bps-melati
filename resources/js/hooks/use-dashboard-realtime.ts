@@ -14,6 +14,13 @@ export interface DashboardUpdatedEvent {
     ticket?: Record<string, unknown>;
 }
 
+export interface ChannelStatsUpdatedEvent {
+    channel_id: number;
+    action: string;
+    name: string;
+    color: string | null;
+}
+
 export function useDashboardRealtime(enabled: boolean = true) {
     const [isLive, setIsLive] = useState<boolean>(enabled);
     const debounceRef = useRef<number | null>(null);
@@ -27,7 +34,7 @@ export function useDashboardRealtime(enabled: boolean = true) {
 
         debounceRef.current = window.setTimeout(() => {
             router.reload({
-                only: ['stats', 'trend', 'recentTickets', 'isLiveEnabled'],
+                only: ['stats', 'trend', 'recentTickets', 'isLiveEnabled', 'sumberKanal'],
             });
         }, RELOAD_DEBOUNCE_MS);
     }, [enabled]);
@@ -35,6 +42,17 @@ export function useDashboardRealtime(enabled: boolean = true) {
     useEcho<DashboardUpdatedEvent>(
         'dashboard.admin',
         '.dashboard.updated',
+        () => {
+            if (enabled) {
+                scheduleReload();
+            }
+        },
+        [enabled],
+    );
+
+    useEcho<ChannelStatsUpdatedEvent>(
+        'dashboard.admin',
+        '.channel.stats.updated',
         () => {
             if (enabled) {
                 scheduleReload();

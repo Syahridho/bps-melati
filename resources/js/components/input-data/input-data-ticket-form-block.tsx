@@ -1,10 +1,10 @@
 import { InputDataAttachmentField } from '@/components/input-data/input-data-attachment-field';
 import { InputDataChannelSelect } from '@/components/input-data/input-data-channel-select';
+import { HierarchicalSearchableSelect } from '@/components/ui/hierarchical-searchable-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { SATUAN_TUGAS_OPTIONS } from '@/lib/input-data-constants';
@@ -130,15 +130,19 @@ export function InputDataTicketFormBlock({
                             <Label htmlFor="service_type">
                                 Jenis Layanan <span className="text-destructive">*</span>
                             </Label>
-                            <Select value={data.service_type} onValueChange={(val) => setData('service_type', val)}>
-                                <SelectTrigger id="service_type">
-                                    <SelectValue placeholder="Pilih jenis layanan" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="pst">Pelayanan Statistik Terpadu (PST)</SelectItem>
-                                    <SelectItem value="lainnya">Lainnya</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <HierarchicalSearchableSelect
+                                id="service_type"
+                                flatOptions={[
+                                    { value: 'pst', label: 'Pelayanan Statistik Terpadu (PST)' },
+                                    { value: 'lainnya', label: 'Lainnya' },
+                                ]}
+                                value={data.service_type}
+                                onChange={(val) => setData('service_type', val)}
+                                placeholder="Pilih jenis layanan"
+                                searchPlaceholder="Cari jenis layanan..."
+                                emptyText="Jenis layanan tidak ditemukan."
+                                error={!!errors.service_type}
+                            />
                             {errors.service_type && <p className="text-destructive text-xs">{errors.service_type}</p>}
                         </div>
 

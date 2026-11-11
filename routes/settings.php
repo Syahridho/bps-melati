@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Dashboard\SettingController;
 use App\Http\Controllers\Settings\ApiController;
+use App\Http\Controllers\Settings\ChannelController;
 use App\Http\Controllers\Settings\PasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,4 +23,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('settings/application', [SettingController::class, 'index'])->name('settings.application.edit');
     Route::post('settings/application', [SettingController::class, 'update'])->name('settings.application.update');
     Route::get('settings/api', [ApiController::class, 'index'])->name('settings.api');
+    Route::resource('settings/sumber-kanal', ChannelController::class)
+        ->parameters(['sumber-kanal' => 'channel'])
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->names(['index' => 'settings.sumber-kanal.index', 'store' => 'settings.sumber-kanal.store', 'update' => 'settings.sumber-kanal.update', 'destroy' => 'settings.sumber-kanal.destroy']);
 });

@@ -17,21 +17,13 @@ export function TicketInfoGrid({ fields }: TicketInfoGridProps) {
     const validFields = fields.filter(Boolean) as InfoFieldItem[];
 
     return (
-        <div className="grid gap-x-4 gap-y-5 px-4 py-4 sm:grid-cols-2 sm:px-6 sm:py-5 xl:grid-cols-4">
-            {validFields.map((field) => {
-                const Icon = field.icon;
-                return (
-                    <div key={field.id} className={`flex min-w-0 items-start gap-3 ${field.className ?? ''}`}>
-                        <div className="bg-muted shrink-0 rounded-md p-2">
-                            <Icon className="text-muted-foreground size-4" />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-muted-foreground text-xs">{field.label}</p>
-                            <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{field.value}</p>
-                        </div>
-                    </div>
-                );
-            })}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-6 gap-y-5 px-4 py-4 sm:px-6 sm:py-5">
+            {validFields.map((field) => (
+                <div key={field.id} className={`min-w-0 ${field.className ?? ''}`}>
+                    <p className="text-muted-foreground text-xs">{field.label}</p>
+                    <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{field.value}</p>
+                </div>
+            ))}
         </div>
     );
 }

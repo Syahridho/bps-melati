@@ -56,7 +56,7 @@ export default function RekapPeriodikView({
     return (
         <AdminPage
             title="Rekap Periodik"
-            description="Rekapitulasi laporan berdasarkan periode yang dipilih"
+            description={`Rekapitulasi laporan berdasarkan periode yang dipilih : ${periodeLabel}`}
             breadcrumbs={[
                 { title: 'Rekap', href: route(`${rolePrefix}rekap-periodik.index`) },
                 { title: 'Periodik', href: route(`${rolePrefix}rekap-periodik.index`) },
@@ -110,10 +110,6 @@ export default function RekapPeriodikView({
                     </div>
                 </div>
 
-                <div className="text-muted-foreground text-xs">
-                    Periode aktif: <span className="text-foreground font-semibold">{periodeLabel}</span>
-                </div>
-
                 {chat !== '0' && (
                     <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
                         <Info className="size-4 shrink-0" />
@@ -131,9 +127,9 @@ export default function RekapPeriodikView({
                         <p className="mt-1 text-xs">Coba pilih tahun atau bulan lain.</p>
                     </div>
                 ) : tampilan === REKAP_VIEW_MODE_RINGKAS ? (
-                    <RekapSummaryTable variant="period" rows={rows} totals={totals} periods={months} />
+                    <RekapSummaryTable variant="period" rows={rows} totals={totals} periods={months} periodLabel={periodeLabel} />
                 ) : (
-                    <RekapPeriodMatrixTable rows={rows} totals={totals} periods={months} />
+                    <RekapPeriodMatrixTable rows={rows} totals={totals} periods={months} periodLabel={periodeLabel} />
                 )}
 
                 <p className="text-muted-foreground text-xs">{REKAP_TABLE_NOTES[tampilan]}</p>

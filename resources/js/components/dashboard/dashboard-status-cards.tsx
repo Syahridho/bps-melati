@@ -35,7 +35,7 @@ export function DashboardStatusCards({ stats }: DashboardStatusCardsProps) {
                         <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Berkadar Pengawasan</p>
                         <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{stats.berkadar_pengawasan}</p>
                     </div>
-                    <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <ShieldAlert className="h-8 w-8 shrink-0 text-amber-600 dark:text-amber-400" />
                 </CardContent>
             </Card>
 

@@ -3,8 +3,14 @@ import { router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
-export function useOperatorManagement(initialSearch: string, perPage: number, flashSuccess?: string) {
+export function useOperatorManagement(
+    initialSearch: string,
+    perPage: number,
+    initialRoles: string[],
+    flashSuccess?: string
+) {
     const [search, setSearch] = useState(initialSearch || '');
+    const [roles, setRoles] = useState(initialRoles ?? []);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const flashSuccessRef = useRef<string | null>(null);
     const flashTimerRef = useRef<number | null>(null);
@@ -58,14 +64,27 @@ export function useOperatorManagement(initialSearch: string, perPage: number, fl
         };
     }, [flashSuccess]);
 
+    const queryParams = (extra: Record<string, unknown> = {}): Record<string, string | number | boolean | null | undefined | string[]> => {
+        const params: Record<string, string | number | boolean | null | undefined | string[]> = { ...(extra as Record<string, string | number | boolean | null | undefined | string[]>) };
+        if (Array.isArray(params.roles) && params.roles.length === 0) {
+            delete params.roles;
+        }
+        return params;
+    };
+
     // Live search handler
     const handleSearchChange = (value: string) => {
         setSearch(value);
-        router.get(route('dashboard.admin.operator.index'), { search: value, per_page: perPage }, { preserveState: true, replace: true });
+        router.get(route('dashboard.admin.operator.index'), queryParams({ search: value, roles, per_page: perPage }), { preserveState: true, replace: true });
+    };
+
+    const handleRolesChange = (newRoles: string[]) => {
+        setRoles(newRoles);
+        router.get(route('dashboard.admin.operator.index'), queryParams({ search, roles: newRoles, per_page: perPage, page: 1 }), { preserveState: true, preserveScroll: true, replace: true });
     };
 
     const handlePerPageChange = (newPerPage: number) => {
-        router.get(route('dashboard.admin.operator.index'), { search, per_page: newPerPage }, { preserveState: true, replace: true });
+        router.get(route('dashboard.admin.operator.index'), queryParams({ search, roles, per_page: newPerPage }), { preserveState: true, replace: true });
     };
 
     const handleForceLogout = (target: Operator) => {
@@ -166,6 +185,8 @@ export function useOperatorManagement(initialSearch: string, perPage: number, fl
         search,
         handleSearchChange,
         handlePerPageChange,
+        roles,
+        handleRolesChange,
         successMessage,
         isCreateOpen,
         setIsCreateOpen,

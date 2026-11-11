@@ -153,9 +153,13 @@ class InputDataController extends Controller
                 ->map(fn ($ch) => [
                     'id' => $ch->id,
                     'name' => $ch->name,
+                    'slug' => $ch->slug,
+                    'color' => $ch->color,
                     'children' => $ch->children->where('is_active', true)->map(fn ($c) => [
                         'id' => $c->id,
                         'name' => $c->name,
+                        'slug' => $c->slug,
+                        'color' => $c->color ?? $ch->color,
                     ])->values()->all(),
                 ])
                 ->all();

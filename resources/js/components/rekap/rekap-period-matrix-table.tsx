@@ -3,7 +3,6 @@ import { REKAP_MATRIX_COLUMNS, REKAP_MATRIX_SUB_COLUMNS, REKAP_VIEW_MODE_DEFAULT
 import { countFor, sumCounts, sumMonthCell } from '@/lib/rekap-utils';
 import { cn } from '@/lib/utils';
 import { type RekapMatrixPeriodColumn, type RekapMatrixRow, type RekapMatrixTotals, type RekapPeriodCounts, type RekapViewMode } from '@/types/rekap';
-
 interface RekapPeriodMatrixTableProps {
     rows: RekapMatrixRow[];
     totals: RekapMatrixTotals;
@@ -12,12 +11,14 @@ interface RekapPeriodMatrixTableProps {
     wrapperClassName?: string;
     tableClassName?: string;
     emptyCellClassName?: string;
+    periodLabel: any;
 }
 
 export function RekapPeriodMatrixTable({
     rows,
     totals,
     periods,
+    periodLabel,
     viewMode = REKAP_VIEW_MODE_DEFAULT,
     wrapperClassName = 'overflow-x-auto rounded-md border bg-card',
     tableClassName = 'w-full border-collapse text-sm',
@@ -25,25 +26,45 @@ export function RekapPeriodMatrixTable({
 }: RekapPeriodMatrixTableProps) {
     const ringkas = viewMode === REKAP_VIEW_MODE_RINGKAS;
     const columnCount = ringkas ? 1 : REKAP_MATRIX_COLUMNS.length;
-
+    const totalColumns = periods.length * columnCount + 2;
     return (
         <div className="bg-card overflow-hidden rounded-md border">
             <div className={wrapperClassName}>
                 <Table className={tableClassName}>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent">
+                            <TableHead colSpan={totalColumns} className="bg-muted/60 text-foreground py-2 text-center text-sm font-medium uppercase">
+                                Rekap Pengaduan BPS Provinsi Riau
+                            </TableHead>
+                        </TableRow>
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead
+                                colSpan={totalColumns}
+                                className="bg-muted/60 text-foreground py-1.5 text-center text-sm font-medium uppercase"
+                            >
+                                {periodLabel}
+                            </TableHead>
+                        </TableRow>
+                        <TableRow className="hover:bg-transparent">
                             <TableHead
                                 rowSpan={ringkas ? undefined : 2}
-                                className="bg-muted text-foreground sticky left-0 z-20 min-w-[220px] border-r border-b px-4 py-2 text-left font-medium text-sm"
+                                className="text-foreground sticky left-0 z-20 min-w-[220px] border-r border-b bg-white px-4 py-2 text-center text-sm font-medium"
                             >
                                 Sumber Kanal
                             </TableHead>
                             {periods.map((period) => (
-                                <TableHead key={period.key} colSpan={columnCount} className="border-r border-b text-center font-medium text-foreground py-2 text-sm">
+                                <TableHead
+                                    key={period.key}
+                                    colSpan={columnCount}
+                                    className="text-foreground border-r border-b py-2 text-center text-sm font-medium"
+                                >
                                     {period.label}
                                 </TableHead>
                             ))}
-                            <TableHead rowSpan={ringkas ? undefined : 2} className="bg-muted text-foreground border-b text-center font-medium py-2 text-sm">
+                            <TableHead
+                                rowSpan={ringkas ? undefined : 2}
+                                className="bg-muted text-foreground border-b py-2 text-center text-sm font-medium"
+                            >
                                 Jumlah
                             </TableHead>
                         </TableRow>
@@ -54,7 +75,7 @@ export function RekapPeriodMatrixTable({
                                         <TableHead
                                             key={`${period.key}-${sub}`}
                                             className={cn(
-                                                'text-muted-foreground border-b text-center text-xs font-normal py-1.5',
+                                                'text-muted-foreground border-b py-1.5 text-center text-xs font-normal',
                                                 index === columnCount - 1 && 'border-r',
                                             )}
                                         >
@@ -82,10 +103,15 @@ export function RekapPeriodMatrixTable({
 
                     <TableFooter>
                         <TableRow className="bg-muted/50 hover:bg-muted/50">
-                            <TableCell className="bg-muted text-foreground sticky left-0 z-10 border-r pl-4 font-medium uppercase h-9 py-1.5 text-sm">Total</TableCell>
+                            <TableCell className="bg-muted text-foreground sticky left-0 z-10 h-9 border-r py-1.5 pl-4 text-sm font-medium uppercase">
+                                Total
+                            </TableCell>
                             {periods.map((period) =>
                                 ringkas ? (
-                                    <TableCell key={`${period.key}-sum`} className="border-r text-center font-medium tabular-nums whitespace-nowrap h-9 py-1.5 text-sm">
+                                    <TableCell
+                                        key={`${period.key}-sum`}
+                                        className="h-9 border-r py-1.5 text-center text-sm font-medium whitespace-nowrap tabular-nums"
+                                    >
                                         {sumCounts(totals[period.key] as RekapPeriodCounts | undefined)}
                                     </TableCell>
                                 ) : (
@@ -93,7 +119,7 @@ export function RekapPeriodMatrixTable({
                                         <TableCell
                                             key={`${period.key}-${column}`}
                                             className={cn(
-                                                'text-center font-medium tabular-nums whitespace-nowrap h-9 py-1.5 text-sm',
+                                                'h-9 py-1.5 text-center text-sm font-medium whitespace-nowrap tabular-nums',
                                                 index === columnCount - 1 && 'border-r',
                                             )}
                                         >
@@ -102,7 +128,9 @@ export function RekapPeriodMatrixTable({
                                     ))
                                 ),
                             )}
-                            <TableCell className="text-center font-medium tabular-nums whitespace-nowrap h-9 py-1.5 text-sm">{totals.jumlah}</TableCell>
+                            <TableCell className="h-9 py-1.5 text-center text-sm font-medium whitespace-nowrap tabular-nums">
+                                {totals.jumlah}
+                            </TableCell>
                         </TableRow>
                     </TableFooter>
                 </Table>
@@ -128,7 +156,12 @@ function RekapMatrixRowFragment({
     return (
         <>
             <TableRow className={cn(hasChildren ? 'bg-muted/50 font-medium' : 'hover:bg-muted/40')}>
-                <TableCell className={cn('sticky left-0 z-10 min-w-[220px] border-r pl-4 whitespace-nowrap h-9 py-1.5 text-sm', hasChildren ? 'bg-muted/50 font-medium' : 'bg-card font-normal')}>
+                <TableCell
+                    className={cn(
+                        'sticky left-0 z-10 h-9 min-w-[220px] border-r py-1.5 pl-4 text-sm whitespace-nowrap',
+                        hasChildren ? 'bg-muted/50 font-medium' : 'bg-card font-normal',
+                    )}
+                >
                     {row.channel}
                 </TableCell>
 
@@ -138,21 +171,27 @@ function RekapMatrixRowFragment({
                     <>
                         {periods.map((period) =>
                             ringkas ? (
-                                <TableCell key={`${period.key}-sum`} className="h-9 py-1.5 border-r text-center tabular-nums whitespace-nowrap text-sm">
+                                <TableCell
+                                    key={`${period.key}-sum`}
+                                    className="h-9 border-r py-1.5 text-center text-sm whitespace-nowrap tabular-nums"
+                                >
                                     {sumMonthCell(row.perPeriod, period.key)}
                                 </TableCell>
                             ) : (
                                 REKAP_MATRIX_COLUMNS.map((column, index) => (
                                     <TableCell
                                         key={`${period.key}-${column}`}
-                                        className={cn('h-9 py-1.5 text-center tabular-nums whitespace-nowrap text-sm', index === columnCount - 1 && 'border-r')}
+                                        className={cn(
+                                            'h-9 py-1.5 text-center text-sm whitespace-nowrap tabular-nums',
+                                            index === columnCount - 1 && 'border-r',
+                                        )}
                                     >
                                         {countFor(row.perPeriod, period.key, column)}
                                     </TableCell>
                                 ))
                             ),
                         )}
-                        <TableCell className="h-9 py-1.5 text-center font-medium tabular-nums whitespace-nowrap text-sm">{row.jumlah}</TableCell>
+                        <TableCell className="h-9 py-1.5 text-center text-sm font-medium whitespace-nowrap tabular-nums">{row.jumlah}</TableCell>
                     </>
                 )}
             </TableRow>
@@ -160,26 +199,32 @@ function RekapMatrixRowFragment({
             {hasChildren &&
                 row.children.map((child) => (
                     <TableRow key={`${row.channel}-${child.channel}`} className="hover:bg-muted/40">
-                        <TableCell className="text-muted-foreground sticky left-0 z-10 min-w-[220px] border-r bg-card pl-8 font-normal whitespace-nowrap h-9 py-1.5 text-sm">
+                        <TableCell className="text-muted-foreground bg-card sticky left-0 z-10 h-9 min-w-[220px] border-r py-1.5 pl-8 text-sm font-normal whitespace-nowrap">
                             {child.channel.replace(/^-+\s*/, '')}
                         </TableCell>
                         {periods.map((period) =>
                             ringkas ? (
-                                <TableCell key={`${period.key}-sum`} className="h-9 py-1.5 border-r text-center tabular-nums whitespace-nowrap text-sm">
+                                <TableCell
+                                    key={`${period.key}-sum`}
+                                    className="h-9 border-r py-1.5 text-center text-sm whitespace-nowrap tabular-nums"
+                                >
                                     {sumMonthCell(child.perPeriod, period.key)}
                                 </TableCell>
                             ) : (
                                 REKAP_MATRIX_COLUMNS.map((column, index) => (
                                     <TableCell
                                         key={`${period.key}-${column}`}
-                                        className={cn('h-9 py-1.5 text-center tabular-nums whitespace-nowrap text-sm', index === columnCount - 1 && 'border-r')}
+                                        className={cn(
+                                            'h-9 py-1.5 text-center text-sm whitespace-nowrap tabular-nums',
+                                            index === columnCount - 1 && 'border-r',
+                                        )}
                                     >
                                         {countFor(child.perPeriod, period.key, column)}
                                     </TableCell>
                                 ))
                             ),
                         )}
-                        <TableCell className="h-9 py-1.5 text-center font-medium tabular-nums whitespace-nowrap text-sm">{child.jumlah}</TableCell>
+                        <TableCell className="h-9 py-1.5 text-center text-sm font-medium whitespace-nowrap tabular-nums">{child.jumlah}</TableCell>
                     </TableRow>
                 ))}
         </>

@@ -73,16 +73,10 @@ export function SupervisionToggle({
                         Kadar Pengawasan
                     </span>
                     <span className="text-muted-foreground text-[10px]">
-                        {isPengawasan
-                            ? `Auto close ${kadarPengawasanDays} hari`
-                            : `Auto close default (${classificationDefaultDays}h)`}
+                        {isPengawasan ? `Auto close ${kadarPengawasanDays} hari` : `Auto close default (${classificationDefaultDays}h)`}
                     </span>
                 </div>
-                <Switch
-                    checked={isPengawasan}
-                    disabled={disabled || isProcessing}
-                    onCheckedChange={handleToggleAttempt}
-                />
+                <Switch checked={isPengawasan} disabled={disabled || isProcessing} onCheckedChange={handleToggleAttempt} />
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -107,17 +101,13 @@ export function SupervisionToggle({
                                 <div className="text-muted-foreground flex items-center justify-between">
                                     <span>Batas auto close saat ini:</span>
                                     <span className="text-foreground font-semibold">
-                                        {pendingValue
-                                            ? `${classificationDefaultDays} hari`
-                                            : `${kadarPengawasanDays} hari`}
+                                        {pendingValue ? `${classificationDefaultDays} hari` : `${kadarPengawasanDays} hari`}
                                     </span>
                                 </div>
                                 <div className="text-muted-foreground flex items-center justify-between">
                                     <span>Batas auto close setelah diubah:</span>
                                     <span className="font-semibold text-amber-600 dark:text-amber-400">
-                                        {pendingValue
-                                            ? `${kadarPengawasanDays} hari`
-                                            : `${classificationDefaultDays} hari`}
+                                        {pendingValue ? `${kadarPengawasanDays} hari` : `${classificationDefaultDays} hari`}
                                     </span>
                                 </div>
                             </div>

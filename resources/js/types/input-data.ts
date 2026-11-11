@@ -37,11 +37,15 @@ export interface TicketItem {
 export interface ChannelChild {
     id: number;
     name: string;
+    slug?: string;
+    color?: string | null;
 }
 
 export interface ChannelGroup {
     id: number;
     name: string;
+    slug?: string;
+    color?: string | null;
     children: ChannelChild[];
 }
 

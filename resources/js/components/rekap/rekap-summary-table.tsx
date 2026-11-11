@@ -13,6 +13,7 @@ interface RekapSummaryTableProps {
      * `table-fixed` + `colgroup`, dipakai tahunan).
      */
     variant: 'period' | 'fixed';
+    periodLabel: any;
 }
 
 /**
@@ -20,9 +21,9 @@ interface RekapSummaryTableProps {
  * Asp + Inf, kolom Jumlah tetap di kanan. Data yang dipakai sama persis dengan
  * tabel detail, penjumlahannya terjadi di `sumMonthCell()`.
  */
-export function RekapSummaryTable({ rows, totals, periods, variant }: RekapSummaryTableProps) {
+export function RekapSummaryTable({ rows, totals, periods, variant, periodLabel }: RekapSummaryTableProps) {
     if (variant === 'period') {
-        return <RekapPeriodMatrixTable rows={rows} totals={totals} periods={periods} viewMode={REKAP_VIEW_MODE_RINGKAS} />;
+        return <RekapPeriodMatrixTable rows={rows} totals={totals} periods={periods} periodLabel={periodLabel} viewMode={REKAP_VIEW_MODE_RINGKAS} />;
     }
 
     return <RekapFixedMatrixTable rows={rows} totals={totals} periods={periods} viewMode={REKAP_VIEW_MODE_RINGKAS} />;

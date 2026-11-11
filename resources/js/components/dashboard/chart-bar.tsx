@@ -2,32 +2,21 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { DASHBOARD_CHANNEL_CARDS } from '@/lib/dashboard-constants';
-import { type ChannelKey, type DashboardStats } from '@/types/dashboard';
+import { type SumberKanalItem } from '@/types/dashboard';
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from 'recharts';
 
-const CHANNEL_COLORS: Record<ChannelKey, string> = {
-    span_lapor: '#8b5cf6', // violet-500
-    sosial_media: '#ec4899', // pink-500
-    kunjungan_langsung: '#84cc16', // lime-500
-    wbs: '#f97316', // orange-500
-    email: '#14b8a6', // teal-500
-    website: '#0ea5e9', // sky-500
-};
-
-// Label dan warna tiap kanal, dipakai tooltip lewat nameKey="key"
-const chartConfig = {
-    total: { label: 'Jumlah Laporan' },
-    ...Object.fromEntries(DASHBOARD_CHANNEL_CARDS.map((card) => [card.key, { label: card.label, color: CHANNEL_COLORS[card.key] }])),
-} satisfies ChartConfig;
-
-export function ChartBarDefault({ stats }: { stats: DashboardStats }) {
-    const chartData = DASHBOARD_CHANNEL_CARDS.map((card) => ({
-        key: card.key,
-        channel: card.label,
-        total: stats[card.key] ?? 0,
-        fill: CHANNEL_COLORS[card.key],
+export function ChartBarDefault({ sumberKanal }: { sumberKanal: SumberKanalItem[] }) {
+    const chartData = sumberKanal.map((item) => ({
+        key: `channel-${item.id}`,
+        channel: item.name,
+        total: item.total,
+        fill: item.color,
     }));
+
+    const chartConfig = {
+        total: { label: 'Jumlah Laporan' },
+        ...Object.fromEntries(sumberKanal.map((item) => [`channel-${item.id}`, { label: item.name, color: item.color }])),
+    } satisfies ChartConfig;
 
     return (
         <Card className="flex h-full flex-col">

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class TicketApiController extends Controller
 {
@@ -35,7 +36,7 @@ class TicketApiController extends Controller
         $validator = Validator::make(array_merge($request->all(), ['channel_id' => $channelId]), [
             'classification' => ['required', 'string', 'in:pengaduan,aspirasi,permintaan_informasi'],
             'title' => ['required', 'string', 'min:3', 'max:255'],
-            'channel_id' => ['required', 'integer', 'exists:channels,id'],
+            'channel_id' => ['required', 'integer', Rule::exists('channels', 'id')->where(fn ($q) => $q->where('is_active', true))],
             'reporter_name' => ['nullable', 'string', 'max:255'],
             'reporter_email' => ['nullable', ...StoreTicketRequest::emailRules(), 'max:255'],
             'reporter_wa' => ['nullable', 'string', 'regex:/^[0-9]+$/', 'max:30'],

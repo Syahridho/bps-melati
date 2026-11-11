@@ -2,28 +2,23 @@
 
 import { Label, Pie, PieChart } from 'recharts';
 
+import { CLASSIFICATION_SERIES } from '@/lib/classification-series';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { type DashboardStats } from '@/types/dashboard';
 
-type ClassificationKey = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
-
-// Warna sama dengan badge klasifikasi (red-500, yellow-500, indigo-500)
+// Warna dari satu sumber dengan chart tren area
 const chartConfig = {
     total: { label: 'Laporan' },
-    pengaduan: { label: 'Pengaduan', color: '#ef4444' },
-    aspirasi: { label: 'Aspirasi', color: '#eab308' },
-    permintaan_informasi: { label: 'Permintaan Informasi', color: '#6366f1' },
+    ...Object.fromEntries(CLASSIFICATION_SERIES.map((s) => [s.key, { label: s.label, color: s.color }])),
 } satisfies ChartConfig;
 
-const classificationKeys: ClassificationKey[] = ['pengaduan', 'aspirasi', 'permintaan_informasi'];
-
 export function ChartPieLabel({ stats }: { stats: DashboardStats }) {
-    const all = classificationKeys.map((key) => ({
-        key,
-        label: chartConfig[key].label,
-        color: chartConfig[key].color,
-        total: stats[key] ?? 0,
+    const all = CLASSIFICATION_SERIES.map((s) => ({
+        key: s.key,
+        label: s.label,
+        color: s.color,
+        total: stats[s.key] ?? 0,
     }));
 
     const sum = all.reduce((acc, item) => acc + item.total, 0);

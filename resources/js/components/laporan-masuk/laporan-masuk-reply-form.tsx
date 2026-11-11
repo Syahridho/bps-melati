@@ -246,7 +246,7 @@ export function LaporanMasukReplyForm({
                 onPreview={(file) => onPreviewFile(file, data.response_attachments)}
             />
 
-            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center">
                 <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={handleCancel} disabled={processing}>
                     Batal
                 </Button>

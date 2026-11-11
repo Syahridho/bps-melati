@@ -4,7 +4,16 @@ import type { ElementType } from 'react';
 
 export type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 export type Status = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
+/** @deprecated Gunakan SumberKanalItem dinamis dari DB. */
 export type ChannelKey = 'span_lapor' | 'sosial_media' | 'kunjungan_langsung' | 'wbs' | 'email' | 'website';
+
+export interface SumberKanalItem {
+    id: number;
+    name: string;
+    slug: string;
+    color: string;
+    total: number;
+}
 
 export interface DashboardStats {
     total: number;
@@ -41,6 +50,7 @@ export interface DashboardProps extends SharedData {
     recentTickets: TicketSummary[];
     periodLabel: string;
     isLiveEnabled?: boolean;
+    sumberKanal: SumberKanalItem[];
 }
 
 export interface DashboardChannelCardConfig {

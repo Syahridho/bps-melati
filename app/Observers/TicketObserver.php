@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Events\ChannelStatsUpdated;
 use App\Events\DashboardUpdated;
 use App\Models\Ticket;
 use Illuminate\Support\Facades\Cache;
@@ -101,5 +102,16 @@ class TicketObserver
             newStatus: $newStatus,
             ticketSummary: $summary,
         ));
+
+        // Statistik kanal berubah bila ada tiket baru masuk atau channel_id berubah.
+        $channelChanged = $type === 'created' || $ticket->wasChanged('channel_id');
+        if ($channelChanged && $ticket->channel_id) {
+            event(new ChannelStatsUpdated(
+                channelId: (int) $ticket->channel_id,
+                action: $type,
+                name: $ticket->channel?->name ?? '-',
+                color: $ticket->channel?->color ?? $ticket->channel?->parent?->color,
+            ));
+        }
     }
 }

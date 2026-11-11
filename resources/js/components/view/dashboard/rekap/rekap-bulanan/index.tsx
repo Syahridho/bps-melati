@@ -26,18 +26,14 @@ export default function RekapBulananView({ rows, totals, year, month, years, mon
     return (
         <AdminPage
             title="Rekap Bulanan"
-            description="Rekapitulasi laporan per bulan"
+            description={`Rekapitulasi laporan per bulan ${periodLabel}`}
             breadcrumbs={[
                 { title: 'Rekap', href: route(`${rolePrefix}rekap-bulanan.index`) },
                 { title: 'Bulanan', href: route(`${rolePrefix}rekap-bulanan.index`) },
             ]}
         >
             <div className="flex flex-col gap-4 pb-10">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-muted-foreground text-sm">
-                        Periode <span className="text-foreground font-medium">{periodLabel}</span>
-                    </p>
-
+                <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
                         <RekapPeriodFilter
                             year={year}

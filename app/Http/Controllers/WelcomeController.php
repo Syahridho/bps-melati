@@ -24,7 +24,7 @@ class WelcomeController extends Controller
     /**
      * Pohon kanal induk + sub-kanal aktif untuk form select kanal.
      *
-     * @return array<int, array{id: int, name: string, children: array<int, array{id: int, name: string}>}>
+     * @return array<int, array{id: int, name: string, slug: string, color: string|null, children: array<int, array{id: int, name: string, slug: string, color: string|null}>}>
      */
     private function channelTree(): array
     {
@@ -37,9 +37,13 @@ class WelcomeController extends Controller
                 ->map(fn ($ch) => [
                     'id' => $ch->id,
                     'name' => $ch->name,
+                    'slug' => $ch->slug,
+                    'color' => $ch->color,
                     'children' => $ch->children->where('is_active', true)->map(fn ($c) => [
                         'id' => $c->id,
                         'name' => $c->name,
+                        'slug' => $c->slug,
+                        'color' => $c->color ?? $ch->color,
                     ])->values()->all(),
                 ])
                 ->all();
@@ -49,7 +53,7 @@ class WelcomeController extends Controller
     /**
      * Statistik publik: total seluruh waktu, key ikut versi supaya otomatis segar saat ada tiket berubah.
      *
-     * @return array{total: int, pengaduan: int, aspirasi: int, permintaan_informasi: int, span_lapor: int, sosial_media: int, kunjungan_langsung: int, website: int, wbs: int, email: int}
+     * @return array<string, mixed>
      */
     private function publicStats(): array
     {
@@ -66,25 +70,41 @@ class WelcomeController extends Controller
                 ")
                     ->first();
 
-                // Sub-kanal digabung ke kanal induknya
+                // Sub-kanal digabung ke kanal induknya (by id, tidak lagi slug-hardcode)
                 $channelCounts = Ticket::query()
                     ->join('channels as c', 'c.id', '=', 'tickets.channel_id')
                     ->leftJoin('channels as p', 'p.id', '=', 'c.parent_id')
-                    ->selectRaw('COALESCE(p.slug, c.slug) as root_slug, COUNT(*) as total')
-                    ->groupBy('root_slug')
-                    ->pluck('total', 'root_slug');
+                    ->selectRaw('COALESCE(p.id, c.id) as root_id, COUNT(*) as total')
+                    ->groupBy('root_id')
+                    ->pluck('total', 'root_id');
+
+                $channels = Channel::whereNull('parent_id')
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->get()
+                    ->map(fn ($ch) => [
+                        'id' => (int) $ch->id,
+                        'name' => (string) $ch->name,
+                        'slug' => (string) $ch->slug,
+                        'color' => (string) ($ch->color ?? '#6b7280'),
+                        'total' => (int) ($channelCounts[$ch->id] ?? 0),
+                    ])
+                    ->values()
+                    ->all();
 
                 return [
                     'total' => (int) $summary->total,
                     'pengaduan' => (int) $summary->pengaduan,
                     'aspirasi' => (int) $summary->aspirasi,
                     'permintaan_informasi' => (int) $summary->permintaan_informasi,
-                    'span_lapor' => (int) ($channelCounts['sp4n-lapor'] ?? 0),
-                    'sosial_media' => (int) ($channelCounts['sosial-media'] ?? 0),
-                    'kunjungan_langsung' => (int) ($channelCounts['kunjungan-langsung'] ?? 0),
-                    'website' => (int) ($channelCounts['website'] ?? 0),
-                    'wbs' => (int) ($channelCounts['wbs'] ?? 0),
-                    'email' => (int) ($channelCounts['email'] ?? 0),
+                    // Key lama dipertahankan untuk kompatibilitas, diisi dari DB by slug.
+                    'span_lapor' => (int) $channelCounts->get((int) Channel::where('slug', 'sp4n-lapor')->value('id'), 0),
+                    'sosial_media' => (int) $channelCounts->get((int) Channel::where('slug', 'sosial-media')->value('id'), 0),
+                    'kunjungan_langsung' => (int) $channelCounts->get((int) Channel::where('slug', 'kunjungan-langsung')->value('id'), 0),
+                    'website' => (int) $channelCounts->get((int) Channel::where('slug', 'website')->value('id'), 0),
+                    'wbs' => (int) $channelCounts->get((int) Channel::where('slug', 'wbs')->value('id'), 0),
+                    'email' => (int) $channelCounts->get((int) Channel::where('slug', 'email')->value('id'), 0),
+                    'channels' => $channels,
                 ];
             },
         );

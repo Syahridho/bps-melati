@@ -81,6 +81,65 @@ test('admin can update user details and role', function () {
     ]);
 });
 
+test('admin can filter users by role (OR combination)', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $admin2 = User::factory()->create(['role' => 'admin']);
+    $operator = User::factory()->create(['role' => 'operator']);
+    User::factory()->create(['role' => 'operator_tim']);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.operator.index', ['roles' => ['admin', 'operator']]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('operators.data', 3) // 2 admin + 1 operator
+        );
+});
+
+test('roles filter with no roles or empty returns all users', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    User::factory()->count(2)->create(['role' => 'operator']);
+
+    // No roles parameter -> all users
+    actingAs($admin)
+        ->get(route('dashboard.admin.operator.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('operators.data', 3)
+        );
+
+    // Empty roles array -> all users
+    actingAs($admin)
+        ->get(route('dashboard.admin.operator.index', ['roles' => []]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('operators.data', 3)
+        );
+});
+
+test('all three roles selected equals no filter (returns all users)', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    User::factory()->count(2)->create(['role' => 'operator']);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.operator.index', ['roles' => ['admin', 'operator', 'operator_tim']]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('operators.data', 3) // all users, no roles filter applied
+        );
+});
+
+test('unknown role value is ignored', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    User::factory()->count(2)->create(['role' => 'operator']);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.operator.index', ['roles' => ['admin', 'unknown_role']]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('operators.data', 1) // only the admin
+        );
+});
+
 test('admin can delete an operator or user', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $operator = User::factory()->create(['role' => 'operator']);

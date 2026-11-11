@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Observers\ChannelObserver;
 use App\Observers\TicketObserver;
 use App\Support\LaporanCache;
 use App\Support\RekapCache;
@@ -55,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Ticket::observe(TicketObserver::class);
+        Channel::observe(ChannelObserver::class);
 
         // Rekap di-cache per periode. Rotasi token saat tiket/kanal berubah
         // supaya halaman rekap otomatis menghitung ulang pada request berikutnya.

@@ -131,14 +131,10 @@ export function LaporanMasukDetailCard({
                 </div>
             </div>
 
-           
             <Separator />
 
             <div className="grid gap-x-4 gap-y-5 px-4 py-4 sm:grid-cols-2 sm:px-6 sm:py-5 xl:grid-cols-4">
                 <div className="flex min-w-0 items-start gap-3">
-                    <div className="bg-muted shrink-0 rounded-md p-2">
-                        <User className="text-muted-foreground size-4" />
-                    </div>
                     <div className="min-w-0">
                         <p className="text-muted-foreground text-xs">Pelapor</p>
                         <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{ticket.reporter_name ?? 'Anonim'}</p>
@@ -215,7 +211,7 @@ export function LaporanMasukDetailCard({
                 )}
             </div>
 
-             {((ticket.title && ticket.title.trim()) || (ticket.content && ticket.content.trim())) && (
+            {((ticket.title && ticket.title.trim()) || (ticket.content && ticket.content.trim())) && (
                 <>
                     <Separator />
                     <div className="space-y-5 px-4 py-4 sm:px-6 sm:py-5">
@@ -236,7 +232,6 @@ export function LaporanMasukDetailCard({
                     </div>
                 </>
             )}
-
 
             {ticket.attachments.length > 0 && (
                 <>
