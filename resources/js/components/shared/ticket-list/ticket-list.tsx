@@ -9,10 +9,21 @@ interface TicketListProps {
     isLoading: boolean;
     emptyText?: string;
     onSelectTicket?: (ticketId: number) => void;
+    isPopoverOpenControlled?: boolean;
+    onPopoverOpenChangeControlled?: (open: boolean) => void;
 }
 
-export function TicketList({ tickets, isLoading, emptyText = 'Tidak ada laporan ditemukan', onSelectTicket }: TicketListProps) {
-    const [openPopoverTicketId, setOpenPopoverTicketId] = useState<number | null>(null);
+export function TicketList({ tickets, isLoading, emptyText = 'Tidak ada laporan ditemukan', onSelectTicket, isPopoverOpenControlled, onPopoverOpenChangeControlled }: TicketListProps) {
+    const [internalIsPopoverOpen, setInternalIsPopoverOpen] = useState<number | null>(null);
+
+    const isControlled = isPopoverOpenControlled !== undefined;
+    const isPopoverOpen = isControlled ? isPopoverOpenControlled : internalIsPopoverOpen !== null;
+    const onPopoverOpenChangeInternal = (open: boolean) => {
+        if (!isControlled) {
+            setInternalIsPopoverOpen(open ? 1 : null);
+        }
+        onPopoverOpenChangeControlled?.(open);
+    };
 
     return (
         <div className={cn('divide-y transition-opacity duration-200', isLoading && 'pointer-events-none opacity-50')}>
@@ -26,8 +37,8 @@ export function TicketList({ tickets, isLoading, emptyText = 'Tidak ada laporan 
                     <TicketListItem
                         key={ticket.id}
                         ticket={ticket}
-                        isPopoverOpen={openPopoverTicketId === ticket.id}
-                        onPopoverOpenChange={(isOpen) => setOpenPopoverTicketId(isOpen ? ticket.id : null)}
+                        isPopoverOpen={isPopoverOpen}
+                        onPopoverOpenChange={onPopoverOpenChangeInternal}
                         onSelect={onSelectTicket}
                     />
                 ))

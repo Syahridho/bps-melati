@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import InputDataAddTicketDialog from '@/components/view/dashboard/input-data/modal-add-ticket';
 import { useInputDataFilters } from '@/hooks/use-input-data-filters';
+import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
 import AdminPage from '@/layouts/dashboard/page';
 import { type SharedData } from '@/types';
 import { type ChannelGroup, type FilterTab, type TicketItem } from '@/types/input-data';
@@ -47,9 +48,18 @@ export default function InputDataView() {
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [flagPopoverOpen, setFlagPopoverOpen] = useState(false);
 
     const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
         useInputDataFilters(routePrefix, filters);
+
+    const searching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
+
+    useLaporanRealtime({
+        isBusy: flagPopoverOpen,
+        searching,
+        only: ['tickets', 'counts'],
+    });
 
     const flashSuccessRef = useRef<string | null>(null);
     const flashTimerRef = useRef<number | null>(null);
@@ -170,7 +180,12 @@ export default function InputDataView() {
                             </Button>
                         </div>
                     ) : (
-                        <TicketList tickets={entries} isLoading={isLoading} />
+                        <TicketList
+                            tickets={entries}
+                            isLoading={isLoading}
+                            isPopoverOpenControlled={flagPopoverOpen}
+                            onPopoverOpenChangeControlled={setFlagPopoverOpen}
+                        />
                     )}
 
                     {/* Pagination Footer */}

@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLaporanSelesaiFilters } from '@/hooks/use-laporan-selesai-filters';
+import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
 import AdminPage from '@/layouts/dashboard/page';
 import { type LaporanSelesaiProps } from '@/types/laporan-selesai';
 import { usePage } from '@inertiajs/react';
 import { RotateCcw, Search, X } from 'lucide-react';
+import { useState } from 'react';
 
 export default function LaporanSelesaiView() {
     const { auth, tickets, filters, counts } = usePage<LaporanSelesaiProps>().props;
@@ -18,6 +20,15 @@ export default function LaporanSelesaiView() {
 
     const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
         useLaporanSelesaiFilters(routePrefix, filters);
+
+    const [flagPopoverOpen, setFlagPopoverOpen] = useState(false);
+    const searching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
+
+    useLaporanRealtime({
+        isBusy: flagPopoverOpen,
+        searching,
+        only: ['tickets', 'counts'],
+    });
 
     const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
 
@@ -86,7 +97,12 @@ export default function LaporanSelesaiView() {
                         </Button>
                     </div>
                 ) : (
-                    <TicketList tickets={entries} isLoading={isLoading} />
+                    <TicketList
+                        tickets={entries}
+                        isLoading={isLoading}
+                        isPopoverOpenControlled={flagPopoverOpen}
+                        onPopoverOpenChangeControlled={setFlagPopoverOpen}
+                    />
                 )}
 
                 {/* Pagination Footer */}

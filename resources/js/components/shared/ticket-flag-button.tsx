@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePage } from '@inertiajs/react';
 import { Flag } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export interface GenericFlagTicket {
@@ -38,6 +38,12 @@ export function TicketFlagButton({
     const [flaggedByName, setFlaggedByName] = useState(ticket.flagged_by_name ?? '');
     const [internalOpen, setInternalOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
+
+    useEffect(() => {
+        setFlagged(ticket.is_flagged ?? false);
+        setFlagNote(ticket.flag_note ?? '');
+        setFlaggedByName(ticket.flagged_by_name ?? '');
+    }, [ticket.is_flagged, ticket.flag_note, ticket.flagged_by_name]);
     const { auth } = usePage<{ auth: { user: { name: string } } }>().props;
 
     const isControlled = controlledOpen !== undefined;
@@ -197,7 +203,8 @@ export function TicketFlagButton({
                     </TooltipTrigger>
                     <TooltipContent side="top">
                         <p className="text-xs">
-                            Ditandai oleh {flaggedByName || 'Petugas'}{flagNote ? `: "${flagNote}"` : ''} · Klik untuk lepas
+                            Ditandai oleh {flaggedByName || 'Petugas'}
+                            {flagNote ? `: "${flagNote}"` : ''} · Klik untuk lepas
                         </p>
                     </TooltipContent>
                 </Tooltip>
@@ -214,7 +221,7 @@ export function TicketFlagButton({
                             <button
                                 type="button"
                                 disabled={processing}
-                                className="text-muted-foreground/40 hover:text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none"
+                                className="text-muted-foreground/40 hover:text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded focus-visible:outline-none"
                                 aria-label="Tandai laporan"
                             >
                                 <Flag className="size-3.5" />

@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
+import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
 import { useLaporanMasukFilters } from '@/hooks/use-laporan-masuk-filters';
 import AdminPage from '@/layouts/dashboard/page';
 import { type LaporanMasukProps } from '@/types/laporan-masuk';
 import { Head, usePage } from '@inertiajs/react';
 import { RotateCcw, Search, X } from 'lucide-react';
+import { useState } from 'react';
 
 export default function LaporanMasukView() {
     const { auth, tickets, filters, counts } = usePage<LaporanMasukProps>().props;
@@ -22,6 +24,14 @@ export default function LaporanMasukView() {
 
     const isSearching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
     const { recentlyAnswered, clearRecentlyAnswered } = useInboxRealtime({ searching: isSearching });
+
+    const [flagPopoverOpen, setFlagPopoverOpen] = useState(false);
+
+    useLaporanRealtime({
+        isBusy: flagPopoverOpen,
+        searching: isSearching,
+        only: ['tickets', 'counts', 'inbox_open_count'],
+    });
 
     const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
 
@@ -102,6 +112,8 @@ export default function LaporanMasukView() {
                             tickets={entries}
                             isLoading={isLoading}
                             onSelectTicket={clearRecentlyAnswered}
+                            isPopoverOpenControlled={flagPopoverOpen}
+                            onPopoverOpenChangeControlled={setFlagPopoverOpen}
                         />
                     )}
 

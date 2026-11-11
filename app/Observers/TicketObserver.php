@@ -4,7 +4,9 @@ namespace App\Observers;
 
 use App\Events\ChannelStatsUpdated;
 use App\Events\DashboardUpdated;
+use App\Events\LaporanChanged;
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 
 class TicketObserver
@@ -15,6 +17,7 @@ class TicketObserver
     public function created(Ticket $ticket): void
     {
         $this->dispatchThrottled('created', $ticket);
+        $this->dispatchLaporanChanged('created', $ticket);
     }
 
     /**
@@ -22,14 +25,32 @@ class TicketObserver
      */
     public function updated(Ticket $ticket): void
     {
-        // Hanya broadcast bila status, klasifikasi, channel, atau tanda pengawasan berubah
-        if ($ticket->wasChanged(['status', 'classification', 'channel_id', 'is_pengawasan', 'completed_at'])) {
+        $changedFields = $ticket->wasChanged(['status', 'classification', 'channel_id', 'is_pengawasan', 'completed_at', 'is_flagged']);
+
+        if (empty($changedFields)) {
+            return;
+        }
+
+        // DashboardUpdated untuk perubahan status/klasifikasi/channel/completed_at.
+        if ($ticket->wasChanged(['status', 'classification', 'channel_id', 'completed_at'])) {
             $this->dispatchThrottled(
                 'status_changed',
                 $ticket,
                 $ticket->getOriginal('status'),
                 $ticket->status
             );
+        }
+
+        // LaporanChanged untuk perubahan flag / pengawasan.
+        $laporanAction = null;
+        if ($ticket->wasChanged('is_flagged')) {
+            $laporanAction = $ticket->is_flagged ? 'flagged' : 'unflagged';
+        } elseif ($ticket->wasChanged('is_pengawasan')) {
+            $laporanAction = $ticket->is_pengawasan ? 'pengawasan_activated' : 'pengawasan_deactivated';
+        }
+
+        if ($laporanAction !== null) {
+            $this->dispatchLaporanChanged($laporanAction, $ticket);
         }
     }
 
@@ -39,6 +60,7 @@ class TicketObserver
     public function deleted(Ticket $ticket): void
     {
         $this->dispatchThrottled('deleted', $ticket);
+        $this->dispatchLaporanChanged('deleted', $ticket);
     }
 
     /**
@@ -113,5 +135,41 @@ class TicketObserver
                 color: $ticket->channel?->color ?? $ticket->channel?->parent?->color,
             ));
         }
+    }
+
+    /**
+     * Dispatch LaporanChanged ke channel laporan.admin dan laporan.operator.{userId}.
+     * Event menggunakan ShouldDispatchAfterCommit, jadi terkirim setelah transaksi DB commit.
+     */
+    protected function dispatchLaporanChanged(string $action, Ticket $ticket): void
+    {
+        // Cek flag untuk mematikan broadcast (misal saat seeder/import)
+        if (config('app.disable_dashboard_broadcast', false)) {
+            return;
+        }
+
+        // Cek pengaturan apakah fitur live dashboard dinonaktifkan
+        if (! (bool) \App\Models\Setting::get('dashboard_live_enabled', true)) {
+            return;
+        }
+
+        // Kumpulkan ID operator yang berhak menerima event (pembuat tiket jika operator).
+        $operatorUserIds = [];
+        $createdBy = $ticket->created_by;
+        if ($createdBy) {
+            $creator = User::find($createdBy);
+            if ($creator && ($creator->isOperator() || $creator->isOperatorTim())) {
+                $operatorUserIds[] = (int) $createdBy;
+            }
+        }
+
+        event(new LaporanChanged(
+            action: $action,
+            ticketId: (int) $ticket->id,
+            ticketNumber: $ticket->ticket_number,
+            type: $ticket->classification,
+            actorId: auth()->user()?->id,
+            operatorUserIds: $operatorUserIds,
+        ));
     }
 }
