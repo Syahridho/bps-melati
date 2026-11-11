@@ -38,7 +38,7 @@ export default function DashboardView({
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-col gap-1">
                         <h2 className="text-sm leading-snug font-semibold break-words sm:text-base">{headerTitle}</h2>
-                        <p className="text-muted-foreground text-xs">Menampilkan data: {periodLabel}</p>
+                        <p className="text-muted-foreground text-xs">{periodLabel}</p>
                     </div>
                     <div className="shrink-0">
                         <ConnectionIndicator isLive={isLive} isLiveEnabled={isLiveEnabled} />

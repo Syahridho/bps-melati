@@ -93,3 +93,22 @@ Broadcast::channel('admin.operators', function (User $user) {
 Broadcast::channel('dashboard.admin', function (User $user) {
     return $user->isAdmin() && $user->is_active;
 });
+
+/**
+ * Private channel admin untuk pembaruan realtime daftar laporan (flag, pengawasan, create, update).
+ * Hanya role admin yang diizinkan menerima semua perubahan laporan.
+ */
+Broadcast::channel('laporan.admin', function (User $user) {
+    return $user->isAdmin() && $user->is_active;
+});
+
+/**
+ * Private channel operator untuk pembaruan realtime daftar laporan miliknya.
+ * Hanya operator yang bersangkutan (berdasarkan actor atau pembuat tiket) yang diizinkan.
+ */
+Broadcast::channel('laporan.operator.{userId}', function (User $user, int $userId) {
+    if (! ($user->isOperator() || $user->isOperatorTim())) {
+        return false;
+    }
+    return (int) $user->id === (int) $userId && $user->is_active === true;
+});

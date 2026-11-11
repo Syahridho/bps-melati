@@ -92,7 +92,7 @@
     </table>
 
     <div class="keterangan">
-        Keterangan: PST = Pengaduan Layanan PST, NonPST = Pengaduan Layanan NonPST, Aspirasi = Aspirasi, Permintaan Informasi = Permintaan Informasi.
+        Keterangan: PST = Pelayanan Statistik Terpadu, NonPST = Tidak Pelayanan Statistik Terpadu = Aspirasi, Permintaan Informasi = Permintaan Informasi.
     </div>
 
     @isset($penandaTangan)

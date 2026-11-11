@@ -216,6 +216,11 @@
             color: #475569;
             font-style: italic;
         }
+        @media screen {
+        body {
+            padding-bottom: 48px;
+        }
+}
     </style>
 
     @foreach ($monthChunks as $chunkIndex => $chunkMonths)
@@ -358,6 +363,10 @@
                     </tr>
                 </tfoot>
             </table>
+
+            <div class="keterangan">
+                Keterangan: PST = Pelayanan Statistik Terpadu, NonPST = Tidak Pelayanan Statistik Terpadu, Aspirasi = Aspirasi, Permintaan Informasi = Permintaan Informasi.
+            </div>
 
             @if ($isLastChunk && isset($penandaTangan))
                 <div class="ttd-container clearfix">

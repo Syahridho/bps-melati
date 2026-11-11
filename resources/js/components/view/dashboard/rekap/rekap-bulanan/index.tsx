@@ -26,7 +26,7 @@ export default function RekapBulananView({ rows, totals, year, month, years, mon
     return (
         <AdminPage
             title="Rekap Bulanan"
-            description={`Rekapitulasi laporan per bulan ${periodLabel}`}
+            description={`Rekapitulasi laporan bulan ${periodLabel}`}
             breadcrumbs={[
                 { title: 'Rekap', href: route(`${rolePrefix}rekap-bulanan.index`) },
                 { title: 'Bulanan', href: route(`${rolePrefix}rekap-bulanan.index`) },
