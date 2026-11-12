@@ -1,17 +1,29 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { PushNotificationCard } from '@/components/settings/push-notification-card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
-import { PushNotificationCard } from '@/components/settings/push-notification-card';
-import { cn } from '@/lib/utils';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { cn } from '@/lib/utils';
+import { BreadcrumbItem } from '@/types';
+import { type NotificationSettingsPageProps } from '@/types/pengaturan';
 import { Head, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
-import { type NotificationSettingsPageProps } from '@/types/pengaturan';
+import { useCallback, useState } from 'react';
+import { toast } from 'sonner';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Pengaturan',
+        href: route('settings.application.edit'),
+    },
+    {
+        title: 'Notifikasi',
+        href: '/settings/notification',
+    },
+];
 
 export default function NotificationSettingsView() {
     const { dashboardLiveEnabled, canManageGlobal } = usePage<NotificationSettingsPageProps>().props;
@@ -34,10 +46,7 @@ export default function NotificationSettingsView() {
                         'Content-Type': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
                         Accept: 'application/json',
-                        'X-CSRF-TOKEN':
-                            document.querySelector<HTMLMetaElement>(
-                                'meta[name="csrf-token"]',
-                            )?.content ?? '',
+                        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
                     },
                     credentials: 'same-origin',
                     body: JSON.stringify({ dashboard_live_enabled: checked }),
@@ -50,8 +59,7 @@ export default function NotificationSettingsView() {
                 toast.success('Pengaturan realtime dashboard diperbarui.');
             } catch (err) {
                 setLiveEnabled(previous);
-                const message =
-                    err instanceof Error ? err.message : 'Terjadi kesalahan.';
+                const message = err instanceof Error ? err.message : 'Terjadi kesalahan.';
                 toast('Gagal memperbarui pengaturan realtime dashboard.', {
                     description: message,
                 });
@@ -63,12 +71,9 @@ export default function NotificationSettingsView() {
     );
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pengaturan Notifikasi" />
-            <SettingsLayout
-                title="Pengaturan Notifikasi"
-                description="Kelola notifikasi push browser dan pembaruan realtime dashboard"
-            >
+            <SettingsLayout title="Pengaturan Notifikasi" description="Kelola notifikasi push browser dan pembaruan realtime dashboard">
                 <PushNotificationCard />
 
                 {canManageGlobal && (
@@ -77,17 +82,12 @@ export default function NotificationSettingsView() {
                         <div className="flex flex-col gap-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="space-y-0.5">
-                                    <Label
-                                        htmlFor="dashboard_live_enabled"
-                                        className="text-sm font-medium"
-                                    >
+                                    <Label htmlFor="dashboard_live_enabled" className="text-sm font-medium">
                                         Pembaruan Realtime Dashboard
                                     </Label>
                                     <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                        Aktifkan pembaruan data real-time via WebSocket di
-                                        dashboard admin & operator. Bila dimatikan, halaman harus
-                                        di-refresh manual untuk melihat data terbaru guna menghemat
-                                        beban server.
+                                        Aktifkan pembaruan data real-time via WebSocket di dashboard admin & operator. Bila dimatikan, halaman harus
+                                        di-refresh manual untuk melihat data terbaru guna menghemat beban server.
                                     </p>
                                 </div>
                                 <Switch
@@ -100,10 +100,7 @@ export default function NotificationSettingsView() {
                                             ? `Pembaruan realtime dashboard, ${liveEnabled ? 'diaktifkan' : 'dinonaktifkan'}`
                                             : 'Pembaruan realtime dashboard, hanya admin'
                                     }
-                                    className={cn(
-                                        'data-[state=checked]:bg-primary data-[state=unchecked]:bg-input',
-                                        liveLoading && 'opacity-50',
-                                    )}
+                                    className={cn('data-[state=checked]:bg-primary data-[state=unchecked]:bg-input', liveLoading && 'opacity-50')}
                                 />
                                 {liveLoading && <LoaderCircle className="h-4 w-4 animate-spin" />}
                             </div>

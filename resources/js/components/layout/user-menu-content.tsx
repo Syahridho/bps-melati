@@ -55,18 +55,6 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem asChild>
-                <Link className="block w-full" href={route('password.edit')} onClick={cleanup}>
-                    Kata Sandi
-                </Link>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem asChild>
-                <Link className="block w-full" href={route('appearance')} onClick={cleanup}>
-                    Tema
-                </Link>
-            </DropdownMenuItem>
-
             <DropdownMenuItem asChild className={cn('w-full justify-start', { 'bg-muted font-medium': isSettingsPage })}>
                 <Link className="block w-full" href={settingsUrl} onClick={cleanup}>
                     <Settings className="mr-2 h-4 w-4" />

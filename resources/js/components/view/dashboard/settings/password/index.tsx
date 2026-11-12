@@ -13,6 +13,10 @@ import { Label } from '@/components/ui/label';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
+        title: 'Pengaturan',
+        href: route('settings.application.edit'),
+    },
+    {
         title: 'Pengaturan Password',
         href: '/settings/password',
     },
