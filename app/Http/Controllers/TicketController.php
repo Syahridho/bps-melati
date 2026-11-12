@@ -99,7 +99,7 @@ class TicketController extends Controller
                 'user_role' => $recipient->role,
                 't0' => now()->format('Y-m-d H:i:s.u'),
             ]);
-            $recipient->notify((new LaporanNotification('laporan_masuk', $data, [$recipient->id]))->onQueue('push'));
+            $recipient->notify(new LaporanNotification('laporan_masuk', $data, [$recipient->id]));
         }
 
         if (! blank($ticket->reporter_email)) {

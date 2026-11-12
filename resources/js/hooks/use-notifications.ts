@@ -1,9 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { router } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
-import { toast } from 'sonner';
 
 export interface NotificationItem {
     id: string;
@@ -93,20 +91,6 @@ export function useNotifications(
             });
 
             setUnreadCount((prev) => prev + 1);
-
-            // Tampilkan toast satu kali per notifikasi.
-            toast('Notifikasi baru', {
-                description: item.title,
-                id: `notification-${item.id}`,
-                action: {
-                    label: 'Lihat',
-                    onClick: () => {
-                        if (item.url) {
-                            router.visit(item.url, { preserveScroll: true });
-                        }
-                    },
-                },
-            });
         },
         [],
     );
