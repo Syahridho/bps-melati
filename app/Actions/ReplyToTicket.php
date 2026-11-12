@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\EmailStatus;
+use App\Events\InboxUpdated;
 use App\Events\TicketResponseCreated;
 use App\Events\TicketUpdated;
 use App\Exceptions\TicketAlreadyCompletedException;
@@ -11,8 +12,8 @@ use App\Jobs\SendTicketResponseNotification;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
-use App\UserRole;
 use App\Support\SafeBroadcast;
+use App\UserRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -209,7 +210,7 @@ class ReplyToTicket
                         'type' => $ticket->classification,
                         'title' => 'Laporan selesai',
                         'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
-                        'url' => '/dashboard/admin/laporan-selesai/' . $ticket->ticket_number,
+                        'url' => '/dashboard/admin/laporan-selesai/'.$ticket->ticket_number,
                         'actor_name' => null,
                     ]),
                     'read_at' => null,

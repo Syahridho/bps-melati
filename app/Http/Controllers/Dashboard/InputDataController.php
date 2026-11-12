@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTicketRequest;
+use App\Http\Requests\UpdateTicketRequest;
 use App\Mail\TicketCreatedMail;
 use App\Mail\TicketResponseSubmitted;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
-use App\UserRole;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
-use App\Support\TicketResponsePayload;
+use App\UserRole;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -21,9 +23,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Inertia\Inertia;
 use Inertia\Response;
-use App\Http\Controllers\Concerns\RendersRolePage;
 
 class InputDataController extends Controller
 {
@@ -112,12 +112,13 @@ class InputDataController extends Controller
 
         // Cache counts 20 detik untuk user/role yang relevan
         $userKey = $user->isOperatorTim() ? "user_{$user->id}" : 'shared';
-        $countCacheKey = sprintf('input_data:counts:%s:%s_%s', $userKey, $filter->from ?? 'all', $filter->to ?? 'all');
+        $countCacheKey = sprintf('input_data:counts:%s:%s_%s:%s', $userKey, $filter->from ?? 'all', $filter->to ?? 'all', $filter->search ?? '');
 
-        $counts = Cache::remember($countCacheKey, 20, function () use ($user, $filter) {
+        $counts = Cache::remember($countCacheKey, 20, function () use ($user, $filter, $searchClosure) {
             $countBaseQuery = Ticket::query()
                 ->where('source_app', 'admin')
                 ->visibleTo($user)
+                ->tap($searchClosure)
                 ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
                     $q->whereDate('created_at', '>=', $filter->from)
                         ->whereDate('created_at', '<=', $filter->to);
@@ -170,10 +171,10 @@ class InputDataController extends Controller
         });
 
         return $this->renderPage($request, 'input-data/index', [
-            'tickets'  => $tickets,
+            'tickets' => $tickets,
             'channels' => $channels,
-            'filters'  => $filter->toFilterProps($frontendFilterKey),
-            'counts'   => $counts,
+            'filters' => $filter->toFilterProps($frontendFilterKey),
+            'counts' => $counts,
         ]);
     }
 
@@ -197,7 +198,7 @@ class InputDataController extends Controller
             $ticket->update(['is_read' => true]);
         }
 
-       return $this->renderPage($request, 'input-data/show/index', [
+        return $this->renderPage($request, 'input-data/show/index', [
             'from' => 'input-data',
             'can' => [
                 'edit' => true,
@@ -219,16 +220,11 @@ class InputDataController extends Controller
 
         $period = now()->format('Y-m');
 
-        $generated = Ticket::generateTicketNumber(
-            $validated['classification'],
-            $period
-        );
-
         $creator = $request->user();
         $creatorName = $creator?->name ?? 'Admin';
 
-        // Untuk input-data admin/operator, nomor tiket dibuat menggunakan nama pembuat + tanggal + urutan periodik unik
-        // $generated = Ticket::generateAdminTicketNumber($creatorName, $period);
+        // Untuk input-data admin/operator, nomor tiket dibuat menggunakan nama pembuat + tanggal + urutan periodik unik.
+        $generated = Ticket::generateAdminTicketNumber($creatorName, $period);
 
         $ticket = Ticket::create([
             'ticket_number' => $generated['ticket_number'],
@@ -269,7 +265,7 @@ class InputDataController extends Controller
                     'type' => $ticket->classification,
                     'title' => 'Data tiket baru ditambahkan',
                     'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
-                    'url' => '/dashboard/admin/input-data/' . $ticket->ticket_number,
+                    'url' => '/dashboard/admin/input-data/'.$ticket->ticket_number,
                     'actor_name' => null,
                 ]),
                 'read_at' => null,
@@ -344,7 +340,7 @@ class InputDataController extends Controller
                     $response->update([
                         'email_status' => 'failed',
                         'email_failed_at' => now(),
-                        'email_error' => \Illuminate\Support\Str::limit($e->getMessage(), 500),
+                        'email_error' => Str::limit($e->getMessage(), 500),
                     ]);
                 }
             } else {
@@ -382,7 +378,7 @@ class InputDataController extends Controller
     /**
      * Tandai atau lepas tandai pada tiket input data.
      */
-    public function tandai(Request $request, string $ticketNumber): \Illuminate\Http\JsonResponse
+    public function tandai(Request $request, string $ticketNumber): JsonResponse
     {
         $request->validate([
             'aktif' => ['required', 'boolean'],
@@ -410,7 +406,7 @@ class InputDataController extends Controller
                 'user_id' => $user?->id,
                 'type' => 'respon_substantif',
                 'is_system' => true,
-                'message' => "Laporan ditandai oleh {$userName}." . ($request->input('note') ? " Catatan: {$request->input('note')}" : ''),
+                'message' => "Laporan ditandai oleh {$userName}.".($request->input('note') ? " Catatan: {$request->input('note')}" : ''),
                 'sent_at' => now(),
             ]);
         } else {
@@ -430,7 +426,7 @@ class InputDataController extends Controller
             ]);
         }
 
-        Cache::forget('ticket_check:' . md5($ticket->ticket_number));
+        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
 
         return response()->json([
@@ -445,7 +441,7 @@ class InputDataController extends Controller
     /**
      * Perbarui data tiket input data.
      */
-    public function update(\App\Http\Requests\UpdateTicketRequest $request, string $ticketNumber): RedirectResponse
+    public function update(UpdateTicketRequest $request, string $ticketNumber): RedirectResponse
     {
         $ticket = Ticket::where('ticket_number', $ticketNumber)
             ->where('source_app', 'admin')
@@ -460,7 +456,7 @@ class InputDataController extends Controller
             'content' => $request->validated('content'),
         ]);
 
-        Cache::forget('ticket_check:' . md5($ticket->ticket_number));
+        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
         Cache::forget('dashboard:admin:version');
 
@@ -478,7 +474,7 @@ class InputDataController extends Controller
             ->visibleTo($request->user())
             ->firstOrFail();
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($ticket) {
+        DB::transaction(function () use ($ticket) {
             foreach ($ticket->attachments as $attachment) {
                 if ($attachment->path && Storage::disk('public')->exists($attachment->path)) {
                     Storage::disk('public')->delete($attachment->path);
@@ -496,7 +492,7 @@ class InputDataController extends Controller
             $ticket->delete();
         });
 
-        Cache::forget('ticket_check:' . md5($ticket->ticket_number));
+        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
         Cache::forget('dashboard:admin:version');
 

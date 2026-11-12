@@ -193,7 +193,7 @@ test('laporan masuk detail lists responses oldest first', function () {
         ->get(route('dashboard.admin.laporan-masuk.show', ['ticketNumber' => $ticket->ticket_number]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/laporan-masuk/show')
+            ->component('dashboard/admin/laporan-masuk/show/index')
             ->where('ticket.responses.0.id', $older->id)
             ->where('ticket.responses.1.id', $newer->id)
         );

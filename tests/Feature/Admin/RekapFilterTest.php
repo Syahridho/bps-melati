@@ -32,7 +32,7 @@ it('builds dynamic years list and falls back on invalid parameters', function ()
         ->get(route('dashboard.admin.rekap-bulanan.index', ['year' => '9999', 'month' => '15'], absolute: false))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/rekap/bulanan')
+            ->component('dashboard/admin/rekap/bulanan/index')
             ->has('years')
             ->where('year', (string) now()->year)
             ->where('month', (string) now()->month)
@@ -76,5 +76,5 @@ it('invalidates RekapYears cache when a ticket is created or deleted', function 
     actingAs($admin)
         ->get(route('dashboard.admin.rekap-bulanan.index', absolute: false))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('years', fn ($years) => !collect($years)->contains('value', '2023') || count($years) >= 1));
+        ->assertInertia(fn (Assert $page) => $page->where('years', fn ($years) => ! collect($years)->contains('value', '2023') || count($years) >= 1));
 });

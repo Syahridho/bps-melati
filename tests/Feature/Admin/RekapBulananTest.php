@@ -63,7 +63,7 @@ it('renders the monthly recap for an admin', function () {
         ->get(rekapUrl())
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/rekap/bulanan')
+            ->component('dashboard/admin/rekap/bulanan/index')
             ->has('rows')
             ->has('totals')
             ->has('periods')

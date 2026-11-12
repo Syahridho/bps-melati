@@ -50,7 +50,7 @@ it('defaults date range to current month', function () {
         ->get(route('dashboard.admin.laporan-selesai.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/laporan-selesai')
+            ->component('dashboard/admin/laporan-selesai/index')
             ->where('filters.from', $currentFrom)
             ->where('filters.to', $currentTo)
         );

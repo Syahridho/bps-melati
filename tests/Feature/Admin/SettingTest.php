@@ -31,7 +31,7 @@ test('admin can access settings page', function () {
         ->get(route('settings.application.edit'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/application')
+            ->component('settings/application/index')
             ->has('settings')
         );
 });
@@ -44,6 +44,7 @@ test('admin can update signatory settings and update redis cache', function () {
             'nama_penanda_tangan' => 'Dr. Budi Santoso, M.Si',
             'jabatan_penanda_tangan' => 'KEPALA BPS PROVINSI',
             'kota_penanda_tangan' => 'Pekanbaru',
+            'kadar_pengawasan_hari' => 30,
             'auto_close_pengaduan_days' => 4,
             'auto_close_aspirasi_days' => 2,
             'auto_close_permintaan_informasi_days' => 7,
@@ -66,6 +67,22 @@ test('admin can update signatory settings and update redis cache', function () {
         ->and(Setting::get('auto_close_aspirasi_days'))->toBe('2')
         ->and(Setting::get('auto_close_permintaan_informasi_days'))->toBe('7')
         ->and(Cache::get('setting:nama_penanda_tangan'))->toBe('Dr. Budi Santoso, M.Si');
+});
+
+test('admin cannot update settings without kadar pengawasan', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    actingAs($admin)
+        ->postJson(route('settings.application.update'), [
+            'nama_penanda_tangan' => 'Dr. Budi Santoso, M.Si',
+            'jabatan_penanda_tangan' => 'KEPALA BPS PROVINSI',
+            'kota_penanda_tangan' => 'Pekanbaru',
+            'auto_close_pengaduan_days' => 4,
+            'auto_close_aspirasi_days' => 2,
+            'auto_close_permintaan_informasi_days' => 7,
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('kadar_pengawasan_hari');
 });
 
 test('operator cannot access application settings page', function () {

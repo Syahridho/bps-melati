@@ -12,26 +12,19 @@ use App\Models\User;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // phpunit.xml memakai BROADCAST_CONNECTION=null sehingga broadcast jadi no-op
+    // dan tidak menyentuh Reverb/Redis lokal. Event::fake mencegah event
+    // mencapai listener dan mencegah ShouldBroadcastNow mencapai broadcaster.
     Event::fake([TicketResponseCreated::class, TicketUpdated::class, InboxUpdated::class]);
 
-    // phpunit.xml memakai BROADCAST_CONNECTION=null sehingga callback kanal tidak
-    // pernah dieksekusi. Untuk menguji otorisasi channel, pakai driver sungguhan.
-    // Broadcast::purge() membuat instance broadcaster baru tanpa kanal yang
-    // sudah terdaftar, jadi routes/channels.php dimuat ulang setelah purge.
-    config([
-        'broadcasting.default' => 'reverb',
-        'broadcasting.connections.reverb.key' => 'test-app-key',
-        'broadcasting.connections.reverb.secret' => 'test-app-secret',
-        'broadcasting.connections.reverb.app_id' => 'test-app-id',
-    ]);
-    Broadcast::purge('reverb');
+    // Daftarkan ulang callback kanal agar otorisasi channel berjalan dengan benar
+    // pada driver null (saat boot, channels terdaftar pada driver default).
     require base_path('routes/channels.php');
 
     $this->channel = Channel::firstOrCreate(
@@ -288,6 +281,14 @@ test('event tidak dikirim untuk balasan yang hanya di replay', function () {
 */
 
 test('operator boleh subscribe ke presence channel tiket yang ada', function () {
+    config([
+        'broadcasting.default' => 'reverb',
+        'broadcasting.connections.reverb.key' => 'test-app-key',
+        'broadcasting.connections.reverb.secret' => 'test-app-secret',
+        'broadcasting.connections.reverb.app_id' => 'test-app-id',
+    ]);
+    require base_path('routes/channels.php');
+
     $this->actingAs($this->operator)
         ->post('/broadcasting/auth', [
             'channel_name' => 'presence-ticket.'.$this->ticket->id,
@@ -298,6 +299,14 @@ test('operator boleh subscribe ke presence channel tiket yang ada', function () 
 });
 
 test('presence channel tiket yang tidak ada ditolak', function () {
+    config([
+        'broadcasting.default' => 'reverb',
+        'broadcasting.connections.reverb.key' => 'test-app-key',
+        'broadcasting.connections.reverb.secret' => 'test-app-secret',
+        'broadcasting.connections.reverb.app_id' => 'test-app-id',
+    ]);
+    require base_path('routes/channels.php');
+
     $this->actingAs($this->admin)
         ->post('/broadcasting/auth', [
             'channel_name' => 'presence-ticket.999999',
@@ -307,6 +316,14 @@ test('presence channel tiket yang tidak ada ditolak', function () {
 });
 
 test('operator tidak boleh subscribe ke presence channel tiket yang tidak ada', function () {
+    config([
+        'broadcasting.default' => 'reverb',
+        'broadcasting.connections.reverb.key' => 'test-app-key',
+        'broadcasting.connections.reverb.secret' => 'test-app-secret',
+        'broadcasting.connections.reverb.app_id' => 'test-app-id',
+    ]);
+    require base_path('routes/channels.php');
+
     $this->actingAs($this->operator)
         ->post('/broadcasting/auth', [
             'channel_name' => 'presence-ticket.999999',
@@ -316,6 +333,14 @@ test('operator tidak boleh subscribe ke presence channel tiket yang tidak ada', 
 });
 
 test('tamu tidak boleh subscribe ke presence channel tiket', function () {
+    config([
+        'broadcasting.default' => 'reverb',
+        'broadcasting.connections.reverb.key' => 'test-app-key',
+        'broadcasting.connections.reverb.secret' => 'test-app-secret',
+        'broadcasting.connections.reverb.app_id' => 'test-app-id',
+    ]);
+    require base_path('routes/channels.php');
+
     $this->post('/broadcasting/auth', [
         'channel_name' => 'presence-ticket.'.$this->ticket->id,
         'socket_id' => '1234.5678',
@@ -332,6 +357,14 @@ test('operator boleh subscribe ke private channel inbox laporan masuk', function
 });
 
 test('scope inbox yang tidak dikenal ditolak', function () {
+    config([
+        'broadcasting.default' => 'reverb',
+        'broadcasting.connections.reverb.key' => 'test-app-key',
+        'broadcasting.connections.reverb.secret' => 'test-app-secret',
+        'broadcasting.connections.reverb.app_id' => 'test-app-id',
+    ]);
+    require base_path('routes/channels.php');
+
     $this->actingAs($this->admin)
         ->post('/broadcasting/auth', [
             'channel_name' => 'private-inbox.apakah-rawan',

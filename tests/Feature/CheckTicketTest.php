@@ -295,7 +295,7 @@ test('page /check produces signed download URLs instead of raw storage URLs', fu
     $res = $this->get('/check?ticket_number='.$ticket->ticket_number);
     $res->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('check')
+            ->component('check/index')
             ->where('ticket.attachments.0.url', fn (string $url) => str_contains($url, '/check/lampiran/ticket/'.$att->id) && str_contains($url, 'signature='))
             ->where('ticket.responses.0.attachments.0.url', fn (string $url) => str_contains($url, '/check/lampiran/response/'.$respAtt->id) && str_contains($url, 'signature='))
         );
@@ -348,7 +348,7 @@ test('tampered or unsigned attachment link is rejected with friendly message', f
     $res = $this->get($unsignedUrl);
     $res->assertStatus(403);
     $res->assertInertia(fn (Assert $page) => $page
-        ->component('error')
+        ->component('error/index')
         ->where('status', 403)
         ->where('message', 'Tautan unduhan sudah kedaluwarsa. Muat ulang halaman status laporan lalu coba lagi.')
     );
@@ -369,7 +369,7 @@ test('expired signed link is rejected with friendly message', function () {
     $res = $this->get($expiredUrl);
     $res->assertStatus(403);
     $res->assertInertia(fn (Assert $page) => $page
-        ->component('error')
+        ->component('error/index')
         ->where('status', 403)
         ->where('message', 'Tautan unduhan sudah kedaluwarsa. Muat ulang halaman status laporan lalu coba lagi.')
     );
@@ -418,7 +418,7 @@ test('attachment belonging to ticket A cannot be fetched via link created for ti
     $res = $this->get($signedUrlMismatched);
     $res->assertStatus(404);
     $res->assertInertia(fn (Assert $page) => $page
-        ->component('error')
+        ->component('error/index')
         ->where('status', 404)
         ->where('message', 'Lampiran tidak ditemukan.')
     );
@@ -454,7 +454,7 @@ test('missing physical file returns 404 with friendly message', function () {
     $res = $this->get($signedUrl);
     $res->assertStatus(404);
     $res->assertInertia(fn (Assert $page) => $page
-        ->component('error')
+        ->component('error/index')
         ->where('status', 404)
         ->where('message', 'Lampiran tidak ditemukan.')
     );

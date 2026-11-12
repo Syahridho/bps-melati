@@ -46,7 +46,7 @@ test('laporan masuk excludes tickets created via input data (source_app admin)',
         ->get(route('dashboard.admin.laporan-masuk.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/laporan-masuk')
+            ->component('dashboard/admin/laporan-masuk/index')
             ->where('counts.semua', 1)
             ->has('tickets.data', 1)
             ->where('tickets.data.0.title', 'Laporan dari Publik')
@@ -289,7 +289,7 @@ test('operator only counts tickets in their scope and unauthorized users get 0',
         ->get(route('dashboard.operator.laporan-masuk.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/laporan-masuk')
+            ->component('dashboard/operator/laporan-masuk/index')
             ->where('counts.semua', 1)
             ->where('counts.permintaan', 1)
             ->where('counts.belum_dibaca', 1)

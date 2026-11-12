@@ -129,7 +129,7 @@ test('ditandai filter works in index', function () {
         ->get(route('dashboard.admin.laporan-selesai.index', ['tab' => 'ditandai', 'from' => 'semua']))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('admin/laporan-selesai')
+            ->component('dashboard/admin/laporan-selesai/index')
             ->has('tickets.data', 1)
             ->where('tickets.data.0.ticket_number', $flagged->ticket_number)
         );

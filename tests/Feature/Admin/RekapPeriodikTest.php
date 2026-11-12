@@ -7,7 +7,6 @@ use App\Models\TicketAttachment;
 use App\Models\TicketResponse;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;
@@ -61,7 +60,7 @@ it('renders the periodic recap for an admin', function () {
         ->get(periodikUrl(['year' => '2026', 'months' => '1,2,3']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/rekap/periodik')
+            ->component('dashboard/admin/rekap/periodik/index')
             ->has('rows')
             ->has('totals')
             ->has('months', 3)
@@ -109,7 +108,7 @@ it('passes chat prop to periodic recap page', function () {
         ->get(periodikUrl(['year' => '2026', 'months' => '1,2,3']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/rekap/periodik')
+            ->component('dashboard/admin/rekap/periodik/index')
             ->where('chat', '0')
         );
 
@@ -118,7 +117,7 @@ it('passes chat prop to periodic recap page', function () {
         ->get(periodikUrl(['year' => '2026', 'months' => '1,2,3', 'chat' => '1']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/rekap/periodik')
+            ->component('dashboard/admin/rekap/periodik/index')
             ->where('chat', '1')
         );
 
@@ -127,7 +126,7 @@ it('passes chat prop to periodic recap page', function () {
         ->get(periodikUrl(['year' => '2026', 'months' => '1,2,3', 'chat' => 'invalid']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('admin/rekap/periodik')
+            ->component('dashboard/admin/rekap/periodik/index')
             ->where('chat', '0')
         );
 });
@@ -195,7 +194,7 @@ it('renders full chat thread with responses, attachments, and escapes HTML in pr
     ]);
 
     $response = actingAs($admin)
-        ->get(route('dashboard.admin.rekap-periodik.print', ['year' => '2026', 'months' => '2', 'chat' => '1'], absolute: false))
+        ->get(route('dashboard.admin.rekap-periodik.print', ['year' => '2026', 'months' => '2', 'chat' => '2'], absolute: false))
         ->assertOk();
 
     // Pastikan section lampiran muncul
