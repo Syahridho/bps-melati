@@ -67,7 +67,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 403);
             }
 
-            return Inertia::render('error', [
+            return Inertia::render('error/index', [
                 'status' => 403,
                 'message' => $message,
             ])
@@ -138,7 +138,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     default => $exception->getMessage() ?: null,
                 };
 
-                return Inertia::render('error', [
+                return Inertia::render('error/index', [
                     'status' => $statusCode,
                     'message' => $message,
                 ])
