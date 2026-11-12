@@ -28,7 +28,6 @@ class SettingController extends Controller
                 'auto_close_aspirasi_days' => Setting::get('auto_close_aspirasi_days', '1'),
                 'auto_close_permintaan_informasi_days' => Setting::get('auto_close_permintaan_informasi_days', '5'),
                 'kadar_pengawasan_hari' => Setting::get('kadar_pengawasan_hari', '30'),
-                'dashboard_live_enabled' => (bool) Setting::get('dashboard_live_enabled', true),
             ],
         ]);
     }
@@ -46,7 +45,6 @@ class SettingController extends Controller
             'auto_close_aspirasi_days' => ['required', 'integer', 'min:0', 'max:365'],
             'auto_close_permintaan_informasi_days' => ['required', 'integer', 'min:0', 'max:365'],
             'kadar_pengawasan_hari' => ['required', 'integer', 'min:0', 'max:365'],
-            'dashboard_live_enabled' => ['sometimes', 'boolean'],
         ], [
             'auto_close_pengaduan_days.min' => 'Batas waktu pengaduan minimal 0 hari. Isi 0 untuk menonaktifkan.',
             'auto_close_aspirasi_days.min' => 'Batas waktu aspirasi minimal 0 hari. Isi 0 untuk menonaktifkan.',

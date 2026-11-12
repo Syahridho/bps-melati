@@ -42,6 +42,11 @@ export default function SettingsLayout({
               ]
             : []),
         {
+            title: 'Notifikasi',
+            url: '/settings/notification',
+            icon: null,
+        },
+        {
             title: 'Kata Sandi',
             url: '/settings/password',
             icon: null,

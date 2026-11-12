@@ -53,6 +53,8 @@ Tidak ada pendaftaran mandiri; akun dibuat oleh admin.
 | Paksa logout akun lain | Ya | Tidak |
 | Ubah dan hapus tiket | Ya | Tidak |
 | Pengaturan aplikasi | Ya | Tidak |
+| Notifikasi push browser (perangkat sendiri) | Ya | Ya |
+| Atur pembaruan realtime dashboard (global) | Ya | Tidak |
 
 Otorisasi diterapkan pada route middleware `role:admin` dan
 `role:operator`, pada Form Request, dan sebagian pada pemeriksaan langsung di
@@ -254,6 +256,12 @@ worker.
    VITE_REVERB_HOST="${REVERB_HOST}"
    VITE_REVERB_PORT="${REVERB_PORT}"
    VITE_REVERB_SCHEME="${REVERB_SCHEME}"
+
+   # Web Push (VAPID) — dihasilkan oleh `php artisan webpush:vapid`.
+   VAPID_SUBJECT="mailto:admin@example.com"
+   VAPID_PUBLIC_KEY=<kunci_publik_vapid>
+   VAPID_PRIVATE_KEY=<kunci_privat_vapid>
+   VITE_VAPID_PUBLIC_KEY="${VAPID_PUBLIC_KEY}"
 
    MAIL_MAILER=smtp
    MAIL_HOST=<host_smtp>
@@ -474,10 +482,17 @@ worker.
 | `ADMIN_PASSWORD` | Sandi akun admin saat seeder | `<password_admin>` |
 | `OPERATOR_EMAIL` | Email akun operator saat seeder | `<email_operator>` |
 | `OPERATOR_PASSWORD` | Sandi akun operator saat seeder | `<password_operator>` |
+| `VAPID_SUBJECT` | Subjek VAPID untuk Web Push (mailto atau URL) | `mailto:admin@example.com` |
+| `VAPID_PUBLIC_KEY` | Kunci publik VAPID (dihasilkan `php artisan webpush:vapid`) | `<kunci_publik_vapid>` |
+| `VAPID_PRIVATE_KEY` | Kunci privat VAPID (jangan dikomit) | `<kunci_privat_vapid>` |
+| `VITE_VAPID_PUBLIC_KEY` | Harus sama dengan `VAPID_PUBLIC_KEY` (baked saat build) | `${VAPID_PUBLIC_KEY}` |
 
 Nilai `VITE_REVERB_*` dibaca Vite saat build, bukan saat runtime. Bila
 `REVERB_APP_KEY`, `REVERB_HOST`, `REVERB_PORT`, atau `REVERB_SCHEME` diubah,
 jalankan `npm run build` ulang di server.
+
+Demikian juga `VITE_VAPID_PUBLIC_KEY`: bila `VAPID_PUBLIC_KEY` diubah,
+jalankan `npm run build` ulang agar nilai baru tersedia di frontend.
 
 Catatan: `APP_TIMEZONE` harus konsisten pada satu instalasi. Nilai bawaan
 `.env.example` adalah `Asia/Jakarta`; barcode waktu pada basis data ikut
@@ -501,6 +516,11 @@ sudo supervisorctl restart melati-worker:*
 sudo supervisorctl restart melati-reverb:*
 php artisan up
 ```
+
+Catatan: nama program Supervisor di atas adalah contoh. Nama aktual di server
+bisa berbeda (mis. `bps-melati-queue`, `reverb`); sesuaikan dengan output
+`sudo supervisorctl status`. Jangan restart program yang bukan milik aplikasi
+ini (mis. `horizon` milik aplikasi lain).
 
 Bila `package-lock.json` ikut berubah, gunakan `npm ci` agar versi terkunci
 terpasang sesuai berkas tersebut.
@@ -557,6 +577,8 @@ sudah tersedia. Jalankan `php artisan test` sebelum menentukan kode siap.
 | Kesalahan Redis keyspace notification | `notify-keyspace-events` belum diatur | Tambahkan `notify-keyspace-events K$` ke konfigurasi Redis lalu muat ulang Redis |
 | Port 8080 sudah dipakai | Port default Reverb bentrok dengan proses lain | Ubah `REVERB_SERVER_PORT` dan sesuaikan `proxy_pass` pada Nginx |
 | Perubahan `.env` tidak terbaca | Cache konfigurasi masih menyimpan nilai lama | Jalankan `php artisan config:clear` lalu `php artisan config:cache` di produksi |
+| Toggle push menyala tapi tidak menyimpan subscription | `VAPID_PUBLIC_KEY` / `VITE_VAPID_PUBLIC_KEY` kosong atau build belum dijalankan ulang | Jalankan `php artisan webpush:vapid`, isi `.env`, lalu `npm run build` dan `config:cache` |
+| Toggle push kembali mati setelah refresh | Server tidak menerima subscription (endpoint simpan gagal) | Periksa `laravel.log`, pastikan user login dan CSRF token valid |
 
 ## Keamanan
 

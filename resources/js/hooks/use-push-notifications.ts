@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
 
 export type PushStatus = 'unsupported' | 'default' | 'granted' | 'denied';
@@ -59,6 +60,21 @@ function isPushSupported(): boolean {
     );
 }
 
+/** Cek apakah subscription sudah terdaftar di server untuk endpoint ini. */
+async function serverHasSubscription(endpoint: string): Promise<boolean> {
+    const res = await fetch(
+        `${route('push-subscriptions.status')}?endpoint=${encodeURIComponent(endpoint)}`,
+        {
+            method: 'GET',
+            headers: jsonHeaders(true),
+            credentials: 'same-origin',
+        },
+    );
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.subscribed === true;
+}
+
 export function usePushNotifications(): UsePushNotificationsReturn {
     const [status, setStatus] = useState<PushStatus>('default');
     const [isSubscribed, setIsSubscribed] = useState(false);
@@ -67,7 +83,12 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     const swRegistrationRef = useRef<ServiceWorkerRegistration | null>(null);
     const syncInFlightRef = useRef<boolean>(false);
 
-    const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? null;
+    // Kunci VAPID dari Vite env (build-time) dengan fallback ke prop Inertia (runtime via middleware).
+    const page = usePage<{ props?: { vapid_public_key?: string | null } }>();
+    const vapidKey: string | null =
+        (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined) ??
+        (page.props?.vapid_public_key as string | undefined) ??
+        null;
 
     /**
      * Kirim subscription ke server (POST /push-subscriptions).
@@ -135,11 +156,16 @@ export function usePushNotifications(): UsePushNotificationsReturn {
                     const subscription = await registration.pushManager.getSubscription();
                     if (subscription) {
                         setIsSubscribed(true);
-                        // Sinkronkan ulang ke server setelah halaman dimuat (pulihkan yang hilang).
-                        await syncSubscriptionToServer(subscription);
+                        // Verifikasi server memiliki subscription ini; jika tidak, kirim ulang.
+                        const hasServer = await serverHasSubscription(subscription.endpoint);
+                        if (!hasServer) {
+                            await syncSubscriptionToServer(subscription);
+                        }
+                    } else {
+                        setStatus('default');
                     }
                 } catch {
-                    // Biarkan diam; switch akan ditangani saat enable().
+                    setStatus('default');
                 }
             } else {
                 setStatus('default');
@@ -159,7 +185,16 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }, [vapidKey, syncSubscriptionToServer]);
 
     const enable = useCallback(async (): Promise<void> => {
-        if (!vapidKey || isLoading) return;
+        if (!vapidKey) {
+            setStatus('default');
+            setIsSubscribed(false);
+            toast('Kunci VAPID belum dikonfigurasi', {
+                description: 'Server belum mengatur kunci publik VAPID. Hubungi administrator.',
+            });
+            return;
+        }
+
+        if (isLoading) return;
 
         setIsLoading(true);
 
@@ -190,9 +225,10 @@ export function usePushNotifications(): UsePushNotificationsReturn {
                 applicationServerKey: urlBase64ToUint8Array(vapidKey),
             });
 
-            setIsSubscribed(true);
-
+            // Simpan ke server DULU sebelum menandai isSubscribed = true.
             await syncSubscriptionToServer(subscription);
+
+            setIsSubscribed(true);
 
             toast('Notifikasi push diaktifkan', {
                 description: 'Anda akan menerima notifikasi saat Melati ditutup.',
@@ -200,8 +236,10 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         } catch (err) {
             setStatus('default');
             setIsSubscribed(false);
+            const message =
+                err instanceof Error ? err.message : 'Terjadi kesalahan.';
             toast('Gagal mengaktifkan push', {
-                description: err instanceof Error ? err.message : 'Terjadi kesalahan.',
+                description: message,
             });
         } finally {
             setIsLoading(false);
@@ -209,31 +247,41 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     }, [vapidKey, isLoading, syncSubscriptionToServer]);
 
     const disable = useCallback(async (): Promise<void> => {
-        if (!swRegistrationRef.current) {
-            swRegistrationRef.current = await navigator.serviceWorker.ready;
-        }
+        try {
+            let registration: ServiceWorkerRegistration | null = null;
+            if (swRegistrationRef.current) {
+                registration = swRegistrationRef.current;
+            } else {
+                registration = await navigator.serviceWorker.ready;
+                swRegistrationRef.current = registration;
+            }
 
-        const registration = swRegistrationRef.current;
-        const subscription = await registration.pushManager.getSubscription();
+            const subscription = await registration.pushManager.getSubscription();
 
-        if (subscription) {
-            await subscription.unsubscribe();
+            if (subscription) {
+                await subscription.unsubscribe();
 
-            // Hapus dari server.
-            await fetch(route('push-subscriptions.destroy'), {
-                method: 'DELETE',
-                headers: jsonHeaders(true),
-                credentials: 'same-origin',
-                body: JSON.stringify({ endpoint: subscription.endpoint }),
+                // Hapus dari server.
+                await fetch(route('push-subscriptions.destroy'), {
+                    method: 'DELETE',
+                    headers: jsonHeaders(true),
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ endpoint: subscription.endpoint }),
+                });
+            }
+
+            setIsSubscribed(false);
+            setStatus(Notification.permission === 'denied' ? 'denied' : 'default');
+
+            toast('Notifikasi push dinonaktifkan', {
+                description: 'Anda tidak akan menerima notifikasi saat Melati ditutup.',
+            });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Terjadi kesalahan.';
+            toast('Gagal menonaktifkan push', {
+                description: message,
             });
         }
-
-        setIsSubscribed(false);
-        setStatus(Notification.permission === 'denied' ? 'denied' : 'default');
-
-        toast('Notifikasi push dinonaktifkan', {
-            description: 'Anda tidak akan menerima notifikasi saat Melati ditutup.',
-        });
     }, []);
 
     const toggle = useCallback(

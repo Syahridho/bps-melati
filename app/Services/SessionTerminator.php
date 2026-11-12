@@ -63,6 +63,11 @@ final class SessionTerminator
 
         $this->forgetSession($sessionId);
 
+        // Hapus semua push subscription milik user ini agar perangkat yang
+        // sama tidak terus menerima notifikasi untuk akun lain setelah
+        // logout, takeover, atau paksa logout.
+        $user->pushSubscriptions()->delete();
+
         $user->forceFill([
             'current_session_id' => null,
             'last_activity_at' => null,

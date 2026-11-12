@@ -170,6 +170,11 @@ export function AppSidebar() {
                 },
             ],
         },
+        {
+            title: 'Pengaturan',
+            url: '/settings/notification',
+            icon: Settings,
+        },
     ];
 
     const operatorTimNavItems: NavItem[] = [
@@ -182,6 +187,11 @@ export function AppSidebar() {
             title: 'Input Data',
             url: '/dashboard/operator/input-data',
             icon: FilePlus2,
+        },
+        {
+            title: 'Pengaturan',
+            url: '/settings/notification',
+            icon: Settings,
         },
     ];
 

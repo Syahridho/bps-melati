@@ -23,7 +23,6 @@ export function PushToggle({ isUnsupported = false }: PushToggleProps) {
 
     const handleToggle = useCallback(
         async (next: boolean) => {
-            setChecked(next);
             await toggle(next);
         },
         [toggle],

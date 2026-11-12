@@ -22,7 +22,6 @@ export function PushNotificationCard({ isUnsupported = false }: PushNotification
 
     const handleToggle = useCallback(
         async (next: boolean) => {
-            setChecked(next);
             await toggle(next);
         },
         [toggle],

@@ -1,9 +1,10 @@
 import { UserInfo } from '@/components/layout/user-info';
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { cn } from '@/lib/utils';
 import { type User } from '@/types';
-import { Link, router } from '@inertiajs/react';
-import { LogOut } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { LogOut, Settings } from 'lucide-react';
 
 interface UserMenuContentProps {
     user: User;
@@ -11,6 +12,12 @@ interface UserMenuContentProps {
 
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
+    const pageUrl = usePage().url;
+    const currentPath = pageUrl.split('?')[0].split('#')[0];
+
+    const isSettingsPage = currentPath.startsWith('/settings/');
+
+    const settingsUrl = user.role === 'admin' ? route('settings.application.edit') : route('settings.notification');
 
     const handleLogout = () => {
         cleanup();
@@ -57,6 +64,13 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             <DropdownMenuItem asChild>
                 <Link className="block w-full" href={route('appearance')} onClick={cleanup}>
                     Tema
+                </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild className={cn('w-full justify-start', { 'bg-muted font-medium': isSettingsPage })}>
+                <Link className="block w-full" href={settingsUrl} onClick={cleanup}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Pengaturan
                 </Link>
             </DropdownMenuItem>
 

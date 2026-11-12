@@ -1,10 +1,7 @@
 import { PengaturanAutoCloseFields } from '@/components/pengaturan/pengaturan-auto-close-fields';
 import { PengaturanSignatureFields } from '@/components/pengaturan/pengaturan-signature-fields';
-import { PushNotificationCard } from '@/components/settings/push-notification-card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import { usePengaturanForm } from '@/hooks/use-pengaturan-form';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
@@ -38,28 +35,6 @@ export default function ApplicationSettingsView() {
                 description="Kelola pengaturan aplikasi, batas waktu otomatis selesai, dan informasi penanda tangan rekap"
             >
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="flex flex-col gap-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="space-y-0.5">
-                                <Label htmlFor="dashboard_live_enabled" className="text-sm font-medium">
-                                    Pembaruan Realtime Dashboard
-                                </Label>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                    Aktifkan pembaruan data real-time via WebSocket di dashboard admin & operator. Bila dimatikan, halaman harus di-refresh manual untuk melihat data terbaru guna menghemat beban server.
-                                </p>
-                            </div>
-                            <Switch
-                                id="dashboard_live_enabled"
-                                checked={data.dashboard_live_enabled}
-                                onCheckedChange={(checked) => setData('dashboard_live_enabled', checked)}
-                            />
-                        </div>
-                    </div>
-
-                    <PushNotificationCard />
-
-                    <Separator />
-
                     <PengaturanAutoCloseFields data={data} setData={setData} errors={errors} />
 
                     <Separator />

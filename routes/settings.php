@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Dashboard\NotificationController;
 use App\Http\Controllers\Dashboard\SettingController;
 use App\Http\Controllers\Settings\ApiController;
 use App\Http\Controllers\Settings\ChannelController;
@@ -17,6 +18,8 @@ Route::middleware('auth')->group(function () {
     Route::put('settings/password', [PasswordController::class, 'update'])->name('password.update');
 
     Route::get('settings/appearance', [SettingController::class, 'indexAppearce'])->name('appearance');
+
+    Route::get('settings/notification', [NotificationController::class, 'index'])->name('settings.notification');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -27,4 +30,5 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->parameters(['sumber-kanal' => 'channel'])
         ->only(['index', 'store', 'update', 'destroy'])
         ->names(['index' => 'settings.sumber-kanal.index', 'store' => 'settings.sumber-kanal.store', 'update' => 'settings.sumber-kanal.update', 'destroy' => 'settings.sumber-kanal.destroy']);
+    Route::patch('settings/notification/dashboard-live', [NotificationController::class, 'updateDashboardLive'])->name('settings.notification.dashboard-live');
 });

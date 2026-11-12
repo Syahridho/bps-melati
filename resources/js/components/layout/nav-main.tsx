@@ -29,7 +29,7 @@ function isUrlActive(itemUrl: string, currentUrl: string): boolean {
         return currentPath === itemPath;
     }
 
-    if (itemPath === '/settings/application' && currentPath.startsWith('/settings')) {
+    if (itemPath.startsWith('/settings') && currentPath.startsWith('/settings')) {
         return true;
     }
 
