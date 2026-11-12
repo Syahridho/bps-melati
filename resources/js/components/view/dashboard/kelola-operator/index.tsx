@@ -7,7 +7,7 @@ import { useOperatorManagement } from '@/hooks/use-operator-management';
 import { useOperatorPresence } from '@/hooks/use-operator-presence';
 import AdminPage from '@/layouts/dashboard/page';
 import { type OperatorPageProps } from '@/types/operator';
-import { usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, UserPlus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
@@ -70,6 +70,7 @@ export default function KelolaOperatorView() {
             // description="Manajemen akun admin dan operator untuk pengelolaan laporan dan data sistem Melati"
             breadcrumbs={[{ title: 'Kelola Operator', href: route('dashboard.admin.operator.index') }]}
         >
+            <Head title="Kelola Operator" />
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-xl font-bold tracking-tight">Input Data</h2>
