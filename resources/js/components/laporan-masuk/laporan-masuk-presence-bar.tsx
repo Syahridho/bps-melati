@@ -10,16 +10,15 @@ const ROLE_LABEL: Record<PresenceMember['role'], string> = {
 };
 
 interface PresenceBarProps {
-    viewers: PresenceMember[];
+    viewers?: PresenceMember[];
     currentUserId: number;
-    typingName: string | null;
+    typingName?: string | null;
     className?: string;
 }
-
 /**
  * Indikator "sedang dilihat" — murni informasi, tidak mengunci aksi siapa pun.
  */
-export function LaporanMasukPresenceBar({ viewers, currentUserId, typingName, className }: PresenceBarProps) {
+export function LaporanMasukPresenceBar({ viewers = [], currentUserId, typingName = null, className }: PresenceBarProps) {
     const others = viewers.filter((viewer) => viewer.id !== currentUserId);
 
     if (others.length === 0 && typingName === null) {

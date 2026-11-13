@@ -41,7 +41,7 @@ export function TicketResponseHistory({
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="flex items-center gap-2 font-semibold">
                     <MessageSquare className="size-4" />
-                    Riwayat Tanggapan ({responses.length})
+                    Riwayat Tanggapan({responses.length})
                 </h3>
 
                 {headerExtra}

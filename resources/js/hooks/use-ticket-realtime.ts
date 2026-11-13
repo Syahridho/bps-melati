@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 const TYPING_THROTTLE_MS = 2000;
-const TYPING_IDLE_MS = 4000;
+const TYPING_IDLE_MS = 60_000;
 const POLL_INTERVAL_MS = 30000;
 const BOTTOM_THRESHOLD_PX = 160;
 

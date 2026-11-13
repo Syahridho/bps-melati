@@ -1,6 +1,8 @@
+import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk/laporan-masuk-delete-dialog';
+import { LaporanMasukEditDialog } from '@/components/laporan-masuk/laporan-masuk-edit-dialog';
+import { LaporanMasukPresenceBar } from '@/components/laporan-masuk/laporan-masuk-presence-bar';
 import { LaporanMasukReplyForm } from '@/components/laporan-masuk/laporan-masuk-reply-form';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
-import { TicketFlagButton } from '@/components/shared/ticket-flag-button';
 import { mapLaporanMasukToDetailData } from '@/components/shared/ticket-detail/adapters';
 import { SupervisionToggle } from '@/components/shared/ticket-detail/supervision-toggle';
 import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
@@ -10,12 +12,10 @@ import { TicketDetailLayout } from '@/components/shared/ticket-detail/ticket-det
 import { TicketEditDeleteActions } from '@/components/shared/ticket-detail/ticket-edit-delete-actions';
 import { TicketInfoGrid } from '@/components/shared/ticket-detail/ticket-info-grid';
 import { TicketResponseHistory } from '@/components/shared/ticket-detail/ticket-response-history';
+import { TicketFlagButton } from '@/components/shared/ticket-flag-button';
 import { Separator } from '@/components/ui/separator';
 import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
 import { formatFullDate } from '@/lib/laporan-masuk-utils';
-import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk/laporan-masuk-delete-dialog';
-import { LaporanMasukEditDialog } from '@/components/laporan-masuk/laporan-masuk-edit-dialog';
-import { LaporanMasukPresenceBar } from '@/components/laporan-masuk/laporan-masuk-presence-bar';
 import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketResponseItem } from '@/types/laporan-masuk';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Calendar, FileText, Globe, Layers, Mail, Phone, User } from 'lucide-react';
@@ -409,10 +409,7 @@ export default function ShowLaporanMasukView() {
 
                 <TicketContentCard title={detailData.title} content={detailData.content} />
 
-                <TicketAttachments
-                    attachments={detailData.attachments}
-                    onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)}
-                />
+                <TicketAttachments attachments={detailData.attachments} onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)} />
             </div>
 
             <TicketResponseHistory
@@ -425,14 +422,7 @@ export default function ShowLaporanMasukView() {
                 onToggleReply={() => setShowReplyForm((prev) => !prev)}
                 onPreviewAttachment={(att) => handlePreviewAttachment(att, detailData.attachments)}
                 lastItemRef={lastItemRef}
-                headerExtra={
-                    <LaporanMasukPresenceBar
-                        viewers={viewers}
-                        currentUserId={auth.user.id}
-                        typingName={typingName}
-                        className="min-w-0"
-                    />
-                }
+                headerExtra={<LaporanMasukPresenceBar viewers={viewers} currentUserId={auth.user.id} typingName={typingName} className="min-w-0" />}
                 getResendUrl={(response) =>
                     route('dashboard.admin.laporan-masuk.responses.resend', {
                         ticket: ticket.id,
@@ -454,6 +444,9 @@ export default function ShowLaporanMasukView() {
                         onSuccess={() => setShowReplyForm(false)}
                         onPreviewFile={handlePreviewFile}
                         onTyping={broadcastTyping}
+                        currentUserId={auth.user.id}
+                        viewers={viewers}
+                        typingName={typingName}
                     />
                 }
             />

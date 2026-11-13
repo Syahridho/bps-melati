@@ -1,11 +1,12 @@
 import { InputDataAttachmentField as AttachmentField } from '@/components/input-data/input-data-attachment-field';
 import { LaporanMasukConflictBanner as ConflictBanner } from '@/components/laporan-masuk/laporan-masuk-conflict-banner';
+import { LaporanMasukPresenceBar } from '@/components/laporan-masuk/laporan-masuk-presence-bar';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useInputDataAttachments as useAttachments } from '@/hooks/use-input-data-attachments';
-import { type ReplyConflict, type Status } from '@/types/laporan-masuk';
+import { PresenceMember, type ReplyConflict, type Status } from '@/types/laporan-masuk';
 import { useForm } from '@inertiajs/react';
 import { LoaderCircle, Send } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -32,6 +33,9 @@ interface ReplyFormProps {
     onSuccess: () => void;
     onPreviewFile: (file: File, files?: File[]) => void;
     onTyping: () => void;
+    viewers?: PresenceMember[];
+    currentUserId: number;
+    typingName?: string | null;
 }
 
 export function LaporanMasukReplyForm({
@@ -48,6 +52,9 @@ export function LaporanMasukReplyForm({
     onSuccess,
     onPreviewFile,
     onTyping,
+    viewers = [],
+    currentUserId,
+    typingName = null,
 }: ReplyFormProps) {
     const defaultType = hasResponAwal || ticketStatus !== 'baru' ? 'respon_substantif' : 'respon_awal';
     const formRef = useRef<HTMLDivElement>(null);
@@ -176,9 +183,13 @@ export function LaporanMasukReplyForm({
 
     return (
         <div ref={formRef} className="bg-card animate-in fade-in-0 slide-in-from-top-2 space-y-4 rounded-lg border p-4 duration-200 sm:p-6">
-            <div>
-                <h3 className="font-semibold">Balas Laporan</h3>
-                <p className="text-muted-foreground text-xs">Tanggapan akan dikirim ke pelapor melalui kanal yang tersedia.</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="font-semibold">Balas Laporan</h3>
+                    <p className="text-muted-foreground text-xs">Tanggapan akan dikirim ke pelapor melalui kanal yang tersedia.</p>
+                </div>
+                {/* ini bisa */}
+                <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingName={typingName} className="min-w-0" />
             </div>
 
             {conflict && (

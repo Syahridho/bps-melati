@@ -166,13 +166,14 @@ export function LaporanMasukResponseHistory({
                     : undefined,
         };
     };
+    console.log(viewers);
 
     return (
         <div className="bg-card space-y-4 rounded-lg border p-4 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="flex items-center gap-2 font-semibold">
                     <MessageSquare className="size-4" />
-                    Riwayat Tanggapan ({responses.length})
+                    Riwayat Tanggapan({responses.length})
                 </h3>
 
                 <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingName={typingName} className="min-w-0" />
@@ -225,6 +226,9 @@ export function LaporanMasukResponseHistory({
                 onSuccess={onReplySuccess}
                 onPreviewFile={onPreviewFile}
                 onTyping={onTyping}
+                viewers={viewers}
+                currentUserId={currentUserId}
+                typingName={typingName}
             />
         </div>
     );
