@@ -35,7 +35,7 @@ interface ReplyFormProps {
     onTyping: () => void;
     viewers?: PresenceMember[];
     currentUserId: number;
-    typingName?: string | null;
+    typingNames?: string[] | null | undefined;
 }
 
 export function LaporanMasukReplyForm({
@@ -54,7 +54,7 @@ export function LaporanMasukReplyForm({
     onTyping,
     viewers = [],
     currentUserId,
-    typingName = null,
+    typingNames,
 }: ReplyFormProps) {
     const defaultType = hasResponAwal || ticketStatus !== 'baru' ? 'respon_substantif' : 'respon_awal';
     const formRef = useRef<HTMLDivElement>(null);
@@ -189,7 +189,7 @@ export function LaporanMasukReplyForm({
                     <p className="text-muted-foreground text-xs">Tanggapan akan dikirim ke pelapor melalui kanal yang tersedia.</p>
                 </div>
                 {/* ini bisa */}
-                <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingName={typingName} className="min-w-0" />
+                <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingNames={typingNames} className="min-w-0" />
             </div>
 
             {conflict && (

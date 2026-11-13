@@ -12,16 +12,16 @@ const ROLE_LABEL: Record<PresenceMember['role'], string> = {
 interface PresenceBarProps {
     viewers?: PresenceMember[];
     currentUserId: number;
-    typingName?: string | null;
+    typingNames: string[] | null | undefined;
     className?: string;
 }
 /**
  * Indikator "sedang dilihat" — murni informasi, tidak mengunci aksi siapa pun.
  */
-export function LaporanMasukPresenceBar({ viewers = [], currentUserId, typingName = null, className }: PresenceBarProps) {
+export function LaporanMasukPresenceBar({ viewers = [], currentUserId, typingNames = null, className }: PresenceBarProps) {
     const others = viewers.filter((viewer) => viewer.id !== currentUserId);
 
-    if (others.length === 0 && typingName === null) {
+    if (others.length === 0 && typingNames === null) {
         return null;
     }
 
@@ -33,7 +33,6 @@ export function LaporanMasukPresenceBar({ viewers = [], currentUserId, typingNam
             {others.length > 0 && (
                 <HoverCard openDelay={100} closeDelay={80}>
                     <HoverCardTrigger asChild>
-                        {/* Satu trigger untuk seluruh grup avatar. Tanpa atribut title. */}
                         <div
                             tabIndex={0}
                             role="button"
@@ -75,14 +74,14 @@ export function LaporanMasukPresenceBar({ viewers = [], currentUserId, typingNam
                 </HoverCard>
             )}
 
-            {typingName !== null && (
+            {typingNames !== null && typingNames.length > 0 && (
                 <span className="text-muted-foreground inline-flex items-center gap-1.5">
-                    <span className="flex gap-0.5" aria-hidden="true">
-                        <span className="bg-muted-foreground inline-block size-1 animate-pulse rounded-full" />
-                        <span className="bg-muted-foreground inline-block size-1 animate-pulse rounded-full [animation-delay:150ms]" />
-                        <span className="bg-muted-foreground inline-block size-1 animate-pulse rounded-full [animation-delay:300ms]" />
-                    </span>
-                    {typingName} sedang mengetik balasan...
+                    {typingNames.map((name, i) => (
+                        <span key={i} className="flex items-center gap-1.5">
+                            <span className="animate-pulse inline-block size-1.5 rounded-full mr-1" aria-hidden="true" />
+                            {name} sedang mengetik balasan...
+                        </span>
+                    ))}
                 </span>
             )}
         </div>

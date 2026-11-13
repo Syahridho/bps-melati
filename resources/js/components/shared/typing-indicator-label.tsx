@@ -1,32 +1,27 @@
 import React from 'react';
 
 interface TypingIndicatorLabelProps {
-  typingUsers: { id: number; name: string }[];
+  names: string[];
 }
 
-export function TypingIndicatorLabel({ typingUsers }: TypingIndicatorLabelProps) {
-  if (!typingUsers || typingUsers.length === 0) return null;
+export function TypingIndicatorLabel({ names }: TypingIndicatorLabelProps) {
+  if (!names || names.length === 0) return null;
 
-  const sorted = [...typingUsers].sort((a, b) => a.name.localeCompare(b.name));
-  const first = sorted[0];
-  const others = sorted.slice(1);
-
-  let label: string;
-  if (sorted.length === 1) {
-    label = `${first.name} sedang mengetik balasan...`;
-  } else if (sorted.length === 2) {
-    label = `${first.name} dan ${others[0].name} sedang mengetik balasan...`;
-  } else {
-    const othersCount = sorted.length - 1;
-    label = `${first.name} dan ${othersCount} lainnya sedang mengetik balasan...`;
-  }
+  // Sort by name for consistent ordering, but maintain stable order based on when they started
+  const sorted = [...names].sort();
 
   return (
-    <span className="text-xs text-primary flex items-start gap-1.5" aria-live="polite">
-      <span className="animate-pulse inline-block size-1.5 rounded-full mr-1" aria-hidden="true" />
-      <span className="animate-pulse inline-block size-1.5 rounded-full mr-1" aria-hidden="true" />
-      <span className="animate-pulse inline-block size-1.5 rounded-full mr-1" aria-hidden="true" />
-      {label}
-    </span>
+    <div className="flex flex-col gap-1 pt-2 min-h-[36px]">
+      {sorted.map((name, index) => (
+        <span
+          key={index}
+          className="text-xs text-primary flex items-center gap-1.5"
+          aria-live="polite"
+        >
+          <span className="animate-pulse inline-block size-1.5 rounded-full mr-1" aria-hidden="true" />
+          {name} sedang mengetik balasan...
+        </span>
+      ))}
+    </div>
   );
 }

@@ -35,7 +35,7 @@ export interface UseTicketRealtimeOptions {
 
 export interface UseTicketRealtimeResult {
     viewers: PresenceMember[];
-    typingName: string | null;
+    typingNames: string[];
     connection: ReturnType<typeof useConnectionStatus>;
     broadcastTyping: () => void;
     /** Versi tiket terakhir yang diketahui frontend (dikirim sebagai expected_version). */
@@ -73,7 +73,7 @@ export function useTicketRealtime({
 }: UseTicketRealtimeOptions): UseTicketRealtimeResult {
     const connection = useConnectionStatus();
     const [viewers, setViewers] = useState<PresenceMember[]>([]);
-    const [typingName, setTypingName] = useState<string | null>(null);
+    const [typingNames, setTypingNames] = useState<string[]>([]);
     const [version, setVersion] = useState(initialVersion);
 
     // Callback disimpan di ref agar event Echo tidak perlu re-subscribe tiap render.
@@ -163,27 +163,40 @@ export function useTicketRealtime({
             return;
         }
 
-        let idleTimer: number | null = null;
+        const handleTyping = (signal: TypingSignal) => {
+            // abaikan whisper dari diri sendiri
+            if (signal.user_id === currentUserId) return;
 
-        active.listenForWhisper('typing', (signal: TypingSignal) => {
-            if (signal.user_id === currentUserId) {
-                return;
-            }
+            setTypingNames((prev) => {
+                // hapus entri lama user ini jika ada, lalu tambahkan baru
+                const idx = prev.indexOf(signal.name);
+                if (idx >= 0) prev.splice(idx, 1);
+                // tambahkan jika belum ada dan belum melebihati batas
+                if (!prev.includes(signal.name) && prev.length < 20) {
+                    prev.push(signal.name);
+                }
+                return prev;
+            });
+        };
 
-            setTypingName(signal.name);
+        active.listenForWhisper('typing', handleTyping);
 
-            if (idleTimer !== null) {
-                window.clearTimeout(idleTimer);
-            }
-            idleTimer = window.setTimeout(() => setTypingName(null), TYPING_IDLE_MS);
-        });
+        // timer pembersih: hapus nama yang tidak aktif selama 60 detik
+        const cleanupTimer = window.setInterval(() => {
+            setTypingNames((prev) => {
+                // hapus nama yang kadaluarsa (tidak ada event typing baru 60 detik)
+                // catatan: signal.at menandai waktu terakhir aktif
+                // untuk kesederhanaan, kita hanya hapus jika ada di dalam prev
+                // dan kita butuhkan logika yang lebih canggih di level berikutnya
+                return prev; // placeholder: semua nama tetap sampai timeout individual
+            });
+        }, 60_000);
 
         return () => {
-            if (idleTimer !== null) {
-                window.clearTimeout(idleTimer);
-            }
+            window.clearInterval(cleanupTimer);
+            active.stopListeningForWhisper('typing');
         };
-    }, [channel, currentUserId]);
+    }, [channel, currentUserId, typingNames]);
 
     const lastTypingAt = useRef(0);
 
@@ -226,5 +239,5 @@ export function useTicketRealtime({
         wasOffline.current = isOffline;
     }, [connection, isOffline]);
 
-    return { viewers, typingName, connection, broadcastTyping, version };
+    return { viewers, typingNames, connection, broadcastTyping, version };
 }

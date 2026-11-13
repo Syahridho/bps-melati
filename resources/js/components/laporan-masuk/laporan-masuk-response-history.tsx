@@ -19,7 +19,7 @@ interface ResponseHistoryProps {
     showReplyForm: boolean;
     viewers: PresenceMember[];
     currentUserId: number;
-    typingName: string | null;
+    typingNames: string[] | null;
     pendingNotice: string | null;
     conflict: ReplyConflict | null;
     canResend?: boolean;
@@ -55,7 +55,7 @@ export function LaporanMasukResponseHistory({
     showReplyForm,
     viewers,
     currentUserId,
-    typingName,
+    typingNames,
     pendingNotice,
     conflict,
     canResend = false,
@@ -176,7 +176,7 @@ export function LaporanMasukResponseHistory({
                     Riwayat Tanggapan({responses.length})
                 </h3>
 
-                <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingName={typingName} className="min-w-0" />
+                <LaporanMasukPresenceBar viewers={viewers} currentUserId={currentUserId} typingNames={typingNames} className="min-w-0" />
             </div>
 
             <ChatThread
@@ -228,7 +228,7 @@ export function LaporanMasukResponseHistory({
                 onTyping={onTyping}
                 viewers={viewers}
                 currentUserId={currentUserId}
-                typingName={typingName}
+                typingNames={typingNames}
             />
         </div>
     );

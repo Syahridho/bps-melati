@@ -169,7 +169,7 @@ export default function ShowLaporanMasukView() {
 
     const {
         viewers,
-        typingName,
+        typingNames,
         broadcastTyping,
         version: liveVersion,
     } = useTicketRealtime({
@@ -422,7 +422,7 @@ export default function ShowLaporanMasukView() {
                 onToggleReply={() => setShowReplyForm((prev) => !prev)}
                 onPreviewAttachment={(att) => handlePreviewAttachment(att, detailData.attachments)}
                 lastItemRef={lastItemRef}
-                headerExtra={<LaporanMasukPresenceBar viewers={viewers} currentUserId={auth.user.id} typingName={typingName} className="min-w-0" />}
+                headerExtra={<LaporanMasukPresenceBar viewers={viewers} currentUserId={auth.user.id} typingNames={typingNames} className="min-w-0" />}
                 getResendUrl={(response) =>
                     route('dashboard.admin.laporan-masuk.responses.resend', {
                         ticket: ticket.id,
@@ -446,7 +446,7 @@ export default function ShowLaporanMasukView() {
                         onTyping={broadcastTyping}
                         currentUserId={auth.user.id}
                         viewers={viewers}
-                        typingName={typingName}
+                        typingNames={typingNames}
                     />
                 }
             />
