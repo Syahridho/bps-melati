@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Ticket;
 use App\Models\User;
+use Illuminate\Notifications\DatabaseNotification as Notification;
 
 class InboxCounter
 {
@@ -57,5 +58,20 @@ class InboxCounter
             'respon_awal' => (int) ($row?->respon_awal ?? 0),
             'respon_substantif' => (int) ($row?->respon_substantif ?? 0),
         ];
+    }
+
+    /**
+     * Jumlah notifikasi belum dibaca untuk user login.
+     */
+    public static function getUnreadCount(?User $user = null): int
+    {
+        if ($user === null) {
+            return 0;
+        }
+
+        return Notification::where('notifiable_type', $user->getMorphClass())
+            ->where('notifiable_id', $user->id)
+            ->whereNull('read_at')
+            ->count();
     }
 }

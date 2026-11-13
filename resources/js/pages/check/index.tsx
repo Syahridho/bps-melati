@@ -4,13 +4,15 @@ import { CheckGuideSection } from '@/components/check/check-guide';
 import { CheckHeader } from '@/components/check/check-header';
 import { CheckSearchCard } from '@/components/check/check-search-card';
 import { CheckTicketSummary } from '@/components/check/check-ticket-summary';
+import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
 import { BpsFooter } from '@/components/layout/bps-footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCheckReplyForm } from '@/hooks/use-check-reply-form';
 import { useCheckTicket } from '@/hooks/use-check-ticket';
-import { type CheckPageProps } from '@/types/check';
+import { type Attachment, type CheckPageProps } from '@/types/check';
 import { Head, usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function CheckTicket() {
     const { ticketNumber, ticket, searched, flash, errors: pageErrors } = usePage<CheckPageProps>().props;
@@ -40,6 +42,16 @@ export default function CheckTicket() {
         handleRemoveFile,
         handleSendReply,
     } = useCheckReplyForm(ticket);
+
+    const [previewAttachments, setPreviewAttachments] = useState<AttachmentPreviewSource[]>([]);
+    const [previewIndex, setPreviewIndex] = useState(0);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+    const handlePreviewAttachment = (attachment: Attachment, list: Attachment[] = []) => {
+        setPreviewAttachments(list.length > 0 ? list : [attachment]);
+        setPreviewIndex(0);
+        setIsPreviewOpen(true);
+    };
 
     return (
         <>
@@ -83,7 +95,12 @@ export default function CheckTicket() {
 
                     {searched && ticket && (
                         <div className="space-y-6">
-                            <CheckTicketSummary ticket={ticket} copied={copied} onCopy={handleCopy} />
+                            <CheckTicketSummary
+                                ticket={ticket}
+                                copied={copied}
+                                onCopy={handleCopy}
+                                onPreviewAttachment={handlePreviewAttachment}
+                            />
 
                             <CheckConversationCard
                                 ticket={ticket}
@@ -100,6 +117,7 @@ export default function CheckTicket() {
                                 onFileChange={handleFileChange}
                                 onRemoveFile={handleRemoveFile}
                                 onSubmitReply={handleSendReply}
+                                onPreviewAttachment={handlePreviewAttachment}
                             />
                         </div>
                     )}
@@ -108,6 +126,14 @@ export default function CheckTicket() {
                 </main>
 
                 <BpsFooter />
+
+                <AttachmentPreviewDialog
+                    items={previewAttachments}
+                    initialIndex={previewIndex}
+                    open={isPreviewOpen}
+                    onClose={() => setIsPreviewOpen(false)}
+                    allowOpenInNewTab={false}
+                />
 
                 {ticket && (
                     <CheckCompleteDialog

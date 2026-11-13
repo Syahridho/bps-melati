@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
-use Illuminate\Notifications\DatabaseNotification as Notification;
+use App\Support\InboxCounter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Notifications\DatabaseNotification as Notification;
 use Illuminate\Validation\ValidationException;
 
 class NotificationController extends Controller
@@ -59,10 +58,7 @@ class NotificationController extends Controller
             'success' => true,
             'data' => NotificationResource::collection($notifications)->resolve($request),
             'next_cursor' => $notifications->nextCursor(),
-            'unread_count' => Notification::where('notifiable_type', $user->getMorphClass())
-                ->where('notifiable_id', $user->id)
-                ->whereNull('read_at')
-                ->count(),
+            'unread_count' => InboxCounter::getUnreadCount($user),
         ]);
     }
 
@@ -76,10 +72,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'success' => true,
-            'unread_count' => Notification::where('notifiable_type', $user->getMorphClass())
-                ->where('notifiable_id', $user->id)
-                ->whereNull('read_at')
-                ->count(),
+            'unread_count' => InboxCounter::getUnreadCount($user),
         ]);
     }
 

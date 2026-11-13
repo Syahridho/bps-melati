@@ -7,7 +7,7 @@ import { usePage } from '@inertiajs/react';
 import { type SharedData } from '@/types';
 
 export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: BreadcrumbItemType[] }) {
-    const { auth, inbox_open_count } = usePage<SharedData>().props;
+    const { auth, notifications_unread_count } = usePage<SharedData>().props;
 
     return (
         <header className="border-sidebar-border/50 flex h-16 shrink-0 items-center border-b px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-6">
@@ -17,7 +17,7 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                     <Breadcrumbs breadcrumbs={breadcrumbs} />
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                    <NotificationBell userId={auth.user.id} initialUnreadCount={inbox_open_count ?? 0} />
+                    <NotificationBell userId={auth.user.id} initialUnreadCount={notifications_unread_count ?? 0} />
                     <AppearanceToggleDropdown />
                 </div>
             </div>

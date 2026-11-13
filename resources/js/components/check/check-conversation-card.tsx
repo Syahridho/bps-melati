@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { responseTypeLabel } from '@/lib/check-constants';
 import { formatDateTime, isImageFile, isImageMime, isPdfMime } from '@/lib/check-utils';
 import { formatFileSize } from '@/lib/welcome-utils';
-import { type TicketDetail } from '@/types/check';
+import { type Attachment, type TicketDetail } from '@/types/check';
 import {
     CheckCircle2,
     Clock,
@@ -43,6 +43,7 @@ interface CheckConversationCardProps {
     onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
     onRemoveFile: (index: number) => void;
     onSubmitReply: (e: FormEvent) => void;
+    onPreviewAttachment: (attachment: Attachment, list?: Attachment[]) => void;
 }
 
 export function CheckConversationCard({
@@ -60,6 +61,7 @@ export function CheckConversationCard({
     onFileChange,
     onRemoveFile,
     onSubmitReply,
+    onPreviewAttachment,
 }: CheckConversationCardProps) {
     console.log(ticket);
     return (
@@ -153,30 +155,29 @@ export function CheckConversationCard({
                                             <div className="space-y-1.5 border-t pt-2">
                                                 <span className="text-muted-foreground text-xs font-medium">Lampiran:</span>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {res.attachments.map((att) => (
-                                                        <a
-                                                            key={att.id}
-                                                            href={att.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="bg-muted/50 hover:bg-accent inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors"
-                                                        >
-                                                            {isImageMime(att.mime_type, att.original_name) ? (
-                                                                <ImageIcon className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                                                            ) : isPdfMime(att.mime_type, att.original_name) ? (
-                                                                <FileText className="h-3.5 w-3.5 shrink-0 text-red-500" />
-                                                            ) : (
-                                                                <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-                                                            )}
-                                                            <span className="max-w-[180px] truncate">{att.original_name}</span>
-                                                            {att.size ? (
-                                                                <span className="text-muted-foreground text-[10px]">
-                                                                    ({formatFileSize(att.size)})
-                                                                </span>
-                                                            ) : null}
-                                                            <Download className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-                                                        </a>
-                                                    ))}
+                                        {res.attachments.map((att) => (
+                                            <Button
+                                                key={att.id}
+                                                type="button"
+                                                className="bg-muted/50 hover:bg-accent inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors"
+                                                onClick={() => onPreviewAttachment(att, res.attachments)}
+                                            >
+                                                {isImageMime(att.mime_type, att.original_name) ? (
+                                                    <ImageIcon className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+                                                ) : isPdfMime(att.mime_type, att.original_name) ? (
+                                                    <FileText className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                                                ) : (
+                                                    <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                                )}
+                                                <span className="max-w-[180px] truncate">{att.original_name}</span>
+                                                {att.size ? (
+                                                    <span className="text-muted-foreground text-[10px]">
+                                                        ({formatFileSize(att.size)})
+                                                    </span>
+                                                ) : null}
+                                                <Download className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                            </Button>
+                                        ))}
                                                 </div>
                                             </div>
                                         )}

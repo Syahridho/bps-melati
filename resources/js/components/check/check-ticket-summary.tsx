@@ -5,16 +5,17 @@ import { Label } from '@/components/ui/label';
 import { classificationBadgeVariant, classificationLabel, statusConfig } from '@/lib/check-constants';
 import { formatDateTime, isImageMime, isPdfMime } from '@/lib/check-utils';
 import { formatFileSize } from '@/lib/welcome-utils';
-import { type TicketDetail } from '@/types/check';
+import { type Attachment, type TicketDetail } from '@/types/check';
 import { Calendar, Check, Copy, Download, FileText, Image as ImageIcon, Inbox, Paperclip, User } from 'lucide-react';
 
 interface CheckTicketSummaryProps {
     ticket: TicketDetail;
     copied: boolean;
     onCopy: (text: string) => void;
+    onPreviewAttachment: (attachment: Attachment, list?: Attachment[]) => void;
 }
 
-export function CheckTicketSummary({ ticket, copied, onCopy }: CheckTicketSummaryProps) {
+export function CheckTicketSummary({ ticket, copied, onCopy, onPreviewAttachment }: CheckTicketSummaryProps) {
     const statusInfo = statusConfig(ticket.status);
     const StatusIcon = statusInfo.icon;
 
@@ -114,12 +115,13 @@ export function CheckTicketSummary({ ticket, copied, onCopy }: CheckTicketSummar
                         <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Lampiran Pelapor</Label>
                         <div className="flex flex-wrap gap-2">
                             {ticket.attachments.map((att) => (
-                                <a
+                                <Button
                                     key={att.id}
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
                                     className="bg-card hover:bg-accent inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors"
+                                    onClick={() => onPreviewAttachment(att, ticket.attachments)}
                                 >
                                     {isImageMime(att.mime_type, att.original_name) ? (
                                         <ImageIcon className="h-3.5 w-3.5 shrink-0 text-blue-500" />
@@ -131,7 +133,7 @@ export function CheckTicketSummary({ ticket, copied, onCopy }: CheckTicketSummar
                                     <span className="max-w-[200px] truncate">{att.original_name}</span>
                                     <span className="text-muted-foreground">({formatFileSize(att.size)})</span>
                                     <Download className="text-muted-foreground ml-1 h-3.5 w-3.5 shrink-0" />
-                                </a>
+                                </Button>
                             ))}
                         </div>
                     </div>

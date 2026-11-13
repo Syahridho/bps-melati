@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
             'inbox_open_count' => fn () => ($request->user()?->isAdmin() || $request->user()?->isOperator())
                 ? InboxCounter::getCounts($request->user())['semua']
                 : 0,
+            'notifications_unread_count' => fn () => InboxCounter::getUnreadCount($request->user()),
             'vapid_public_key' => env('VAPID_PUBLIC_KEY'),
             'flash' => [
                 'ticket_number' => fn () => $request->session()->get('ticket_number'),

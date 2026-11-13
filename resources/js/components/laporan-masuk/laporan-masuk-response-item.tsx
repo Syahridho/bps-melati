@@ -106,7 +106,7 @@ export function LaporanMasukResponseItem({ response, onPreviewAttachment, resend
     );
 }
 
-function ResendForm({ url, currentEmail }: { url: string; currentEmail: string }) {
+export function ResendForm({ url, currentEmail }: { url: string; currentEmail: string }) {
     const { data, setData, post, processing, errors } = useForm({
         reporter_email: currentEmail,
     });

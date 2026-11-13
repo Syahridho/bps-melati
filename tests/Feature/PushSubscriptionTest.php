@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\Channel;
+use App\Models\Ticket;
 use App\Models\User;
+use App\Notifications\LaporanNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 use function Pest\Laravel\actingAs;
@@ -115,7 +118,7 @@ test('user cannot delete another user push subscription', function () {
     // User B tries to delete user A's subscription -> should not delete
     actingAs($userB)
         ->deleteJson(route('push-subscriptions.destroy'), ['endpoint' => $endpoint])
-        ->assertStatus(200);
+        ->assertStatus(204);
 
     expect($userA->pushSubscriptions()->count())->toBe(1);
     $this->assertDatabaseHas('push_subscriptions', ['endpoint' => $endpoint]);
@@ -209,4 +212,75 @@ test('operator status endpoint returns subscribed true when has subscription', f
         ->assertStatus(200);
 
     $response->assertJsonPath('subscribed', true);
+});
+
+test('logout menghapus subscription milik user tersebut', function () {
+    $user = User::factory()->create(['role' => 'operator']);
+    $endpoint = 'https://fcm.googleapis.com/fcm/send/test-logout-delete';
+    actingAs($user)->postJson(route('push-subscriptions.store'), pushSubscriptionPayload($endpoint))->assertStatus(200);
+
+    expect($user->pushSubscriptions()->count())->toBe(1);
+
+    actingAs($user)->post(route('logout'))->assertRedirect('/');
+
+    $this->assertDatabaseMissing('push_subscriptions', ['endpoint' => $endpoint]);
+    expect($user->fresh()->pushSubscriptions()->count())->toBe(0);
+});
+
+test('logout tidak menghapus subscription milik user lain', function () {
+    $userA = User::factory()->create(['role' => 'operator']);
+    $userB = User::factory()->create(['role' => 'operator']);
+    $endpointA = 'https://fcm.googleapis.com/fcm/send/test-logout-a';
+    $endpointB = 'https://fcm.googleapis.com/fcm/send/test-logout-b';
+
+    actingAs($userA)->postJson(route('push-subscriptions.store'), pushSubscriptionPayload($endpointA))->assertStatus(200);
+    actingAs($userB)->postJson(route('push-subscriptions.store'), pushSubscriptionPayload($endpointB))->assertStatus(200);
+
+    actingAs($userA)->post(route('logout'))->assertRedirect('/');
+
+    $this->assertDatabaseMissing('push_subscriptions', ['endpoint' => $endpointA]);
+    $this->assertDatabaseHas('push_subscriptions', ['endpoint' => $endpointB]);
+});
+
+test('payload web push tidak memuat isi laporan', function () {
+    $channel = Channel::firstOrCreate(
+        ['slug' => 'website'],
+        ['name' => 'Website', 'is_active' => true],
+    );
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'T-12345',
+        'classification' => 'pengaduan',
+        'title' => 'Judul Laporan',
+        'content' => 'Isi laporan yang sangat panjang dan sensitif yang tidak boleh bocor.',
+        'period' => now()->format('Y-m'),
+        'sequence' => 1,
+        'channel_id' => $channel->id,
+    ]);
+
+    $user = User::factory()->create(['role' => 'admin']);
+    $notification = LaporanNotification::forNewReport($ticket, [$user->id]);
+
+    expect($notification->data['message'])->not->toContain('Isi laporan yang sangat panjang');
+    expect($notification->data['title'])->toBe('Pengaduan baru masuk');
+    expect($notification->data['ticket_number'])->toBe('T-12345');
+});
+
+test('subscribe ulang dengan endpoint sama mengganti pemilik ke user baru', function () {
+    $userA = User::factory()->create(['role' => 'operator']);
+    $userB = User::factory()->create(['role' => 'operator']);
+    $endpoint = 'https://fcm.googleapis.com/fcm/send/test-re-subscribe';
+
+    actingAs($userA)->postJson(route('push-subscriptions.store'), pushSubscriptionPayload($endpoint))->assertStatus(200);
+    expect($userA->pushSubscriptions()->count())->toBe(1);
+
+    actingAs($userB)->postJson(route('push-subscriptions.store'), pushSubscriptionPayload($endpoint))->assertStatus(200);
+
+    expect($userB->pushSubscriptions()->count())->toBe(1);
+    expect($userA->fresh()->pushSubscriptions()->count())->toBe(0);
+    $this->assertDatabaseHas('push_subscriptions', [
+        'subscribable_type' => User::class,
+        'subscribable_id' => $userB->id,
+        'endpoint' => $endpoint,
+    ]);
 });

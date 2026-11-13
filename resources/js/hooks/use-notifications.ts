@@ -74,6 +74,7 @@ export function useNotifications(
     const [hasMore, setHasMore] = useState(true);
     const loadingMoreRef = useRef(false);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const realtimeProcessedIdsRef = useRef<Set<string>>(new Set());
 
     /**
      * Handler tunggal untuk notifikasi realtime dari private channel user.
@@ -85,12 +86,16 @@ export function useNotifications(
             const item = normalizeNotification(event);
 
             // Dedup berdasarkan id (hindari item dobel jika event sama diterima berkali-kali).
+            const isNewNotification = !realtimeProcessedIdsRef.current.has(item.id);
+            if (isNewNotification) {
+                realtimeProcessedIdsRef.current.add(item.id);
+                setUnreadCount((prev) => prev + 1);
+            }
+
             setNotifications((prev) => {
                 if (prev.some((n) => n.id === item.id)) return prev;
                 return [item, ...prev];
             });
-
-            setUnreadCount((prev) => prev + 1);
         },
         [],
     );

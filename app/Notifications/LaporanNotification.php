@@ -3,8 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Ticket;
-use App\Models\User;
-use App\UserRole;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -19,8 +18,10 @@ use NotificationChannels\WebPush\WebPushMessage;
 /**
  * Notifikasi ringan untuk halaman daftar laporan (Input Data, Laporan Masuk, Laporan Selesai).
  *
- * Payload sengaja minimal: tidak mengirim isi laporan atau data pribadi pelapor.
- * Klien cukup mengambil data lengkap lewat Inertia sehingga otorisasi server tetap berlaku.
+ * Saluran database dan broadcast membawa judul/isi singkat karena hanya dapat dilihat
+ * setelah login. Saluran Web Push SENGAJA tidak memuat isi laporan atau data pribadi
+ * pelapor (hanya judul umum dan nomor tiket), karena tampil di layar OS dan bisa
+ * diterima perangkat yang sesi aplikasinya sudah berakhir.
  *
  * Jenis notifikasi:
  *  - laporan_masuk: laporan baru masuk dari pelapor (penerima: admin + operator terkait)
@@ -29,11 +30,14 @@ use NotificationChannels\WebPush\WebPushMessage;
  *  - input_data: admin/operator menginput data baru (penerima: admin + operator terkait)
  *
  * ShouldQueue: notifikasi dikirim melalui antrean agar tidak memblokir request.
- * via() = ['database', 'broadcast']: disimpan ke tabel notifications dan disiarkan lewat Reverb.
+ * via() = ['database', 'broadcast'] (+ WebPush bila VAPID tersedia).
  */
 class LaporanNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    /** ID unik notifikasi ini (UUID), digunakan untuk DB dan broadcast payload. */
+    public string $notificationId;
 
     /**
      * @param  string  $type  Salah satu dari: laporan_masuk | laporan_selesai | laporan_dibalas | input_data
@@ -50,11 +54,8 @@ class LaporanNotification extends Notification implements ShouldQueue
         $this->notificationId = (string) Str::uuid();
     }
 
-    /** ID unik notifikasi ini (UUID), digunakan untuk DB dan broadcast payload. */
-    public string $notificationId;
-
     /**
-     * Saluran notifikasi: database + broadcast.
+     * Saluran notifikasi: database + broadcast (+ web push).
      * Dilewati bila fitur notifikasi dinonaktifkan (config/notifications.php enabled=false),
      * mis. saat seeder/import massal.
      */
@@ -72,7 +73,7 @@ class LaporanNotification extends Notification implements ShouldQueue
 
         $channels = ['database', 'broadcast'];
 
-        // Hampirkan push bila kunci VAPID tersimpan di server.
+        // Tambahkan push bila kunci VAPID tersimpan di server.
         if (filled(config('webpush.vapid.private_key'))) {
             $channels[] = WebPushChannel::class;
         }
@@ -90,7 +91,7 @@ class LaporanNotification extends Notification implements ShouldQueue
             return false;
         }
 
-        $key = 'notification:dedup:'.$this->type.':'.$this->data['ticket_number'].':'.(int) $notifiable->getKey();
+        $key = 'notification:dedup:'.$this->type.':'.($this->data['ticket_number'] ?? '').':'.(int) $notifiable->getKey();
         $ttl = config('notifications.dedup_ttl_seconds', 300);
 
         if (Cache::has($key)) {
@@ -128,7 +129,7 @@ class LaporanNotification extends Notification implements ShouldQueue
         return new BroadcastMessage([
             'id' => $this->notificationId,
             'type' => $this->type,
-            'title' => $this->data['title'],
+            'title' => $this->data['title'] ?? 'Notifikasi baru',
             'message' => $this->data['message'] ?? '',
             'ticket_number' => $this->data['ticket_number'] ?? null,
             'url' => $this->data['url'] ?? null,
@@ -141,8 +142,9 @@ class LaporanNotification extends Notification implements ShouldQueue
     /**
      * Payload yang dikirim lewat Web Push (toWebPush).
      *
-     * Isi sengaja ringkas: judul, isi singkat, nomor tiket, dan URL detail.
-     * Tidak memuat isi laporan lengkap atau data pribadi pelapor.
+     * Hanya memuat judul umum dan nomor tiket. Isi laporan, judul tiket buatan pelapor,
+     * dan nama pelapor tidak disertakan agar tidak bocor ke layar OS atau perangkat
+     * yang sudah logout. Detail dilihat setelah login lewat URL pada data notifikasi.
      */
     public function toWebPush(object $notifiable): WebPushMessage
     {
@@ -152,12 +154,14 @@ class LaporanNotification extends Notification implements ShouldQueue
             't2' => now()->format('Y-m-d H:i:s.u'),
         ]);
 
-        return (new WebPushMessage())
+        $ticketNumber = $this->data['ticket_number'] ?? null;
+
+        return (new WebPushMessage)
             ->title($this->data['title'] ?? 'Notifikasi baru')
-            ->body($this->data['message'] ?? '')
-            ->icon('/logo-melati.png')
-            ->badge('/logo-melati.png')
-            ->tag($this->data['ticket_number'] ?? $this->notificationId)
+            ->body($ticketNumber ? 'Tiket '.$ticketNumber : 'Buka Melati untuk melihat detail.')
+            ->icon('/logo-melati.webp')
+            ->badge('/logo-melati.webp')
+            ->tag($ticketNumber ?? $this->notificationId)
             ->renotify()
             ->options([
                 'urgency' => 'high',
@@ -165,7 +169,7 @@ class LaporanNotification extends Notification implements ShouldQueue
             ])
             ->data([
                 'url' => $this->data['url'] ?? null,
-                'ticket_number' => $this->data['ticket_number'] ?? null,
+                'ticket_number' => $ticketNumber,
                 'type' => $this->type,
                 'notification_id' => $this->notificationId,
             ]);
@@ -188,7 +192,7 @@ class LaporanNotification extends Notification implements ShouldQueue
         $channels = [];
 
         foreach ($this->recipientUserIds as $userId) {
-            $channels[] = new \Illuminate\Broadcasting\PrivateChannel('App.Models.User.' . (int) $userId);
+            $channels[] = new PrivateChannel('App.Models.User.'.(int) $userId);
         }
 
         return $channels;
@@ -199,12 +203,10 @@ class LaporanNotification extends Notification implements ShouldQueue
      *
      * @param  Ticket  $ticket  Tiket yang baru dibuat
      * @param  array<int, int>  $recipientUserIds  ID pengguna yang berhak menerima
-     * @return self
      */
     public static function forNewReport(Ticket $ticket, array $recipientUserIds = []): self
     {
-        $type = $ticket->classification;
-        $typeLabel = match ($type) {
+        $typeLabel = match ($ticket->classification) {
             'pengaduan' => 'Pengaduan',
             'aspirasi' => 'Aspirasi',
             'permintaan_informasi' => 'Permintaan Informasi',
@@ -218,8 +220,8 @@ class LaporanNotification extends Notification implements ShouldQueue
                 'ticket_number' => $ticket->ticket_number,
                 'type' => $ticket->classification,
                 'title' => "{$typeLabel} baru masuk",
-                'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
-                'url' => '/dashboard/admin/laporan-masuk/' . $ticket->ticket_number,
+                'message' => Str::limit((string) ($ticket->title ?? ''), 100),
+                'url' => '/dashboard/admin/laporan-masuk/'.$ticket->ticket_number,
                 'actor_name' => $ticket->reporter_name ?? null,
             ],
             recipientUserIds: $recipientUserIds,
@@ -228,10 +230,6 @@ class LaporanNotification extends Notification implements ShouldQueue
 
     /**
      * Buat payload notifikasi untuk laporan yang selesai.
-     *
-     * @param  Ticket  $ticket  Tiket yang selesai
-     * @param  array<int, int>  $recipientUserIds  ID pengguna yang berhak menerima
-     * @return self
      */
     public static function forCompleted(Ticket $ticket, array $recipientUserIds = []): self
     {
@@ -242,8 +240,8 @@ class LaporanNotification extends Notification implements ShouldQueue
                 'ticket_number' => $ticket->ticket_number,
                 'type' => $ticket->classification,
                 'title' => 'Laporan selesai',
-                'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
-                'url' => '/dashboard/admin/laporan-selesai/' . $ticket->ticket_number,
+                'message' => Str::limit((string) ($ticket->title ?? $ticket->content ?? ''), 100),
+                'url' => '/dashboard/admin/laporan-selesai/'.$ticket->ticket_number,
                 'actor_name' => null,
             ],
             recipientUserIds: $recipientUserIds,
@@ -255,7 +253,6 @@ class LaporanNotification extends Notification implements ShouldQueue
      *
      * @param  Ticket  $ticket  Tiket yang dibalas
      * @param  array<int, int>  $recipientUserIds  ID pengguna yang berhak menerima
-     * @return self
      */
     public static function forRepliedByReporter(Ticket $ticket, array $recipientUserIds = []): self
     {
@@ -267,7 +264,7 @@ class LaporanNotification extends Notification implements ShouldQueue
                 'type' => $ticket->classification,
                 'title' => 'Balasan baru dari pelapor',
                 'message' => 'Pelapor telah membalas tanggapan Anda.',
-                'url' => '/dashboard/admin/laporan-masuk/' . $ticket->ticket_number,
+                'url' => '/dashboard/admin/laporan-masuk/'.$ticket->ticket_number,
                 'actor_name' => $ticket->reporter_name ?? null,
             ],
             recipientUserIds: $recipientUserIds,
@@ -279,7 +276,6 @@ class LaporanNotification extends Notification implements ShouldQueue
      *
      * @param  Ticket  $ticket  Tiket input data baru
      * @param  array<int, int>  $recipientUserIds  ID pengguna yang berhak menerima
-     * @return self
      */
     public static function forInputData(Ticket $ticket, array $recipientUserIds = []): self
     {
@@ -290,8 +286,8 @@ class LaporanNotification extends Notification implements ShouldQueue
                 'ticket_number' => $ticket->ticket_number,
                 'type' => $ticket->classification,
                 'title' => 'Data tiket baru ditambahkan',
-                'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
-                'url' => '/dashboard/admin/input-data/' . $ticket->ticket_number,
+                'message' => Str::limit((string) ($ticket->title ?? $ticket->content ?? ''), 100),
+                'url' => '/dashboard/admin/input-data/'.$ticket->ticket_number,
                 'actor_name' => null,
             ],
             recipientUserIds: $recipientUserIds,

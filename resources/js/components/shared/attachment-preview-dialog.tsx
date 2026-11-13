@@ -37,6 +37,7 @@ interface AttachmentPreviewDialogProps {
     items?: AttachmentPreviewSource[];
     initialIndex?: number;
     onClose: () => void;
+    allowOpenInNewTab?: boolean;
 }
 
 function formatFileSize(bytes?: number): string {
@@ -86,7 +87,7 @@ function isPdf(name: string, mime?: string | null): boolean {
     return name.toLowerCase().endsWith('.pdf');
 }
 
-export function AttachmentPreviewDialog({ open, item, items, initialIndex = 0, onClose }: AttachmentPreviewDialogProps) {
+export function AttachmentPreviewDialog({ open, item, items, initialIndex = 0, onClose, allowOpenInNewTab = true }: AttachmentPreviewDialogProps) {
     const list = useMemo(() => {
         if (items && items.length > 0) return items;
         return item ? [item] : [];
@@ -320,7 +321,7 @@ export function AttachmentPreviewDialog({ open, item, items, initialIndex = 0, o
                         )}
 
                         {/* Buka di Tab Baru */}
-                        {activeUrl && (
+                        {allowOpenInNewTab && activeUrl && (
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -410,14 +411,16 @@ export function AttachmentPreviewDialog({ open, item, items, initialIndex = 0, o
                             )}
 
                             {/* Banner mobile untuk buka tab baru bila diperlukan */}
-                            <div className="bg-muted/90 flex items-center justify-between border-b px-3 py-1.5 text-xs sm:hidden">
-                                <span className="text-muted-foreground truncate text-[11px]">Buka tab baru jika PDF tidak tampil</span>
-                                <Button variant="outline" size="sm" asChild className="h-7 text-xs">
-                                    <a href={activeUrl} target="_blank" rel="noopener noreferrer">
-                                        Buka Tab Baru
-                                    </a>
-                                </Button>
-                            </div>
+                            {allowOpenInNewTab && (
+                                <div className="bg-muted/90 flex items-center justify-between border-b px-3 py-1.5 text-xs sm:hidden">
+                                    <span className="text-muted-foreground truncate text-[11px]">Buka tab baru jika PDF tidak tampil</span>
+                                    <Button variant="outline" size="sm" asChild className="h-7 text-xs">
+                                        <a href={activeUrl} target="_blank" rel="noopener noreferrer">
+                                            Buka Tab Baru
+                                        </a>
+                                    </Button>
+                                </div>
+                            )}
 
                             <iframe
                                 key={activeUrl}

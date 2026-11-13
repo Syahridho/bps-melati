@@ -11,7 +11,9 @@ class PushSubscriptionController extends Controller
 {
     /**
      * POST /push-subscriptions
-     * Simpan atau perbarui push subscription perangkat milik user login.
+     * POST /push/subscribe
+     * Simpan atau perbarui subscription. Satu endpoint hanya milik satu user,
+     * jadi jika user lain login di browser yang sama, endpoint berpindah.
      */
     public function store(StorePushSubscriptionRequest $request): JsonResponse
     {
@@ -37,44 +39,39 @@ class PushSubscriptionController extends Controller
     }
 
     /**
+     * POST /push/unsubscribe
      * DELETE /push-subscriptions
-     * Hapus subscription berdasarkan endpoint (hanya milik user login).
+     * Hapus subscription berdasarkan endpoint. Idempotent (selalu 204).
      */
-    public function destroy(Request $request): JsonResponse
+    public function destroy(Request $request)
     {
-        $user = $request->user();
-
         $request->validate([
             'endpoint' => ['required', 'string', 'url'],
         ]);
 
-        $user->deletePushSubscription($request->input('endpoint'));
+        $request->user()->pushSubscriptions()
+            ->where('endpoint', $request->input('endpoint'))
+            ->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Subscription push dihapus.',
-        ]);
+        return response()->noContent();
     }
 
     /**
      * GET /push-subscriptions/status?endpoint=...
-     * Cek apakah endpoint milik user login telah terdaftar di server.
      */
     public function status(Request $request): JsonResponse
     {
-        $user = $request->user();
-
         $request->validate([
             'endpoint' => ['required', 'string', 'url'],
         ]);
 
-        $subscription = $user->pushSubscriptions()
+        $exists = $request->user()->pushSubscriptions()
             ->where('endpoint', $request->input('endpoint'))
-            ->first();
+            ->exists();
 
         return response()->json([
             'success' => true,
-            'subscribed' => $subscription !== null,
+            'subscribed' => $exists,
         ]);
     }
 }
