@@ -15,7 +15,7 @@ export default function SettingsLayout({
     description?: string;
     children: React.ReactNode;
 }) {
-    const { isAdmin } = useAuthRole();
+    const { isAdmin, isOperatorTim } = useAuthRole();
     const pageUrl = usePage().url;
     const currentPath = pageUrl.split('?')[0].split('#')[0];
 
@@ -41,11 +41,15 @@ export default function SettingsLayout({
                   },
               ]
             : []),
-        {
-            title: 'Notifikasi',
-            url: '/settings/notification',
-            icon: null,
-        },
+        ...(!isOperatorTim
+            ? [
+                  {
+                      title: 'Notifikasi',
+                      url: '/settings/notification',
+                      icon: null,
+                  },
+              ]
+            : []),
         {
             title: 'Kata Sandi',
             url: '/settings/password',

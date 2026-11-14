@@ -5,7 +5,7 @@ import { useAuthRole } from '@/hooks/use-auth-role';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEcho, useEchoPublic } from '@laravel/echo-react';
-import { ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, Settings, Users } from 'lucide-react';
+import { ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AppLogo from './app-logo';
@@ -124,11 +124,6 @@ export function AppSidebar() {
                 },
             ],
         },
-        {
-            title: 'Pengaturan',
-            url: '/settings/application',
-            icon: Settings,
-        },
     ];
 
     const operatorNavItems: NavItem[] = [
@@ -170,11 +165,6 @@ export function AppSidebar() {
                 },
             ],
         },
-        {
-            title: 'Pengaturan',
-            url: '/settings/notification',
-            icon: Settings,
-        },
     ];
 
     const operatorTimNavItems: NavItem[] = [
@@ -187,11 +177,6 @@ export function AppSidebar() {
             title: 'Input Data',
             url: '/dashboard/operator/input-data',
             icon: FilePlus2,
-        },
-        {
-            title: 'Pengaturan',
-            url: '/settings/notification',
-            icon: Settings,
         },
     ];
 

@@ -7,7 +7,6 @@ use App\Http\Controllers\Settings\ChannelController;
 use App\Http\Controllers\Settings\PasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::middleware('auth')->group(function () {
     Route::get('settings', function (Request $request) {
@@ -18,7 +17,9 @@ Route::middleware('auth')->group(function () {
     Route::put('settings/password', [PasswordController::class, 'update'])->name('password.update');
 
     Route::get('settings/appearance', [SettingController::class, 'indexAppearce'])->name('appearance');
+});
 
+Route::middleware(['auth', 'role:admin,operator'])->group(function () {
     Route::get('settings/notification', [NotificationController::class, 'index'])->name('settings.notification');
 });
 

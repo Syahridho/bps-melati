@@ -39,15 +39,12 @@ test('operator can access notification settings page but cannot manage global', 
             ->where('canManageGlobal', false));
 });
 
-test('operator_tim can access notification settings page but cannot manage global', function () {
+test('operator_tim cannot access notification settings page', function () {
     $operatorTim = User::factory()->create(['role' => 'operator_tim']);
 
     actingAs($operatorTim)
         ->get(route('settings.notification'))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('settings/notification/index')
-            ->where('canManageGlobal', false));
+        ->assertForbidden();
 });
 
 test('admin can update dashboard_live_enabled via PATCH endpoint', function () {
