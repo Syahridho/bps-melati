@@ -42,6 +42,13 @@ class CheckAttachmentDownloadController extends Controller
             abort(404, 'Lampiran tidak ditemukan.');
         }
 
+        // Validasi kode akses tiket agar URL lampiran tidak dapat ditransfer
+        // ke pihak lain tanpa akses ke tiket tersebut.
+        $providedAccessCode = $request->query('access_code');
+        if (! hash_equals((string) $ticket->access_code, (string) $providedAccessCode)) {
+            abort(403, 'Kode akses tiket tidak valid.');
+        }
+
         // 3. Cegah path traversal
         $path = $attachment->path;
         if (blank($path) || str_contains($path, '..')) {

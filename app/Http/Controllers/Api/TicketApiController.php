@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class TicketApiController extends Controller
@@ -81,6 +82,7 @@ class TicketApiController extends Controller
             'reporter_email' => ! empty($validated['reporter_email']) ? strtolower(trim($validated['reporter_email'])) : null,
             'reporter_wa' => ! empty($validated['reporter_wa']) ? trim($validated['reporter_wa']) : null,
             'content' => trim($validated['content']),
+            'access_code' => Str::random(32),
             'status' => 'baru',
             'is_read' => false,
             'source_app' => $sourceApp,
@@ -257,6 +259,7 @@ class TicketApiController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            'access_code' => ['required', 'string'],
             'message' => ['required', 'string', 'min:5'],
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
@@ -271,6 +274,13 @@ class TicketApiController extends Controller
         }
 
         $validated = $validator->validated();
+
+        if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode akses tiket tidak valid.',
+            ], 403);
+        }
 
         // Satu action untuk web & API: simpan balasan + lampiran, bersihkan cache,
         // lalu siarkan setelah commit (aman bila Reverb sedang mati).
@@ -304,7 +314,7 @@ class TicketApiController extends Controller
      * POST /api/check/{ticketNumber}/complete
      * Pelapor menandai tiket selesai.
      */
-    public function complete(string $ticketNumber): JsonResponse
+    public function complete(Request $request, string $ticketNumber): JsonResponse
     {
         $ticketNumber = trim($ticketNumber);
         $ticket = Ticket::where('ticket_number', $ticketNumber)->first();
@@ -314,6 +324,17 @@ class TicketApiController extends Controller
                 'success' => false,
                 'message' => 'Nomor tiket tidak ditemukan.',
             ], 404);
+        }
+
+        $validated = $request->validate([
+            'access_code' => ['required', 'string'],
+        ]);
+
+        if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kode akses tiket tidak valid.',
+            ], 403);
         }
 
         if ($ticket->status !== 'selesai') {

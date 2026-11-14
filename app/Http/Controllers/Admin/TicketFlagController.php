@@ -17,7 +17,9 @@ class TicketFlagController extends Controller
             'note' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
+        $ticket = Ticket::where('ticket_number', $ticketNumber)
+            ->visibleTo($request->user())
+            ->firstOrFail();
 
         $aktif = $request->boolean('aktif');
         $user = auth()->user();
@@ -35,7 +37,7 @@ class TicketFlagController extends Controller
                 'user_id' => $user?->id,
                 'type' => 'respon_substantif',
                 'is_system' => true,
-                'message' => "Laporan ditandai oleh {$userName}." . ($request->input('note') ? " Catatan: {$request->input('note')}" : ''),
+                'message' => "Laporan ditandai oleh {$userName}.".($request->input('note') ? " Catatan: {$request->input('note')}" : ''),
                 'sent_at' => now(),
             ]);
         } else {
@@ -55,7 +57,7 @@ class TicketFlagController extends Controller
             ]);
         }
 
-        Cache::forget('ticket_check:' . md5($ticket->ticket_number));
+        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
 
         return response()->json([

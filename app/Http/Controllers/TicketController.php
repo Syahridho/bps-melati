@@ -7,8 +7,8 @@ use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketCreatedMail;
 use App\Models\Ticket;
 use App\Models\User;
-use App\UserRole;
 use App\Notifications\LaporanNotification;
+use App\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -42,6 +42,7 @@ class TicketController extends Controller
             'reporter_email' => $validated['reporter_email'] ?? null,
             'reporter_wa' => $validated['reporter_wa'] ?? null,
             'content' => $validated['content'],
+            'access_code' => Str::random(32),
             'status' => 'baru',
             'is_read' => false,
             'source_app' => 'web',
@@ -83,7 +84,7 @@ class TicketController extends Controller
             'type' => $ticket->classification,
             'title' => 'Laporan baru masuk',
             'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
-            'url' => '/dashboard/admin/laporan-masuk/' . $ticket->ticket_number,
+            'url' => '/dashboard/admin/laporan-masuk/'.$ticket->ticket_number,
             'actor_name' => $ticket->reporter_name ?? null,
         ];
 

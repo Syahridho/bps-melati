@@ -8,6 +8,7 @@ Terima kasih telah menyampaikan {{ $reportTypeNoun ?? $ticket->classificationNou
 <x-mail::panel>
 **Ringkasan Laporan:**
 - **Nomor Tiket:** `{{ $ticket->ticket_number }}`
+- **Kode Akses:** `{{ $ticket->access_code }}`
 - **Klasifikasi:** {{ ucfirst(str_replace('_', ' ', $ticket->classification ?? 'laporan')) }}
 @if($ticket->service_type)
 - **Jenis Layanan:** {{ strtoupper($ticket->service_type) }}

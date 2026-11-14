@@ -3,21 +3,18 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Concerns\RendersRolePage;
-use App\Actions\AutoCloseTickets;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Models\Ticket;
 use App\Support\LaporanCache;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
-use App\Support\TicketResponsePayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class LaporanMasukController extends Controller
@@ -137,7 +134,7 @@ class LaporanMasukController extends Controller
 
         $counts = LaporanCache::remember('laporan-masuk', 'counts', $countParams, 60, $fetchCounts);
 
-         return $this->renderPage($request, 'laporan-masuk/index', [
+        return $this->renderPage($request, 'laporan-masuk/index', [
             'tickets' => $tickets,
             'filters' => $filter->toFilterProps($frontendFilterKey),
             'counts' => $counts,
@@ -182,7 +179,9 @@ class LaporanMasukController extends Controller
      */
     public function update(UpdateTicketRequest $request, string $ticketNumber): RedirectResponse
     {
-        $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
+        $ticket = Ticket::where('ticket_number', $ticketNumber)
+            ->visibleTo($request->user())
+            ->firstOrFail();
 
         $ticket->update([
             'reporter_name' => $request->validated('reporter_name'),

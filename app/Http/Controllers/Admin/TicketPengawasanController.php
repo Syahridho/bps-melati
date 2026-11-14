@@ -16,7 +16,9 @@ class TicketPengawasanController extends Controller
             'aktif' => ['required', 'boolean'],
         ]);
 
-        $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
+        $ticket = Ticket::where('ticket_number', $ticketNumber)
+            ->visibleTo($request->user())
+            ->firstOrFail();
 
         if ($ticket->status === 'selesai') {
             return back()->withErrors(['aktif' => 'Tiket yang sudah selesai tidak dapat diubah kadar pengawasan.']);

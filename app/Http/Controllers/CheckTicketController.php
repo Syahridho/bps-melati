@@ -8,16 +8,16 @@ use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\User;
-use App\UserRole;
 use App\Support\SafeBroadcast;
+use App\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Str;
 
 class CheckTicketController extends Controller
 {
@@ -49,6 +49,7 @@ class CheckTicketController extends Controller
                 return [
                     'id' => $t->id,
                     'ticket_number' => $t->ticket_number,
+                    'access_code' => $t->access_code,
                     'classification' => $t->classification,
                     'title' => $t->title,
                     'service_type' => $t->service_type,
@@ -100,22 +101,22 @@ class CheckTicketController extends Controller
             if ($ticket) {
                 $ticketId = $ticket['id'];
 
-                $ticket['attachments'] = array_map(function ($attachment) use ($ticketId) {
+                $ticket['attachments'] = array_map(function ($attachment) use ($ticketId, $ticket) {
                     $attachment['url'] = URL::temporarySignedRoute(
                         'check.attachments.download',
                         now()->addMinutes(30),
-                        ['type' => 'ticket', 'id' => $attachment['id'], 'ticket' => $ticketId]
+                        ['type' => 'ticket', 'id' => $attachment['id'], 'ticket' => $ticketId, 'access_code' => $ticket['access_code']]
                     );
 
                     return $attachment;
                 }, $ticket['attachments']);
 
-                $ticket['responses'] = array_map(function ($response) use ($ticketId) {
-                    $response['attachments'] = array_map(function ($att) use ($ticketId) {
+                $ticket['responses'] = array_map(function ($response) use ($ticketId, $ticket) {
+                    $response['attachments'] = array_map(function ($att) use ($ticketId, $ticket) {
                         $att['url'] = URL::temporarySignedRoute(
                             'check.attachments.download',
                             now()->addMinutes(30),
-                            ['type' => 'response', 'id' => $att['id'], 'ticket' => $ticketId]
+                            ['type' => 'response', 'id' => $att['id'], 'ticket' => $ticketId, 'access_code' => $ticket['access_code']]
                         );
 
                         return $att;
@@ -147,10 +148,17 @@ class CheckTicketController extends Controller
         }
 
         $validated = $request->validate([
+            'access_code' => ['required', 'string'],
             'message' => ['required', 'string', 'min:5'],
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
+
+        if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
+            return redirect()->back()->withErrors([
+                'message' => 'Kode akses tiket tidak valid.',
+            ])->withInput();
+        }
 
         // Penyimpanan, invalidasi cache, dan broadcast ditangani satu action agar
         // jalur web dan API mobile tidak lagi berperilaku berbeda.
@@ -167,6 +175,16 @@ class CheckTicketController extends Controller
     public function complete(Request $request, string $ticketNumber): RedirectResponse
     {
         $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
+
+        $validated = $request->validate([
+            'access_code' => ['required', 'string'],
+        ]);
+
+        if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
+            return redirect()->back()->withErrors([
+                'message' => 'Kode akses tiket tidak valid.',
+            ])->withInput();
+        }
 
         if ($ticket->status !== 'selesai') {
             $ticket->update([
@@ -207,7 +225,7 @@ class CheckTicketController extends Controller
                         'type' => $ticket->classification,
                         'title' => 'Laporan selesai',
                         'message' => 'Laporan telah ditandai selesai oleh pelapor.',
-                        'url' => '/dashboard/admin/laporan-selesai/' . $ticket->ticket_number,
+                        'url' => '/dashboard/admin/laporan-selesai/'.$ticket->ticket_number,
                         'actor_name' => null,
                     ]),
                     'read_at' => null,
