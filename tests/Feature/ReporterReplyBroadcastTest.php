@@ -48,9 +48,11 @@ beforeEach(function () {
 });
 
 test('web reporter reply dispatches TicketReplyFromReporter after commit', function () {
-    $ticket = createBroadcastTestTicket($this->channel);
+    $accessCode = 'test-access-code-broadcast-123';
+    $ticket = createBroadcastTestTicket($this->channel, ['access_code' => $accessCode]);
 
     $this->post(route('tickets.check.reply', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => $accessCode,
         'message' => 'Terima kasih, saya sudah membaca jawaban dari petugas.',
     ])->assertRedirect();
 
@@ -77,10 +79,12 @@ test('web reporter reply dispatches TicketReplyFromReporter after commit', funct
 });
 
 test('api reporter reply also dispatches TicketReplyFromReporter', function () {
-    $ticket = createBroadcastTestTicket($this->channel, ['source_app' => 'flutter']);
+    $accessCode = 'test-access-code-api-123';
+    $ticket = createBroadcastTestTicket($this->channel, ['source_app' => 'flutter', 'access_code' => $accessCode]);
 
     $this->withHeader('X-API-KEY', config('app.api_key'))
         ->postJson('/api/check/'.$ticket->ticket_number.'/reply', [
+            'access_code' => $accessCode,
             'message' => 'Balasan pelapor dari aplikasi mobile.',
         ])
         ->assertStatus(201)

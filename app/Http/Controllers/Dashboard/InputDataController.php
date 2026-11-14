@@ -223,9 +223,8 @@ class InputDataController extends Controller
         $creator = $request->user();
         $creatorName = $creator?->name ?? 'Admin';
 
-        // Gunakan satu generator nomor tiket yang sama dengan alur publik agar format konsisten.
-        // Format akan menjadi: {prefix}-{code}/{MMYYYY}/{2huruf}{urutan} (contoh: L-1400/112026/BW2077)
-        $generated = Ticket::generateTicketNumber($validated['classification'], $period);
+        // Gunakan generator nomor tiket untuk input data admin (format: NamaPembuat/DDMMYYYY/Sequence).
+        $generated = Ticket::generateAdminTicketNumber($creatorName, $period);
 
         $ticket = Ticket::create([
             'ticket_number' => $generated['ticket_number'],

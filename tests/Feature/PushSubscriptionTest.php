@@ -101,8 +101,7 @@ test('user can delete their own push subscription', function () {
 
     actingAs($user)
         ->deleteJson(route('push-subscriptions.destroy'), ['endpoint' => $endpoint])
-        ->assertStatus(200)
-        ->assertJsonPath('success', true);
+        ->assertStatus(204);
 
     expect($user->pushSubscriptions()->count())->toBe(0);
     $this->assertDatabaseMissing('push_subscriptions', ['endpoint' => $endpoint]);
@@ -195,8 +194,7 @@ test('operator can delete their own push subscription', function () {
 
     actingAs($operator)
         ->deleteJson(route('push-subscriptions.destroy'), ['endpoint' => $endpoint])
-        ->assertStatus(200)
-        ->assertJsonPath('success', true);
+        ->assertStatus(204);
 
     expect($operator->pushSubscriptions()->count())->toBe(0);
     $this->assertDatabaseMissing('push_subscriptions', ['endpoint' => $endpoint]);

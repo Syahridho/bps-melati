@@ -139,6 +139,7 @@ test('can check ticket status via get /api/check', function () {
 });
 
 test('can reply and complete ticket via api', function () {
+    $accessCode = 'test-access-code-api-complete-123';
     $ticket = Ticket::create([
         'ticket_number' => 'P-1400/102026/FL02',
         'period' => '102026',
@@ -146,6 +147,7 @@ test('can reply and complete ticket via api', function () {
         'classification' => 'pengaduan',
         'title' => 'Balas Tiket',
         'content' => 'Isi laporan tiket yang akan dibalas dan diselesaikan',
+        'access_code' => $accessCode,
         'channel_id' => $this->channel->id,
         'status' => 'respon_awal',
     ]);
@@ -153,6 +155,7 @@ test('can reply and complete ticket via api', function () {
     // Reply
     $replyResponse = $this->withHeader('X-API-KEY', $this->apiKey)
         ->postJson("/api/check/{$ticket->ticket_number}/reply", [
+            'access_code' => $accessCode,
             'message' => 'Terima kasih atas tanggapannya, ini informasi tambahan.',
         ]);
 
@@ -161,7 +164,9 @@ test('can reply and complete ticket via api', function () {
 
     // Complete
     $completeResponse = $this->withHeader('X-API-KEY', $this->apiKey)
-        ->postJson("/api/check/{$ticket->ticket_number}/complete");
+        ->postJson("/api/check/{$ticket->ticket_number}/complete", [
+            'access_code' => $accessCode,
+        ]);
 
     $completeResponse->assertStatus(200)
         ->assertJsonPath('success', true);

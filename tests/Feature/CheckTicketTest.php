@@ -80,6 +80,7 @@ test('admin response clears ticket check cache', function () {
 });
 
 test('reporter can reply on check page using existing ticket', function () {
+    $accessCode = 'test-access-code-reply-123';
     $ticket = Ticket::create([
         'ticket_number' => 'A-1400/092026/0101',
         'period' => '2026-09',
@@ -88,12 +89,14 @@ test('reporter can reply on check page using existing ticket', function () {
         'channel_id' => $this->channel->id,
         'reporter_name' => 'Fulan',
         'content' => 'Usulan perbaikan data.',
+        'access_code' => $accessCode,
         'status' => 'respon_substantif',
         'is_read' => true,
         'source_app' => 'web',
     ]);
 
     $response = $this->post(route('tickets.check.reply', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => $accessCode,
         'message' => 'Terima kasih atas tanggapannya, tapi bagaimana dengan data bulan lalu?',
     ]);
 
@@ -115,6 +118,7 @@ test('reporter can reply on check page using existing ticket', function () {
 });
 
 test('reporter can complete ticket on check page', function () {
+    $accessCode = 'test-access-code-complete-123';
     $ticket = Ticket::create([
         'ticket_number' => 'I-1400/092026/0102',
         'period' => '2026-09',
@@ -123,12 +127,15 @@ test('reporter can complete ticket on check page', function () {
         'channel_id' => $this->channel->id,
         'reporter_name' => 'Fulan',
         'content' => 'Mohon data inflasi terbaru.',
+        'access_code' => $accessCode,
         'status' => 'respon_substantif',
         'is_read' => true,
         'source_app' => 'web',
     ]);
 
-    $response = $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]));
+    $response = $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => $accessCode,
+    ]);
 
     $response->assertRedirect();
     $response->assertSessionHas('flash.success');
@@ -138,42 +145,10 @@ test('reporter can complete ticket on check page', function () {
         ->and($ticket->completed_at)->not->toBeNull();
 });
 
-// test('pelapor menyelesaikan tiket menyegarkan badge inbox dan halaman detail', function () {
-//     Event::fake([InboxUpdated::class, TicketUpdated::class]);
-
-//     $ticket = Ticket::create([
-//         'ticket_number' => 'I-1400/092026/0112',
-//         'period' => '2026-09',
-//         'sequence' => 112,
-//         'classification' => 'permintaan_informasi',
-//         'channel_id' => $this->channel->id,
-//         'reporter_name' => 'Fulan',
-//         'content' => 'Mohon data inflasi terbaru.',
-//         'status' => 'respon_substantif',
-//         'is_read' => true,
-//         'source_app' => 'web',
-//     ]);
-
-//     Cache::put('ticket_check:'.md5($ticket->ticket_number), ['stale'], now()->addMinutes(30));
-//     Cache::put("ticket:{$ticket->ticket_number}", ['stale'], now()->addMinutes(30));
-
-//     $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]))->assertRedirect();
-
-//     // Badge/tab Laporan Masuk.
-//     Event::assertDispatchedTimes(InboxUpdated::class, 1);
-//     // Halaman detail tiket yang sedang dibuka petugas ikut tahu status barunya.
-//     Event::assertDispatchedTimes(TicketUpdated::class, 1);
-
-//     Event::assertDispatched(TicketUpdated::class, fn (TicketUpdated $event) => $event->ticket->id === $ticket->id && $event->status === 'selesai');
-
-//     // Cache tampilan /check dibersihkan supaya reload pelapor tidak basi.
-//     expect(Cache::has('ticket_check:'.md5($ticket->ticket_number)))->toBeFalse()
-//         ->and(Cache::has("ticket:{$ticket->ticket_number}"))->toBeFalse();
-// });
-
 test('tiket yang sudah selesai tidak menyiarkan event inbox dua kali', function () {
     Event::fake([InboxUpdated::class, TicketUpdated::class]);
 
+    $accessCode = 'test-access-code-selesai-123';
     $ticket = Ticket::create([
         'ticket_number' => 'I-1400/092026/0113',
         'period' => '2026-09',
@@ -182,13 +157,16 @@ test('tiket yang sudah selesai tidak menyiarkan event inbox dua kali', function 
         'channel_id' => $this->channel->id,
         'reporter_name' => 'Fulan',
         'content' => 'Mohon data inflasi terbaru.',
+        'access_code' => $accessCode,
         'status' => 'selesai',
         'completed_at' => now(),
         'is_read' => true,
         'source_app' => 'web',
     ]);
 
-    $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]))->assertRedirect();
+    $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => $accessCode,
+    ])->assertRedirect();
 
     Event::assertNotDispatched(InboxUpdated::class);
     Event::assertNotDispatched(TicketUpdated::class);
