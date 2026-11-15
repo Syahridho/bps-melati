@@ -5,6 +5,7 @@ import { DashboardRecentTickets } from '@/components/dashboard/dashboard-recent-
 import { DashboardStatCards } from '@/components/dashboard/dashboard-stat-cards';
 import { DashboardStatusCards } from '@/components/dashboard/dashboard-status-cards';
 import { ConnectionIndicator } from '@/components/header/ConnectionIndicator';
+import { useAuthRole } from '@/hooks/use-auth-role';
 import AppLayout from '@/layouts/app-layout';
 import { type DashboardTemplateProps } from '@/types/dashboard';
 import { Head } from '@inertiajs/react';
@@ -30,6 +31,8 @@ export default function DashboardView({
     isLive = true,
     isLiveEnabled = true,
 }: ExtendedDashboardTemplateProps) {
+    const { isOperatorTim } = useAuthRole();
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={title} />
@@ -71,12 +74,14 @@ export default function DashboardView({
                         <DashboardStatusCards stats={stats} />
                     </div>
                     {/* Laporan terbaru */}
-                    <DashboardRecentTickets
-                        recentTickets={recentTickets}
-                        periodLabel={periodLabel}
-                        allTicketsRoute={allTicketsRoute}
-                        ticketDetailRouteName={ticketDetailRouteName}
-                    />
+                    {!isOperatorTim && (
+                        <DashboardRecentTickets
+                            recentTickets={recentTickets}
+                            periodLabel={periodLabel}
+                            allTicketsRoute={allTicketsRoute}
+                            ticketDetailRouteName={ticketDetailRouteName}
+                        />
+                    )}
                 </div>
             </div>
         </AppLayout>

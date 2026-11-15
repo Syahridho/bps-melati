@@ -229,7 +229,7 @@ export function TicketFlagButton({
                         </PopoverTrigger>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                        <p className="text-xs">Tandai laporan ini</p>
+                        <p className="text-xs">Tandai laporan</p>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>

@@ -9,10 +9,6 @@ import SettingsLayout from '@/layouts/settings/layout';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Pengaturan',
-        href: route('settings.application.edit'),
-    },
-    {
         title: 'Pengaturan Tema',
         href: '/settings/appearance',
     },

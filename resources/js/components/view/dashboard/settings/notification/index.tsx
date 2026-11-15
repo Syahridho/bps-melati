@@ -16,10 +16,6 @@ import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Pengaturan',
-        href: route('settings.application.edit'),
-    },
-    {
         title: 'Notifikasi',
         href: '/settings/notification',
     },

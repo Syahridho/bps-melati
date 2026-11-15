@@ -11,8 +11,11 @@ use App\Support\LaporanCache;
 use App\Support\RekapCache;
 use App\Support\RekapYears;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -98,6 +101,23 @@ class AppServiceProvider extends ServiceProvider
                     'last_activity_at' => null,
                 ])->saveQuietly();
             }
+        });
+
+        // Custom: reset password email dalam bahasa Indonesia dengan identitas Melati.
+        ResetPassword::toMailUsing(function (Authenticatable $notifiable, string $token): MailMessage {
+            $resetUrl = url(route('password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ], false));
+
+            return (new MailMessage)
+                ->subject('Reset Password Akun Melati')
+                ->greeting($notifiable->name ? 'Halo, '.$notifiable->name.'!' : 'Halo!')
+                ->line('Kami menerima permintaan reset password untuk akun Anda.')
+                ->action('Reset Password', $resetUrl)
+                ->line('Link ini berlaku selama '.config('auth.passwords.'.config('auth.defaults.passwords').'.expire').' menit.')
+                ->line('Jika Anda tidak merasa meminta reset password, abaikan email ini.')
+                ->salutation('Salam, Tim Melati');
         });
     }
 }

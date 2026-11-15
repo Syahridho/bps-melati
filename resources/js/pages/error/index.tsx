@@ -1,10 +1,8 @@
 import AppLogo from '@/components/layout/app-logo';
-import { Button } from '@/components/ui/button';
 import { Head, Link } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import { AlertOctagon, FileQuestion, HardHat, Lock, LogOut, ServerCrash, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
-Button;
 
 interface ErrorPageProps {
     status: number;
@@ -93,17 +91,9 @@ export default function ErrorPage({ status = 404, message }: ErrorPageProps) {
 
     const Icon = errorDetails.icon;
 
-    const handleReload = () => {
-        window.location.reload();
-    };
+    
 
-    const handleGoBack = () => {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            window.location.href = '/';
-        }
-    };
+    
 
     return (
         <div className="via-background dark:via-background text-foreground relative flex h-dvh flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-blue-50/60 to-blue-100/40 px-4 py-6 font-sans dark:from-slate-950 dark:to-blue-950/30">

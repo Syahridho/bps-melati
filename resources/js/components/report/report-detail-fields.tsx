@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CLASSIFICATIONS } from '@/lib/welcome-constants';
 import { getTodayDateString } from '@/lib/welcome-utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const TODAY_REFRESH_MS = 60000;
 
@@ -19,6 +19,15 @@ interface ReportDetailFieldsProps {
 export function ReportDetailFields({ data, setData, errors }: ReportDetailFieldsProps) {
     const selectedLabel = CLASSIFICATIONS.find((c) => c.value === data.classification)?.label;
     const [today, setToday] = useState(getTodayDateString);
+    const dateRef = useRef<HTMLInputElement>(null);
+
+    const openPicker = () => {
+        try {
+            dateRef.current?.showPicker();
+        } catch (e) {
+            void e;
+        }
+    };
 
     useEffect(() => {
         const timer = window.setInterval(() => setToday(getTodayDateString()), TODAY_REFRESH_MS);
@@ -51,12 +60,14 @@ export function ReportDetailFields({ data, setData, errors }: ReportDetailFields
                             }
                         >
                             <Input
+                                ref={dateRef}
                                 id="tanggal"
                                 type="date"
                                 max={today}
-                                className="w-full"
+                                className="w-full cursor-pointer"
                                 value={data.tanggal_kejadian}
                                 onChange={(e) => handleTanggalKejadianChange(e.target.value)}
+                                onClick={openPicker}
                                 aria-describedby="tanggal-hint"
                             />
                         </LabeledField>

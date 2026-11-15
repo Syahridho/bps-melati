@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -17,7 +18,7 @@ class PasswordResetLinkController extends Controller
      */
     public function create(Request $request): Response
     {
-        return Inertia::render('auth/forgot-password', [
+        return Inertia::render('forgot-password/index', [
             'status' => $request->session()->get('status'),
         ]);
     }
@@ -33,10 +34,20 @@ class PasswordResetLinkController extends Controller
             'email' => 'required|email',
         ]);
 
-        Password::sendResetLink(
-            $request->only('email')
-        );
+        $email = $request->email;
 
-        return back()->with('status', __('A reset link will be sent if the account exists.'));
+        // Cek jika user nonaktif
+        $user = User::where('email', $email)->where('is_active', true)->first();
+
+        // Kirim link reset jika user aktif
+        if ($user) {
+            Password::sendResetLink(
+                $request->only('email')
+            );
+        }
+
+        // Kembali ke halaman lupa password dengan status via Inertia
+        return redirect()->route('password.request')
+            ->with('status', __('Jika email terdaftar, link reset password telah dikirim.'));
     }
 }

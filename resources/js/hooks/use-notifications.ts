@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuthRole } from '@/hooks/use-auth-role';
 import { useEcho } from '@laravel/echo-react';
 
 export interface NotificationItem {
@@ -66,8 +67,10 @@ export function useNotifications(
     userId: number | null,
     initialUnreadCount: number = 0,
 ): UseNotificationsReturn {
+    const { isOperatorTim } = useAuthRole();
+    const effectiveUserId = isOperatorTim ? null : userId;
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-    const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
+    const [unreadCount, setUnreadCount] = useState(isOperatorTim ? 0 : initialUnreadCount);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [cursor, setCursor] = useState<string | null>(null);
@@ -102,16 +105,16 @@ export function useNotifications(
 
     // Subscribe sekali ke private channel per pengguna. Hidup selama layout aktif.
     useEcho<Record<string, unknown>>(
-        userId ? `App.Models.User.${userId}` : '',
+        effectiveUserId ? `App.Models.User.${effectiveUserId}` : '',
         '.notifications',
         handleRealtimeNotification,
-        [userId],
+        [effectiveUserId],
     );
 
     const loadNotifications = useCallback(
         async (append = false): Promise<void> => {
             if (loadingMoreRef.current) return;
-            if (!userId) return;
+            if (!effectiveUserId) return;
 
             // Batalkan request sebelumnya jika masih berjalan (hindari panggilan ganda).
             if (abortControllerRef.current) {
@@ -177,11 +180,11 @@ export function useNotifications(
                 loadingMoreRef.current = false;
             }
         },
-        [userId, cursor],
+        [effectiveUserId, cursor],
     );
 
     const loadUnreadCount = useCallback(async (): Promise<void> => {
-        if (!userId) return;
+        if (!effectiveUserId) return;
         try {
             const res = await fetch(route('notifications.unread.count'), {
                 headers: jsonHeaders(false),
@@ -196,16 +199,16 @@ export function useNotifications(
         } catch {
             // Biarkan diam — data tetap konsisten lewat Inertia reload.
         }
-    }, [userId]);
+    }, [effectiveUserId]);
 
     // Sinkronkan unreadCount dari server pada mount (Inertia props bisa usang).
     useEffect(() => {
         loadUnreadCount();
-    }, [userId, loadUnreadCount]);
+    }, [effectiveUserId, loadUnreadCount]);
 
     const markAsRead = useCallback(
         async (id: string): Promise<void> => {
-            if (!userId) return;
+            if (!effectiveUserId) return;
 
             const prevNotifications = [...notifications];
             const prevUnread = unreadCount;
@@ -241,12 +244,12 @@ export function useNotifications(
                 setUnreadCount(prevUnread);
             }
         },
-        [userId, notifications, unreadCount],
+        [effectiveUserId, notifications, unreadCount],
     );
 
     const markAsUnread = useCallback(
         async (id: string): Promise<void> => {
-            if (!userId) return;
+            if (!effectiveUserId) return;
 
             const prevNotifications = [...notifications];
             const prevUnread = unreadCount;
@@ -281,11 +284,11 @@ export function useNotifications(
                 setUnreadCount(prevUnread);
             }
         },
-        [userId, notifications, unreadCount],
+        [effectiveUserId, notifications, unreadCount],
     );
 
     const markAllAsRead = useCallback(async (): Promise<void> => {
-        if (!userId) return;
+        if (!effectiveUserId) return;
 
         const prevNotifications = [...notifications];
 
@@ -317,7 +320,7 @@ export function useNotifications(
             setNotifications(prevNotifications);
             await loadUnreadCount();
         }
-    }, [userId, notifications, loadUnreadCount]);
+    }, [effectiveUserId, notifications, loadUnreadCount]);
 
     return {
         notifications,

@@ -1,4 +1,4 @@
-export function LoginBrandPanel() {
+export default function LoginBrandPanel() {
     return (
         <div className="from-primary/10 via-primary/5 dark:from-primary/20 dark:via-primary/10 relative hidden bg-gradient-to-br to-transparent md:flex md:flex-col md:items-center md:justify-center dark:to-transparent">
             <div className="relative flex flex-col items-center justify-center">

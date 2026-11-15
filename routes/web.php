@@ -33,7 +33,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     // Notifikasi (database + Reverb broadcast) untuk dashboard — JSON, bukan Inertia.
-    Route::prefix('notifications')->name('notifications.')->group(function () {
+    // Operator Tim tidak diizinkan mengakses endpoint notifikasi lonceng.
+    Route::middleware('role:admin,operator')->prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
         Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread.count');
         Route::patch('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');

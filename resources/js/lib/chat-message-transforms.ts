@@ -6,7 +6,8 @@ import type { ChatMessage } from '@/components/ui/chat-thread';
  * `is_reporter`, `type` containing 'pelapor', or the sender name not matching
  * known officer roles. Adjust the heuristics if the actual data shape changes.
  */
-export function transformResponses(responses: any[]): ChatMessage[] {
+import type { TicketResponseItem } from '@/types/laporan-masuk';
+export function transformResponses(responses: TicketResponseItem[]): ChatMessage[] {
   return responses.map((r) => {
     // Heuristic: treat as reporter when explicitly marked or type indicates reporter
     const isReporter =
@@ -19,7 +20,7 @@ export function transformResponses(responses: any[]): ChatMessage[] {
     return {
       id: r.id,
       side,
-      senderName: r.user_name ?? r.name ?? 'Unknown',
+      senderName: r.user_name ?? 'Unknown',
       badge: r.type
         ? { label: r.type.replace(/_/g, ' ') }
         : undefined,

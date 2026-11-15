@@ -34,17 +34,17 @@ interface ResponseHistoryProps {
     highlightLast?: boolean;
 }
 
-const TYPE_LABEL: Record<string, string> = {
-    respon_awal: 'Respon Awal',
-    respon_substantif: 'Respon Substantif',
-};
+// const TYPE_LABEL: Record<string, string> = {
+//     respon_awal: 'Respon Awal',
+//     respon_substantif: 'Respon Substantif',
+// };
 
-const EMAIL_LABEL: Record<string, string> = {
-    sent: 'Email terkirim',
-    delivered: 'Email terkirim',
-    failed: 'Email gagal',
-    bounced: 'Email bounce',
-};
+// const EMAIL_LABEL: Record<string, string> = {
+//     sent: 'Email terkirim',
+//     delivered: 'Email terkirim',
+//     failed: 'Email gagal',
+//     bounced: 'Email bounce',
+// };
 
 export function LaporanMasukResponseHistory({
     responses,
@@ -166,7 +166,6 @@ export function LaporanMasukResponseHistory({
                     : undefined,
         };
     };
-    console.log(viewers);
 
     return (
         <div className="bg-card space-y-4 rounded-lg border p-4 sm:p-6">

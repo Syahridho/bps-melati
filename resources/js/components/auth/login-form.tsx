@@ -1,5 +1,5 @@
 import { FormField } from '@/components/auth/form-field';
-import { LoginBrandPanel } from '@/components/auth/login-brand-panel';
+import LoginBrandPanel from '@/components/auth/login-brand-panel';
 import { PasswordInput } from '@/components/auth/password-input';
 import { SessionConflictCard, type SessionConflictInfo } from '@/components/session/session-conflict-card';
 import { Button } from '@/components/ui/button';
@@ -182,6 +182,14 @@ export default function LoginForm({ noticeReason, throttleSeconds, sessionConfli
                                                 placeholder="Masukkan password Anda"
                                             />
                                         </FormField>
+
+                                        <a
+                                            href={route('password.request')}
+                                            className="text-primary float-right mr-2 mb-2 text-sm underline underline-offset-4"
+                                            style={{ float: 'right', marginBottom: '-14px' }}
+                                        >
+                                            Lupa password?
+                                        </a>
 
                                         <Button type="submit" className="w-full" tabIndex={3} disabled={processing || isThrottled}>
                                             {processing && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}

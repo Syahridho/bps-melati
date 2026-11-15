@@ -1,28 +1,17 @@
-import { Button } from '@/components/ui/button';
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CodeBlock } from './CodeBlock';
-import {
-    API_ENDPOINTS,
-    API_ERROR_CODES,
-    MOBILE_AUTH_GUIDE,
-    QUICK_START_STEPS,
-    TICKET_NUMBER_NOTE,
-} from '@/lib/api-docs';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Copy, Headphones, Link as LinkIcon, Lock, Play, ShieldAlert, Terminal } from 'lucide-react';
-import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { API_ENDPOINTS, API_ERROR_CODES, MOBILE_AUTH_GUIDE, QUICK_START_STEPS, TICKET_NUMBER_NOTE } from '@/lib/api-docs';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
+import { Copy, Headphones, Link as LinkIcon, Lock, Play, ShieldAlert, Terminal } from 'lucide-react';
+import { useState } from 'react';
+import { CodeBlock } from './CodeBlock';
 
 interface ApiSettingsProps {
     baseUrl: string;
@@ -33,10 +22,6 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
     const [activeTab, setActiveTab] = useState('quick-start');
 
     const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'Pengaturan',
-            href: route('settings.application.edit'),
-        },
         {
             title: 'API',
             href: route('settings.api'),
@@ -58,24 +43,24 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
 
     const renderParams = (params: (typeof API_ENDPOINTS)[number]['params']) => {
         if (params.length === 0) {
-            return <p className="text-xs text-muted-foreground">Tidak ada parameter.</p>;
+            return <p className="text-muted-foreground text-xs">Tidak ada parameter.</p>;
         }
 
         return (
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="border-b border-muted/50">
-                            <th className="text-left pb-2 font-medium text-muted-foreground w-24">Nama</th>
-                            <th className="text-left pb-2 font-medium text-muted-foreground w-20">Lokasi</th>
-                            <th className="text-left pb-2 font-medium text-muted-foreground w-20">Tipe</th>
-                            <th className="text-left pb-2 font-medium text-muted-foreground w-16">Wajib</th>
-                            <th className="text-left pb-2 font-medium text-muted-foreground">Deskripsi</th>
+                        <tr className="border-muted/50 border-b">
+                            <th className="text-muted-foreground w-24 pb-2 text-left font-medium">Nama</th>
+                            <th className="text-muted-foreground w-20 pb-2 text-left font-medium">Lokasi</th>
+                            <th className="text-muted-foreground w-20 pb-2 text-left font-medium">Tipe</th>
+                            <th className="text-muted-foreground w-16 pb-2 text-left font-medium">Wajib</th>
+                            <th className="text-muted-foreground pb-2 text-left font-medium">Deskripsi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {params.map((param) => (
-                            <tr key={param.name} className="border-b border-muted/50 last:border-0">
+                            <tr key={param.name} className="border-muted/50 border-b last:border-0">
                                 <td className="pb-3 font-mono text-xs">{param.name}</td>
                                 <td className="pb-3 text-xs">
                                     <Badge variant="outline" className="h-5 w-fit px-1.5">
@@ -85,7 +70,7 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
                                 <td className="pb-3 font-mono text-xs">{param.type}</td>
                                 <td className="pb-3 text-xs">
                                     {param.required ? (
-                                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">Ya</span>
+                                        <span className="font-medium text-emerald-600 dark:text-emerald-400">Ya</span>
                                     ) : (
                                         <span className="text-muted-foreground">Tidak</span>
                                     )}
@@ -105,7 +90,7 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
                 <AccordionTrigger className="flex flex-col gap-1">
                     <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{endpoint.title}</span>
-                        <span className="text-xs font-medium text-muted-foreground">{endpoint.path}</span>
+                        <span className="text-muted-foreground text-xs font-medium">{endpoint.path}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         {methodBadge(endpoint.method)}
@@ -119,30 +104,28 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
                         )}
                     </div>
                 </AccordionTrigger>
-                <AccordionContent className="pb-6 pt-4">
-                    <p className="text-sm text-muted-foreground mb-4">{endpoint.description}</p>
+                <AccordionContent className="pt-4 pb-6">
+                    <p className="text-muted-foreground mb-4 text-sm">{endpoint.description}</p>
 
                     <div className="space-y-4">
-                        <div className="border border-muted/50 rounded-lg p-4">
+                        <div className="border-muted/50 rounded-lg border p-4">
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
                                 <CardTitle className="text-sm font-semibold">Parameter</CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                {renderParams(endpoint.params)}
-                            </CardContent>
+                            <CardContent>{renderParams(endpoint.params)}</CardContent>
                         </div>
 
                         <div className="space-y-2">
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contoh Respons Sukses</h4>
+                            <h4 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Contoh Respons Sukses</h4>
                             <CodeBlock code={endpoint.success.body} label="200/201" language="json" />
                         </div>
 
                         {endpoint.errors.length > 0 && (
                             <div className="space-y-2">
-                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contoh Respons Error</h4>
+                                <h4 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Contoh Respons Error</h4>
                                 {endpoint.errors.map((err: (typeof API_ENDPOINTS)[number]['errors'][number], i: number) => (
-                                    <div key={i} className="border border-muted/50 rounded-lg p-3 bg-muted/50 dark:bg-muted/30">
-                                        <p className="text-xs font-medium text-destructive dark:text-rose-400 mb-1">
+                                    <div key={i} className="border-muted/50 bg-muted/50 dark:bg-muted/30 rounded-lg border p-3">
+                                        <p className="text-destructive mb-1 text-xs font-medium dark:text-rose-400">
                                             {err.statusCode} – {err.description}
                                         </p>
                                         <CodeBlock code={err.body} label="Error" language="json" />
@@ -152,10 +135,10 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
                         )}
 
                         <div className="space-y-2">
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contoh Kode</h4>
+                            <h4 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Contoh Kode</h4>
                             {endpoint.codeExamples.map((ex: (typeof API_ENDPOINTS)[number]['codeExamples'][number], i: number) => (
-                                <div key={i} className="border border-muted/50 rounded-lg p-3 bg-muted/50 dark:bg-muted/30">
-                                    <p className="text-xs font-medium text-muted-foreground mb-2">{ex.label}</p>
+                                <div key={i} className="border-muted/50 bg-muted/50 dark:bg-muted/30 rounded-lg border p-3">
+                                    <p className="text-muted-foreground mb-2 text-xs font-medium">{ex.label}</p>
                                     <CodeBlock code={ex.code} label={ex.label} />
                                 </div>
                             ))}
@@ -187,11 +170,9 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="border border-muted/50 rounded-lg p-4">
-                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                        Base URL
-                                    </p>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="border-muted/50 rounded-lg border p-4">
+                                    <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">Base URL</p>
                                     <div className="flex items-center gap-2">
                                         <span className="font-mono text-sm break-all">{baseUrl}</span>
                                         <Button variant="outline" size="icon" className="h-8 w-8">
@@ -199,23 +180,17 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
                                         </Button>
                                     </div>
                                 </div>
-                                <div className="border border-muted/50 rounded-lg p-4">
-                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                        Header API Key
-                                    </p>
+                                <div className="border-muted/50 rounded-lg border p-4">
+                                    <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">Header API Key</p>
                                     <span className="font-mono text-sm">{apiKeyHeaderName}</span>
                                 </div>
-                                <div className="border border-muted/50 rounded-lg p-4">
-                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                        Content-Type
-                                    </p>
+                                <div className="border-muted/50 rounded-lg border p-4">
+                                    <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">Content-Type</p>
                                     <span className="font-mono text-sm">application/json</span>
                                 </div>
-                                <div className="border border-muted/50 rounded-lg p-4">
-                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                        Rate Limit
-                                    </p>
-                                    <ul className="text-sm text-muted-foreground space-y-1">
+                                <div className="border-muted/50 rounded-lg border p-4">
+                                    <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">Rate Limit</p>
+                                    <ul className="text-muted-foreground space-y-1 text-sm">
                                         <li>Tiket baru: 5/menit</li>
                                         <li>Cek tiket: 20/menit</li>
                                         <li>Balas/Selesaikan: 10/menit</li>
@@ -232,8 +207,8 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
                         <AlertTitle>Peringatan Keamanan</AlertTitle>
                         <AlertDescription className="text-sm">
                             API key disimpan di file <span className="font-mono text-xs">.env</span> pada server dan{' '}
-                            <strong>tidak ditampilkan di halaman ini</strong>. Nilai API key tidak ada dalam props Inertia, HTML,
-                            atau bundle JavaScript.
+                            <strong>tidak ditampilkan di halaman ini</strong>. Nilai API key tidak ada dalam props Inertia, HTML, atau bundle
+                            JavaScript.
                         </AlertDescription>
                     </Alert>
 
@@ -242,36 +217,36 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <TabsList className="w-full justify-start">
                                 <TabsTrigger value="quick-start" className="flex-1">
-                                    <Play className="h-4 w-4 mr-2" /> Panduan Cepat
+                                    <Play className="mr-2 h-4 w-4" /> Panduan Cepat
                                 </TabsTrigger>
                                 <TabsTrigger value="endpoints" className="flex-1">
-                                    <LinkIcon className="h-4 w-4 mr-2" /> Referensi Endpoint
+                                    <LinkIcon className="mr-2 h-4 w-4" /> Referensi Endpoint
                                 </TabsTrigger>
                                 <TabsTrigger value="mobile-auth" className="flex-1">
-                                    <Headphones className="h-4 w-4 mr-2" /> Autentikasi Mobile
+                                    <Headphones className="mr-2 h-4 w-4" /> Autentikasi Mobile
                                 </TabsTrigger>
                                 <TabsTrigger value="errors" className="flex-1">
-                                    <Lock className="h-4 w-4 mr-2" /> Kode Error &amp; Batas
+                                    <Lock className="mr-2 h-4 w-4" /> Kode Error &amp; Batas
                                 </TabsTrigger>
                             </TabsList>
 
                             {/* Tab: Panduan Cepat */}
                             <TabsContent value="quick-start" className="space-y-4">
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-muted-foreground text-sm">
                                     Ikuti langkah-langkah berikut untuk mulai mengintegrasikan aplikasi Anda dengan API Melati.
                                 </p>
                                 {QUICK_START_STEPS.map((step) => (
                                     <div key={step.step} className="flex gap-3">
                                         <div className="flex-shrink-0">
-                                            <Badge variant="secondary" className="h-8 w-8 flex items-center justify-center">
+                                            <Badge variant="secondary" className="flex h-8 w-8 items-center justify-center">
                                                 {step.step}
                                             </Badge>
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-sm">{step.title}</h4>
-                                            <p className="text-sm text-muted-foreground">{step.description}</p>
+                                            <h4 className="text-sm font-semibold">{step.title}</h4>
+                                            <p className="text-muted-foreground text-sm">{step.description}</p>
                                             {step.endpoint && (
-                                                <p className="text-xs font-mono text-muted-foreground mt-1">
+                                                <p className="text-muted-foreground mt-1 font-mono text-xs">
                                                     Endpoint: {API_ENDPOINTS.find((e) => e.id === step.endpoint)?.path}
                                                 </p>
                                             )}
@@ -282,19 +257,15 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
 
                             {/* Tab: Referensi Endpoint */}
                             <TabsContent value="endpoints" className="space-y-4">
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-muted-foreground text-sm">
                                     Setiap endpoint dijelaskan lengkap dengan parameter, contoh respons, dan kode dalam berbagai bahasa.
                                 </p>
                                 <Accordion type="multiple" className="w-full space-y-1">
                                     {API_ENDPOINTS.map(renderEndpointItem)}
                                 </Accordion>
-                                <div className="border border-muted/50 rounded-lg p-4 bg-muted/50 dark:bg-muted/30">
-                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                        Catatan Nomor Tiket
-                                    </h4>
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                        {TICKET_NUMBER_NOTE.description}
-                                    </p>
+                                <div className="border-muted/50 bg-muted/50 dark:bg-muted/30 rounded-lg border p-4">
+                                    <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Catatan Nomor Tiket</h4>
+                                    <p className="text-muted-foreground mb-2 text-sm">{TICKET_NUMBER_NOTE.description}</p>
                                     {TICKET_NUMBER_NOTE.examples.map((ex, i) => (
                                         <CodeBlock key={i} code={ex.code} label={ex.label} language="text" />
                                     ))}
@@ -303,21 +274,21 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
 
                             {/* Tab: Autentikasi Mobile */}
                             <TabsContent value="mobile-auth" className="space-y-4">
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-muted-foreground text-sm">
                                     Panduan untuk klien mobile (Flutter/Android) menggunakan autentikasi Bearer token via Sanctum.
                                 </p>
                                 {MOBILE_AUTH_GUIDE.map((step) => (
                                     <div key={step.step} className="flex gap-3">
                                         <div className="flex-shrink-0">
-                                            <Badge variant="secondary" className="h-8 w-8 flex items-center justify-center">
+                                            <Badge variant="secondary" className="flex h-8 w-8 items-center justify-center">
                                                 {step.step}
                                             </Badge>
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-sm">{step.title}</h4>
-                                            <p className="text-sm text-muted-foreground">{step.description}</p>
+                                            <h4 className="text-sm font-semibold">{step.title}</h4>
+                                            <p className="text-muted-foreground text-sm">{step.description}</p>
                                             {step.endpoint && (
-                                                <p className="text-xs font-mono text-muted-foreground mt-1">
+                                                <p className="text-muted-foreground mt-1 font-mono text-xs">
                                                     Endpoint: {API_ENDPOINTS.find((e) => e.id === step.endpoint)?.path}
                                                 </p>
                                             )}
@@ -328,27 +299,27 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
 
                             {/* Tab: Kode Error */}
                             <TabsContent value="errors" className="space-y-4">
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-muted-foreground text-sm">
                                     Daftar kode respons error yang dapat dikembalikan API dan cara menangani masing-masing.
                                 </p>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
-                                            <tr className="border-b border-muted/50">
-                                                <th className="text-left pb-2 font-medium text-muted-foreground w-16">Kode</th>
-                                                <th className="text-left pb-2 font-medium text-muted-foreground w-24">Nama</th>
-                                                <th className="text-left pb-2 font-medium text-muted-foreground">Deskripsi</th>
-                                                <th className="text-left pb-2 font-medium text-muted-foreground w-32">Contoh Body</th>
-                                                <th className="text-left pb-2 font-medium text-muted-foreground">Catatan</th>
+                                            <tr className="border-muted/50 border-b">
+                                                <th className="text-muted-foreground w-16 pb-2 text-left font-medium">Kode</th>
+                                                <th className="text-muted-foreground w-24 pb-2 text-left font-medium">Nama</th>
+                                                <th className="text-muted-foreground pb-2 text-left font-medium">Deskripsi</th>
+                                                <th className="text-muted-foreground w-32 pb-2 text-left font-medium">Contoh Body</th>
+                                                <th className="text-muted-foreground pb-2 text-left font-medium">Catatan</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {API_ERROR_CODES.map((err) => (
-                                                <tr key={err.code} className="border-b border-muted/50 last:border-0">
+                                                <tr key={err.code} className="border-muted/50 border-b last:border-0">
                                                     <td className="pb-3 font-mono text-xs">{err.code}</td>
                                                     <td className="pb-3 text-xs font-medium">{err.name}</td>
                                                     <td className="pb-3 text-xs">{err.description}</td>
-                                                    <td className="pb-3 font-mono text-xs text-muted-foreground truncate max-w-40">
+                                                    <td className="text-muted-foreground max-w-40 truncate pb-3 font-mono text-xs">
                                                         {err.exampleBody}
                                                     </td>
                                                     <td className="pb-3 text-xs">{err.note ?? '-'}</td>

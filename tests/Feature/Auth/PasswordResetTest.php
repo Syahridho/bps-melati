@@ -25,7 +25,8 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        $this->post('/forgot-password', ['email' => $user->email]);
+        $this->post('/forgot-password', ['email' => $user->email], ['X-Inertia' => 'true'])
+            ->assertRedirect(route('password.request'));
 
         Notification::assertSentTo($user, ResetPassword::class);
     }

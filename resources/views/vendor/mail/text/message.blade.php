@@ -14,8 +14,7 @@
     {{-- Footer --}}
     <x-slot:footer>
         <x-mail::footer>
-Melati: Manajemen Lapor, Aspirasi, dan Transparansi Informasi
-© {{ date('Y') }} {{ config('app.name', 'Melati') }}. @lang('All rights reserved.')
+© {{ date('Y') }} Melati. Powered by BPS Provinsi Riu.
         </x-mail::footer>
     </x-slot:footer>
 </x-mail::layout>

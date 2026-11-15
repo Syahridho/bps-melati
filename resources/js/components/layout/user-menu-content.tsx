@@ -23,16 +23,13 @@ async function cleanupPush(signal?: AbortSignal): Promise<void> {
 
     const subscription = await registration.pushManager.getSubscription();
     if (subscription) {
-                await fetch(route('push.unsubscribe'), {
-                    method: 'POST',
+        await fetch(route('push.unsubscribe'), {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 Accept: 'application/json',
-                'X-CSRF-TOKEN':
-                    document.querySelector<HTMLMetaElement>(
-                        'meta[name="csrf-token"]',
-                    )?.content ?? '',
+                'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
             },
             credentials: 'same-origin',
             signal,
@@ -50,7 +47,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
 
     const isSettingsPage = currentPath.startsWith('/settings/');
 
-    const settingsUrl = user.role === 'admin' ? route('settings.application.edit') : route('settings.notification');
+    const settingsUrl = user.role === 'admin' ? route('settings.application.edit') : route('appearance');
 
     const handleLogout = async (e: Event) => {
         e.preventDefault();
@@ -83,10 +80,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
         });
 
         try {
-            await Promise.race([
-                cleanupPush(controller.signal),
-                pushTimeout,
-            ]);
+            await Promise.race([cleanupPush(controller.signal), pushTimeout]);
         } catch (err) {
             console.warn('Cleanup push gagal, logout tetap dilanjutkan.', err);
         } finally {

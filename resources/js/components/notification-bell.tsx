@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAuthRole } from '@/hooks/use-auth-role';
 import { Bell, BellOff, ChevronRight, Clock, MoreHorizontal } from 'lucide-react';
 import { router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ export function NotificationBell({
     userId,
     initialUnreadCount = 0,
 }: NotificationBellProps) {
+    const { isOperatorTim } = useAuthRole();
     const [isOpen, setIsOpen] = useState(false);
     const [tab, setTab] = useState('semua');
 
@@ -105,6 +107,10 @@ export function NotificationBell({
             loadUnreadCount();
         }
     }, [isOpen, notifications.length, loading, error, loadNotifications, loadUnreadCount]);
+
+    if (isOperatorTim) {
+        return null;
+    }
 
     return (
         <Popover

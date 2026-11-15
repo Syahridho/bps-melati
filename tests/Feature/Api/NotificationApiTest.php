@@ -2,8 +2,10 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 use function Pest\Laravel\actingAs;
 
@@ -16,7 +18,7 @@ beforeEach(function () {
 
 function createTestNotification(array $overrides = []): array
 {
-    $id = \Illuminate\Support\Str::uuid()->toString();
+    $id = Str::uuid()->toString();
     $data = array_merge([
         'id' => $id,
         'type' => 'laporan_masuk',
@@ -54,7 +56,7 @@ test('user can fetch their own notifications with cursor pagination', function (
     // Buat 5 notifikasi untuk user
     for ($i = 1; $i <= 5; $i++) {
         createTestNotification([
-            'id' => \Illuminate\Support\Str::uuid()->toString(),
+            'id' => Str::uuid()->toString(),
             'type' => 'laporan_masuk',
             'notifiable_type' => User::class,
             'notifiable_id' => $user->id,
@@ -102,7 +104,7 @@ test('filter=unread returns only unread notifications', function () {
     // 3 notifikasi belum dibaca
     for ($i = 1; $i <= 3; $i++) {
         createTestNotification([
-            'id' => \Illuminate\Support\Str::uuid()->toString(),
+            'id' => Str::uuid()->toString(),
             'type' => 'laporan_masuk',
             'notifiable_type' => User::class,
             'notifiable_id' => $user->id,
@@ -121,23 +123,23 @@ test('filter=unread returns only unread notifications', function () {
     }
 
     // 1 notifikasi sudah dibaca
-createTestNotification([
-            'id' => \Illuminate\Support\Str::uuid()->toString(),
-            'type' => 'laporan_masuk',
-            'notifiable_type' => User::class,
-            'notifiable_id' => $user->id,
-            'data' => [
-                'id' => 4,
-                'ticket_number' => 'P-1400/102026/U0401',
-                'type' => 'aspirasi',
-                'title' => 'Laporan 4',
-                'message' => 'Isi',
-                'url' => '/dashboard/admin/laporan-selesai/P-1400/102026/U0401',
-                'actor_name' => null,
-            ],
-            'read_at' => now(),
-            'created_at' => now(),
-        ]);
+    createTestNotification([
+        'id' => Str::uuid()->toString(),
+        'type' => 'laporan_masuk',
+        'notifiable_type' => User::class,
+        'notifiable_id' => $user->id,
+        'data' => [
+            'id' => 4,
+            'ticket_number' => 'P-1400/102026/U0401',
+            'type' => 'aspirasi',
+            'title' => 'Laporan 4',
+            'message' => 'Isi',
+            'url' => '/dashboard/admin/laporan-selesai/P-1400/102026/U0401',
+            'actor_name' => null,
+        ],
+        'read_at' => now(),
+        'created_at' => now(),
+    ]);
 
     actingAs($user)
         ->getJson('/notifications?filter=unread')
@@ -151,26 +153,26 @@ createTestNotification([
 test('filter=type filters notifications by type', function () {
     $user = User::factory()->create(['role' => 'admin']);
 
-createTestNotification([
-            'id' => \Illuminate\Support\Str::uuid()->toString(),
-            'type' => 'laporan_masuk',
-            'notifiable_type' => User::class,
-            'notifiable_id' => $user->id,
-            'data' => [
-                'id' => 1,
-                'ticket_number' => 'P-1400/102026/T01',
-                'type' => 'pengaduan',
-                'title' => 'Laporan Masuk',
-                'message' => 'Isi',
-                'url' => '/dashboard/admin/laporan-masuk/P-1400/102026/T01',
-                'actor_name' => 'Pelapor',
-            ],
-            'read_at' => null,
-            'created_at' => now(),
-        ]);
+    createTestNotification([
+        'id' => Str::uuid()->toString(),
+        'type' => 'laporan_masuk',
+        'notifiable_type' => User::class,
+        'notifiable_id' => $user->id,
+        'data' => [
+            'id' => 1,
+            'ticket_number' => 'P-1400/102026/T01',
+            'type' => 'pengaduan',
+            'title' => 'Laporan Masuk',
+            'message' => 'Isi',
+            'url' => '/dashboard/admin/laporan-masuk/P-1400/102026/T01',
+            'actor_name' => 'Pelapor',
+        ],
+        'read_at' => null,
+        'created_at' => now(),
+    ]);
 
     createTestNotification([
-        'id' => \Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => 'laporan_selesai',
         'notifiable_type' => User::class,
         'notifiable_id' => $user->id,
@@ -202,7 +204,7 @@ test('user cannot access notifications of another user', function () {
 
     // Notifikasi milik userB
     createTestNotification([
-        'id' => \Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => 'laporan_masuk',
         'notifiable_type' => User::class,
         'notifiable_id' => $userB->id,
@@ -230,7 +232,7 @@ test('user can mark a single notification as read', function () {
     $user = User::factory()->create(['role' => 'admin']);
 
     $notification = createTestNotification([
-        'id' => \Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => 'laporan_masuk',
         'notifiable_type' => User::class,
         'notifiable_id' => $user->id,
@@ -254,7 +256,7 @@ test('user can mark a single notification as read', function () {
 
     $this->assertDatabaseHas('notifications', [
         'id' => $notification['id'],
-        'read_at' => \Illuminate\Support\Carbon::now()->format('Y-m-d H:i:s'),
+        'read_at' => Carbon::now()->format('Y-m-d H:i:s'),
     ]);
 });
 
@@ -263,7 +265,7 @@ test('user cannot mark another user notification as read (404)', function () {
     $userB = User::factory()->create(['role' => 'operator']);
 
     $notification = createTestNotification([
-        'id' => \Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => 'laporan_masuk',
         'notifiable_type' => User::class,
         'notifiable_id' => $userB->id,
@@ -290,7 +292,7 @@ test('user can mark all notifications as read', function () {
 
     for ($i = 1; $i <= 3; $i++) {
         createTestNotification([
-            'id' => \Illuminate\Support\Str::uuid()->toString(),
+            'id' => Str::uuid()->toString(),
             'type' => 'laporan_masuk',
             'notifiable_type' => User::class,
             'notifiable_id' => $user->id,
@@ -317,7 +319,7 @@ test('user can mark all notifications as read', function () {
     $this->assertDatabaseHas('notifications', [
         'notifiable_type' => User::class,
         'notifiable_id' => $user->id,
-        'read_at' => \Illuminate\Support\Carbon::now()->format('Y-m-d H:i:s'),
+        'read_at' => Carbon::now()->format('Y-m-d H:i:s'),
     ]);
 });
 
@@ -325,7 +327,7 @@ test('unread-count returns correct count for user', function () {
     $user = User::factory()->create(['role' => 'admin']);
 
     createTestNotification([
-        'id' => \Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => 'laporan_masuk',
         'notifiable_type' => User::class,
         'notifiable_id' => $user->id,
@@ -343,7 +345,7 @@ test('unread-count returns correct count for user', function () {
     ]);
 
     createTestNotification([
-        'id' => \Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => 'laporan_selesai',
         'notifiable_type' => User::class,
         'notifiable_id' => $user->id,
@@ -365,4 +367,26 @@ test('unread-count returns correct count for user', function () {
         ->assertStatus(200)
         ->assertJsonPath('success', true)
         ->assertJsonPath('unread_count', 1);
+});
+
+test('operator tim receives 403 on notifications unread-count', function () {
+    $operatorTim = User::factory()->create(['role' => 'operator_tim']);
+
+    actingAs($operatorTim)
+        ->getJson('/notifications/unread-count')
+        ->assertStatus(403);
+});
+
+test('admin and operator receive 200 on notifications unread-count', function (string $role) {
+    $user = User::factory()->create(['role' => $role]);
+
+    actingAs($user)
+        ->getJson('/notifications/unread-count')
+        ->assertStatus(200)
+        ->assertJsonPath('success', true);
+})->with(['admin', 'operator']);
+
+test('guest is redirected to login on notifications unread-count', function () {
+    $this->get('/notifications/unread-count')
+        ->assertRedirect('/login');
 });

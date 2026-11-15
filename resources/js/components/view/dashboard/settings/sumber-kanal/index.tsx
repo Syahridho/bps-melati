@@ -34,10 +34,7 @@ export default function SumberKanalView() {
         handleDeleteSubmit,
     } = useSumberKanalManagement(flash?.success);
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Pengaturan', href: route('settings.application.edit') },
-        { title: 'Sumber Kanal', href: route('settings.sumber-kanal.index') },
-    ];
+    const breadcrumbs: BreadcrumbItem[] = [{ title: 'Sumber Kanal', href: route('settings.sumber-kanal.index') }];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
