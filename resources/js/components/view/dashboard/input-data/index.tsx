@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import InputDataAddTicketDialog from '@/components/view/dashboard/input-data/modal-add-ticket';
 import { useInputDataFilters } from '@/hooks/use-input-data-filters';
+import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
 import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
 import AdminPage from '@/layouts/dashboard/page';
 import { type SharedData } from '@/types';
@@ -54,6 +55,8 @@ export default function InputDataView() {
         useInputDataFilters(routePrefix, filters);
 
     const searching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
+
+    useInboxRealtime({ searching });
 
     useLaporanRealtime({
         isBusy: flagPopoverOpen,

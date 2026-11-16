@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Events\ChannelStatsUpdated;
 use App\Events\DashboardUpdated;
 use App\Events\LaporanChanged;
+use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -41,9 +42,11 @@ class TicketObserver
             );
         }
 
-        // LaporanChanged untuk perubahan flag / pengawasan.
+        // LaporanChanged untuk perubahan status, flag, atau pengawasan.
         $laporanAction = null;
-        if ($ticket->wasChanged('is_flagged')) {
+        if ($ticket->wasChanged('status')) {
+            $laporanAction = $ticket->status === 'selesai' ? 'completed' : 'status_changed';
+        } elseif ($ticket->wasChanged('is_flagged')) {
             $laporanAction = $ticket->is_flagged ? 'flagged' : 'unflagged';
         } elseif ($ticket->wasChanged('is_pengawasan')) {
             $laporanAction = $ticket->is_pengawasan ? 'pengawasan_activated' : 'pengawasan_deactivated';
@@ -78,13 +81,14 @@ class TicketObserver
         }
 
         // Cek pengaturan apakah fitur live dashboard dinonaktifkan
-        if (! (bool) \App\Models\Setting::get('dashboard_live_enabled', true)) {
+        if (! (bool) Setting::get('dashboard_live_enabled', true)) {
             return;
         }
 
         // Jangan throttle saat environment testing agar unit test event assert selalu valid
         if (app()->environment('testing')) {
             $this->dispatchDashboardUpdated($type, $ticket, $oldStatus, $newStatus);
+
             return;
         }
 
@@ -149,7 +153,7 @@ class TicketObserver
         }
 
         // Cek pengaturan apakah fitur live dashboard dinonaktifkan
-        if (! (bool) \App\Models\Setting::get('dashboard_live_enabled', true)) {
+        if (! (bool) Setting::get('dashboard_live_enabled', true)) {
             return;
         }
 

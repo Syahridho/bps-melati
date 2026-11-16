@@ -23,64 +23,66 @@ DEMO : https://test.syahridho.my.id/
 
 ## Teknologi
 
-| Komponen | Versi |
-| --- | --- |
-| PHP | ^8.2 |
-| Laravel | ^12.0 |
-| Inertia (server) | ^2.0 |
-| Inertia (React) | ^2.0 |
-| React | ^19.0 |
-| TypeScript | ^5.7 |
-| Vite | ^6.0 |
-| Tailwind CSS | ^4.0 |
-| shadcn/ui | berbasis Radix UI |
-| Reverb | ^1.0 |
-| Predis | ^3.6 |
-| MySQL | 8.0 atau lebih baru |
-| Sanctum | ^4.0 |
-| Pest | ^3.8 |
+| Komponen         | Versi               |
+| ---------------- | ------------------- |
+| PHP              | ^8.2                |
+| Laravel          | ^12.0               |
+| Inertia (server) | ^2.0                |
+| Inertia (React)  | ^2.0                |
+| React            | ^19.0               |
+| TypeScript       | ^5.7                |
+| Vite             | ^6.0                |
+| Tailwind CSS     | ^4.0                |
+| shadcn/ui        | berbasis Radix UI   |
+| Reverb           | ^1.0                |
+| Predis           | ^3.6                |
+| MySQL            | 8.0 atau lebih baru |
+| Sanctum          | ^4.0                |
+| Pest             | ^3.8                |
 
 ## Peran pengguna
 
 Admin dan operator memakai halaman yang sama dengan hak akses berbeda.
 Tidak ada pendaftaran mandiri; akun dibuat oleh admin.
 
-| Kemampuan | Admin | Operator |
-| --- | --- | --- |
-| Dashboard, Input Data, Laporan Masuk, Laporan Selesai, rekap | Ya | Ya |
-| Balas tiket dan ubah status | Ya | Ya |
-| Kelola operator (tambah, ubah, hapus) | Ya | Tidak |
-| Paksa logout akun lain | Ya | Tidak |
-| Ubah dan hapus tiket | Ya | Tidak |
-| Pengaturan aplikasi | Ya | Tidak |
-| Notifikasi push browser (perangkat sendiri) | Ya | Ya |
-| Atur pembaruan realtime dashboard (global) | Ya | Tidak |
+| Kemampuan                                                    | Admin | Operator |
+| ------------------------------------------------------------ | ----- | -------- |
+| Dashboard, Input Data, Laporan Masuk, Laporan Selesai, rekap | Ya    | Ya       |
+| Balas tiket dan ubah status                                  | Ya    | Ya       |
+| Kelola operator (tambah, ubah, hapus)                        | Ya    | Tidak    |
+| Paksa logout akun lain                                       | Ya    | Tidak    |
+| Ubah dan hapus tiket                                         | Ya    | Tidak    |
+| Pengaturan aplikasi                                          | Ya    | Tidak    |
+| Notifikasi push browser (perangkat sendiri)                  | Ya    | Ya       |
+| Atur pembaruan realtime dashboard (global)                   | Ya    | Tidak    |
 
 Otorisasi diterapkan pada route middleware `role:admin` dan
 `role:operator`, pada Form Request, dan sebagian pada pemeriksaan langsung di
 controller.
 
+ERD : https://app.diagrams.net/#G17QzUwKRrGpAj-5Dah_GCwb4bYJeUbGIe#%7B%22pageId%22%3A%22q5GjW-WgMZuwhmJ2cc3M%22%7D
+
 ## Prasyarat
 
-| Kebutuhan | Versi atau catatan |
-| --- | --- |
-| PHP | 8.2 atau lebih baru |
+| Kebutuhan    | Versi atau catatan                                                                                         |
+| ------------ | ---------------------------------------------------------------------------------------------------------- |
+| PHP          | 8.2 atau lebih baru                                                                                        |
 | Ekstensi PHP | ctype, curl, dom, fileinfo, filter, hash, mbstring, openssl, pcre, pdo, pdo_mysql, session, tokenizer, xml |
-| Composer | 2.x |
-| Node.js | 20 atau lebih baru |
-| npm | 10 atau lebih baru |
-| MySQL | 8.0 atau lebih baru |
-| Redis | 6 atau lebih baru |
-| Git | versi terbaru |
+| Composer     | 2.x                                                                                                        |
+| Node.js      | 20 atau lebih baru                                                                                         |
+| npm          | 10 atau lebih baru                                                                                         |
+| MySQL        | 8.0 atau lebih baru                                                                                        |
+| Redis        | 6 atau lebih baru                                                                                          |
+| Git          | versi terbaru                                                                                              |
 
 Tambahan untuk VPS:
 
-| Kebutuhan | Catatan |
-| --- | --- |
-| Nginx | reverse proxy untuk HTTP dan WebSocket |
-| PHP-FPM | versi sama dengan PHP yang dipakai lokal |
+| Kebutuhan  | Catatan                                      |
+| ---------- | -------------------------------------------- |
+| Nginx      | reverse proxy untuk HTTP dan WebSocket       |
+| PHP-FPM    | versi sama dengan PHP yang dipakai lokal     |
 | Supervisor | menjalankan worker antrean dan server Reverb |
-| Certbot | issued sertifikat TLS |
+| Certbot    | issued sertifikat TLS                        |
 
 ## Instalasi lokal (Windows dan Laragon)
 
@@ -90,37 +92,37 @@ Tambahan untuk VPS:
 
 2. Klon repositori ke direktori web Laragon.
 
-   ```bash
-   git clone <url_repositori> C:\laragon\www\melati
-   cd C:\laragon\www\melati
-   ```
+    ```bash
+    git clone <url_repositori> C:\laragon\www\melati
+    cd C:\laragon\www\melati
+    ```
 
 3. Pasang dependensi PHP dan JavaScript.
 
-   ```bash
-   composer install
-   npm install
-   ```
+    ```bash
+    composer install
+    npm install
+    ```
 
 4. Salin berkas contoh lalu ganti nilainya. Nilai bawaan `.env.example`
    memakai SQLite dan driver broadcast `log`, keduanya perlu diganti untuk
    instalasi sebenarnya.
 
-   ```powershell
-   Copy-Item .env.example .env
-   ```
+    ```powershell
+    Copy-Item .env.example .env
+    ```
 
 5. Buat application key.
 
-   ```bash
-   php artisan key:generate
-   ```
+    ```bash
+    php artisan key:generate
+    ```
 
 6. Buat basis data melalui phpMyAdmin atau perintah MySQL.
 
-   ```sql
-   CREATE DATABASE melati_bps CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
+    ```sql
+    CREATE DATABASE melati_bps CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ```
 
 7. Isi bagian `DB_*`, `CACHE_STORE`, `SESSION_DRIVER`, `QUEUE_CONNECTION`, dan
    `BROADCAST_CONNECTION` pada `.env`. Rinciannya ada di bagian Konfigurasi
@@ -131,15 +133,15 @@ Tambahan untuk VPS:
    dibaca dari `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `OPERATOR_EMAIL`, dan
    `OPERATOR_PASSWORD`.
 
-   ```bash
-   php artisan migrate --seed
-   ```
+    ```bash
+    php artisan migrate --seed
+    ```
 
 9. Buat symlink penyimpanan publik.
 
-   ```bash
-   php artisan storage:link
-   ```
+    ```bash
+    php artisan storage:link
+    ```
 
 10. Atur Redis lokal agar melaporkan keyspace event, agar fitur realtime
     bekerja.
@@ -186,180 +188,180 @@ worker.
 
 1. Pasang paket sistem.
 
-   ```bash
-   sudo apt update
-   sudo apt install -y git unzip curl redis-server supervisor nginx \
-     php8.2-fpm php8.2-cli php8.2-mysql php8.2-mbstring php8.2-xml \
-     php8.2-curl php8.2-zip php8.2-bcmath php8.2-intl
-   ```
+    ```bash
+    sudo apt update
+    sudo apt install -y git unzip curl redis-server supervisor nginx \
+      php8.2-fpm php8.2-cli php8.2-mysql php8.2-mbstring php8.2-xml \
+      php8.2-curl php8.2-zip php8.2-bcmath php8.2-intl
+    ```
 
 2. Buat grup dan pengguna khusus aplikasi, lalu beri izin folder.
 
-   ```bash
-   sudo addgroup --system app
-   sudo adduser --system --group --home /var/www/melati app
-   sudo chown -R app:app /var/www/melati
-   ```
+    ```bash
+    sudo addgroup --system app
+    sudo adduser --system --group --home /var/www/melati app
+    sudo chown -R app:app /var/www/melati
+    ```
 
 3. Klon repositori sebagai pengguna `app`.
 
-   ```bash
-   sudo -u app git clone <url_repositori> /var/www/melati
-   cd /var/www/melati
-   ```
+    ```bash
+    sudo -u app git clone <url_repositori> /var/www/melati
+    cd /var/www/melati
+    ```
 
 4. Pasang dependensi produksi.
 
-   ```bash
-   sudo -u app composer install --no-dev --optimize-autoloader
-   sudo -u app npm ci
-   sudo -u app npm run build
-   ```
+    ```bash
+    sudo -u app composer install --no-dev --optimize-autoloader
+    sudo -u app npm ci
+    sudo -u app npm run build
+    ```
 
 5. Buat `.env` produksi. Salin dari `.env.example` lalu ganti nilainya.
 
-   ```dotenv
-   APP_NAME=Melati
-   APP_ENV=production
-   APP_KEY=<hasil_php_artisan_key_generate>
-   APP_DEBUG=false
-   APP_URL=https://melati.example.id
-   API_KEY=<api_key_acak_panjang>
+    ```dotenv
+    APP_NAME=Melati
+    APP_ENV=production
+    APP_KEY=<hasil_php_artisan_key_generate>
+    APP_DEBUG=false
+    APP_URL=https://melati.example.id
+    API_KEY=<api_key_acak_panjang>
 
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=melati_bps
-   DB_USERNAME=melati
-   DB_PASSWORD=<db_password>
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=melati_bps
+    DB_USERNAME=melati
+    DB_PASSWORD=<db_password>
 
-   CACHE_STORE=redis
-   SESSION_DRIVER=redis
-   QUEUE_CONNECTION=redis
-   BROADCAST_CONNECTION=reverb
-   REDIS_CLIENT=predis
-   REDIS_HOST=127.0.0.1
-   REDIS_PASSWORD=null
-   REDIS_PORT=6379
+    CACHE_STORE=redis
+    SESSION_DRIVER=redis
+    QUEUE_CONNECTION=redis
+    BROADCAST_CONNECTION=reverb
+    REDIS_CLIENT=predis
+    REDIS_HOST=127.0.0.1
+    REDIS_PASSWORD=null
+    REDIS_PORT=6379
 
-   REVERB_APP_ID=<reverb_app_id>
-   REVERB_APP_KEY=<reverb_app_key>
-   REVERB_APP_SECRET=<reverb_app_secret>
-   REVERB_HOST=melati.example.id
-   REVERB_PORT=443
-   REVERB_SCHEME=https
-   REVERB_SERVER_HOST=127.0.0.1
-   REVERB_SERVER_PORT=8080
-   REVERB_SCALING_ENABLED=true
+    REVERB_APP_ID=<reverb_app_id>
+    REVERB_APP_KEY=<reverb_app_key>
+    REVERB_APP_SECRET=<reverb_app_secret>
+    REVERB_HOST=melati.example.id
+    REVERB_PORT=443
+    REVERB_SCHEME=https
+    REVERB_SERVER_HOST=127.0.0.1
+    REVERB_SERVER_PORT=8080
+    REVERB_SCALING_ENABLED=true
 
-   VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
-   VITE_REVERB_HOST="${REVERB_HOST}"
-   VITE_REVERB_PORT="${REVERB_PORT}"
-   VITE_REVERB_SCHEME="${REVERB_SCHEME}"
+    VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+    VITE_REVERB_HOST="${REVERB_HOST}"
+    VITE_REVERB_PORT="${REVERB_PORT}"
+    VITE_REVERB_SCHEME="${REVERB_SCHEME}"
 
-   # Web Push (VAPID) — dihasilkan oleh `php artisan webpush:vapid`.
-   VAPID_SUBJECT="mailto:admin@example.com"
-   VAPID_PUBLIC_KEY=<kunci_publik_vapid>
-   VAPID_PRIVATE_KEY=<kunci_privat_vapid>
-   VITE_VAPID_PUBLIC_KEY="${VAPID_PUBLIC_KEY}"
+    # Web Push (VAPID) — dihasilkan oleh `php artisan webpush:vapid`.
+    VAPID_SUBJECT="mailto:admin@example.com"
+    VAPID_PUBLIC_KEY=<kunci_publik_vapid>
+    VAPID_PRIVATE_KEY=<kunci_privat_vapid>
+    VITE_VAPID_PUBLIC_KEY="${VAPID_PUBLIC_KEY}"
 
-   MAIL_MAILER=smtp
-   MAIL_HOST=<host_smtp>
-   MAIL_PORT=587
-   MAIL_USERNAME=<user_smtp>
-   MAIL_PASSWORD=<password_smtp>
-   MAIL_ENCRYPTION=tls
-   MAIL_FROM_ADDRESS="contoh@gmail.com"
-   MAIL_FROM_NAME="${APP_NAME}"
-   ```
+    MAIL_MAILER=smtp
+    MAIL_HOST=<host_smtp>
+    MAIL_PORT=587
+    MAIL_USERNAME=<user_smtp>
+    MAIL_PASSWORD=<password_smtp>
+    MAIL_ENCRYPTION=tls
+    MAIL_FROM_ADDRESS="contoh@gmail.com"
+    MAIL_FROM_NAME="${APP_NAME}"
+    ```
 
 6. Buat application key, jalankan migrasi, dan buat symlink penyimpanan.
 
-   ```bash
-   sudo -u app php artisan key:generate --force
-   sudo -u app php artisan migrate --force
-   sudo -u app php artisan db:seed --force
-   sudo -u app php artisan storage:link
-   ```
+    ```bash
+    sudo -u app php artisan key:generate --force
+    sudo -u app php artisan migrate --force
+    sudo -u app php artisan db:seed --force
+    sudo -u app php artisan storage:link
+    ```
 
 7. Perbaiki izin folder yang ditulis runtime.
 
-   ```bash
-   sudo chown -R app:app /var/www/melati/storage /var/www/melati/bootstrap/cache
-   sudo chmod -R 775 /var/www/melati/storage /var/www/melati/bootstrap/cache
-   ```
+    ```bash
+    sudo chown -R app:app /var/www/melati/storage /var/www/melati/bootstrap/cache
+    sudo chmod -R 775 /var/www/melati/storage /var/www/melati/bootstrap/cache
+    ```
 
 8. Konfigurasi Redis agar melaporkan keyspace event.
 
-   ```bash
-   echo 'notify-keyspace-events K$' | sudo tee /etc/redis/redis.conf.d/melati.conf
-   sudo systemctl restart redis-server
-   ```
+    ```bash
+    echo 'notify-keyspace-events K$' | sudo tee /etc/redis/redis.conf.d/melati.conf
+    sudo systemctl restart redis-server
+    ```
 
 9. Buat blok server Nginx. Dua location untuk WebSocket diperlukan agar
    Reverb dapat dipakai melalui HTTPS.
 
-   ```nginx
-   server {
-       listen 80;
-       server_name melati.example.id;
-       root /var/www/melati/public;
-       index index.php;
+    ```nginx
+    server {
+        listen 80;
+        server_name melati.example.id;
+        root /var/www/melati/public;
+        index index.php;
 
-       client_max_body_size 20M;
+        client_max_body_size 20M;
 
-       location / {
-           try_files $uri $uri/ /index.php?$query_string;
-       }
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
 
-       location ~ \.php$ {
-           fastcgi_pass unix:/run/php/php8.2-fpm.sock;
-           fastcgi_index index.php;
-           fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-           fastcgi_param DOCUMENT_ROOT $realpath_root;
+        location ~ \.php$ {
+            fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+            fastcgi_param DOCUMENT_ROOT $realpath_root;
 
-           # Header Inertia yang besar memicu "upstream sent too big header".
-           fastcgi_buffer_size 32k;
-           fastcgi_buffers 16 32k;
-           fastcgi_busy_buffers_size 64k;
+            # Header Inertia yang besar memicu "upstream sent too big header".
+            fastcgi_buffer_size 32k;
+            fastcgi_buffers 16 32k;
+            fastcgi_busy_buffers_size 64k;
 
-           include fastcgi_params;
-       }
+            include fastcgi_params;
+        }
 
-       # WebSocket Reverb: kanal privat dan presence.
-       location /app {
-           proxy_pass http://127.0.0.1:8080;
-           proxy_http_version 1.1;
-           proxy_set_header Upgrade $http_upgrade;
-           proxy_set_header Connection "Upgrade";
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_read_timeout 60s;
-       }
+        # WebSocket Reverb: kanal privat dan presence.
+        location /app {
+            proxy_pass http://127.0.0.1:8080;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_read_timeout 60s;
+        }
 
-       # Endpoint auth broadcast Reverb.
-       location /apps {
-           proxy_pass http://127.0.0.1:8080;
-           proxy_http_version 1.1;
-           proxy_set_header Upgrade $http_upgrade;
-           proxy_set_header Connection "Upgrade";
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-       }
+        # Endpoint auth broadcast Reverb.
+        location /apps {
+            proxy_pass http://127.0.0.1:8080;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
 
-       location ~ /\.(?!well-known).* {
-           deny all;
-       }
-   }
-   ```
+        location ~ /\.(?!well-known).* {
+            deny all;
+        }
+    }
+    ```
 
-   Aktifkan konfigurasi lalu muat ulang Nginx.
+    Aktifkan konfigurasi lalu muat ulang Nginx.
 
-   ```bash
-   sudo ln -s /etc/nginx/sites-available/melati /etc/nginx/sites-enabled/melati
-   sudo nginx -t
-   sudo systemctl reload nginx
-   ```
+    ```bash
+    sudo ln -s /etc/nginx/sites-available/melati /etc/nginx/sites-enabled/melati
+    sudo nginx -t
+    sudo systemctl reload nginx
+    ```
 
 10. Sesuaikan PHP-FPM agar lampiran pada tiket dapat diterima.
 
@@ -440,52 +442,52 @@ worker.
 
 ## Konfigurasi `.env`
 
-| Variabel | Fungsi | Contoh |
-| --- | --- | --- |
-| `APP_NAME` | Nama aplikasi yang tampil | `Melati` |
-| `APP_ENV` | Mode lingkungan | `production` |
-| `APP_KEY` | Kunci enkripsi aplikasi | `<hasil_php_artisan_key_generate>` |
-| `APP_DEBUG` | Tampilkan detail exception | `false` di produksi |
-| `APP_TIMEZONE` | Zona waktu aplikasi | `Asia/Jakarta` |
-| `APP_URL` | Alamat dasar aplikasi | `https://melati.example.id` |
-| `API_KEY` | Kunci untuk endpoint `/api` | `<api_key_acak_panjang>` |
-| `DB_CONNECTION` | Koneksi basis data | `mysql` |
-| `DB_DATABASE` | Nama basis data | `melati_bps` |
-| `DB_USERNAME` | Pengguna basis data | `melati` |
-| `DB_PASSWORD` | Sandi basis data | `<db_password>` |
-| `CACHE_STORE` | Penyimpan cache | `redis` |
-| `SESSION_DRIVER` | Penyimpan sesi | `redis` |
-| `SESSION_LIFETIME` | Umur sesi dalam menit | `120` |
-| `SESSION_SINGLE` | Satu sesi aktif per akun | `true` |
-| `SESSION_ACTIVE_THRESHOLD_MINUTES` | Ambang sesi dianggap aktif | `5` |
-| `SESSION_INACTIVITY_MINUTES` | Batas inaktivasi, samakan dengan `SESSION_LIFETIME` | `120` |
-| `SESSION_ALLOW_TAKEOVER` | Izinkan ambil alih sesi dengan sandi ulang | `true` |
-| `QUEUE_CONNECTION` | Koneksi antrean | `redis` |
-| `BROADCAST_CONNECTION` | Driver broadcast | `reverb` |
-| `REDIS_CLIENT` | Driver Redis | `predis` |
-| `REDIS_HOST` | Host Redis | `127.0.0.1` |
-| `REVERB_APP_ID` | ID aplikasi Reverb | `<reverb_app_id>` |
-| `REVERB_APP_KEY` | Kunci aplikasi Reverb | `<reverb_app_key>` |
-| `REVERB_APP_SECRET` | Rahasia aplikasi Reverb | `<reverb_app_secret>` |
-| `REVERB_HOST` | Host yang dilihat peramban | `melati.example.id` |
-| `REVERB_PORT` | Port WebSocket yang dilihat peramban | `443` |
-| `REVERB_SCHEME` | Skema WebSocket | `https` di produksi |
-| `REVERB_SERVER_HOST` | Host tempat Reverb dijalankan | `127.0.0.1` |
-| `REVERB_SERVER_PORT` | Port tempat Reverb dijalankan | `8080` |
-| `VITE_REVERB_APP_KEY` | Harus sama dengan `REVERB_APP_KEY` | `${REVERB_APP_KEY}` |
-| `VITE_REVERB_HOST` | Harus sama dengan `REVERB_HOST` | `${REVERB_HOST}` |
-| `VITE_REVERB_PORT` | Harus sama dengan `REVERB_PORT` | `${REVERB_PORT}` |
-| `VITE_REVERB_SCHEME` | Harus sama dengan `REVERB_SCHEME` | `${REVERB_SCHEME}` |
-| `MAIL_MAILER` | Driver email | `smtp` |
-| `MAIL_FROM_ADDRESS` | Alamat pengirim | `contoh@gmail.com` |
-| `ADMIN_EMAIL` | Email akun admin saat seeder | `<email_admin>` |
-| `ADMIN_PASSWORD` | Sandi akun admin saat seeder | `<password_admin>` |
-| `OPERATOR_EMAIL` | Email akun operator saat seeder | `<email_operator>` |
-| `OPERATOR_PASSWORD` | Sandi akun operator saat seeder | `<password_operator>` |
-| `VAPID_SUBJECT` | Subjek VAPID untuk Web Push (mailto atau URL) | `mailto:admin@example.com` |
-| `VAPID_PUBLIC_KEY` | Kunci publik VAPID (dihasilkan `php artisan webpush:vapid`) | `<kunci_publik_vapid>` |
-| `VAPID_PRIVATE_KEY` | Kunci privat VAPID (jangan dikomit) | `<kunci_privat_vapid>` |
-| `VITE_VAPID_PUBLIC_KEY` | Harus sama dengan `VAPID_PUBLIC_KEY` (baked saat build) | `${VAPID_PUBLIC_KEY}` |
+| Variabel                           | Fungsi                                                      | Contoh                             |
+| ---------------------------------- | ----------------------------------------------------------- | ---------------------------------- |
+| `APP_NAME`                         | Nama aplikasi yang tampil                                   | `Melati`                           |
+| `APP_ENV`                          | Mode lingkungan                                             | `production`                       |
+| `APP_KEY`                          | Kunci enkripsi aplikasi                                     | `<hasil_php_artisan_key_generate>` |
+| `APP_DEBUG`                        | Tampilkan detail exception                                  | `false` di produksi                |
+| `APP_TIMEZONE`                     | Zona waktu aplikasi                                         | `Asia/Jakarta`                     |
+| `APP_URL`                          | Alamat dasar aplikasi                                       | `https://melati.example.id`        |
+| `API_KEY`                          | Kunci untuk endpoint `/api`                                 | `<api_key_acak_panjang>`           |
+| `DB_CONNECTION`                    | Koneksi basis data                                          | `mysql`                            |
+| `DB_DATABASE`                      | Nama basis data                                             | `melati_bps`                       |
+| `DB_USERNAME`                      | Pengguna basis data                                         | `melati`                           |
+| `DB_PASSWORD`                      | Sandi basis data                                            | `<db_password>`                    |
+| `CACHE_STORE`                      | Penyimpan cache                                             | `redis`                            |
+| `SESSION_DRIVER`                   | Penyimpan sesi                                              | `redis`                            |
+| `SESSION_LIFETIME`                 | Umur sesi dalam menit                                       | `120`                              |
+| `SESSION_SINGLE`                   | Satu sesi aktif per akun                                    | `true`                             |
+| `SESSION_ACTIVE_THRESHOLD_MINUTES` | Ambang sesi dianggap aktif                                  | `5`                                |
+| `SESSION_INACTIVITY_MINUTES`       | Batas inaktivasi, samakan dengan `SESSION_LIFETIME`         | `120`                              |
+| `SESSION_ALLOW_TAKEOVER`           | Izinkan ambil alih sesi dengan sandi ulang                  | `true`                             |
+| `QUEUE_CONNECTION`                 | Koneksi antrean                                             | `redis`                            |
+| `BROADCAST_CONNECTION`             | Driver broadcast                                            | `reverb`                           |
+| `REDIS_CLIENT`                     | Driver Redis                                                | `predis`                           |
+| `REDIS_HOST`                       | Host Redis                                                  | `127.0.0.1`                        |
+| `REVERB_APP_ID`                    | ID aplikasi Reverb                                          | `<reverb_app_id>`                  |
+| `REVERB_APP_KEY`                   | Kunci aplikasi Reverb                                       | `<reverb_app_key>`                 |
+| `REVERB_APP_SECRET`                | Rahasia aplikasi Reverb                                     | `<reverb_app_secret>`              |
+| `REVERB_HOST`                      | Host yang dilihat peramban                                  | `melati.example.id`                |
+| `REVERB_PORT`                      | Port WebSocket yang dilihat peramban                        | `443`                              |
+| `REVERB_SCHEME`                    | Skema WebSocket                                             | `https` di produksi                |
+| `REVERB_SERVER_HOST`               | Host tempat Reverb dijalankan                               | `127.0.0.1`                        |
+| `REVERB_SERVER_PORT`               | Port tempat Reverb dijalankan                               | `8080`                             |
+| `VITE_REVERB_APP_KEY`              | Harus sama dengan `REVERB_APP_KEY`                          | `${REVERB_APP_KEY}`                |
+| `VITE_REVERB_HOST`                 | Harus sama dengan `REVERB_HOST`                             | `${REVERB_HOST}`                   |
+| `VITE_REVERB_PORT`                 | Harus sama dengan `REVERB_PORT`                             | `${REVERB_PORT}`                   |
+| `VITE_REVERB_SCHEME`               | Harus sama dengan `REVERB_SCHEME`                           | `${REVERB_SCHEME}`                 |
+| `MAIL_MAILER`                      | Driver email                                                | `smtp`                             |
+| `MAIL_FROM_ADDRESS`                | Alamat pengirim                                             | `contoh@gmail.com`                 |
+| `ADMIN_EMAIL`                      | Email akun admin saat seeder                                | `<email_admin>`                    |
+| `ADMIN_PASSWORD`                   | Sandi akun admin saat seeder                                | `<password_admin>`                 |
+| `OPERATOR_EMAIL`                   | Email akun operator saat seeder                             | `<email_operator>`                 |
+| `OPERATOR_PASSWORD`                | Sandi akun operator saat seeder                             | `<password_operator>`              |
+| `VAPID_SUBJECT`                    | Subjek VAPID untuk Web Push (mailto atau URL)               | `mailto:admin@example.com`         |
+| `VAPID_PUBLIC_KEY`                 | Kunci publik VAPID (dihasilkan `php artisan webpush:vapid`) | `<kunci_publik_vapid>`             |
+| `VAPID_PRIVATE_KEY`                | Kunci privat VAPID (jangan dikomit)                         | `<kunci_privat_vapid>`             |
+| `VITE_VAPID_PUBLIC_KEY`            | Harus sama dengan `VAPID_PUBLIC_KEY` (baked saat build)     | `${VAPID_PUBLIC_KEY}`              |
 
 Nilai `VITE_REVERB_*` dibaca Vite saat build, bukan saat runtime. Bila
 `REVERB_APP_KEY`, `REVERB_HOST`, `REVERB_PORT`, atau `REVERB_SCHEME` diubah,
@@ -527,18 +529,18 @@ terpasang sesuai berkas tersebut.
 
 ## Struktur folder
 
-| Folder | Isi |
-| --- | --- |
-| `app/` | Controller, model, action, event, job, middleware, dan helper di `Support` |
-| `routes/` | Definisi route web, API, console, dan kanal broadcast |
-| `database/` | Migrasi, seeder, dan factory |
-| `config/` | Konfigurasi framework dan aplikasi |
-| `resources/js/components/` | Komponen UI yang dipakai bersama |
-| `resources/js/hooks/` | React hooks, termasuk hook realtime |
-| `resources/js/lib/` | Konstanta dan fungsi utilitas |
-| `resources/js/types/` | Deklarasi tipe TypeScript |
-| `resources/js/layouts/` | Layout aplikasi |
-| `resources/js/pages/` | Halaman Inertia |
+| Folder                     | Isi                                                                        |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `app/`                     | Controller, model, action, event, job, middleware, dan helper di `Support` |
+| `routes/`                  | Definisi route web, API, console, dan kanal broadcast                      |
+| `database/`                | Migrasi, seeder, dan factory                                               |
+| `config/`                  | Konfigurasi framework dan aplikasi                                         |
+| `resources/js/components/` | Komponen UI yang dipakai bersama                                           |
+| `resources/js/hooks/`      | React hooks, termasuk hook realtime                                        |
+| `resources/js/lib/`        | Konstanta dan fungsi utilitas                                              |
+| `resources/js/types/`      | Deklarasi tipe TypeScript                                                  |
+| `resources/js/layouts/`    | Layout aplikasi                                                            |
+| `resources/js/pages/`      | Halaman Inertia                                                            |
 
 Aturan: `resources/js/pages/` hanya berisi berkas halaman yang dirender Inertia.
 Komponen, hook, dan utilitas diletakkan di foldernya masing-masing. Halaman
@@ -547,38 +549,38 @@ lama menjadi pembuka yang meng-export komponen di dalamnya.
 
 ## Perintah berguna
 
-| Tujuan | Perintah |
-| --- | --- |
-| Format kode PHP | `vendor/bin/pint` |
-| Format kode frontend | `npm run format` |
-| Periksa format frontend | `npm run format:check` |
-| Lint frontend | `npm run lint` |
-| Periksa tipe TypeScript | `npx tsc --noEmit` |
-| Jalankan seluruh test | `php artisan test` |
-| Jalankan satu berkas test | `php artisan test tests/Feature/CheckTicketTest.php` |
-| Lihat jadwal tugas | `php artisan schedule:list` |
-| Simulasi penutupan otomatis | `php artisan tickets:auto-close --dry-run` |
-| Bersihkan sesi basi | `php artisan sessions:cleanup` |
-| Pangkas log autentikasi | `php artisan auth:prune-logs` |
-| Status Supervisor | `sudo supervisorctl status` |
+| Tujuan                      | Perintah                                             |
+| --------------------------- | ---------------------------------------------------- |
+| Format kode PHP             | `vendor/bin/pint`                                    |
+| Format kode frontend        | `npm run format`                                     |
+| Periksa format frontend     | `npm run format:check`                               |
+| Lint frontend               | `npm run lint`                                       |
+| Periksa tipe TypeScript     | `npx tsc --noEmit`                                   |
+| Jalankan seluruh test       | `php artisan test`                                   |
+| Jalankan satu berkas test   | `php artisan test tests/Feature/CheckTicketTest.php` |
+| Lihat jadwal tugas          | `php artisan schedule:list`                          |
+| Simulasi penutupan otomatis | `php artisan tickets:auto-close --dry-run`           |
+| Bersihkan sesi basi         | `php artisan sessions:cleanup`                       |
+| Pangkas log autentikasi     | `php artisan auth:prune-logs`                        |
+| Status Supervisor           | `sudo supervisorctl status`                          |
 
 Test memakai Pest dan memerlukan basis data MySQL terpisah dengan data awal
 sudah tersedia. Jalankan `php artisan test` sebelum menentukan kode siap.
 
 ## Pemecahan masalah
 
-| Gejala | Penyebab | Solusi |
-| --- | --- | --- |
-| 502 dengan log `upstream sent too big header` | Buffer FastCGI terlalu kecil untuk header Inertia | Naikkan `fastcgi_buffer_size` dan `fastcgi_buffers` pada blok PHP-FPM di Nginx, lalu `sudo nginx -t && sudo systemctl reload nginx` |
+| Gejala                                                 | Penyebab                                                                                                    | Solusi                                                                                                                                                                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 502 dengan log `upstream sent too big header`          | Buffer FastCGI terlalu kecil untuk header Inertia                                                           | Naikkan `fastcgi_buffer_size` dan `fastcgi_buffers` pada blok PHP-FPM di Nginx, lalu `sudo nginx -t && sudo systemctl reload nginx`                                                                          |
 | Realtime tidak berjalan, badge dan baris tidak berubah | Worker antrean tidak memproses `broadcasts`, atau Reverb mati, atau `VITE_REVERB_*` berbeda dari `REVERB_*` | Periksa `sudo supervisorctl status`, pastikan worker memakai `--queue=broadcasts,default`, pastikan URL WebSocket pada peramban sesuai `VITE_REVERB_*`, lalu `npm run build` ulang bila nilai Reverb berubah |
-| 403 saat membuka lampiran | Symlink `public/storage` tidak ada | Jalankan `php artisan storage:link` |
-| 419 Halaman kedaluwarsa | Token CSRF tidak lagi valid, sering setelah lama menganggur | Muat ulang halaman lalu ulangi aksi |
-| 500 tanpa detail | `APP_DEBUG=false` menyembunyikan pesan exception | Isi log di `storage/logs/laravel.log`, atau aktifkan `APP_DEBUG=true` sementara di lingkungan lokal |
-| Kesalahan Redis keyspace notification | `notify-keyspace-events` belum diatur | Tambahkan `notify-keyspace-events K$` ke konfigurasi Redis lalu muat ulang Redis |
-| Port 8080 sudah dipakai | Port default Reverb bentrok dengan proses lain | Ubah `REVERB_SERVER_PORT` dan sesuaikan `proxy_pass` pada Nginx |
-| Perubahan `.env` tidak terbaca | Cache konfigurasi masih menyimpan nilai lama | Jalankan `php artisan config:clear` lalu `php artisan config:cache` di produksi |
-| Toggle push menyala tapi tidak menyimpan subscription | `VAPID_PUBLIC_KEY` / `VITE_VAPID_PUBLIC_KEY` kosong atau build belum dijalankan ulang | Jalankan `php artisan webpush:vapid`, isi `.env`, lalu `npm run build` dan `config:cache` |
-| Toggle push kembali mati setelah refresh | Server tidak menerima subscription (endpoint simpan gagal) | Periksa `laravel.log`, pastikan user login dan CSRF token valid |
+| 403 saat membuka lampiran                              | Symlink `public/storage` tidak ada                                                                          | Jalankan `php artisan storage:link`                                                                                                                                                                          |
+| 419 Halaman kedaluwarsa                                | Token CSRF tidak lagi valid, sering setelah lama menganggur                                                 | Muat ulang halaman lalu ulangi aksi                                                                                                                                                                          |
+| 500 tanpa detail                                       | `APP_DEBUG=false` menyembunyikan pesan exception                                                            | Isi log di `storage/logs/laravel.log`, atau aktifkan `APP_DEBUG=true` sementara di lingkungan lokal                                                                                                          |
+| Kesalahan Redis keyspace notification                  | `notify-keyspace-events` belum diatur                                                                       | Tambahkan `notify-keyspace-events K$` ke konfigurasi Redis lalu muat ulang Redis                                                                                                                             |
+| Port 8080 sudah dipakai                                | Port default Reverb bentrok dengan proses lain                                                              | Ubah `REVERB_SERVER_PORT` dan sesuaikan `proxy_pass` pada Nginx                                                                                                                                              |
+| Perubahan `.env` tidak terbaca                         | Cache konfigurasi masih menyimpan nilai lama                                                                | Jalankan `php artisan config:clear` lalu `php artisan config:cache` di produksi                                                                                                                              |
+| Toggle push menyala tapi tidak menyimpan subscription  | `VAPID_PUBLIC_KEY` / `VITE_VAPID_PUBLIC_KEY` kosong atau build belum dijalankan ulang                       | Jalankan `php artisan webpush:vapid`, isi `.env`, lalu `npm run build` dan `config:cache`                                                                                                                    |
+| Toggle push kembali mati setelah refresh               | Server tidak menerima subscription (endpoint simpan gagal)                                                  | Periksa `laravel.log`, pastikan user login dan CSRF token valid                                                                                                                                              |
 
 ## Keamanan
 
@@ -587,7 +589,7 @@ sudah tersedia. Jalankan `php artisan test` sebelum menentukan kode siap.
   pengguna.
 - Masuk ke server dengan kunci SSH, bukan sandi.
 - Jangan membuka port MySQL dan Redis ke internet. Kedua layanan hanya perlu
- hanya perlu mendengarkan pada `127.0.0.1`.
+  hanya perlu mendengarkan pada `127.0.0.1`.
 - Bila `APP_KEY`, `API_KEY`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, atau
   sandi basis data pernah terekspos, ganti seluruhnya sekaligus.
 - Cadangkan basis data secara berkala.

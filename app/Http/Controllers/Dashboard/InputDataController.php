@@ -47,7 +47,7 @@ class InputDataController extends Controller
         $searchClosure = LaporanFilterQuery::searchClosure($filter->search);
         $user = $request->user();
 
-        // Query utama daftar tiket (hanya tiket yang diinput manual oleh admin/operator)
+        // Query utama daftar tiket (hanya tiket yang diinput manual oleh admin/operator dan belum selesai)
         $ticketsQuery = Ticket::with(['channel', 'flaggedBy'])
             ->select([
                 'id',
@@ -73,6 +73,7 @@ class InputDataController extends Controller
                 'created_at',
             ])
             ->where('source_app', 'admin')
+            ->where('status', '!=', 'selesai')
             ->visibleTo($user)
             ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
                 $q->whereDate('created_at', '>=', $filter->from)
@@ -117,6 +118,7 @@ class InputDataController extends Controller
         $counts = Cache::remember($countCacheKey, 20, function () use ($user, $filter, $searchClosure) {
             $countBaseQuery = Ticket::query()
                 ->where('source_app', 'admin')
+                ->where('status', '!=', 'selesai')
                 ->visibleTo($user)
                 ->tap($searchClosure)
                 ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
@@ -198,10 +200,12 @@ class InputDataController extends Controller
             $ticket->update(['is_read' => true]);
         }
 
+        $isSelesai = $ticket->status === 'selesai';
+
         return $this->renderPage($request, 'input-data/show/index', [
             'from' => 'input-data',
             'can' => [
-                'edit' => true,
+                'edit' => ! $isSelesai,
                 'delete' => true,
             ],
             'ticket' => $this->ticketPayload($ticket),
@@ -390,6 +394,13 @@ class InputDataController extends Controller
             ->visibleTo($request->user())
             ->firstOrFail();
 
+        if ($ticket->status === 'selesai') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tiket telah selesai dan tidak dapat ditandai.',
+            ], 400);
+        }
+
         $aktif = $request->boolean('aktif');
         $user = $request->user();
         $userName = $user?->name ?? 'Petugas';
@@ -447,6 +458,10 @@ class InputDataController extends Controller
             ->where('source_app', 'admin')
             ->visibleTo($request->user())
             ->firstOrFail();
+
+        if ($ticket->status === 'selesai') {
+            return back()->withErrors(['message' => 'Tiket telah selesai dan tidak dapat diubah.']);
+        }
 
         $ticket->update([
             'reporter_name' => $request->validated('reporter_name'),

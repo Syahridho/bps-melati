@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\LaporanChanged;
 use App\Events\TicketCreated;
 use App\Models\Channel;
 use App\Models\Ticket;
@@ -205,4 +206,83 @@ test('storing ticket via input-data does not dispatch TicketCreated and does not
         ->assertInertia(fn (Assert $page) => $page
             ->where('inbox_open_count', $initialInboxCount)
         );
+});
+
+test('input-data query and counts exclude tickets with status selesai', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    createTestTicket([
+        'classification' => 'pengaduan',
+        'title' => 'Tiket Masih Aktif',
+        'status' => 'baru',
+    ]);
+
+    createTestTicket([
+        'classification' => 'pengaduan',
+        'title' => 'Tiket Sudah Selesai',
+        'status' => 'selesai',
+    ]);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.input-data.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/admin/input-data/index')
+            ->where('counts.semua', 1)
+            ->where('counts.pengaduan', 1)
+            ->has('tickets.data', 1)
+            ->where('tickets.data.0.title', 'Tiket Masih Aktif')
+        );
+});
+
+test('updating completed ticket in input-data is rejected with error', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $ticket = createTestTicket([
+        'status' => 'selesai',
+        'title' => 'Tiket Selesai Asli',
+    ]);
+
+    actingAs($admin)
+        ->from(route('dashboard.admin.input-data.show', $ticket->ticket_number))
+        ->put(route('dashboard.admin.input-data.update', $ticket->ticket_number), [
+            'reporter_name' => 'Nama Baru',
+            'title' => 'Judul Baru Diubah',
+            'content' => 'Isi laporan yang baru dan panjang lebih dari sepuluh karakter',
+        ])
+        ->assertRedirect(route('dashboard.admin.input-data.show', $ticket->ticket_number))
+        ->assertSessionHasErrors(['message']);
+
+    expect($ticket->fresh()->title)->toBe('Tiket Selesai Asli');
+});
+
+test('flagging completed ticket in input-data returns 400', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $ticket = createTestTicket([
+        'status' => 'selesai',
+    ]);
+
+    actingAs($admin)
+        ->patchJson(route('dashboard.admin.input-data.tandai', $ticket->ticket_number), [
+            'aktif' => true,
+            'note' => 'Catatan flag',
+        ])
+        ->assertStatus(400)
+        ->assertJson([
+            'success' => false,
+            'message' => 'Tiket telah selesai dan tidak dapat ditandai.',
+        ]);
+});
+
+test('ticket status change to selesai dispatches LaporanChanged with completed action', function () {
+    Event::fake([LaporanChanged::class]);
+
+    $ticket = createTestTicket([
+        'status' => 'respon_substantif',
+    ]);
+
+    $ticket->update(['status' => 'selesai']);
+
+    Event::assertDispatched(LaporanChanged::class, function ($event) use ($ticket) {
+        return $event->action === 'completed' && $event->ticketId === $ticket->id;
+    });
 });

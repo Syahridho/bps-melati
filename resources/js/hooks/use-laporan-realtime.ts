@@ -33,7 +33,7 @@ export interface UseLaporanRealtimeOptions {
 }
 
 export interface LaporanChangedEvent {
-    action: 'created' | 'updated' | 'deleted' | 'flagged' | 'unflagged' | 'pengawasan_activated' | 'pengawasan_deactivated';
+    action: 'created' | 'updated' | 'deleted' | 'flagged' | 'unflagged' | 'pengawasan_activated' | 'pengawasan_deactivated' | 'completed' | 'status_changed';
     id: number;
     ticket_number: string;
     type: string;
