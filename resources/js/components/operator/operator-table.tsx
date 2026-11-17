@@ -38,14 +38,13 @@ export function OperatorTable({
     onForceLogout,
     onDelete,
 }: OperatorTableProps) {
-
     const hasRoleFilter = roles.length > 0;
 
     return (
         <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 {/* Search Bar & Role Filter */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="relative max-w-md flex-1">
                         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                         <Input
@@ -55,11 +54,7 @@ export function OperatorTable({
                             className="w-full pl-9"
                         />
                     </div>
-                    <RoleFilter
-                        roles={roles}
-                        availableRoles={availableRoles}
-                        onRolesChange={onRolesChange}
-                    />
+                    <RoleFilter roles={roles} availableRoles={availableRoles} onRolesChange={onRolesChange} />
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -78,27 +73,13 @@ export function OperatorTable({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {operators.data.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
-                                    {hasRoleFilter ? (
-                                        <>
-                                            Tidak ada pengguna yang cocok dengan filter.
-                                            <Button
-                                                variant="link"
-                                                size="sm"
-                                                onClick={() => onRolesChange([])}
-                                                className="ml-2 underline underline-offset-4 hover:text-accent"
-                                            >
-                                                Reset filter
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        'Tidak ada data pengguna ditemukan.'
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ) : (
+                            {operators.data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-muted-foreground h-24 text-center">
+                                        {hasRoleFilter ? 'Tidak ada pengguna yang cocok dengan filter.' : 'Tidak ada data pengguna ditemukan.'}
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
                                 operators.data.map((op, idx) => (
                                     <TableRow key={op.id}>
                                         <TableCell className="font-medium">{(operators.current_page - 1) * operators.per_page + idx + 1}</TableCell>

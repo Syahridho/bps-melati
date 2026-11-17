@@ -61,6 +61,7 @@ Otorisasi diterapkan pada route middleware `role:admin` dan
 controller.
 
 ERD : https://app.diagrams.net/#G17QzUwKRrGpAj-5Dah_GCwb4bYJeUbGIe#%7B%22pageId%22%3A%22q5GjW-WgMZuwhmJ2cc3M%22%7D
+Figma : https://www.figma.com/design/40kOLZMeDyXIDFW3mLUveK/melati?node-id=0-1&p=f&t=hlIuS8TAgJN0hzb7-0
 
 ## Prasyarat
 

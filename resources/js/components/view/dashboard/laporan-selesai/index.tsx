@@ -1,13 +1,13 @@
-import { toTicketListEntry } from '@/components/view/dashboard/laporan-selesai/adapter';
 import { LaporanSelesaiFilterTabs } from '@/components/laporan-selesai/laporan-selesai-filter-tabs';
-import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { DateRangeFilter } from '@/components/shared/date-range-filter';
 import { Pagination } from '@/components/shared/pagination';
+import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useLaporanSelesaiFilters } from '@/hooks/use-laporan-selesai-filters';
+import { toTicketListEntry } from '@/components/view/dashboard/laporan-selesai/adapter';
 import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
+import { useLaporanSelesaiFilters } from '@/hooks/use-laporan-selesai-filters';
 import AdminPage from '@/layouts/dashboard/page';
 import { type LaporanSelesaiProps } from '@/types/laporan-selesai';
 import { usePage } from '@inertiajs/react';
@@ -92,9 +92,6 @@ export default function LaporanSelesaiView() {
                 {tickets.data.length === 0 ? (
                     <div className="text-muted-foreground flex flex-col items-center justify-center py-16">
                         <p className="text-sm">Tidak ada laporan pada rentang ini</p>
-                        <Button variant="outline" size="sm" onClick={handleResetFilters} className="mt-3">
-                            Reset filter
-                        </Button>
                     </div>
                 ) : (
                     <TicketList

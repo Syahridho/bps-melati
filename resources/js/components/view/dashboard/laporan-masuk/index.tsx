@@ -1,14 +1,14 @@
-import { toTicketListEntry } from '@/components/view/dashboard/laporan-masuk/adapter';
 import { LaporanMasukFilterTabs } from '@/components/laporan-masuk/laporan-masuk-filter-tabs';
-import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { DateRangeFilter } from '@/components/shared/date-range-filter';
 import { Pagination } from '@/components/shared/pagination';
+import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toTicketListEntry } from '@/components/view/dashboard/laporan-masuk/adapter';
 import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
-import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
 import { useLaporanMasukFilters } from '@/hooks/use-laporan-masuk-filters';
+import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
 import AdminPage from '@/layouts/dashboard/page';
 import { type LaporanMasukProps } from '@/types/laporan-masuk';
 import { Head, usePage } from '@inertiajs/react';
@@ -103,9 +103,6 @@ export default function LaporanMasukView() {
                     {tickets.data.length === 0 ? (
                         <div className="text-muted-foreground flex flex-col items-center justify-center py-16">
                             <p className="text-sm">Tidak ada laporan pada rentang ini</p>
-                            <Button variant="outline" size="sm" onClick={handleResetFilters} className="mt-3">
-                                Reset filter
-                            </Button>
                         </div>
                     ) : (
                         <TicketList

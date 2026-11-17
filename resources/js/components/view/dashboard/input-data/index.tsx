@@ -1,14 +1,14 @@
-import { toTicketListEntry } from '@/components/view/dashboard/input-data/adapter';
 import { InputDataFilterTabs } from '@/components/input-data/input-data-filter-tabs';
-import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { DateRangeFilter } from '@/components/shared/date-range-filter';
 import { Pagination, type PaginatedData } from '@/components/shared/pagination';
+import { TicketList } from '@/components/shared/ticket-list/ticket-list';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toTicketListEntry } from '@/components/view/dashboard/input-data/adapter';
 import InputDataAddTicketDialog from '@/components/view/dashboard/input-data/modal-add-ticket';
-import { useInputDataFilters } from '@/hooks/use-input-data-filters';
 import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
+import { useInputDataFilters } from '@/hooks/use-input-data-filters';
 import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
 import AdminPage from '@/layouts/dashboard/page';
 import { type SharedData } from '@/types';
@@ -178,9 +178,6 @@ export default function InputDataView() {
                     {tickets.data.length === 0 ? (
                         <div className="text-muted-foreground flex flex-col items-center justify-center py-16">
                             <p className="text-sm">Tidak ada laporan pada rentang ini</p>
-                            <Button variant="outline" size="sm" onClick={handleResetFilters} className="mt-3">
-                                Reset filter
-                            </Button>
                         </div>
                     ) : (
                         <TicketList
