@@ -26,6 +26,7 @@ export interface TicketResponse {
 export interface TicketDetail {
     id: number;
     ticket_number: string;
+    access_code?: string;
     classification: Classification;
     title?: string | null;
     service_type: string | null;

@@ -243,6 +243,7 @@ class InputDataController extends Controller
             'reporter_email' => $validated['reporter_email'] ?? null,
             'reporter_wa' => $validated['reporter_wa'] ?? null,
             'content' => $validated['content'],
+            'access_code' => Str::random(32),
             'status' => 'baru',
             'is_read' => false,
             'source_app' => 'admin',

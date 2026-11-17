@@ -3,6 +3,7 @@ import { type TicketDetail } from '@/types/check';
 import { router } from '@inertiajs/react';
 import { useEchoPublic } from '@laravel/echo-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { toast } from 'sonner';
 
 export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail | null, flashSuccess?: string) {
     const [inputQuery, setInputQuery] = useState(initialTicketNumber || '');
@@ -24,6 +25,15 @@ export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail
         }
     }, [flashSuccess]);
 
+    const getStoredAccessCode = useCallback(() => {
+        if (typeof window === 'undefined' || !ticket) return '';
+        try {
+            return sessionStorage.getItem(`ticket_access_code_${ticket.ticket_number}`) || '';
+        } catch {
+            return '';
+        }
+    }, [ticket]);
+
     function handleSearch(e: FormEvent) {
         e.preventDefault();
         const trimmed = inputQuery.trim();
@@ -38,15 +48,32 @@ export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail
         setTimeout(() => setCopied(false), 2000);
     }, []);
 
-    function handleComplete() {
+    function handleComplete(accessCodeOverride?: string) {
         if (!ticket) return;
         setCompleting(true);
+        const code = accessCodeOverride || ticket.access_code || getStoredAccessCode() || '';
+
+        if (code && typeof window !== 'undefined') {
+            try {
+                sessionStorage.setItem(`ticket_access_code_${ticket.ticket_number}`, code);
+            } catch {}
+        }
+
         router.post(
             route('tickets.check.complete', { ticketNumber: ticket.ticket_number }),
-            {},
+            {
+                access_code: code,
+            },
             {
                 preserveScroll: true,
                 onFinish: () => setCompleting(false),
+                onSuccess: () => {
+                    setIsCompleteDialogOpen(false);
+                    toast.success('Laporan telah ditandai selesai. Terima kasih!');
+                },
+                onError: () => {
+                    toast.error('Gagal menyelesaikan laporan. Silakan periksa kembali kode akses.');
+                },
             },
         );
     }

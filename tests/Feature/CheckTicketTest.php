@@ -117,6 +117,115 @@ test('reporter can reply on check page using existing ticket', function () {
     ]);
 });
 
+test('reproduksi payload frontend tanpa access_code gagal validasi dengan redirect 302', function () {
+    $ticket = Ticket::create([
+        'ticket_number' => 'A-1400/092026/0199',
+        'period' => '2026-09',
+        'sequence' => 199,
+        'classification' => 'aspirasi',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Usulan perbaikan data.',
+        'access_code' => 'valid-access-code',
+        'status' => 'respon_substantif',
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    // Request seperti payload di DevTools: hanya message dan attachments: []
+    $response = $this->post(route('tickets.check.reply', ['ticketNumber' => $ticket->ticket_number]), [
+        'message' => 'asdasdasdasdasdasd',
+        'attachments' => [],
+    ]);
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors(['access_code']);
+});
+
+test('balasan ditolak pada tiket berstatus selesai', function () {
+    $accessCode = 'test-access-code-selesai-reply';
+    $ticket = Ticket::create([
+        'ticket_number' => 'A-1400/092026/0200',
+        'period' => '2026-09',
+        'sequence' => 200,
+        'classification' => 'aspirasi',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Usulan perbaikan data.',
+        'access_code' => $accessCode,
+        'status' => 'selesai',
+        'completed_at' => now(),
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    $response = $this->post(route('tickets.check.reply', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => $accessCode,
+        'message' => 'Mencoba membalas tiket yang sudah selesai.',
+        'attachments' => [],
+    ]);
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors(['message']);
+    expect($ticket->responses()->count())->toBe(0);
+});
+
+test('balasan dengan attachments array kosong berhasil tersimpan', function () {
+    $accessCode = 'test-access-code-empty-attachments';
+    $ticket = Ticket::create([
+        'ticket_number' => 'A-1400/092026/0201',
+        'period' => '2026-09',
+        'sequence' => 201,
+        'classification' => 'aspirasi',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Usulan perbaikan data.',
+        'access_code' => $accessCode,
+        'status' => 'respon_substantif',
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    $response = $this->post(route('tickets.check.reply', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => $accessCode,
+        'message' => 'Balasan dengan attachments kosong.',
+        'attachments' => [],
+    ]);
+
+    $response->assertStatus(302);
+    $response->assertSessionHas('flash.success');
+
+    $this->assertDatabaseHas('ticket_responses', [
+        'ticket_id' => $ticket->id,
+        'message' => 'Balasan dengan attachments kosong.',
+    ]);
+});
+
+test('validasi pesan balasan wajib minimal 5 karakter', function () {
+    $accessCode = 'test-access-code-validation';
+    $ticket = Ticket::create([
+        'ticket_number' => 'A-1400/092026/0202',
+        'period' => '2026-09',
+        'sequence' => 202,
+        'classification' => 'aspirasi',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Usulan perbaikan data.',
+        'access_code' => $accessCode,
+        'status' => 'respon_substantif',
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    $response = $this->post(route('tickets.check.reply', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => $accessCode,
+        'message' => 'hai',
+    ]);
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors(['message']);
+});
+
 test('reporter can complete ticket on check page', function () {
     $accessCode = 'test-access-code-complete-123';
     $ticket = Ticket::create([
@@ -436,4 +545,89 @@ test('missing physical file returns 404 with friendly message', function () {
         ->where('status', 404)
         ->where('message', 'Lampiran tidak ditemukan.')
     );
+});
+
+test('reply dengan access_code salah ditolak dengan pesan error pada access_code dan message', function () {
+    $ticket = Ticket::create([
+        'ticket_number' => 'A-1400/092026/0204',
+        'period' => '2026-09',
+        'sequence' => 204,
+        'classification' => 'aspirasi',
+        'channel_id' => $this->channel->id,
+        'content' => 'Usulan data',
+        'access_code' => 'correct-access-code',
+        'status' => 'respon_substantif',
+        'source_app' => 'web',
+    ]);
+
+    $response = $this->post(route('tickets.check.reply', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => 'wrong-access-code',
+        'message' => 'Pesan balasan pengujian',
+    ]);
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors(['access_code', 'message']);
+});
+
+test('complete dengan access_code salah ditolak dengan pesan error pada access_code dan message', function () {
+    $ticket = Ticket::create([
+        'ticket_number' => 'A-1400/092026/0205',
+        'period' => '2026-09',
+        'sequence' => 205,
+        'classification' => 'aspirasi',
+        'channel_id' => $this->channel->id,
+        'content' => 'Usulan data',
+        'access_code' => 'correct-access-code',
+        'status' => 'respon_substantif',
+        'source_app' => 'web',
+    ]);
+
+    $response = $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => 'wrong-access-code',
+    ]);
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors(['access_code', 'message']);
+    $ticket->refresh();
+    expect($ticket->status)->toBe('respon_substantif');
+});
+
+test('tiket bergaris miring seperti A-1400/112026/PK2119 dapat dibalas dan diselesaikan dengan access_code valid', function () {
+    Event::fake([InboxUpdated::class, TicketUpdated::class]);
+
+    $ticketNumber = 'A-1400/112026/PK2119';
+    $accessCode = 'test-access-code-pk2119-valid';
+
+    $ticket = Ticket::create([
+        'ticket_number' => $ticketNumber,
+        'period' => '2026-11',
+        'sequence' => 2119,
+        'classification' => 'aspirasi',
+        'channel_id' => $this->channel->id,
+        'content' => 'Pengujian nomor tiket bertanda garis miring',
+        'access_code' => $accessCode,
+        'status' => 'respon_substantif',
+        'source_app' => 'web',
+    ]);
+
+    $replyResponse = $this->post(route('tickets.check.reply', ['ticketNumber' => $ticketNumber]), [
+        'access_code' => $accessCode,
+        'message' => 'Balasan pengujian pada tiket berslash.',
+        'attachments' => [],
+    ]);
+
+    $replyResponse->assertRedirect();
+    $replyResponse->assertSessionHas('flash.success');
+
+    $completeResponse = $this->post(route('tickets.check.complete', ['ticketNumber' => $ticketNumber]), [
+        'access_code' => $accessCode,
+    ]);
+
+    $completeResponse->assertRedirect();
+    $completeResponse->assertSessionHas('flash.success');
+
+    $ticket->refresh();
+    expect($ticket->status)->toBe('selesai');
+    Event::assertDispatched(InboxUpdated::class);
+    Event::assertDispatched(TicketUpdated::class);
 });

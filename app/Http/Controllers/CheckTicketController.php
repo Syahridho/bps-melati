@@ -44,6 +44,10 @@ class CheckTicketController extends Controller
                     return null;
                 }
 
+                if (blank($t->access_code)) {
+                    $t->forceFill(['access_code' => Str::random(32)])->saveQuietly();
+                }
+
                 $t->checkAndAutoClose();
 
                 return [
@@ -154,8 +158,13 @@ class CheckTicketController extends Controller
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
 
+        if (blank($ticket->access_code)) {
+            $ticket->forceFill(['access_code' => Str::random(32)])->saveQuietly();
+        }
+
         if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
             return redirect()->back()->withErrors([
+                'access_code' => 'Kode akses tiket tidak valid.',
                 'message' => 'Kode akses tiket tidak valid.',
             ])->withInput();
         }
@@ -180,8 +189,13 @@ class CheckTicketController extends Controller
             'access_code' => ['required', 'string'],
         ]);
 
+        if (blank($ticket->access_code)) {
+            $ticket->forceFill(['access_code' => Str::random(32)])->saveQuietly();
+        }
+
         if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
             return redirect()->back()->withErrors([
+                'access_code' => 'Kode akses tiket tidak valid.',
                 'message' => 'Kode akses tiket tidak valid.',
             ])->withInput();
         }

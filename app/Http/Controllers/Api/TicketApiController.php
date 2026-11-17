@@ -275,6 +275,10 @@ class TicketApiController extends Controller
 
         $validated = $validator->validated();
 
+        if (blank($ticket->access_code)) {
+            $ticket->forceFill(['access_code' => Str::random(32)])->saveQuietly();
+        }
+
         if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
             return response()->json([
                 'success' => false,
@@ -329,6 +333,10 @@ class TicketApiController extends Controller
         $validated = $request->validate([
             'access_code' => ['required', 'string'],
         ]);
+
+        if (blank($ticket->access_code)) {
+            $ticket->forceFill(['access_code' => Str::random(32)])->saveQuietly();
+        }
 
         if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
             return response()->json([

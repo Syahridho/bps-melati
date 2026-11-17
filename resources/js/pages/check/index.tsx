@@ -7,6 +7,7 @@ import { CheckTicketSummary } from '@/components/check/check-ticket-summary';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
 import { BpsFooter } from '@/components/layout/bps-footer';
 import { Card, CardContent } from '@/components/ui/card';
+import { Toaster } from '@/components/ui/toaster';
 import { useCheckReplyForm } from '@/hooks/use-check-reply-form';
 import { useCheckTicket } from '@/hooks/use-check-ticket';
 import { type Attachment, type CheckPageProps } from '@/types/check';
@@ -141,8 +142,13 @@ export default function CheckTicket() {
                         onOpenChange={setIsCompleteDialogOpen}
                         onConfirm={handleComplete}
                         completing={completing}
+                        ticketNumber={ticket.ticket_number}
+                        defaultAccessCode={ticket.access_code}
+                        error={pageErrors?.access_code || pageErrors?.message}
                     />
                 )}
+
+                <Toaster position="top-right" richColors />
             </div>
         </>
     );

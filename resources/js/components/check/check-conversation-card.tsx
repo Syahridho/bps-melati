@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { responseTypeLabel } from '@/lib/check-constants';
@@ -24,6 +25,7 @@ import {
 import { type ChangeEvent, type FormEvent, type RefObject } from 'react';
 
 interface ReplyFormData {
+    access_code?: string;
     message: string;
     attachments: File[];
 }
@@ -63,7 +65,6 @@ export function CheckConversationCard({
     onSubmitReply,
     onPreviewAttachment,
 }: CheckConversationCardProps) {
-    console.log(ticket);
     return (
         <Card className="border shadow-sm">
             <CardHeader className="bg-muted/30 border-b pb-4">
@@ -155,29 +156,32 @@ export function CheckConversationCard({
                                             <div className="space-y-1.5 border-t pt-2">
                                                 <span className="text-muted-foreground text-xs font-medium">Lampiran:</span>
                                                 <div className="flex flex-wrap gap-2">
-                                        {res.attachments.map((att) => (
-                                            <Button
-                                                key={att.id}
-                                                type="button"
-                                                className="bg-muted/50 hover:bg-accent inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors"
-                                                onClick={() => onPreviewAttachment(att, res.attachments)}
-                                            >
-                                                {isImageMime(att.mime_type, att.original_name) ? (
-                                                    <ImageIcon className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-                                                ) : isPdfMime(att.mime_type, att.original_name) ? (
-                                                    <FileText className="h-3.5 w-3.5 shrink-0 text-red-500" />
-                                                ) : (
-                                                    <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-                                                )}
-                                                <span className="max-w-[180px] truncate">{att.original_name}</span>
-                                                {att.size ? (
-                                                    <span className="text-muted-foreground text-[10px]">
-                                                        ({formatFileSize(att.size)})
-                                                    </span>
-                                                ) : null}
-                                                <Download className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-                                            </Button>
-                                        ))}
+                                                    {res.attachments.map((att) => (
+                                                        <Button
+                                                            key={att.id}
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="bg-card hover:bg-accent text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+                                                            onClick={() => onPreviewAttachment(att, res.attachments)}
+                                                            title={att.original_name}
+                                                        >
+                                                            {isImageMime(att.mime_type, att.original_name) ? (
+                                                                <ImageIcon className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+                                                            ) : isPdfMime(att.mime_type, att.original_name) ? (
+                                                                <FileText className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                                                            ) : (
+                                                                <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                                            )}
+                                                            <span className="max-w-[220px] sm:max-w-xs truncate text-foreground font-medium">{att.original_name}</span>
+                                                            {att.size ? (
+                                                                <span className="text-muted-foreground text-[10px]">
+                                                                    ({formatFileSize(att.size)})
+                                                                </span>
+                                                            ) : null}
+                                                            <Download className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+                                                        </Button>
+                                                    ))}
                                                 </div>
                                             </div>
                                         )}
@@ -238,6 +242,7 @@ export function CheckConversationCard({
                             </div>
                         ) : (
                             <form onSubmit={onSubmitReply} className="bg-card space-y-4 rounded-lg border p-4 shadow-xs">
+                                <input type="hidden" name="access_code" value={replyData.access_code || ''} />
                                 <div className="flex items-center justify-between border-b pb-3">
                                     <h4 className="flex items-center gap-2 text-sm font-semibold">
                                         <Send className="text-primary h-4 w-4" />
@@ -254,6 +259,34 @@ export function CheckConversationCard({
                                     </Button>
                                 </div>
 
+                                {(!ticket.access_code || replyErrors.access_code) && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="reply-access-code">
+                                            Kode Akses <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Input
+                                            id="reply-access-code"
+                                            type="text"
+                                            placeholder="Masukkan kode akses tiket dari email..."
+                                            value={replyData.access_code || ''}
+                                            onChange={(e) => {
+                                                const val = e.target.value.trim();
+                                                setReplyData('access_code', val);
+                                                if (typeof window !== 'undefined' && ticket) {
+                                                    try {
+                                                        sessionStorage.setItem(`ticket_access_code_${ticket.ticket_number}`, val);
+                                                    } catch {}
+                                                }
+                                            }}
+                                            required
+                                        />
+                                        <p className="text-muted-foreground text-xs">
+                                            Kode akses diperlukan untuk memverifikasi hak pelapor membalas tiket.
+                                        </p>
+                                        {replyErrors.access_code && <p className="text-destructive text-xs">{replyErrors.access_code}</p>}
+                                    </div>
+                                )}
+
                                 <div className="space-y-2">
                                     <Label htmlFor="reply-message">
                                         Pesan Balasan <span className="text-destructive">*</span>
@@ -267,6 +300,10 @@ export function CheckConversationCard({
                                         required
                                     />
                                     {replyErrors.message && <p className="text-destructive text-xs">{replyErrors.message}</p>}
+                                    {ticket.access_code && !replyErrors.access_code && null}
+                                    {ticket.access_code && replyErrors.access_code && (
+                                        <p className="text-destructive text-xs">{replyErrors.access_code}</p>
+                                    )}
                                 </div>
 
                                 {/* File Upload */}
@@ -274,49 +311,55 @@ export function CheckConversationCard({
                                     <Label>Lampiran Balasan (opsional)</Label>
                                     <p className="text-muted-foreground text-xs">Format: JPG, PNG, PDF. Maksimal 2MB per file, maksimal 3 file.</p>
 
-                                    {replyData.attachments.length < 3 && (
-                                        <div>
-                                            <input
-                                                ref={fileInputRef}
-                                                type="file"
-                                                accept=".jpg,.jpeg,.png,.pdf"
-                                                multiple
-                                                onChange={onFileChange}
-                                                className="hidden"
-                                            />
-                                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                                <Paperclip className="mr-2 h-4 w-4" />
-                                                Pilih File Lampiran
-                                            </Button>
-                                        </div>
-                                    )}
+                                        {replyData.attachments.length < 3 && (
+                                            <div>
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.pdf"
+                                                    multiple
+                                                    onChange={onFileChange}
+                                                    className="hidden"
+                                                />
+                                                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                                    <Paperclip className="mr-2 h-4 w-4" />
+                                                    Pilih File Lampiran
+                                                </Button>
+                                            </div>
+                                        )}
 
-                                    {replyData.attachments.length > 0 && (
-                                        <div className="space-y-2 pt-2">
-                                            {replyData.attachments.map((file, index) => (
-                                                <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
-                                                    <div className="flex items-center gap-2 truncate">
-                                                        {isImageFile(file) ? (
-                                                            <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
-                                                        ) : (
-                                                            <FileText className="h-4 w-4 shrink-0 text-red-500" />
-                                                        )}
-                                                        <span className="truncate font-medium">{file.name}</span>
-                                                        <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                                        {/* Attachment validation errors */}
+                                        {replyErrors.attachments && (
+                                            <p className="text-destructive text-xs mt-1">{replyErrors.attachments}</p>
+                                        )}
+
+                                        {replyData.attachments.length > 0 && (
+                                            <div className="space-y-2 pt-2">
+                                                {replyData.attachments.map((file, index) => (
+                                                    <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
+                                                        <div className="flex items-center gap-2 truncate">
+                                                            {isImageFile(file) ? (
+                                                                <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
+                                                            ) : (
+                                                                <FileText className="h-4 w-4 shrink-0 text-red-500" />
+                                                            )}
+                                                            <span className="truncate font-medium">{file.name}</span>
+                                                            <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-destructive h-6 w-6"
+                                                            onClick={() => onRemoveFile(index)}
+                                                        >
+                                                            <X className="h-3.5 w-3.5" />
+                                                        </Button>
                                                     </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-destructive h-6 w-6"
-                                                        onClick={() => onRemoveFile(index)}
-                                                    >
-                                                        <X className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                                ))}
+                                            </div>
+                                        )}
+
                                 </div>
 
                                 <div className="flex items-center justify-end gap-2 border-t pt-2">

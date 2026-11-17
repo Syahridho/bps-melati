@@ -120,8 +120,9 @@ export function CheckTicketSummary({ ticket, copied, onCopy, onPreviewAttachment
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="bg-card hover:bg-accent inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors"
+                                    className="bg-card hover:bg-accent text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors"
                                     onClick={() => onPreviewAttachment(att, ticket.attachments)}
+                                    title={att.original_name}
                                 >
                                     {isImageMime(att.mime_type, att.original_name) ? (
                                         <ImageIcon className="h-3.5 w-3.5 shrink-0 text-blue-500" />
@@ -130,8 +131,8 @@ export function CheckTicketSummary({ ticket, copied, onCopy, onPreviewAttachment
                                     ) : (
                                         <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                                     )}
-                                    <span className="max-w-[200px] truncate">{att.original_name}</span>
-                                    <span className="text-muted-foreground">({formatFileSize(att.size)})</span>
+                                    <span className="max-w-[220px] sm:max-w-xs truncate text-foreground font-medium">{att.original_name}</span>
+                                    <span className="text-muted-foreground text-[10px]">({formatFileSize(att.size)})</span>
                                     <Download className="text-muted-foreground ml-1 h-3.5 w-3.5 shrink-0" />
                                 </Button>
                             ))}
