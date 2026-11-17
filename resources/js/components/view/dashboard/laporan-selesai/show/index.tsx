@@ -1,5 +1,5 @@
+import CompletedStamp from '@/components/completed-stamp';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
-import { TicketFlagButton } from '@/components/shared/ticket-flag-button';
 import { mapLaporanSelesaiToDetailData } from '@/components/shared/ticket-detail/adapters';
 import { SupervisionToggle } from '@/components/shared/ticket-detail/supervision-toggle';
 import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
@@ -8,11 +8,12 @@ import { TicketDetailHeader } from '@/components/shared/ticket-detail/ticket-det
 import { TicketDetailLayout } from '@/components/shared/ticket-detail/ticket-detail-layout';
 import { TicketInfoGrid } from '@/components/shared/ticket-detail/ticket-info-grid';
 import { TicketResponseHistory } from '@/components/shared/ticket-detail/ticket-response-history';
+import { TicketFlagButton } from '@/components/shared/ticket-flag-button';
 import { Separator } from '@/components/ui/separator';
 import { formatFullDate } from '@/lib/laporan-masuk-utils';
 import { type Attachment, type ShowProps } from '@/types/laporan-selesai';
 import { usePage } from '@inertiajs/react';
-import { Calendar, FileText, Globe, Layers, Mail, Phone, User } from 'lucide-react';
+import { Calendar, Clock, FileText, Globe, Layers, Mail, Phone, User } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ShowLaporanSelesaiView() {
@@ -74,6 +75,25 @@ export default function ShowLaporanSelesaiView() {
             value: formatFullDate(detailData.created_at),
             icon: Calendar,
         },
+
+        detailData.completed_at && detailData.created_at
+            ? {
+                  id: 'duration',
+                  label: 'Durasi Penyelesaian',
+                  value: (() => {
+                      const start = new Date(detailData.created_at);
+                      const end = new Date(detailData.completed_at);
+                      const diffMs = end.getTime() - start.getTime();
+                      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                      const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                      if (diffDays > 0) return `${diffDays} hari ${diffHours} jam`;
+                      if (diffHours > 0) return `${diffHours} jam ${diffMins} menit`;
+                      return `${diffMins} menit`;
+                  })(),
+                  icon: Clock,
+              }
+            : null,
         {
             id: 'sequence',
             label: 'Nomor Urut',
@@ -141,13 +161,12 @@ export default function ShowLaporanSelesaiView() {
                 <Separator />
 
                 <TicketInfoGrid fields={infoFields} />
+                {/* Completed stamp */}
+                {detailData.completed_at && <CompletedStamp completedAt={detailData.completed_at} />}
 
                 <TicketContentCard title={detailData.title} content={detailData.content} />
 
-                <TicketAttachments
-                    attachments={detailData.attachments}
-                    onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)}
-                />
+                <TicketAttachments attachments={detailData.attachments} onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)} />
             </div>
 
             <TicketResponseHistory

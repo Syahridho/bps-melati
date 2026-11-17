@@ -1,3 +1,4 @@
+import CompletedStamp from '@/components/completed-stamp';
 import { LaporanMasukDeleteDialog } from '@/components/laporan-masuk/laporan-masuk-delete-dialog';
 import { LaporanMasukEditDialog } from '@/components/laporan-masuk/laporan-masuk-edit-dialog';
 import { LaporanMasukPresenceBar } from '@/components/laporan-masuk/laporan-masuk-presence-bar';
@@ -40,6 +41,7 @@ export default function ShowLaporanMasukView() {
     const flashTimerRef = useRef<number | null>(null);
     const [responses, setResponses] = useState<TicketResponseItem[]>(ticket.responses);
     const [ticketStatus, setTicketStatus] = useState<Status>(ticket.status);
+    const [completedAt, setCompletedAt] = useState<string | null>(ticket.completed_at ?? null);
     const [ticketVersion, setTicketVersion] = useState<number>(ticket.version ?? 0);
     const [highlightLast, setHighlightLast] = useState(false);
     const [conflict, setConflict] = useState<ReplyConflict | null>(flash?.conflict ?? null);
@@ -93,6 +95,7 @@ export default function ShowLaporanMasukView() {
     useEffect(() => {
         setResponses(ticket.responses);
         setTicketStatus(ticket.status);
+        setCompletedAt(ticket.completed_at ?? null);
         setTicketVersion(ticket.version ?? 0);
     }, [ticket]);
 
@@ -197,7 +200,8 @@ export default function ShowLaporanMasukView() {
             setTicketStatus(status);
             setTicketVersion((prev) => Math.max(prev, version));
         },
-        onCompleted: () => {
+        onCompleted: (eventCompletedAt) => {
+            setCompletedAt(eventCompletedAt ?? new Date().toISOString());
             setShowReplyForm(false);
             setPendingNotice(null);
             setSuccessMessage('Pelapor menandai laporan ini selesai.');
@@ -254,6 +258,7 @@ export default function ShowLaporanMasukView() {
     const detailData = mapLaporanMasukToDetailData({
         ...ticket,
         status: ticketStatus,
+        completed_at: completedAt,
         responses,
     });
 
@@ -406,6 +411,8 @@ export default function ShowLaporanMasukView() {
                 <Separator />
 
                 <TicketInfoGrid fields={infoFields} />
+
+                {ticketStatus === 'selesai' && completedAt && <CompletedStamp completedAt={completedAt} />}
 
                 <TicketContentCard title={detailData.title} content={detailData.content} />
 

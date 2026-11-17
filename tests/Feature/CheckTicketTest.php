@@ -254,6 +254,37 @@ test('reporter can complete ticket on check page', function () {
         ->and($ticket->completed_at)->not->toBeNull();
 });
 
+test('broadcast event TicketUpdated on complete carries completed_at', function () {
+    Event::fake([TicketUpdated::class]);
+
+    $accessCode = 'test-access-code-broadcast-123';
+    $ticket = Ticket::create([
+        'ticket_number' => 'L-1400/092026/0115',
+        'period' => '2026-09',
+        'sequence' => 115,
+        'classification' => 'pengaduan',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Laporan uji broadcast completed_at.',
+        'access_code' => $accessCode,
+        'status' => 'respon_substantif',
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    $this->post(route('tickets.check.complete', ['ticketNumber' => $ticket->ticket_number]), [
+        'access_code' => $accessCode,
+    ])->assertRedirect();
+
+    Event::assertDispatched(TicketUpdated::class, function (TicketUpdated $event) use ($ticket) {
+        $payload = $event->broadcastWith();
+
+        return $event->ticket->id === $ticket->id
+            && $payload['status'] === 'selesai'
+            && ! empty($payload['completed_at']);
+    });
+});
+
 test('tiket yang sudah selesai tidak menyiarkan event inbox dua kali', function () {
     Event::fake([InboxUpdated::class, TicketUpdated::class]);
 

@@ -62,6 +62,7 @@ export interface TicketUpdatedEvent {
     status: RealtimeStatus;
     version: number;
     actor_id: number | null;
+    completed_at?: string | null;
     response?: TicketResponseItem;
 }
 

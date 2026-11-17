@@ -306,3 +306,49 @@ test('operator only counts tickets in their scope and unauthorized users get 0',
     $unauthCounts = InboxCounter::getCounts($fakeUser);
     expect($unauthCounts['semua'])->toBe(0);
 });
+
+test('detail laporan masuk brings completed_at when completed and null when not', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true]);
+
+    $activeTicket = Ticket::create([
+        'ticket_number' => 'PUB-ACT-001',
+        'period' => now()->format('Y-m'),
+        'sequence' => 901,
+        'classification' => 'pengaduan',
+        'title' => 'Laporan Aktif',
+        'channel_id' => $channel->id,
+        'content' => 'Isi laporan aktif',
+        'status' => 'baru',
+        'source_app' => 'web',
+    ]);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.laporan-masuk.show', $activeTicket->ticket_number))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/admin/laporan-masuk/show/index')
+            ->where('ticket.completed_at', null)
+        );
+
+    $completedTicket = Ticket::create([
+        'ticket_number' => 'PUB-CMP-001',
+        'period' => now()->format('Y-m'),
+        'sequence' => 902,
+        'classification' => 'pengaduan',
+        'title' => 'Laporan Selesai',
+        'channel_id' => $channel->id,
+        'content' => 'Isi laporan selesai',
+        'status' => 'selesai',
+        'source_app' => 'web',
+        'completed_at' => now(),
+    ]);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.laporan-masuk.show', $completedTicket->ticket_number))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/admin/laporan-masuk/show/index')
+            ->whereNot('ticket.completed_at', null)
+        );
+});

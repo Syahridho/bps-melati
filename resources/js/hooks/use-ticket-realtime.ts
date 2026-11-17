@@ -30,7 +30,7 @@ export interface UseTicketRealtimeOptions {
     onResponse: (response: TicketResponseItem) => void;
     onEmailStatusUpdate?: (event: EmailStatusEvent) => void;
     onStatusChange: (status: TicketBroadcastEvent['status'], version: number) => void;
-    onCompleted?: () => void;
+    onCompleted?: (completedAt?: string | null) => void;
 }
 
 export interface UseTicketRealtimeResult {
@@ -100,7 +100,8 @@ export function useTicketRealtime({
             handlers.current.onStatusChange(event.status, eventVersion);
 
             if (event.status === 'selesai') {
-                handlers.current.onCompleted?.();
+                const completedAt = 'completed_at' in event ? event.completed_at : null;
+                handlers.current.onCompleted?.(completedAt);
             }
 
             const response = 'response' in event ? event.response : null;

@@ -80,6 +80,20 @@
     }
 }
 
+@keyframes stamp-in {
+    0% {
+        transform: scale(1.8);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(0.95);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 :root {
     --footer-bg: #eef4fb;
     --footer-foreground: #0f2a47;

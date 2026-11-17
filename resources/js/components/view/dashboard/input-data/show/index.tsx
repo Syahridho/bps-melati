@@ -1,3 +1,4 @@
+import CompletedStamp from '@/components/completed-stamp';
 import { LaporanMasukReplyForm } from '@/components/laporan-masuk/laporan-masuk-reply-form';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
 import { mapInputDataToDetailData } from '@/components/shared/ticket-detail/adapters';
@@ -37,6 +38,7 @@ export default function ShowInputDataView() {
     const flashTimerRef = useRef<number | null>(null);
     const [responses, setResponses] = useState<InputDataResponseItem[]>(ticket.responses);
     const [ticketStatus, setTicketStatus] = useState<StatusType>(ticket.status);
+    const [completedAt, setCompletedAt] = useState<string | null>(ticket.completed_at ?? null);
     const [ticketVersion, setTicketVersion] = useState<number>(ticket.version ?? 0);
 
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -81,6 +83,7 @@ export default function ShowInputDataView() {
     useEffect(() => {
         setResponses(ticket.responses);
         setTicketStatus(ticket.status);
+        setCompletedAt(ticket.completed_at ?? null);
         setTicketVersion(ticket.version ?? 0);
     }, [ticket]);
 
@@ -171,7 +174,8 @@ export default function ShowInputDataView() {
             setTicketStatus(status as StatusType);
             setTicketVersion((prev) => Math.max(prev, version));
         },
-        onCompleted: () => {
+        onCompleted: (eventCompletedAt) => {
+            setCompletedAt(eventCompletedAt ?? new Date().toISOString());
             setSuccessMessage('Pelapor menandai laporan ini selesai.');
             toast.info('Pelapor menyelesaikan laporan ini', {
                 description: 'Status berubah menjadi Selesai.',
@@ -221,6 +225,7 @@ export default function ShowInputDataView() {
     const detailData = mapInputDataToDetailData({
         ...ticket,
         status: ticketStatus,
+        completed_at: completedAt,
         responses,
     });
 
@@ -358,6 +363,8 @@ export default function ShowInputDataView() {
                 <Separator />
 
                 <TicketInfoGrid fields={infoFields} />
+
+                {ticketStatus === 'selesai' && completedAt && <CompletedStamp completedAt={completedAt} />}
 
                 <TicketContentCard title={detailData.title} content={detailData.content} />
 

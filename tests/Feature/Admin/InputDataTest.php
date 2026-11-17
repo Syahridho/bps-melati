@@ -286,3 +286,30 @@ test('ticket status change to selesai dispatches LaporanChanged with completed a
         return $event->action === 'completed' && $event->ticketId === $ticket->id;
     });
 });
+
+test('detail input data brings completed_at when completed and null when not', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $activeTicket = createTestTicket(['status' => 'baru', 'created_by' => $admin->id]);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.input-data.show', $activeTicket->ticket_number))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/admin/input-data/show/index')
+            ->where('ticket.completed_at', null)
+        );
+
+    $completedTicket = createTestTicket([
+        'status' => 'selesai',
+        'created_by' => $admin->id,
+        'completed_at' => now(),
+    ]);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.input-data.show', $completedTicket->ticket_number))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/admin/input-data/show/index')
+            ->whereNot('ticket.completed_at', null)
+        );
+});
