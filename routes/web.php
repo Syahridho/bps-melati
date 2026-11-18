@@ -81,6 +81,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('input-data/{ticketNumber}', [InputDataController::class, 'update'])->name('input-data.update')->where('ticketNumber', '.*');
         Route::delete('input-data/{ticketNumber}', [InputDataController::class, 'destroy'])->name('input-data.destroy')->where('ticketNumber', '.*');
         Route::patch('input-data/{ticketNumber}/tandai', [InputDataController::class, 'tandai'])->middleware('throttle:60,1')->name('input-data.tandai')->where('ticketNumber', '.*');
+        Route::patch('input-data/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('input-data.pengawasan')->where('ticketNumber', '.*');
         Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
@@ -121,6 +122,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware('role:operator')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
+        Route::patch('input-data/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('input-data.pengawasan')->where('ticketNumber', '.*');
         Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
         Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
         Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');

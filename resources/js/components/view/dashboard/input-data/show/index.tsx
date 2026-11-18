@@ -3,6 +3,7 @@ import { LaporanMasukReplyForm } from '@/components/laporan-masuk/laporan-masuk-
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
 import { mapInputDataToDetailData } from '@/components/shared/ticket-detail/adapters';
 import SensorToggleButton from '@/components/shared/ticket-detail/sensor-toggle-button';
+import { SupervisionToggle } from '@/components/shared/ticket-detail/supervision-toggle';
 import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
 import { TicketContentCard } from '@/components/shared/ticket-detail/ticket-content-card';
 import { TicketDetailHeader } from '@/components/shared/ticket-detail/ticket-detail-header';
@@ -353,10 +354,23 @@ export default function ShowInputDataView() {
                     status={detailData.status}
                     createdAt={detailData.created_at}
                     autoCloseAt={detailData.auto_close_at}
-                    isPengawasan={false}
+                    isPengawasan={detailData.is_pengawasan}
+                    pengawasanAt={detailData.pengawasan_at}
+                    pengawasanByName={detailData.pengawasan_by_name}
+                    kadarPengawasanDays={detailData.kadar_pengawasan_days}
                     actions={
                         <>
                             <SensorToggleButton showOriginal={showOriginal} onToggle={() => setShowOriginal((prev) => !prev)} />
+                            <SupervisionToggle
+                                ticketNumber={detailData.ticket_number}
+                                isPengawasan={detailData.is_pengawasan}
+                                disabled={ticketStatus === 'selesai' || auth.user.role === 'operator_tim'}
+                                kadarPengawasanDays={detailData.kadar_pengawasan_days}
+                                classificationDefaultDays={detailData.classification_default_days}
+                                updateRoute={route(`${routePrefix}.input-data.pengawasan`, {
+                                    ticketNumber: detailData.ticket_number,
+                                })}
+                            />
                             <TicketEditDeleteActions
                                 canEdit={canEdit}
                                 canDelete={canDelete}

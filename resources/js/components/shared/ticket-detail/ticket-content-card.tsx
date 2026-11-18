@@ -29,7 +29,7 @@ export function TicketContentCard({
 
     const canShowOriginal = Boolean(hasProfanity && (titleOriginal != null || contentOriginal != null));
 
-    // const displayTitle = showOriginal && titleOriginal ? titleOriginal : title;
+    const displayTitle = showOriginal && titleOriginal ? titleOriginal : title;
     const displayContent = showOriginal && contentOriginal ? contentOriginal : content;
 
     return (
@@ -41,19 +41,11 @@ export function TicketContentCard({
                         Mengandung kata kasar
                     </span>
                 )}
-                {/* {hasTitle && (
+                {hasTitle && (
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-semibold [overflow-wrap:anywhere] break-words sm:text-xl">
-                            {displayTitle}
-                        </h3>
-                        {canShowOriginal && onToggle && (
-                            <SensorToggleButton
-                                showOriginal={showOriginal}
-                                onToggle={onToggle}
-                            />
-                        )}
+                        <h3 className="text-lg font-semibold [overflow-wrap:anywhere] break-words sm:text-xl">{displayTitle}</h3>
                     </div>
-                )} */}
+                )}
                 {hasContent && (
                     <div>
                         <div className="bg-muted/20 rounded-lg border p-4 text-sm">
