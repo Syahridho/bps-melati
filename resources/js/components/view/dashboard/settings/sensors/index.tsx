@@ -1,22 +1,23 @@
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useSensorManagement } from '@/hooks/use-sensor-management';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
-import { type CensoredWordItem } from '@/types/sensors';
+import { CensoredWordItem } from '@/types/settings';
 import { Head, usePage } from '@inertiajs/react';
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
-import SensorFormDialog from './modal-word-form';
-import SensorBulkFormDialog from './modal-bulk-form';
-import SensorDeleteDialog from './modal-delete-word';
 
-export default function SensorsView() {
+import SensorBulkFormDialog from '@/components/view/dashboard/settings/sensors/modal-bulk-form';
+import SensorDeleteDialog from '@/components/view/dashboard/settings/sensors/modal-delete-word';
+import SensorFormDialog from '@/components/view/dashboard/settings/sensors/modal-word-form';
+
+export default function SensorsSettingsView() {
     const { words, flash } = usePage<{
         words: CensoredWordItem[];
         flash: { success?: string };
@@ -47,17 +48,12 @@ export default function SensorsView() {
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: 'Sensor Kata Kasar', href: route('settings.sensors.index') }];
 
-    const filteredWords = words.filter((w) =>
-        w.word.toLowerCase().includes(search.toLowerCase()),
-    );
+    const filteredWords = words.filter((w) => w.word.toLowerCase().includes(search.toLowerCase()));
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Sensor Kata Kasar" />
-            <SettingsLayout
-                title="Sensor Kata Kasar"
-                description="Kelola daftar kata yang otomatis disensor pada laporan dan tanggapan."
-            >
+            <SettingsLayout title="Sensor Kata Kasar" description="Kelola daftar kata yang otomatis disensor pada laporan dan tanggapan.">
                 <div className="space-y-6">
                     {successMessage && (
                         <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
@@ -68,19 +64,12 @@ export default function SensorsView() {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <CardTitle className="text-lg font-bold">Sensor Kata Kasar</CardTitle>
-                            <CardDescription>
-                                Kelola daftar kata yang otomatis disensor pada laporan dan tanggapan.
-                            </CardDescription>
+                            <CardDescription>Kelola daftar kata yang otomatis disensor pada laporan dan tanggapan.</CardDescription>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <div className="relative w-64">
                                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                                <Input
-                                    placeholder="Cari kata..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-9"
-                                />
+                                <Input placeholder="Cari kata..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
                             </div>
                             <Button variant="outline" onClick={openCreateModal} className="gap-2">
                                 <Plus className="h-4 w-4" />
@@ -133,18 +122,10 @@ export default function SensorsView() {
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-1">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => openEditModal(item)}
-                                                            >
+                                                            <Button variant="ghost" size="sm" onClick={() => openEditModal(item)}>
                                                                 Edit
                                                             </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => openDeleteModal(item)}
-                                                            >
+                                                            <Button variant="ghost" size="sm" onClick={() => openDeleteModal(item)}>
                                                                 Hapus
                                                             </Button>
                                                         </div>
@@ -155,10 +136,9 @@ export default function SensorsView() {
                                     </TableBody>
                                 </Table>
                                 <p className="text-muted-foreground mt-3 text-xs">
-                                    Kata dengan panjang 5 huruf atau lebih default menggunakan mode{' '}
-                                    <em>Di mana saja</em> (cocok di seluruh teks, termasuk yang menempel).
-                                    Kata pendek (4 huruf atau kurang) default menggunakan mode{' '}
-                                    <em>Kata utuh</em> (hanya cocok sebagai kata tersendiri).
+                                    Kata dengan panjang 5 huruf atau lebih default menggunakan mode <em>Di mana saja</em> (cocok di seluruh teks,
+                                    termasuk yang menempel). Kata pendek (4 huruf atau kurang) default menggunakan mode <em>Kata utuh</em> (hanya
+                                    cocok sebagai kata tersendiri).
                                 </p>
                             </div>
                         </CardContent>
@@ -189,16 +169,8 @@ export default function SensorsView() {
                         editingId={editingWord?.id ?? null}
                         onSubmit={handleEditSubmit}
                     />
-                    <SensorDeleteDialog
-                        open={isDeleteOpen}
-                        word={deletingWord}
-                        onClose={closeDeleteModal}
-                        onConfirm={handleDeleteSubmit}
-                    />
-                    <SensorBulkFormDialog
-                        open={isBulkOpen}
-                        onOpenChange={setIsBulkOpen}
-                    />
+                    <SensorDeleteDialog open={isDeleteOpen} word={deletingWord} onClose={closeDeleteModal} onConfirm={handleDeleteSubmit} />
+                    <SensorBulkFormDialog open={isBulkOpen} onOpenChange={setIsBulkOpen} />
                 </div>
             </SettingsLayout>
         </AppLayout>

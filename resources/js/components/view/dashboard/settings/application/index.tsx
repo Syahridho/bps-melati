@@ -6,7 +6,7 @@ import { usePengaturanForm } from '@/hooks/use-pengaturan-form';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
-import { type SettingPageProps } from '@/types/pengaturan';
+import { type SettingPageProps } from '@/types/settings';
 import { Transition } from '@headlessui/react';
 import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, LoaderCircle } from 'lucide-react';

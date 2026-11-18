@@ -14,7 +14,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function AppearanceView() {
+export default function AppearanceSettingsView() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pengaturan Tema" />

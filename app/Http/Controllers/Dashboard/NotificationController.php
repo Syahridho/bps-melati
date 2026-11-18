@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Support\DashboardStats;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\RedirectResponse; 
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,7 +31,7 @@ class NotificationController extends Controller
     /**
      * Perbarui pengaturan pembaruan realtime dashboard (hanya admin).
      */
-    public function updateDashboardLive(UpdateDashboardLiveRequest $request): JsonResponse
+    public function updateDashboardLive(UpdateDashboardLiveRequest $request): RedirectResponse
     {
         $enabled = (bool) $request->validated('dashboard_live_enabled');
 
@@ -40,9 +41,11 @@ class NotificationController extends Controller
         Cache::add(DashboardStats::VERSION_KEY, 0);
         Cache::increment(DashboardStats::VERSION_KEY);
 
-        return response()->json([
-            'success' => true,
-            'dashboard_live_enabled' => $enabled,
-        ]);
+        // return response()->json([
+        //     'success' => true,
+        //     'dashboard_live_enabled' => $enabled,
+        // ]);
+
+        return back();
     }
 }

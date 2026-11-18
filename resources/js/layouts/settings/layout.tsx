@@ -30,20 +30,20 @@ export default function SettingsLayout({
                       icon: null,
                   },
                   {
-                      title: 'API',
+                      title: 'API Dokumentasi',
                       url: '/settings/api',
                       icon: null,
                   },
-              {
-                  title: 'Sumber Kanal',
-                  url: '/settings/sumber-kanal',
-                  icon: null,
-              },
-              {
-                  title: 'Sensor',
-                  url: '/settings/sensors',
-                  icon: null,
-              },
+                  {
+                      title: 'Sumber Kanal',
+                      url: '/settings/sumber-kanal',
+                      icon: null,
+                  },
+                  {
+                      title: 'Sensor',
+                      url: '/settings/sensors',
+                      icon: null,
+                  },
               ]
             : []),
         ...(!isOperatorTim

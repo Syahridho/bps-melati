@@ -56,219 +56,217 @@ export const API_KEY_PLACEHOLDER = 'YOUR_API_KEY';
  * Data semua endpoint API.
  */
 export const API_ENDPOINTS: ApiEndpoint[] = [
-    {
-        id: 'auth-token-store',
-        method: 'POST',
-        path: '/api/auth/token',
-        title: 'Masuk (Login) Mobile',
-        description:
-            'Mendapatkan token Bearer untuk klien non-browser (Flutter/Android). ' +
-            'Login mobile baru mencabut token mobile lama dengan nama perangkat yang sama. ' +
-            'Token web (sesi) dan token mobile tidak saling meniadakan.',
-        auth: 'none',
-        rateLimit: '10 request per menit (per email + IP)',
-        params: [
-            {
-                name: 'email',
-                location: 'body',
-                type: 'string',
-                required: true,
-                description: 'Alamat email pelanggan.',
-                example: 'pelapor@example.com',
-            },
-            {
-                name: 'password',
-                location: 'body',
-                type: 'string',
-                required: true,
-                description: 'Kata sandi akun.',
-                example: 'sandi123',
-            },
-            {
-                name: 'device_name',
-                location: 'body',
-                type: 'string',
-                required: false,
-                description: 'Nama perangkat (maksimal 100 karakter).',
-                example: 'HP Android Kantor',
-            },
-        ],
-        success: {
-            statusCode: 201,
-            description: 'Berhasil masuk.',
-            body: JSON.stringify(
-                {
-                    message: 'Berhasil masuk.',
-                    code: 'ok',
-                    data: {
-                        token: 'eyJ0eXAiOi...',
-                        token_type: 'Bearer',
-                        expires_at: '2026-11-14T07:00:00+07:00',
-                        user: {
-                            id: 1,
-                            name: 'Administrator',
-                            email: 'admin@example.com',
-                            role: 'admin',
-                        },
-                    },
-                },
-                null,
-                2,
-            ),
-        },
-        errors: [
-            {
-                statusCode: 401,
-                description: 'Kredensial salah.',
-                body: JSON.stringify({ message: 'Kredensial yang Anda masukkan salah.', code: 'invalid_credentials' }, null, 2),
-            },
-            {
-                statusCode: 403,
-                description: 'Akun dinonaktifkan.',
-                body: JSON.stringify({ message: 'Akun Anda dinonaktifkan.', code: 'account_disabled' }, null, 2),
-            },
-            {
-                statusCode: 409,
-                description: 'Akun sedang digunakan.',
-                body: JSON.stringify({ message: 'Akun sedang digunakan.', code: 'account_in_use' }, null, 2),
-            },
-            {
-                statusCode: 422,
-                description: 'Validasi gagal.',
-                body: JSON.stringify({ message: 'Email wajib diisi.', code: 'validation_error' }, null, 2),
-            },
-            {
-                statusCode: 429,
-                description: 'Terlalu banyak request.',
-                body: JSON.stringify(
-                    {
-                        message: 'Terlalu banyak percobaan login. Coba lagi dalam 60 detik.',
-                        code: 'throttled',
-                        retry_after: 60,
-                    },
-                    null,
-                    2,
-                ),
-            },
-        ],
-        codeExamples: [
-            {
-                label: 'cURL',
-                code: `curl -X POST ${BASE_URL_PLACEHOLDER}/api/auth/token \\\n  -H "Content-Type: application/json" \\\n  -d '{"email":"pelapor@example.com","password":"sandi123","device_name":"HP Android"}'`,
-            },
-            {
-                label: 'JavaScript (fetch)',
-                code: `fetch('${BASE_URL_PLACEHOLDER}/api/auth/token', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    email: 'pelapor@example.com',\n    password: 'sandi123',\n    device_name: 'HP Android'\n  })\n})\n  .then(r => r.json())\n  .then(data => console.log(data.data.token));`,
-            },
-            {
-                label: 'PHP (Laravel Http)',
-                code: `use Illuminate\\Support\\Facades\\Http;\n\n$response = Http::post('${BASE_URL_PLACEHOLDER}/api/auth/token', [\n  'email' => 'pelapor@example.com',\n  'password' => 'sandi123',\n  'device_name' => 'HP Android',\n]);\n\n$token = $response->json('data.token');`,
-            },
-            {
-                label: 'Dart/Flutter (http)',
-                code: `import 'package:http/http.dart' as http;\nimport 'dart:convert';\n\nfinal response = await http.post(\n  Uri.parse('${BASE_URL_PLACEHOLDER}/api/auth/token'),\n  headers: { 'Content-Type': 'application/json' },\n  body: jsonEncode({\n    email: 'pelapor@example.com',\n    password: 'sandi123',\n    device_name: 'HP Android',\n  }),\n);\nfinal data = jsonDecode(response.body);\nfinal token = data['data']['token'];`,
-            },
-        ],
-    },
-    {
-        id: 'auth-token-destroy',
-        method: 'DELETE',
-        path: '/api/auth/token',
-        title: 'Keluar (Logout) Mobile',
-        description: 'Mencabut token Bearer milik akun yang sedang login. Digunakan oleh klien mobile saat logout.',
-        auth: 'bearer',
-        params: [],
-        success: {
-            statusCode: 200,
-            description: 'Token berhasil dicabut.',
-            body: JSON.stringify({ message: 'Token berhasil dicabut.', code: 'ok' }, null, 2),
-        },
-        errors: [
-            {
-                statusCode: 401,
-                description: 'Tidak terautentikasi.',
-                body: JSON.stringify({ message: 'Unauthenticated.', code: 'unauthenticated' }, null, 2),
-            },
-        ],
-        codeExamples: [
-            {
-                label: 'cURL',
-                code: `curl -X DELETE ${BASE_URL_PLACEHOLDER}/api/auth/token \\\n  -H "Authorization: Bearer YOUR_API_KEY" \\\n  -H "Content-Type: application/json"`,
-            },
-            {
-                label: 'JavaScript (fetch)',
-                code: `fetch('${BASE_URL_PLACEHOLDER}/api/auth/token', {\n  method: 'DELETE',\n  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }\n})\n  .then(r => r.json());`,
-            },
-            {
-                label: 'PHP (Laravel Http)',
-                code: `$response = Http::withToken('YOUR_API_KEY')\n  ->delete('${BASE_URL_PLACEHOLDER}/api/auth/token');`,
-            },
-            {
-                label: 'Dart/Flutter (http)',
-                code: `final response = await http.delete(\n  Uri.parse('${BASE_URL_PLACEHOLDER}/api/auth/token'),\n  headers: { 'Authorization': 'Bearer YOUR_API_KEY' },\n);`,
-            },
-        ],
-    },
-    {
-        id: 'auth-user',
-        method: 'GET',
-        path: '/api/user',
-        title: 'Profil Pengguna Saat Ini',
-        description: 'Mengembalikan data pengguna yang sedang login berdasarkan token Bearer.',
-        auth: 'bearer',
-        params: [],
-        success: {
-            statusCode: 200,
-            description: 'Data pengguna.',
-            body: JSON.stringify(
-                {
-                    id: 1,
-                    name: 'Administrator',
-                    email: 'admin@example.com',
-                    role: 'admin',
-                    avatar: null,
-                    email_verified_at: null,
-                    created_at: '2026-11-01T00:00:00+07:00',
-                    updated_at: '2026-11-01T00:00:00+07:00',
-                },
-                null,
-                2,
-            ),
-        },
-        errors: [
-            {
-                statusCode: 401,
-                description: 'Tidak terautentikasi.',
-                body: JSON.stringify({ message: 'Unauthenticated.', code: 'unauthenticated' }, null, 2),
-            },
-        ],
-        codeExamples: [
-            {
-                label: 'cURL',
-                code: `curl -X GET ${BASE_URL_PLACEHOLDER}/api/user \\\n  -H "Authorization: Bearer YOUR_API_KEY"`,
-            },
-            {
-                label: 'JavaScript (fetch)',
-                code: `fetch('${BASE_URL_PLACEHOLDER}/api/user', {\n  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }\n})\n  .then(r => r.json());`,
-            },
-            {
-                label: 'PHP (Laravel Http)',
-                code: `$response = Http::withToken('YOUR_API_KEY')\n  ->get('${BASE_URL_PLACEHOLDER}/api/user');`,
-            },
-            {
-                label: 'Dart/Flutter (http)',
-                code: `final response = await http.get(\n  Uri.parse('${BASE_URL_PLACEHOLDER}/api/user'),\n  headers: { 'Authorization': 'Bearer YOUR_API_KEY' },\n);`,
-            },
-        ],
-    },
+    // {
+    //     id: 'auth-token-store',
+    //     method: 'POST',
+    //     path: '/api/auth/token',
+    //     title: 'Masuk (Login) Mobile',
+    //     description:
+    //         'Mendapatkan token Bearer untuk klien non-browser (Flutter/Android). ' +
+    //         'Login mobile baru mencabut token mobile lama dengan nama perangkat yang sama. ' +
+    //         'Token web (sesi) dan token mobile tidak saling meniadakan.',
+    //     auth: 'none',
+    //     rateLimit: '10 request per menit (per email + IP)',
+    //     params: [
+    //         {
+    //             name: 'email',
+    //             location: 'body',
+    //             type: 'string',
+    //             required: true,
+    //             description: 'Alamat email pelanggan.',
+    //             example: 'pelapor@example.com',
+    //         },
+    //         {
+    //             name: 'password',
+    //             location: 'body',
+    //             type: 'string',
+    //             required: true,
+    //             description: 'Kata sandi akun.',
+    //             example: 'sandi123',
+    //         },
+    //         {
+    //             name: 'device_name',
+    //             location: 'body',
+    //             type: 'string',
+    //             required: false,
+    //             description: 'Nama perangkat (maksimal 100 karakter).',
+    //             example: 'HP Android Kantor',
+    //         },
+    //     ],
+    //     success: {
+    //         statusCode: 201,
+    //         description: 'Berhasil masuk.',
+    //         body: JSON.stringify(
+    //             {
+    //                 message: 'Berhasil masuk.',
+    //                 code: 'ok',
+    //                 data: {
+    //                     token: 'eyJ0eXAiOi...',
+    //                     token_type: 'Bearer',
+    //                     expires_at: '2026-11-14T07:00:00+07:00',
+    //                     user: {
+    //                         id: 1,
+    //                         name: 'Administrator',
+    //                         email: 'admin@example.com',
+    //                         role: 'admin',
+    //                     },
+    //                 },
+    //             },
+    //             null,
+    //             2,
+    //         ),
+    //     },
+    //     errors: [
+    //         {
+    //             statusCode: 401,
+    //             description: 'Kredensial salah.',
+    //             body: JSON.stringify({ message: 'Kredensial yang Anda masukkan salah.', code: 'invalid_credentials' }, null, 2),
+    //         },
+    //         {
+    //             statusCode: 403,
+    //             description: 'Akun dinonaktifkan.',
+    //             body: JSON.stringify({ message: 'Akun Anda dinonaktifkan.', code: 'account_disabled' }, null, 2),
+    //         },
+    //         {
+    //             statusCode: 409,
+    //             description: 'Akun sedang digunakan.',
+    //             body: JSON.stringify({ message: 'Akun sedang digunakan.', code: 'account_in_use' }, null, 2),
+    //         },
+    //         {
+    //             statusCode: 422,
+    //             description: 'Validasi gagal.',
+    //             body: JSON.stringify({ message: 'Email wajib diisi.', code: 'validation_error' }, null, 2),
+    //         },
+    //         {
+    //             statusCode: 429,
+    //             description: 'Terlalu banyak request.',
+    //             body: JSON.stringify(
+    //                 {
+    //                     message: 'Terlalu banyak percobaan login. Coba lagi dalam 60 detik.',
+    //                     code: 'throttled',
+    //                     retry_after: 60,
+    //                 },
+    //                 null,
+    //                 2,
+    //             ),
+    //         },
+    //     ],
+    //     codeExamples: [
+    //         {
+    //             label: 'cURL',
+    //             code: `curl -X POST ${BASE_URL_PLACEHOLDER}/api/auth/token \\\n  -H "Content-Type: application/json" \\\n  -d '{"email":"pelapor@example.com","password":"sandi123","device_name":"HP Android"}'`,
+    //         },
+    //         {
+    //             label: 'JavaScript (fetch)',
+    //             code: `fetch('${BASE_URL_PLACEHOLDER}/api/auth/token', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    email: 'pelapor@example.com',\n    password: 'sandi123',\n    device_name: 'HP Android'\n  })\n})\n  .then(r => r.json())\n  .then(data => console.log(data.data.token));`,
+    //         },
+    //         {
+    //             label: 'PHP (Laravel Http)',
+    //             code: `use Illuminate\\Support\\Facades\\Http;\n\n$response = Http::post('${BASE_URL_PLACEHOLDER}/api/auth/token', [\n  'email' => 'pelapor@example.com',\n  'password' => 'sandi123',\n  'device_name' => 'HP Android',\n]);\n\n$token = $response->json('data.token');`,
+    //         },
+    //         {
+    //             label: 'Dart/Flutter (http)',
+    //             code: `import 'package:http/http.dart' as http;\nimport 'dart:convert';\n\nfinal response = await http.post(\n  Uri.parse('${BASE_URL_PLACEHOLDER}/api/auth/token'),\n  headers: { 'Content-Type': 'application/json' },\n  body: jsonEncode({\n    email: 'pelapor@example.com',\n    password: 'sandi123',\n    device_name: 'HP Android',\n  }),\n);\nfinal data = jsonDecode(response.body);\nfinal token = data['data']['token'];`,
+    //         },
+    //     ],
+    // },
+    // {
+    //     id: 'auth-token-destroy',
+    //     method: 'DELETE',
+    //     path: '/api/auth/token',
+    //     title: 'Keluar (Logout) Mobile',
+    //     description: 'Mencabut token Bearer milik akun yang sedang login. Digunakan oleh klien mobile saat logout.',
+    //     auth: 'bearer',
+    //     params: [],
+    //     success: {
+    //         statusCode: 200,
+    //         description: 'Token berhasil dicabut.',
+    //         body: JSON.stringify({ message: 'Token berhasil dicabut.', code: 'ok' }, null, 2),
+    //     },
+    //     errors: [
+    //         {
+    //             statusCode: 401,
+    //             description: 'Tidak terautentikasi.',
+    //             body: JSON.stringify({ message: 'Unauthenticated.', code: 'unauthenticated' }, null, 2),
+    //         },
+    //     ],
+    //     codeExamples: [
+    //         {
+    //             label: 'cURL',
+    //             code: `curl -X DELETE ${BASE_URL_PLACEHOLDER}/api/auth/token \\\n  -H "Authorization: Bearer YOUR_API_KEY" \\\n  -H "Content-Type: application/json"`,
+    //         },
+    //         {
+    //             label: 'JavaScript (fetch)',
+    //             code: `fetch('${BASE_URL_PLACEHOLDER}/api/auth/token', {\n  method: 'DELETE',\n  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }\n})\n  .then(r => r.json());`,
+    //         },
+    //         {
+    //             label: 'PHP (Laravel Http)',
+    //             code: `$response = Http::withToken('YOUR_API_KEY')\n  ->delete('${BASE_URL_PLACEHOLDER}/api/auth/token');`,
+    //         },
+    //         {
+    //             label: 'Dart/Flutter (http)',
+    //             code: `final response = await http.delete(\n  Uri.parse('${BASE_URL_PLACEHOLDER}/api/auth/token'),\n  headers: { 'Authorization': 'Bearer YOUR_API_KEY' },\n);`,
+    //         },
+    //     ],
+    // },
+    // {
+    //     id: 'auth-user',
+    //     method: 'GET',
+    //     path: '/api/user',
+    //     title: 'Profil Pengguna Saat Ini',
+    //     description: 'Mengembalikan data pengguna yang sedang login berdasarkan token Bearer.',
+    //     auth: 'bearer',
+    //     params: [],
+    //     success: {
+    //         statusCode: 200,
+    //         description: 'Data pengguna.',
+    //         body: JSON.stringify(
+    //             {
+    //                 id: 1,
+    //                 name: 'Administrator',
+    //                 email: 'admin@example.com',
+    //                 role: 'admin',
+    //                 avatar: null,
+    //                 email_verified_at: null,
+    //                 created_at: '2026-11-01T00:00:00+07:00',
+    //                 updated_at: '2026-11-01T00:00:00+07:00',
+    //             },
+    //             null,
+    //             2,
+    //         ),
+    //     },
+    //     errors: [
+    //         {
+    //             statusCode: 401,
+    //             description: 'Tidak terautentikasi.',
+    //             body: JSON.stringify({ message: 'Unauthenticated.', code: 'unauthenticated' }, null, 2),
+    //         },
+    //     ],
+    //     codeExamples: [
+    //         {
+    //             label: 'cURL',
+    //             code: `curl -X GET ${BASE_URL_PLACEHOLDER}/api/user \\\n  -H "Authorization: Bearer YOUR_API_KEY"`,
+    //         },
+    //         {
+    //             label: 'JavaScript (fetch)',
+    //             code: `fetch('${BASE_URL_PLACEHOLDER}/api/user', {\n  headers: { 'Authorization': 'Bearer YOUR_API_KEY' }\n})\n  .then(r => r.json());`,
+    //         },
+    //         {
+    //             label: 'PHP (Laravel Http)',
+    //             code: `$response = Http::withToken('YOUR_API_KEY')\n  ->get('${BASE_URL_PLACEHOLDER}/api/user');`,
+    //         },
+    //         {
+    //             label: 'Dart/Flutter (http)',
+    //             code: `final response = await http.get(\n  Uri.parse('${BASE_URL_PLACEHOLDER}/api/user'),\n  headers: { 'Authorization': 'Bearer YOUR_API_KEY' },\n);`,
+    //         },
+    //     ],
+    // },
     {
         id: 'tickets-store',
         method: 'POST',
         path: '/api/tickets',
         title: 'Buat Tiket Baru',
-        description:
-            'Membuat tiket pengaduan, aspirasi, atau permintaan informasi dari aplikasi klien. ' +
-            'Membutuhkan header API key yang valid.',
+        description: 'Membuat tiket pengaduan, aspirasi, atau permintaan informasi dari aplikasi klien. ' + 'Membutuhkan header API key yang valid.',
         auth: 'api-key',
         rateLimit: '5 request per menit (per IP)',
         params: [
@@ -401,20 +399,12 @@ export const API_ENDPOINTS: ApiEndpoint[] = [
             {
                 statusCode: 401,
                 description: 'API key tidak valid atau hilang.',
-                body: JSON.stringify(
-                    { success: false, message: 'Unauthorized. Invalid or missing API key.' },
-                    null,
-                    2,
-                ),
+                body: JSON.stringify({ success: false, message: 'Unauthorized. Invalid or missing API key.' }, null, 2),
             },
             {
                 statusCode: 422,
                 description: 'Validasi gagal.',
-                body: JSON.stringify(
-                    { success: false, message: 'Validasi gagal.', errors: { title: ['Judul laporan wajib diisi.'] } },
-                    null,
-                    2,
-                ),
+                body: JSON.stringify({ success: false, message: 'Validasi gagal.', errors: { title: ['Judul laporan wajib diisi.'] } }, null, 2),
             },
             {
                 statusCode: 429,
@@ -822,11 +812,7 @@ export const API_ERROR_CODES: Array<{
         code: 401,
         name: 'Unauthorized',
         description: 'API key tidak valid, hilang, atau token Bearer tidak dikenali.',
-        exampleBody: JSON.stringify(
-            { success: false, message: 'Unauthorized. Invalid or missing API key.' },
-            null,
-            2,
-        ),
+        exampleBody: JSON.stringify({ success: false, message: 'Unauthorized. Invalid or missing API key.' }, null, 2),
     },
     {
         code: 403,
@@ -844,21 +830,13 @@ export const API_ERROR_CODES: Array<{
         code: 422,
         name: 'Unprocessable Entity',
         description: 'Validasi input gagal (field wajib kosong, format salah, dll).',
-        exampleBody: JSON.stringify(
-            { success: false, message: 'Validasi gagal.', errors: { title: ['Judul laporan wajib diisi.'] } },
-            null,
-            2,
-        ),
+        exampleBody: JSON.stringify({ success: false, message: 'Validasi gagal.', errors: { title: ['Judul laporan wajib diisi.'] } }, null, 2),
     },
     {
         code: 429,
         name: 'Too Many Requests',
         description: 'Melewati batas rate limit. Header `Retry-After` berisi sisa detik sebelum bisa mencoba lagi.',
-        exampleBody: JSON.stringify(
-            { message: 'Terlalu banyak request.', code: 'throttled', retry_after: 60 },
-            null,
-            2,
-        ),
+        exampleBody: JSON.stringify({ message: 'Terlalu banyak request.', code: 'throttled', retry_after: 60 }, null, 2),
         note: 'Batas: ticket-store 5/menit, ticket-check 20/menit, ticket-reply 10/menit, auth/token 10/menit.',
     },
     {
@@ -943,7 +921,8 @@ export const MOBILE_AUTH_GUIDE: Array<{
     {
         step: 6,
         title: 'Kebijakan Token',
-        description: 'Satu token aktif per akun per jenis klien. Login mobile baru mencabut token mobile lama. Token web dan mobile tidak saling meniadakan. Batas 10 request per menit untuk login.',
+        description:
+            'Satu token aktif per akun per jenis klien. Login mobile baru mencabut token mobile lama. Token web dan mobile tidak saling meniadakan. Batas 10 request per menit untuk login.',
     },
 ];
 

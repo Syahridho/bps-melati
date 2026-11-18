@@ -1,14 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { type CensoredWordItem } from '@/types/sensors';
+import { SensorDeleteDialogProps } from '@/types/settings';
 import { Trash2 } from 'lucide-react';
-
-interface SensorDeleteDialogProps {
-    open: boolean;
-    word: CensoredWordItem | null;
-    onClose: () => void;
-    onConfirm: () => void;
-}
 
 export default function SensorDeleteDialog({ open, word, onClose, onConfirm }: SensorDeleteDialogProps) {
     return (

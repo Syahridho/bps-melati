@@ -12,15 +12,7 @@ import { toast } from 'sonner';
 
 export type { ReportFormData, ReportFormProps } from '@/components/report/types';
 
-export function ReportForm({
-    data,
-    setData,
-    processing,
-    errors,
-    onSubmit,
-    onRemoveFile,
-    onPreviewFile,
-}: ReportFormProps) {
+export function WelcomeReportForm({ data, setData, processing, errors, onSubmit, onRemoveFile, onPreviewFile }: ReportFormProps) {
     const typeSectionRef = useRef<HTMLDivElement>(null);
 
     function ensureTypeSelected() {

@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\EmailStatus;
+use App\Enums\EmailStatus;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use Illuminate\Support\Facades\Storage;

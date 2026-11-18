@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Support\Facades\Broadcast;
 
 test('admin can access dashboard.admin channel', function () {

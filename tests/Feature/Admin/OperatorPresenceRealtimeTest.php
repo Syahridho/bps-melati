@@ -2,7 +2,7 @@
 
 use App\Events\UserLoggedIn;
 use App\Models\User;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;

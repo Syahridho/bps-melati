@@ -156,7 +156,7 @@ class TicketResponseController extends Controller
         abort_unless($user instanceof User && $user->isAdmin(), 403);
         abort_unless($response->ticket_id === $ticket->id, 404);
 
-        $statusValue = $response->email_status instanceof \App\EmailStatus
+        $statusValue = $response->email_status instanceof App\Enums\EmailStatus
             ? $response->email_status->value
             : $response->email_status;
 

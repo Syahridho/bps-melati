@@ -1,8 +1,8 @@
 import { OperatorTable } from '@/components/operator/operator-table';
 import { Button } from '@/components/ui/button';
-import OperatorFormDialog from '@/components/view/dashboard/kelola-operator/modal-add-operator';
-import OperatorDeleteDialog from '@/components/view/dashboard/kelola-operator/modal-delete-operator';
-import OperatorFormDialogUpdate from '@/components/view/dashboard/kelola-operator/modal-update-operator';
+import OperatorFormDialog from '@/components/view/dashboard/operator-management/modal-add-operator';
+import OperatorDeleteDialog from '@/components/view/dashboard/operator-management/modal-delete-operator';
+import OperatorFormDialogUpdate from '@/components/view/dashboard/operator-management/modal-update-operator';
 import { useOperatorManagement } from '@/hooks/use-operator-management';
 import { useOperatorPresence } from '@/hooks/use-operator-presence';
 import AdminPage from '@/layouts/dashboard/page';
@@ -11,7 +11,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, UserPlus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
-export default function KelolaOperatorView() {
+export default function OperatorManagementView() {
     const { auth, operators, filters, flash } = usePage<OperatorPageProps>().props;
 
     const {
@@ -65,20 +65,16 @@ export default function KelolaOperatorView() {
     }, []);
 
     return (
-        <AdminPage
-            // title="Kelola Pengguna & Operator"
-            // description="Manajemen akun admin dan operator untuk pengelolaan laporan dan data sistem Melati"
-            breadcrumbs={[{ title: 'Kelola Operator', href: route('dashboard.admin.operator.index') }]}
-        >
+        <AdminPage breadcrumbs={[{ title: 'Kelola Operator', href: route('dashboard.admin.operator.index') }]}>
             <Head title="Kelola Operator" />
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-xl font-bold tracking-tight">Input Data</h2>
-                    <p className="text-muted-foreground text-sm">Kelola dan tambahkan laporan, aspirasi, atau permintaan informasi baru.</p>
+                    <h2 className="text-xl font-bold tracking-tight">Kelola Operator</h2>
+                    <p className="text-muted-foreground text-sm">Kelola dan tambahkan operator baru</p>
                 </div>
                 <Button onClick={openCreateModal} className="shrink-0 gap-2">
                     <UserPlus className="h-4 w-4" />
-                    Tambah Pengguna Baru
+                    Tambah Operator Baru
                 </Button>
             </div>
             <div className="space-y-6">

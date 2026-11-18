@@ -1,25 +1,14 @@
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { SensorBulkFormDialogProps } from '@/types/settings';
 import { useForm } from '@inertiajs/react';
 import { Layers, LoaderCircle } from 'lucide-react';
 import { type FormEvent } from 'react';
 import { toast } from 'sonner';
-
-interface SensorBulkFormDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
 
 export default function SensorBulkFormDialog({ open, onOpenChange }: SensorBulkFormDialogProps) {
     const { data, setData, post, processing, errors, reset, clearErrors } = useForm<{
@@ -59,9 +48,7 @@ export default function SensorBulkFormDialog({ open, onOpenChange }: SensorBulkF
                         <Layers className="text-primary h-5 w-5" />
                         Tambah Banyak Kata Terlarang
                     </DialogTitle>
-                    <DialogDescription>
-                        Masukkan beberapa kata terlarang sekaligus. Tulis satu kata per baris.
-                    </DialogDescription>
+                    <DialogDescription>Masukkan beberapa kata terlarang sekaligus. Tulis satu kata per baris.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
@@ -71,21 +58,16 @@ export default function SensorBulkFormDialog({ open, onOpenChange }: SensorBulkF
                             rows={6}
                             value={data.words}
                             onChange={(e) => setData('words', e.target.value)}
-                            placeholder={"anjing\nbangsat\nbajingan"}
+                            placeholder={'anjing\nbangsat\nbajingan'}
                             className="font-mono text-sm"
                         />
                         {errors.words && <p className="text-destructive text-xs">{errors.words}</p>}
-                        <p className="text-muted-foreground text-xs">
-                            Baris kosong atau kata yang sudah terdaftar akan otomatis dilewati.
-                        </p>
+                        <p className="text-muted-foreground text-xs">Baris kosong atau kata yang sudah terdaftar akan otomatis dilewati.</p>
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="sensor_bulk_match_type">Mode Pencocokan untuk Semua Kata *</Label>
-                        <Select
-                            value={data.match_type}
-                            onValueChange={(v) => setData('match_type', v as 'anywhere' | 'whole_word')}
-                        >
+                        <Select value={data.match_type} onValueChange={(v) => setData('match_type', v as 'anywhere' | 'whole_word')}>
                             <SelectTrigger id="sensor_bulk_match_type">
                                 <SelectValue placeholder="Pilih mode pencocokan" />
                             </SelectTrigger>
@@ -98,11 +80,7 @@ export default function SensorBulkFormDialog({ open, onOpenChange }: SensorBulkF
                     </div>
 
                     <div className="flex items-end gap-2 pb-2">
-                        <Switch
-                            id="sensor_bulk_is_active"
-                            checked={data.is_active}
-                            onCheckedChange={(v) => setData('is_active', v)}
-                        />
+                        <Switch id="sensor_bulk_is_active" checked={data.is_active} onCheckedChange={(v) => setData('is_active', v)} />
                         <Label htmlFor="sensor_bulk_is_active">Aktifkan Semua Kata</Label>
                     </div>
 

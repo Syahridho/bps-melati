@@ -67,7 +67,12 @@ export interface DashboardTemplateProps extends DashboardProps {
     title: string;
     headerTitle: string;
     breadcrumbs: BreadcrumbItem[];
-    channelCards: DashboardChannelCardConfig[];
+    channelCards?: DashboardChannelCardConfig[];
     allTicketsRoute: string;
     ticketDetailRouteName: string;
+}
+
+export interface ExtendedDashboardTemplateProps extends DashboardTemplateProps {
+    isLive?: boolean;
+    isLiveEnabled?: boolean;
 }

@@ -45,3 +45,11 @@ export interface AlurStep {
     title: string;
     description: string;
 }
+
+export interface TicketSuccessDialogProps {
+    open: boolean;
+    ticketNumber: string | null;
+    copied: boolean;
+    onCopy: () => void;
+    onClose: () => void;
+}

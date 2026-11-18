@@ -7,13 +7,8 @@ import { DashboardStatusCards } from '@/components/dashboard/dashboard-status-ca
 import { ConnectionIndicator } from '@/components/header/ConnectionIndicator';
 import { useAuthRole } from '@/hooks/use-auth-role';
 import AppLayout from '@/layouts/app-layout';
-import { type DashboardTemplateProps } from '@/types/dashboard';
+import { ExtendedDashboardTemplateProps } from '@/types/dashboard';
 import { Head } from '@inertiajs/react';
-
-interface ExtendedDashboardTemplateProps extends DashboardTemplateProps {
-    isLive?: boolean;
-    isLiveEnabled?: boolean;
-}
 
 export default function DashboardView({
     title,
@@ -24,7 +19,6 @@ export default function DashboardView({
     recentTickets,
     periodLabel,
     sumberKanal,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     channelCards,
     allTicketsRoute,
     ticketDetailRouteName,

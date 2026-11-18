@@ -1,14 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TicketSuccessDialogProps } from '@/types/welcome';
 import { CheckCircle2, Copy } from 'lucide-react';
-
-interface TicketSuccessDialogProps {
-    open: boolean;
-    ticketNumber: string | null;
-    copied: boolean;
-    onCopy: () => void;
-    onClose: () => void;
-}
 
 export function TicketSuccessDialog({ open, ticketNumber, copied, onCopy, onClose }: TicketSuccessDialogProps) {
     return (

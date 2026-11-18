@@ -1,4 +1,4 @@
-import { type SettingPageProps } from '@/types/pengaturan';
+import { type SettingPageProps } from '@/types/settings';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';

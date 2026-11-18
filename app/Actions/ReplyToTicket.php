@@ -2,7 +2,7 @@
 
 namespace App\Actions;
 
-use App\EmailStatus;
+use App\Enums\EmailStatus;
 use App\Events\InboxUpdated;
 use App\Events\TicketResponseCreated;
 use App\Events\TicketUpdated;
@@ -13,7 +13,7 @@ use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
 use App\Support\SafeBroadcast;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;

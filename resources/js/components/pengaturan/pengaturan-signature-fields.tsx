@@ -1,6 +1,6 @@
 import { PengaturanFormField } from '@/components/pengaturan/pengaturan-form-field';
 import HeadingSmall from '@/components/shared/heading-small';
-import { type SetSettingField, type SettingValues } from '@/types/pengaturan';
+import { type SetSettingField, type SettingValues } from '@/types/settings';
 
 interface PengaturanSignatureFieldsProps {
     data: SettingValues;

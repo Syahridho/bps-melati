@@ -1,9 +1,5 @@
-import SumberKanalView from '@/components/view/dashboard/settings/sumber-kanal';
+import SumberKanalSettingsView from '@/components/view/dashboard/settings/sumber-kanal';
 
 export default function SumberKanalPage() {
-    return (
-        <>
-            <SumberKanalView />
-        </>
-    );
+    return <SumberKanalSettingsView />;
 }

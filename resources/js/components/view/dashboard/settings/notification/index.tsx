@@ -1,70 +1,35 @@
-'use client';
-
 import { PushNotificationCard } from '@/components/settings/push-notification-card';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
+import RealTimeDashboard from '@/components/settings/real-time-dashboard';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { cn } from '@/lib/utils';
 import { BreadcrumbItem } from '@/types';
-import { type NotificationSettingsPageProps } from '@/types/pengaturan';
-import { Head, usePage } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { type NotificationSettingsPageProps } from '@/types/settings';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Notifikasi',
-        href: '/settings/notification',
-    },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Notifikasi', href: '/settings/notification' }];
 
 export default function NotificationSettingsView() {
     const { dashboardLiveEnabled, canManageGlobal } = usePage<NotificationSettingsPageProps>().props;
+    const [processing, setProcessing] = useState(false);
 
-    const [liveEnabled, setLiveEnabled] = useState(dashboardLiveEnabled);
-    const [liveLoading, setLiveLoading] = useState(false);
-
-    const handleLiveToggle = useCallback(
-        async (checked: boolean) => {
-            if (checked === liveEnabled || liveLoading) return;
-
-            setLiveLoading(true);
-            const previous = liveEnabled;
-            setLiveEnabled(checked);
-
-            try {
-                const res = await fetch(route('settings.notification.dashboard-live'), {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ dashboard_live_enabled: checked }),
-                });
-
-                if (!res.ok) {
-                    throw new Error('Gagal menyimpan pengaturan realtime dashboard.');
-                }
-
-                toast.success('Pengaturan realtime dashboard diperbarui.');
-            } catch (err) {
-                setLiveEnabled(previous);
-                const message = err instanceof Error ? err.message : 'Terjadi kesalahan.';
-                toast('Gagal memperbarui pengaturan realtime dashboard.', {
-                    description: message,
-                });
-            } finally {
-                setLiveLoading(false);
-            }
-        },
-        [liveEnabled, liveLoading],
-    );
+    const handleLiveToggle = (checked: boolean) => {
+        router.patch(
+            route('settings.notification.dashboard-live'),
+            { dashboard_live_enabled: checked },
+            {
+                preserveScroll: true,
+                onStart: () => setProcessing(true),
+                onFinish: () => setProcessing(false),
+                onSuccess: () => toast.success('Pengaturan realtime dashboard diperbarui.'),
+                onError: (errors) =>
+                    toast.error('Gagal memperbarui pengaturan realtime dashboard.', {
+                        description: Object.values(errors)[0],
+                    }),
+            },
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -72,37 +37,7 @@ export default function NotificationSettingsView() {
             <SettingsLayout title="Pengaturan Notifikasi" description="Kelola notifikasi push browser dan pembaruan realtime dashboard">
                 <PushNotificationCard />
 
-                {canManageGlobal && (
-                    <>
-                        <Separator />
-                        <div className="flex flex-col gap-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="space-y-0.5">
-                                    <Label htmlFor="dashboard_live_enabled" className="text-sm font-medium">
-                                        Pembaruan Realtime Dashboard
-                                    </Label>
-                                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                        Aktifkan pembaruan data real-time via WebSocket di dashboard admin & operator. Bila dimatikan, halaman harus
-                                        di-refresh manual untuk melihat data terbaru guna menghemat beban server.
-                                    </p>
-                                </div>
-                                <Switch
-                                    id="dashboard_live_enabled"
-                                    checked={liveEnabled}
-                                    onCheckedChange={handleLiveToggle}
-                                    disabled={liveLoading || !canManageGlobal}
-                                    aria-label={
-                                        canManageGlobal
-                                            ? `Pembaruan realtime dashboard, ${liveEnabled ? 'diaktifkan' : 'dinonaktifkan'}`
-                                            : 'Pembaruan realtime dashboard, hanya admin'
-                                    }
-                                    className={cn('data-[state=checked]:bg-primary data-[state=unchecked]:bg-input', liveLoading && 'opacity-50')}
-                                />
-                                {liveLoading && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                            </div>
-                        </div>
-                    </>
-                )}
+                {canManageGlobal && <RealTimeDashboard enabled={dashboardLiveEnabled} processing={processing} onToggle={handleLiveToggle} />}
             </SettingsLayout>
         </AppLayout>
     );

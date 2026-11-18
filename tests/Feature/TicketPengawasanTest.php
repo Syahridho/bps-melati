@@ -5,7 +5,7 @@ use App\Models\Channel;
 use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
-use App\UserRole;
+use App\Enums\UserRole;
 
 test('admin and operator can toggle ticket pengawasan', function () {
     $channel = Channel::first() ?? Channel::create(['name' => 'Default']);

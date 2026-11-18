@@ -4,24 +4,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { type ChannelFormData, type ChannelParentOption } from '@/types/sumber-kanal';
+import { ChannelFormDialogProps } from '@/types/settings';
 import { Edit, LoaderCircle, PlusCircle } from 'lucide-react';
-import { type FormEvent } from 'react';
 
-interface ChannelFormDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    mode: 'create' | 'edit';
-    data: ChannelFormData;
-    setData: <K extends keyof ChannelFormData>(key: K, value: ChannelFormData[K]) => void;
-    errors: Partial<Record<keyof ChannelFormData, string>>;
-    processing: boolean;
-    parents: ChannelParentOption[];
-    editingId?: number | null;
-    onSubmit: (e: FormEvent) => void;
-}
-
-export default function ChannelFormDialog({ open, onOpenChange, mode, data, setData, errors, processing, parents, editingId, onSubmit }: ChannelFormDialogProps) {
+export default function ChannelFormDialog({
+    open,
+    onOpenChange,
+    mode,
+    data,
+    setData,
+    errors,
+    processing,
+    parents,
+    editingId,
+    onSubmit,
+}: ChannelFormDialogProps) {
     const isCreate = mode === 'create';
     const isRoot = !data.parent_id;
     const hexValid = /^#[0-9a-fA-F]{6}$/.test(data.color);
@@ -54,7 +51,9 @@ export default function ChannelFormDialog({ open, onOpenChange, mode, data, setD
                     <div className="space-y-2">
                         <Label htmlFor="channel_parent">Kanal Induk (opsional)</Label>
                         {data.parent_id === '' && isRoot ? (
-                            <p className="text-muted-foreground text-xs">Kosong = kanal utama. Pilih induk untuk membuat sub-kanal (maksimal 2 level).</p>
+                            <p className="text-muted-foreground text-xs">
+                                Kosong = kanal utama. Pilih induk untuk membuat sub-kanal (maksimal 2 level).
+                            </p>
                         ) : null}
                         <Select value={data.parent_id || 'none'} onValueChange={(v) => handleParentChange(v === 'none' ? '' : v)}>
                             <SelectTrigger id="channel_parent">
@@ -92,8 +91,11 @@ export default function ChannelFormDialog({ open, onOpenChange, mode, data, setD
                                 placeholder="#8b5cf6"
                                 className="w-32 font-mono"
                             />
-                            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <span className="inline-block h-4 w-4 rounded-full border" style={{ backgroundColor: hexValid ? data.color : 'transparent' }} />
+                            <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                                <span
+                                    className="inline-block h-4 w-4 rounded-full border"
+                                    style={{ backgroundColor: hexValid ? data.color : 'transparent' }}
+                                />
                                 Preview
                             </span>
                         </div>

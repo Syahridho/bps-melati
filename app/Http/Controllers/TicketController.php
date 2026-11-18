@@ -9,7 +9,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\LaporanNotification;
 use App\Support\ProfanityFilter;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;

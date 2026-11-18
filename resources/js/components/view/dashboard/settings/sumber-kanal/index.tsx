@@ -6,13 +6,13 @@ import { useSumberKanalManagement } from '@/hooks/use-sumber-kanal-management';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
-import { type SumberKanalPageProps } from '@/types/sumber-kanal';
+import { type SumberKanalPageProps } from '@/types/settings';
 import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, Edit, Plus, Trash2 } from 'lucide-react';
 import ChannelFormDialog from './modal-channel-form';
 import ChannelDeleteDialog from './modal-delete-channel';
 
-export default function SumberKanalView() {
+export default function SumberKanalSettingsView() {
     const { channels, parents, flash } = usePage<SumberKanalPageProps>().props;
 
     const {

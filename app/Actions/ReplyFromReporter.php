@@ -8,7 +8,7 @@ use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
-use App\UserRole;
+use App\Enums\UserRole;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;

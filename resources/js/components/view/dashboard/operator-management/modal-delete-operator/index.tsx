@@ -1,14 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { type Operator } from '@/types/operator';
+import { OperatorDeleteDialogProps } from '@/types/operator';
 import { Trash2 } from 'lucide-react';
-
-interface OperatorDeleteDialogProps {
-    open: boolean;
-    operator: Operator | null;
-    onClose: () => void;
-    onConfirm: () => void;
-}
 
 export default function OperatorDeleteDialog({ open, operator, onClose, onConfirm }: OperatorDeleteDialogProps) {
     return (

@@ -8,22 +8,18 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { API_ENDPOINTS, API_ERROR_CODES, MOBILE_AUTH_GUIDE, QUICK_START_STEPS, TICKET_NUMBER_NOTE } from '@/lib/api-docs';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Copy, Headphones, Link as LinkIcon, Lock, Play, ShieldAlert, Terminal } from 'lucide-react';
 import { useState } from 'react';
 import { CodeBlock } from './CodeBlock';
 
-interface ApiSettingsProps {
-    baseUrl: string;
-    apiKeyHeaderName: string;
-}
-
-export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettingsProps) {
+export default function ApiSettingsView() {
+    const { baseUrl, apiKeyHeaderName } = usePage<{ baseUrl: string; apiKeyHeaderName: string }>().props;
     const [activeTab, setActiveTab] = useState('quick-start');
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
-            title: 'API',
+            title: 'API Dokumentasi',
             href: route('settings.api'),
         },
     ];
@@ -153,7 +149,7 @@ export default function ApiSettingsView({ baseUrl, apiKeyHeaderName }: ApiSettin
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dokumentasi API" />
             <SettingsLayout
-                title="Pengaturan API"
+                title="API Dokumentasi"
                 description="Referensi lengkap untuk integrasi aplikasi klien (Flutter, sistem eksternal, dll) dengan API Melati."
             >
                 <div className="space-y-6">

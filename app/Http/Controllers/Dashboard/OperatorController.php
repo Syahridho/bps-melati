@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Services\SessionTerminator;
 use App\Support\IpMasker;
 use App\Support\UserAgentParser;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -68,7 +68,7 @@ class OperatorController extends Controller
                 ...self::presenceFor($user),
             ]);
 
-        return $this->renderPage($request, 'kelola-operator/index', [
+        return $this->renderPage($request, 'operator-management/index', [
             'operators' => $operators,
             'filters' => [
                 'search' => $search ?? '',

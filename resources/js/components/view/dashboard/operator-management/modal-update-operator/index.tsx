@@ -3,22 +3,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { type OperatorFormData } from '@/types/operator';
+import { OperatorFormDialogProps } from '@/types/operator';
 import { Edit, LoaderCircle, UserPlus } from 'lucide-react';
-import { type FormEvent } from 'react';
 
-interface OperatorFormDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    mode: 'create' | 'edit';
-    data: OperatorFormData;
-    setData: <K extends keyof OperatorFormData>(key: K, value: OperatorFormData[K]) => void;
-    errors: Partial<Record<keyof OperatorFormData, string>>;
-    processing: boolean;
-    onSubmit: (e: FormEvent) => void;
-}
-
-export default function OperatorFormDialog({ open, onOpenChange, mode, data, setData, errors, processing, onSubmit }: OperatorFormDialogProps) {
+export default function OperatorFormDialogUpdate({ open, onOpenChange, mode, data, setData, errors, processing, onSubmit }: OperatorFormDialogProps) {
     const isCreate = mode === 'create';
     const fieldPrefix = isCreate ? 'create' : 'edit';
 

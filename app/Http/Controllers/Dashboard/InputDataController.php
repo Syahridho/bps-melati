@@ -14,7 +14,7 @@ use App\Models\User;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
 use App\Support\ProfanityFilter;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

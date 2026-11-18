@@ -1,14 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { type ChannelChildItem, type ChannelItem } from '@/types/sumber-kanal';
+import { ChannelDeleteDialogProps } from '@/types/settings';
 import { Trash2 } from 'lucide-react';
-
-interface ChannelDeleteDialogProps {
-    open: boolean;
-    channel: ChannelItem | ChannelChildItem | null;
-    onClose: () => void;
-    onConfirm: () => void;
-}
 
 export default function ChannelDeleteDialog({ open, channel, onClose, onConfirm }: ChannelDeleteDialogProps) {
     return (
@@ -20,8 +13,8 @@ export default function ChannelDeleteDialog({ open, channel, onClose, onConfirm 
                         Konfirmasi Hapus Kanal
                     </DialogTitle>
                     <DialogDescription>
-                        Apakah Anda yakin ingin menghapus kanal <strong className="text-foreground">{channel?.name}</strong>?
-                        Kanal yang sudah dipakai tiket atau memiliki sub-kanal tidak dapat dihapus — nonaktifkan saja.
+                        Apakah Anda yakin ingin menghapus kanal <strong className="text-foreground">{channel?.name}</strong>? Kanal yang sudah dipakai
+                        tiket atau memiliki sub-kanal tidak dapat dihapus — nonaktifkan saja.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="mt-4">

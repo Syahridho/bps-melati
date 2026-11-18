@@ -1,5 +1,6 @@
 import { type PaginatedData } from '@/components/shared/pagination';
 import { type SharedData } from '@/types';
+import { FormEvent } from 'react';
 
 export interface Operator {
     id: number;
@@ -35,4 +36,22 @@ export interface OperatorPageProps extends SharedData {
     flash: {
         success?: string;
     };
+}
+
+export interface OperatorFormDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    mode: 'create' | 'edit';
+    data: OperatorFormData;
+    setData: <K extends keyof OperatorFormData>(key: K, value: OperatorFormData[K]) => void;
+    errors: Partial<Record<keyof OperatorFormData, string>>;
+    processing: boolean;
+    onSubmit: (e: FormEvent) => void;
+}
+
+export interface OperatorDeleteDialogProps {
+    open: boolean;
+    operator: Operator | null;
+    onClose: () => void;
+    onConfirm: () => void;
 }

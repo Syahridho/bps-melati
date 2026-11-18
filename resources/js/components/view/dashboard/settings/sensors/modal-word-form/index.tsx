@@ -4,21 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { type SensorFormData } from '@/types/sensors';
-import { Edit, LoaderCircle, PlusCircle } from 'lucide-react';
-import { type FormEvent } from 'react';
+import { defaultMatchTypeHint } from '@/lib/sensor';
+import { SensorFormDialogProps } from '@/types/settings';
 
-interface SensorFormDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    mode: 'create' | 'edit';
-    data: SensorFormData;
-    setData: <K extends keyof SensorFormData>(key: K, value: SensorFormData[K]) => void;
-    errors: Partial<Record<keyof SensorFormData, string>>;
-    processing: boolean;
-    editingId?: number | null;
-    onSubmit: (e: FormEvent) => void;
-}
+import { Edit, LoaderCircle, PlusCircle } from 'lucide-react';
 
 export default function SensorFormDialog({
     open,
@@ -28,7 +17,7 @@ export default function SensorFormDialog({
     setData,
     errors,
     processing,
-    // editingId,
+    editingId,
     onSubmit,
 }: SensorFormDialogProps) {
     const isCreate = mode === 'create';
@@ -95,10 +84,3 @@ export default function SensorFormDialog({
         </Dialog>
     );
 }
-
-const defaultMatchTypeHint = (word: string): string => {
-    const isLong = word.length >= 5;
-    return isLong
-        ? 'Kata 5 huruf atau lebih default menggunakan mode "Di mana saja" (cocok di seluruh teks).'
-        : 'Kata 4 huruf atau kurang default menggunakan mode "Kata utuh" (hanya cocok sebagai kata tersendiri).';
-};

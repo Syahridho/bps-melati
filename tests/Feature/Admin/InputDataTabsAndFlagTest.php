@@ -3,7 +3,7 @@
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;

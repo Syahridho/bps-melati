@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\UserRole;
+use App\Enums\UserRole;
 
 test('operator_tim can access dashboard and input data but is forbidden elsewhere', function () {
     $operatorTim = User::factory()->create(['role' => UserRole::OperatorTim]);

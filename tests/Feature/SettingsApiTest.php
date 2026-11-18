@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\UserRole;
+use App\Enums\UserRole;
 use Inertia\Testing\AssertableInertia as Assert;
 
 use function Pest\Laravel\actingAs;

@@ -10,7 +10,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;

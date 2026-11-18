@@ -4,7 +4,7 @@ use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use App\Models\User;
-use App\UserRole;
+use App\Enums\UserRole;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
