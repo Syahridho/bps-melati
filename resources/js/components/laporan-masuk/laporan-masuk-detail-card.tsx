@@ -90,18 +90,20 @@ export function LaporanMasukDetailCard({
                 </div>
 
                 <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto lg:flex-col lg:items-stretch xl:flex-row xl:items-center">
-                    <div className="bg-muted/50 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 sm:w-auto">
-                        <div className="flex min-w-0 flex-col text-left sm:text-right">
-                            <span className="flex items-center gap-1 text-xs font-medium sm:justify-end">
-                                <ShieldAlert className="size-3.5 shrink-0 text-amber-500" />
-                                Kadar Pengawasan
-                            </span>
-                            <span className="text-muted-foreground text-[10px]">
+                    <div className="bg-muted/50 flex items-center gap-3 self-stretch rounded-lg border px-3 py-2 sm:w-auto">
+                        <span className="flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
+                            <ShieldAlert className="size-4 text-amber-500" />
+                        </span>
+
+                        <div className="flex min-w-0 flex-col text-left leading-tight">
+                            <span className="text-sm font-medium">Kadar Pengawasan</span>
+                            <span className="text-muted-foreground text-[11px]">
                                 {ticket.is_pengawasan
                                     ? `Auto close ${ticket.kadar_pengawasan_days} hari`
                                     : `Auto close default (${ticket.classification_default_days}h)`}
                             </span>
                         </div>
+
                         <Switch
                             checked={ticket.is_pengawasan}
                             disabled={ticketStatus === 'selesai' || processingPengawasan}
@@ -176,7 +178,7 @@ export function LaporanMasukDetailCard({
                         <Layers className="text-muted-foreground size-4" />
                     </div>
                     <div className="min-w-0">
-                        <p className="text-muted-foreground text-xs">Channel</p>
+                        <p className="text-muted-foreground text-xs">Sumber Kanal</p>
                         <p className="text-sm font-medium [overflow-wrap:anywhere] break-words">{ticket.channel}</p>
                     </div>
                 </div>

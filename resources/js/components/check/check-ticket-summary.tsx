@@ -76,7 +76,7 @@ export function CheckTicketSummary({ ticket, copied, onCopy, onPreviewAttachment
                     <div className="flex min-w-0 items-center gap-3">
                         <Inbox className="text-muted-foreground h-4 w-4 shrink-0" />
                         <div className="min-w-0">
-                            <p className="text-muted-foreground text-xs">Saluran Pengaduan</p>
+                            <p className="text-muted-foreground text-xs">Sumber Kanal</p>
                             <p className="font-medium [overflow-wrap:anywhere] break-words">{ticket.channel}</p>
                         </div>
                     </div>
@@ -131,7 +131,7 @@ export function CheckTicketSummary({ ticket, copied, onCopy, onPreviewAttachment
                                     ) : (
                                         <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                                     )}
-                                    <span className="max-w-[220px] sm:max-w-xs truncate text-foreground font-medium">{att.original_name}</span>
+                                    <span className="text-foreground max-w-[220px] truncate font-medium sm:max-w-xs">{att.original_name}</span>
                                     <span className="text-muted-foreground text-[10px]">({formatFileSize(att.size)})</span>
                                     <Download className="text-muted-foreground ml-1 h-3.5 w-3.5 shrink-0" />
                                 </Button>

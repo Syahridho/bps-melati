@@ -87,7 +87,7 @@ export function DashboardRecentTickets({ recentTickets, periodLabel, allTicketsR
                                         <TableHead className="w-[180px]">Kode Tiket</TableHead>
                                         <TableHead>Pelapor</TableHead>
                                         <TableHead>Klasifikasi</TableHead>
-                                        <TableHead>Saluran</TableHead>
+                                        <TableHead>Sumber Kanal</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Waktu Masuk</TableHead>
                                     </TableRow>

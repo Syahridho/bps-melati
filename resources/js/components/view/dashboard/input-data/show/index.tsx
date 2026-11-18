@@ -263,7 +263,7 @@ export default function ShowInputDataView() {
         },
         {
             id: 'channel',
-            label: 'Channel',
+            label: 'Sumber Kanal',
             value: detailData.channel,
             icon: Layers,
         },

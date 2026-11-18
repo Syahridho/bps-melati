@@ -302,7 +302,7 @@ export default function ShowLaporanMasukView() {
         },
         {
             id: 'channel',
-            label: 'Channel',
+            label: 'Sumber Kanal',
             value: detailData.channel,
             icon: Layers,
         },

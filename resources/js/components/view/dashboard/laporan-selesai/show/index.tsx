@@ -67,7 +67,7 @@ export default function ShowLaporanSelesaiView() {
         },
         {
             id: 'channel',
-            label: 'Channel',
+            label: 'Sumber Kanal',
             value: detailData.channel,
             icon: Layers,
         },
