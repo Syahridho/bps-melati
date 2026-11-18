@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\CensoredWord;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Observers\ChannelObserver;
 use App\Observers\TicketObserver;
 use App\Support\LaporanCache;
+use App\Support\ProfanityFilter;
 use App\Support\RekapCache;
 use App\Support\RekapYears;
 use Illuminate\Auth\Events\Logout;
@@ -28,7 +30,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(ProfanityFilter::class, function ($app) {
+            return new ProfanityFilter;
+        });
     }
 
     /**
@@ -88,6 +92,15 @@ class AppServiceProvider extends ServiceProvider
         Channel::deleted(function () {
             RekapCache::invalidate();
             RekapYears::invalidate();
+        });
+
+        // Invalidate cache kata kasar saat daftar kata berubah supaya
+        // ProfanityFilter segera mengambil daftar terbaru.
+        CensoredWord::saved(function () {
+            ProfanityFilter::clearCache();
+        });
+        CensoredWord::deleted(function () {
+            ProfanityFilter::clearCache();
         });
 
         // Jaga konsistensi kolom sesi meski logout terjadi lewat jalan lain

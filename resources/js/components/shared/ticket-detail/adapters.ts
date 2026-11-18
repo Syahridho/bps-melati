@@ -32,11 +32,15 @@ export function mapLaporanMasukToDetailData(ticket: TicketDetail): TicketDetailD
         flagged_at: ticket.flagged_at,
         flagged_by_name: ticket.flagged_by_name,
         flag_note: ticket.flag_note,
+        flag_note_original: ticket.flag_note_original,
         kadar_pengawasan_days: ticket.kadar_pengawasan_days,
         classification_default_days: ticket.classification_default_days,
         auto_close_at: ticket.auto_close_at,
         created_at: ticket.created_at,
         updated_at: ticket.updated_at,
+        title_original: ticket.title_original,
+        content_original: ticket.content_original,
+        has_profanity: ticket.has_profanity,
         attachments: (ticket.attachments ?? []).map((att) => ({
             id: att.id,
             original_name: att.original_name,
@@ -48,6 +52,7 @@ export function mapLaporanMasukToDetailData(ticket: TicketDetail): TicketDetailD
             id: resp.id,
             type: resp.type,
             message: resp.message,
+            message_original: resp.message_original,
             user_name: resp.user_name,
             is_reporter: resp.is_reporter,
             is_system: resp.is_system,
@@ -64,6 +69,7 @@ export function mapLaporanMasukToDetailData(ticket: TicketDetail): TicketDetailD
                 size: att.size,
                 url: att.url,
             })),
+            has_profanity: resp.has_profanity,
         })),
     };
 }
@@ -95,9 +101,13 @@ export function mapLaporanSelesaiToDetailData(ticket: LaporanSelesaiShowProps['t
         flagged_at: ticket.flagged_at,
         flagged_by_name: ticket.flagged_by_name,
         flag_note: ticket.flag_note,
+        flag_note_original: ticket.flag_note_original,
         auto_close_at: ticket.auto_close_at,
         created_at: ticket.created_at,
         updated_at: ticket.updated_at,
+        title_original: ticket.title_original,
+        content_original: ticket.content_original,
+        has_profanity: ticket.has_profanity,
         attachments: (ticket.attachments ?? []).map((att) => ({
             id: att.id,
             original_name: att.original_name,
@@ -109,6 +119,7 @@ export function mapLaporanSelesaiToDetailData(ticket: LaporanSelesaiShowProps['t
             id: resp.id,
             type: resp.type,
             message: resp.message,
+            message_original: resp.message_original,
             user_name: resp.user_name,
             sent_at: resp.sent_at,
             created_at: resp.created_at,
@@ -119,6 +130,7 @@ export function mapLaporanSelesaiToDetailData(ticket: LaporanSelesaiShowProps['t
                 size: att.size,
                 url: att.url,
             })),
+            has_profanity: resp.has_profanity,
         })),
     };
 }
@@ -152,11 +164,15 @@ export function mapInputDataToDetailData(ticket: InputDataTicketDetail): TicketD
         flagged_at: ticket.flagged_at,
         flagged_by_name: ticket.flagged_by_name,
         flag_note: ticket.flag_note,
+        flag_note_original: ticket.flag_note_original,
         kadar_pengawasan_days: ticket.kadar_pengawasan_days,
         classification_default_days: ticket.classification_default_days,
         auto_close_at: ticket.auto_close_at,
         created_at: ticket.created_at,
         updated_at: ticket.updated_at,
+        title_original: ticket.title_original,
+        content_original: ticket.content_original,
+        has_profanity: ticket.has_profanity,
         attachments: (ticket.attachments ?? []).map((att) => ({
             id: att.id,
             original_name: att.original_name,
@@ -168,6 +184,7 @@ export function mapInputDataToDetailData(ticket: InputDataTicketDetail): TicketD
             id: resp.id,
             type: resp.type,
             message: resp.message,
+            message_original: resp.message_original,
             user_name: resp.user_name,
             is_reporter: resp.is_reporter,
             is_system: resp.is_system,
@@ -184,6 +201,7 @@ export function mapInputDataToDetailData(ticket: InputDataTicketDetail): TicketD
                 size: att.size,
                 url: att.url,
             })),
+            has_profanity: resp.has_profanity,
         })),
     };
 }

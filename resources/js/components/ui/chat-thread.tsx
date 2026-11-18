@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils';
-import { type ReactNode, type Ref } from 'react';
+import { Button } from '@/components/ui/button';
+import { Eye, EyeOff } from 'lucide-react';
+import { type ReactNode, type Ref, useState } from 'react';
 
 export type ChatSide = 'officer' | 'reporter';
 
@@ -10,10 +12,12 @@ export type ChatMessage = {
     senderName: string;
     badge?: string;
     body: string;
+    messageOriginal?: string | null;
+    hasProfanity?: boolean;
     createdAt: string;
     meta?: ReactNode;
     attachments?: ReactNode;
-    notice?: ReactNode; 
+    notice?: ReactNode;
     muted?: boolean;
 };
 
@@ -34,6 +38,10 @@ const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.
 export function ChatBubble({ message, showHeader, className }: { message: ChatMessage; showHeader: boolean; className?: string }) {
     const isOfficer = message.side === 'officer';
     const date = new Date(message.createdAt);
+
+    const canShowOriginal = Boolean(message.hasProfanity && message.messageOriginal);
+    const [showOriginal, setShowOriginal] = useState(false);
+    const displayBody = showOriginal && message.messageOriginal ? message.messageOriginal : message.body;
 
     return (
         <div
@@ -61,8 +69,29 @@ export function ChatBubble({ message, showHeader, className }: { message: ChatMe
                           : 'bg-secondary text-secondary-foreground',
                 )}
             >
-                {message.body}
+                {displayBody}
             </div>
+
+            {canShowOriginal && (
+                <div className="mt-1 flex justify-end">
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowOriginal(!showOriginal)}
+                        className="text-xs shrink-0"
+                    >
+                        {showOriginal ? (
+                            <>
+                                <EyeOff className="mr-1 size-3.5" /> Sembunyikan Asli
+                            </>
+                        ) : (
+                            <>
+                                <Eye className="mr-1 size-3.5" /> Tampilkan Asli
+                            </>
+                        )}
+                    </Button>
+                </div>
+            )}
 
             {message.notice}
 

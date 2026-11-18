@@ -11,6 +11,7 @@ use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketCreatedMail;
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -127,6 +128,8 @@ class TicketApiController extends Controller
         Cache::forget('dashboard:admin:version');
         TicketCreated::dispatch($ticket);
 
+        $filter = app(ProfanityFilter::class);
+
         if (! blank($ticket->reporter_email)) {
             Mail::to($ticket->reporter_email)->queue(new TicketCreatedMail($ticket));
         }
@@ -139,7 +142,7 @@ class TicketApiController extends Controller
                 'ticket_number' => $ticket->ticket_number,
                 'access_code' => $ticket->access_code,
                 'classification' => $ticket->classification,
-                'title' => $ticket->title,
+                'title' => $filter->censor($ticket->title),
                 'status' => $ticket->status,
                 'created_at' => $ticket->created_at->toIso8601String(),
                 'attachments' => $attachmentsData,
@@ -183,15 +186,17 @@ class TicketApiController extends Controller
 
         $ticket->checkAndAutoClose();
 
+        $filter = app(ProfanityFilter::class);
+
         $data = [
             'id' => $ticket->id,
             'ticket_number' => $ticket->ticket_number,
             'classification' => $ticket->classification,
-            'title' => $ticket->title,
+            'title' => $filter->censor($ticket->title),
             'service_type' => $ticket->service_type,
             'satuan_tugas' => $ticket->satuan_tugas,
             'reporter_name' => $ticket->reporter_name,
-            'content' => $ticket->content,
+            'content' => $filter->censor($ticket->content),
             'status' => $ticket->status,
             'channel' => $ticket->channel?->name ?? '-',
             'created_at' => $ticket->created_at->toIso8601String(),
@@ -203,7 +208,7 @@ class TicketApiController extends Controller
                 'size' => $attachment->size,
                 'url' => Storage::url($attachment->path),
             ])->values()->all(),
-            'responses' => $ticket->responses->sortByDesc('created_at')->values()->map(function ($response) use ($ticket) {
+            'responses' => $ticket->responses->sortByDesc('created_at')->values()->map(function ($response) use ($ticket, $filter) {
                 $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
                 $userName = $isReporter
                     ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
@@ -212,7 +217,7 @@ class TicketApiController extends Controller
                 return [
                     'id' => $response->id,
                     'type' => $response->type,
-                    'message' => $response->message,
+                    'message' => $filter->censor($response->message),
                     'user_name' => $userName,
                     'is_reporter' => $isReporter,
                     'sent_at' => $response->sent_at?->toIso8601String(),
@@ -301,13 +306,15 @@ class TicketApiController extends Controller
             ->values()
             ->all();
 
+        $filter = app(ProfanityFilter::class);
+
         return response()->json([
             'success' => true,
             'message' => 'Balasan berhasil terkirim.',
             'data' => [
                 'id' => $response->id,
                 'type' => $response->type,
-                'message' => $response->message,
+                'message' => $filter->censor($response->message),
                 'sent_at' => $response->sent_at?->toIso8601String(),
                 'attachments' => $attachmentsData,
             ],

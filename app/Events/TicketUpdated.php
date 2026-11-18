@@ -4,6 +4,7 @@ namespace App\Events;
 
 use App\Models\Ticket;
 use App\Models\TicketResponse;
+use App\Support\ProfanityFilter;
 use App\Support\TicketResponsePayload;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -63,7 +64,12 @@ class TicketUpdated implements ShouldBroadcastNow
         ];
 
         if ($this->response !== null) {
-            $payload['response'] = TicketResponsePayload::from($this->response, $this->ticket);
+            $payload['response'] = TicketResponsePayload::from(
+                $this->response,
+                $this->ticket,
+                app(ProfanityFilter::class),
+                false
+            );
         }
 
         return $payload;

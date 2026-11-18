@@ -5,17 +5,14 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-
-use Inertia\Inertia;
 use Inertia\Response;
 
 class LaporanSelesaiController extends Controller
 {
-
     use RendersRolePage;
+
     /**
      * Status yang dianggap "selesai" (sudah direspon).
      *
@@ -118,17 +115,15 @@ class LaporanSelesaiController extends Controller
             ->orderByDesc('updated_at')
             ->paginate($perPage)
             ->withQueryString()
-            ->through(fn (Ticket $ticket) => [
+            ->through(fn (Ticket $ticket) => array_merge([
                 'id' => $ticket->id,
                 'ticket_number' => $ticket->ticket_number,
                 'classification' => $ticket->classification,
-                'title' => $ticket->title,
                 'service_type' => $ticket->service_type,
                 'satuan_tugas' => $ticket->satuan_tugas,
                 'reporter_name' => $ticket->reporter_name,
                 'reporter_email' => $ticket->reporter_email,
                 'reporter_wa' => $ticket->reporter_wa,
-                'content' => $ticket->content,
                 'status' => $ticket->status,
                 'is_pengawasan' => (bool) $ticket->is_pengawasan,
                 'is_flagged' => (bool) $ticket->is_flagged,
@@ -141,7 +136,7 @@ class LaporanSelesaiController extends Controller
                 'completed_at' => $ticket->completed_at?->toIso8601String(),
                 'created_at' => $ticket->created_at->toIso8601String(),
                 'updated_at' => $ticket->updated_at->toIso8601String(),
-            ]);
+            ], $this->profanityTicketProps($ticket)));
 
         // Base query untuk counts (mengikuti rentang tanggal dan pencarian, tanpa filter tab)
         $countBaseQuery = Ticket::query()
@@ -188,7 +183,7 @@ class LaporanSelesaiController extends Controller
     /**
      * Detail satu laporan selesai berdasarkan ticket_number.
      */
-    public function show(string $ticketNumber,Request $request): Response
+    public function show(string $ticketNumber, Request $request): Response
     {
         $ticket = Ticket::with([
             'channel',

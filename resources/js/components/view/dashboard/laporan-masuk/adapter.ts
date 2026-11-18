@@ -33,6 +33,7 @@ export function toTicketListEntry(
         is_read: ticket.is_read,
         is_pengawasan: ticket.is_pengawasan,
         recently_answered_by: recentlyAnswered[ticket.id] ?? null,
+        has_profanity: ticket.has_profanity,
     };
 }
 

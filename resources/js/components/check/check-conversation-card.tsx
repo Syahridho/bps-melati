@@ -173,7 +173,9 @@ export function CheckConversationCard({
                                                             ) : (
                                                                 <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                                                             )}
-                                                            <span className="max-w-[220px] sm:max-w-xs truncate text-foreground font-medium">{att.original_name}</span>
+                                                            <span className="text-foreground max-w-[220px] truncate font-medium sm:max-w-xs">
+                                                                {att.original_name}
+                                                            </span>
                                                             {att.size ? (
                                                                 <span className="text-muted-foreground text-[10px]">
                                                                     ({formatFileSize(att.size)})
@@ -275,7 +277,9 @@ export function CheckConversationCard({
                                                 if (typeof window !== 'undefined' && ticket) {
                                                     try {
                                                         sessionStorage.setItem(`ticket_access_code_${ticket.ticket_number}`, val);
-                                                    } catch {}
+                                                    } catch {
+                                                        //
+                                                    }
                                                 }
                                             }}
                                             required
@@ -311,55 +315,52 @@ export function CheckConversationCard({
                                     <Label>Lampiran Balasan (opsional)</Label>
                                     <p className="text-muted-foreground text-xs">Format: JPG, PNG, PDF. Maksimal 2MB per file, maksimal 3 file.</p>
 
-                                        {replyData.attachments.length < 3 && (
-                                            <div>
-                                                <input
-                                                    ref={fileInputRef}
-                                                    type="file"
-                                                    accept=".jpg,.jpeg,.png,.pdf"
-                                                    multiple
-                                                    onChange={onFileChange}
-                                                    className="hidden"
-                                                />
-                                                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                                                    <Paperclip className="mr-2 h-4 w-4" />
-                                                    Pilih File Lampiran
-                                                </Button>
-                                            </div>
-                                        )}
+                                    {replyData.attachments.length < 3 && (
+                                        <div>
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                accept=".jpg,.jpeg,.png,.pdf"
+                                                multiple
+                                                onChange={onFileChange}
+                                                className="hidden"
+                                            />
+                                            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                                                <Paperclip className="mr-2 h-4 w-4" />
+                                                Pilih File Lampiran
+                                            </Button>
+                                        </div>
+                                    )}
 
-                                        {/* Attachment validation errors */}
-                                        {replyErrors.attachments && (
-                                            <p className="text-destructive text-xs mt-1">{replyErrors.attachments}</p>
-                                        )}
+                                    {/* Attachment validation errors */}
+                                    {replyErrors.attachments && <p className="text-destructive mt-1 text-xs">{replyErrors.attachments}</p>}
 
-                                        {replyData.attachments.length > 0 && (
-                                            <div className="space-y-2 pt-2">
-                                                {replyData.attachments.map((file, index) => (
-                                                    <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
-                                                        <div className="flex items-center gap-2 truncate">
-                                                            {isImageFile(file) ? (
-                                                                <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
-                                                            ) : (
-                                                                <FileText className="h-4 w-4 shrink-0 text-red-500" />
-                                                            )}
-                                                            <span className="truncate font-medium">{file.name}</span>
-                                                            <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
-                                                        </div>
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="text-destructive h-6 w-6"
-                                                            onClick={() => onRemoveFile(index)}
-                                                        >
-                                                            <X className="h-3.5 w-3.5" />
-                                                        </Button>
+                                    {replyData.attachments.length > 0 && (
+                                        <div className="space-y-2 pt-2">
+                                            {replyData.attachments.map((file, index) => (
+                                                <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
+                                                    <div className="flex items-center gap-2 truncate">
+                                                        {isImageFile(file) ? (
+                                                            <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
+                                                        ) : (
+                                                            <FileText className="h-4 w-4 shrink-0 text-red-500" />
+                                                        )}
+                                                        <span className="truncate font-medium">{file.name}</span>
+                                                        <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        )}
-
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-destructive h-6 w-6"
+                                                        onClick={() => onRemoveFile(index)}
+                                                    >
+                                                        <X className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center justify-end gap-2 border-t pt-2">

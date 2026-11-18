@@ -5,11 +5,54 @@ namespace App\Http\Controllers;
 use App\Actions\AutoCloseTickets;
 use App\Models\Setting;
 use App\Models\Ticket;
+use App\Models\User;
+use App\Support\ProfanityFilter;
 use App\Support\TicketResponsePayload;
 use Illuminate\Support\Facades\Storage;
 
 abstract class Controller
 {
+    /**
+     * Properti keluaran teks tiket (judul/isi/catatan tandai) yang sudah disamarkan.
+     *
+     * Default selalu tampil tersensor. Teks asli hanya tersedia sebagai
+     * prop terpisah (`*_original`) untuk pengguna petugas
+     * (admin / operator / operator_tim). Database tidak pernah diubah.
+     *
+     * @return array{
+     *     title: string|null,
+     *     content: string|null,
+     *     flag_note: string|null,
+     *     title_original: string|null,
+     *     content_original: string|null,
+     *     flag_note_original: string|null,
+     *     has_profanity: bool
+     * }
+     */
+    protected function profanityTicketProps(Ticket $ticket): array
+    {
+        $filter = app(ProfanityFilter::class);
+        $user = auth()->user();
+        $isStaff = $user instanceof User
+            && ($user->isAdmin() || $user->isOperator() || $user->isOperatorTim());
+
+        $title = $ticket->title ?? '';
+        $content = $ticket->content ?? '';
+        $flagNote = $ticket->flag_note ?? '';
+
+        return [
+            'title' => $filter->censor($title),
+            'content' => $filter->censor($content),
+            'flag_note' => $filter->censor($flagNote),
+            'title_original' => $isStaff ? $title : null,
+            'content_original' => $isStaff ? $content : null,
+            'flag_note_original' => $isStaff ? $flagNote : null,
+            'has_profanity' => $filter->contains($title)
+                || $filter->contains($content)
+                || $filter->contains($flagNote),
+        ];
+    }
+
     protected function ticketPayload(Ticket $ticket): array
     {
         $classificationDays = match ($ticket->classification) {
@@ -19,19 +62,23 @@ abstract class Controller
             default => 3,
         };
 
-        return [
+        $profanity = $this->profanityTicketProps($ticket);
+        $filter = app(ProfanityFilter::class);
+        $user = auth()->user();
+        $isStaff = $user instanceof User
+            && ($user->isAdmin() || $user->isOperator() || $user->isOperatorTim());
+
+        return array_merge([
             'id' => $ticket->id,
             'ticket_number' => $ticket->ticket_number,
             'period' => $ticket->period,
             'sequence' => $ticket->sequence,
             'classification' => $ticket->classification,
-            'title' => $ticket->title,
             'service_type' => $ticket->service_type,
             'satuan_tugas' => $ticket->satuan_tugas,
             'reporter_name' => $ticket->reporter_name,
             'reporter_email' => $ticket->reporter_email,
             'reporter_wa' => $ticket->reporter_wa,
-            'content' => $ticket->content,
             'status' => $ticket->status,
             'version' => $ticket->version,
             'is_read' => $ticket->is_read,
@@ -60,8 +107,8 @@ abstract class Controller
                 'url' => Storage::url($attachment->path),
             ]),
             'responses' => $ticket->responses->map(
-                fn ($response) => TicketResponsePayload::from($response, $ticket)
+                fn ($response) => TicketResponsePayload::from($response, $ticket, $filter, $isStaff)
             )->values()->all(),
-        ];
+        ], $profanity);
     }
 }

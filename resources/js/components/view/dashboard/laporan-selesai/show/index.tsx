@@ -1,6 +1,7 @@
 import CompletedStamp from '@/components/completed-stamp';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
 import { mapLaporanSelesaiToDetailData } from '@/components/shared/ticket-detail/adapters';
+import SensorToggleButton from '@/components/shared/ticket-detail/sensor-toggle-button';
 import { SupervisionToggle } from '@/components/shared/ticket-detail/supervision-toggle';
 import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
 import { TicketContentCard } from '@/components/shared/ticket-detail/ticket-content-card';
@@ -25,6 +26,7 @@ export default function ShowLaporanSelesaiView() {
 
     const [previewItem, setPreviewItem] = useState<AttachmentPreviewSource | null>(null);
     const [previewList, setPreviewList] = useState<AttachmentPreviewSource[]>([]);
+    const [showOriginal, setShowOriginal] = useState(false);
 
     const handlePreviewAttachment = (attachment: Attachment, list: Attachment[] = []) => {
         setPreviewItem(attachment);
@@ -116,11 +118,13 @@ export default function ShowLaporanSelesaiView() {
             backHref={route(backRouteName)}
             backLabel={backLabel}
             headerActions={
-                <TicketFlagButton
-                    ticket={ticket}
-                    tandaiRoute={route(`${routePrefix}.laporan-selesai.tandai`, ticket.ticket_number)}
-                    variant="badge-button"
-                />
+                <>
+                    <TicketFlagButton
+                        ticket={ticket}
+                        tandaiRoute={route(`${routePrefix}.laporan-selesai.tandai`, ticket.ticket_number)}
+                        variant="badge-button"
+                    />
+                </>
             }
             dialogs={
                 <AttachmentPreviewDialog
@@ -145,16 +149,19 @@ export default function ShowLaporanSelesaiView() {
                     pengawasanByName={detailData.pengawasan_by_name}
                     kadarPengawasanDays={detailData.kadar_pengawasan_days}
                     actions={
-                        <SupervisionToggle
-                            ticketNumber={detailData.ticket_number}
-                            isPengawasan={detailData.is_pengawasan}
-                            disabled={true}
-                            kadarPengawasanDays={detailData.kadar_pengawasan_days}
-                            classificationDefaultDays={detailData.classification_default_days}
-                            updateRoute={route(`${routePrefix}.laporan-masuk.pengawasan`, {
-                                ticketNumber: detailData.ticket_number,
-                            })}
-                        />
+                        <>
+                            <SensorToggleButton showOriginal={showOriginal} onToggle={() => setShowOriginal((prev) => !prev)} />
+                            <SupervisionToggle
+                                ticketNumber={detailData.ticket_number}
+                                isPengawasan={detailData.is_pengawasan}
+                                disabled={true}
+                                kadarPengawasanDays={detailData.kadar_pengawasan_days}
+                                classificationDefaultDays={detailData.classification_default_days}
+                                updateRoute={route(`${routePrefix}.laporan-masuk.pengawasan`, {
+                                    ticketNumber: detailData.ticket_number,
+                                })}
+                            />
+                        </>
                     }
                 />
 
@@ -164,7 +171,15 @@ export default function ShowLaporanSelesaiView() {
                 {/* Completed stamp */}
                 {detailData.completed_at && <CompletedStamp completedAt={detailData.completed_at} />}
 
-                <TicketContentCard title={detailData.title} content={detailData.content} />
+                <TicketContentCard
+                    title={detailData.title}
+                    content={detailData.content}
+                    hasProfanity={detailData.has_profanity}
+                    titleOriginal={detailData.title_original}
+                    contentOriginal={detailData.content_original}
+                    showOriginal={showOriginal}
+                    onToggle={() => setShowOriginal((prev) => !prev)}
+                />
 
                 <TicketAttachments attachments={detailData.attachments} onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)} />
             </div>
@@ -173,6 +188,8 @@ export default function ShowLaporanSelesaiView() {
                 responses={detailData.responses}
                 ticketStatus={detailData.status}
                 readOnly={true}
+                showOriginal={showOriginal}
+                onToggle={() => setShowOriginal((prev) => !prev)}
                 onPreviewAttachment={(att) => handlePreviewAttachment(att, detailData.attachments)}
             />
         </TicketDetailLayout>

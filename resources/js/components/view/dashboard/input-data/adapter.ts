@@ -29,6 +29,7 @@ export function toTicketListEntry(ticket: TicketItem, routePrefix: string): Tick
         is_read: ticket.is_read ?? null,
         is_pengawasan: ticket.is_pengawasan,
         recently_answered_by: null,
+        has_profanity: ticket.has_profanity,
     };
 }
 

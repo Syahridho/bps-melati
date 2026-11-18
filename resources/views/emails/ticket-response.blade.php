@@ -10,7 +10,7 @@ Berikut adalah **{{ $response->type === 'respon_awal' ? 'Respon Awal' : 'Respon 
 <x-mail::panel>
 **Pesan Tanggapan:**
 
-{!! nl2br(e($response->message)) !!}
+{!! nl2br(e(app(\App\Support\ProfanityFilter::class)->censor($response->message))) !!}
 </x-mail::panel>
 
 ### Ringkasan Laporan Anda:
@@ -25,7 +25,7 @@ Berikut adalah **{{ $response->type === 'respon_awal' ? 'Respon Awal' : 'Respon 
 - **Tanggal Dibuat:** {{ $ticket->created_at->locale('id')->translatedFormat('d F Y H:i') }} WIB
 
 **Isi Laporan:**
-> {{ $ticket->content }}
+> {{ app(\App\Support\ProfanityFilter::class)->censor($ticket->content) }}
 
 @if($response->attachments->count() > 0)
 *Catatan: Terlampir {{ $response->attachments->count() }} file dokumen pendukung pada email ini.*

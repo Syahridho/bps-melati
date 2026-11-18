@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Actions\AutoCloseTickets;
+use App\Services\TicketNumberGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Cache;
 class Ticket extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'ticket_number',
         'period',
@@ -228,80 +230,12 @@ class Ticket extends Model
      * Generate nomor tiket. Format: P-1400/MMYYYY/AA01
      * P = Prefix klasifikasi, MM = bulan, YYYY = tahun, AA = 2 huruf acak, 01 = nomor urut (AA100 jika >= 100)
      *
-     * Menggunakan Redis cache / lock untuk mencegah race condition.
+     * Delegasi ke {@see TicketNumberGenerator} supaya jalur
+     * publik dan Input Data berbagi satu sumber kebenaran pembuatan nomor.
      */
     public static function generateTicketNumber(string $classification, string $period): array
     {
-        $meta = self::classificationMeta($classification);
-        $lock = Cache::lock("ticket_counter:{$period}", 10);
-
-        return $lock->block(5, function () use ($meta, $period) {
-            $counter = TicketCounter::firstOrCreate(
-                ['period' => $period],
-                ['last_number' => (int) Ticket::where('period', $period)->max('sequence')]
-            );
-
-            $counter->increment('last_number');
-            $sequence = $counter->last_number;
-
-            // Simpan / update hitungan di Redis cache
-            Cache::put("ticket_sequence:{$period}", $sequence, now()->addDays(30));
-
-            [$year, $month] = explode('-', $period);
-
-            // Generate 2 huruf kapital acak (AA, XY, RK, dll)
-            $randomLetters = sprintf('%s%s', chr(rand(65, 90)), chr(rand(65, 90)));
-            // Nomor urut: 01 s/d 99, atau 100 dst.
-            $seqFormatted = sprintf('%02d', $sequence);
-
-            $ticketNumber = sprintf(
-                '%s-%s/%s%s/%s%s',
-                $meta['prefix'],
-                $meta['code'],
-                $month,
-                $year,
-                $randomLetters,
-                $seqFormatted
-            );
-
-            return [
-                'ticket_number' => $ticketNumber,
-                'sequence' => $sequence,
-            ];
-        });
-    }
-
-    /**
-     * Generate nomor tiket khusus input data oleh admin/operator.
-     * Format: NamaPembuat/DDMMYYYY/Sequence (misal: Administrator/06102026/01)
-     * Menggunakan Redis lock & TicketCounter agar (period, sequence) selalu unik.
-     *
-     * @return array{ticket_number: string, sequence: int}
-     */
-    public static function generateAdminTicketNumber(string $creatorName, string $period, ?string $dateFormatted = null): array
-    {
-        $dateStr = $dateFormatted ?? now()->format('dmY');
-        $lock = Cache::lock("ticket_counter:{$period}", 10);
-
-        return $lock->block(5, function () use ($creatorName, $period, $dateStr) {
-            $counter = TicketCounter::firstOrCreate(
-                ['period' => $period],
-                ['last_number' => (int) Ticket::where('period', $period)->max('sequence')]
-            );
-
-            $counter->increment('last_number');
-            $sequence = $counter->last_number;
-
-            Cache::put("ticket_sequence:{$period}", $sequence, now()->addDays(30));
-
-            $seqFormatted = sprintf('%02d', $sequence);
-            $ticketNumber = sprintf('%s/%s/%s', $creatorName, $dateStr, $seqFormatted);
-
-            return [
-                'ticket_number' => $ticketNumber,
-                'sequence' => $sequence,
-            ];
-        });
+        return app(TicketNumberGenerator::class)->generate($classification, $period);
     }
 
     /**

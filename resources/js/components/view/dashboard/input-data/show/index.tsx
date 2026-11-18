@@ -2,6 +2,7 @@ import CompletedStamp from '@/components/completed-stamp';
 import { LaporanMasukReplyForm } from '@/components/laporan-masuk/laporan-masuk-reply-form';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
 import { mapInputDataToDetailData } from '@/components/shared/ticket-detail/adapters';
+import SensorToggleButton from '@/components/shared/ticket-detail/sensor-toggle-button';
 import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
 import { TicketContentCard } from '@/components/shared/ticket-detail/ticket-content-card';
 import { TicketDetailHeader } from '@/components/shared/ticket-detail/ticket-detail-header';
@@ -45,6 +46,7 @@ export default function ShowInputDataView() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showReplyForm, setShowReplyForm] = useState(false);
+    const [showOriginal, setShowOriginal] = useState(false);
 
     const editForm = useForm({
         reporter_name: ticket.reporter_name ?? '',
@@ -310,11 +312,13 @@ export default function ShowInputDataView() {
             backLabel={backLabel}
             successMessage={successMessage}
             headerActions={
-                <TicketFlagButton
-                    ticket={ticket}
-                    tandaiRoute={route(`${routePrefix}.input-data.tandai`, ticket.ticket_number)}
-                    variant="badge-button"
-                />
+                <>
+                    <TicketFlagButton
+                        ticket={ticket}
+                        tandaiRoute={route(`${routePrefix}.input-data.tandai`, ticket.ticket_number)}
+                        variant="badge-button"
+                    />
+                </>
             }
             dialogs={
                 <>
@@ -351,12 +355,15 @@ export default function ShowInputDataView() {
                     autoCloseAt={detailData.auto_close_at}
                     isPengawasan={false}
                     actions={
-                        <TicketEditDeleteActions
-                            canEdit={canEdit}
-                            canDelete={canDelete}
-                            onEdit={() => setIsEditOpen(true)}
-                            onDelete={() => setIsDeleteOpen(true)}
-                        />
+                        <>
+                            <SensorToggleButton showOriginal={showOriginal} onToggle={() => setShowOriginal((prev) => !prev)} />
+                            <TicketEditDeleteActions
+                                canEdit={canEdit}
+                                canDelete={canDelete}
+                                onEdit={() => setIsEditOpen(true)}
+                                onDelete={() => setIsDeleteOpen(true)}
+                            />
+                        </>
                     }
                 />
 
@@ -366,7 +373,15 @@ export default function ShowInputDataView() {
 
                 {ticketStatus === 'selesai' && completedAt && <CompletedStamp completedAt={completedAt} />}
 
-                <TicketContentCard title={detailData.title} content={detailData.content} />
+                <TicketContentCard
+                    title={detailData.title}
+                    content={detailData.content}
+                    hasProfanity={detailData.has_profanity}
+                    titleOriginal={detailData.title_original}
+                    contentOriginal={detailData.content_original}
+                    showOriginal={showOriginal}
+                    onToggle={() => setShowOriginal((prev) => !prev)}
+                />
 
                 <TicketAttachments attachments={detailData.attachments} onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)} />
             </div>
@@ -376,6 +391,8 @@ export default function ShowInputDataView() {
                 ticketStatus={ticketStatus}
                 readOnly={true}
                 onPreviewAttachment={(att) => handlePreviewAttachment(att, detailData.attachments)}
+                showOriginal={showOriginal}
+                onToggle={() => setShowOriginal((prev) => !prev)}
                 footerExtra={
                     <>
                         {!showReplyForm && ticketStatus !== 'selesai' && (

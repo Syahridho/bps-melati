@@ -56,7 +56,9 @@ export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail
         if (code && typeof window !== 'undefined') {
             try {
                 sessionStorage.setItem(`ticket_access_code_${ticket.ticket_number}`, code);
-            } catch {}
+            } catch {
+                //
+            }
         }
 
         router.post(

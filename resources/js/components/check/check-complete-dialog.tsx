@@ -35,7 +35,9 @@ export function CheckCompleteDialog({
                 if (stored) {
                     setAccessCode(stored);
                 }
-            } catch {}
+            } catch {
+                //
+            }
         }
     }, [defaultAccessCode, ticketNumber, open]);
 
@@ -43,7 +45,9 @@ export function CheckCompleteDialog({
         if (ticketNumber && accessCode && typeof window !== 'undefined') {
             try {
                 sessionStorage.setItem(`ticket_access_code_${ticketNumber}`, accessCode);
-            } catch {}
+            } catch {
+                //
+            }
         }
         onConfirm(accessCode);
     };

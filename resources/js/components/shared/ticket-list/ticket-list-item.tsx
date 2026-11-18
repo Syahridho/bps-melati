@@ -66,6 +66,14 @@ export const TicketListItem = memo(function TicketListItem({ ticket, isPopoverOp
                                 dibalas oleh {ticket.recently_answered_by}
                             </Badge>
                         )}
+                        {ticket.has_profanity && (
+                            <Badge
+                                variant="destructive"
+                                className="border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/10 gap-1 text-[10px]"
+                            >
+                                Mengandung kata kasar
+                            </Badge>
+                        )}
                     </div>
                 </Link>
 

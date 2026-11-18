@@ -16,12 +16,12 @@ Terima kasih telah menyampaikan {{ $reportTypeNoun ?? $ticket->classificationNou
 @if($ticket->satuan_tugas)
 - **Satuan Tugas:** {{ $ticket->satuan_tugas }}
 @endif
-- **Judul:** {{ $ticket->title }}
+- **Judul:** {{ app(\App\Support\ProfanityFilter::class)->censor($ticket->title) }}
 - **Tanggal Dibuat:** {{ $ticket->created_at->locale('id')->translatedFormat('d F Y H:i') }} WIB
 </x-mail::panel>
 
 **Isi Laporan:**
-> {{ $ticket->content }}
+> {{ app(\App\Support\ProfanityFilter::class)->censor($ticket->content) }}
 
 @if($ticket->attachments->count() > 0)
 *Catatan: Terdapat {{ $ticket->attachments->count() }} file lampiran yang disertakan pada laporan ini.*

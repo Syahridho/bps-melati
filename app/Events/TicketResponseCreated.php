@@ -5,6 +5,7 @@ namespace App\Events;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
+use App\Support\ProfanityFilter;
 use App\Support\TicketResponsePayload;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -64,7 +65,12 @@ class TicketResponseCreated implements ShouldBroadcastNow
      */
     public function broadcastWith(): array
     {
-        $payload = TicketResponsePayload::from($this->response, $this->ticket);
+        $payload = TicketResponsePayload::from(
+            $this->response,
+            $this->ticket,
+            app(ProfanityFilter::class),
+            false // kanal publik juga terdaftar: jangan sertakan teks asli
+        );
 
         $payload['user_role'] = $this->actor?->role?->value;
 

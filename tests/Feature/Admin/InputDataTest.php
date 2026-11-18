@@ -139,12 +139,14 @@ test('admin can store ticket via input-data and unique constraint is preserved',
         ])
         ->assertRedirect();
 
-    $todayStr = now()->format('dmY');
-    $this->assertDatabaseHas('tickets', [
-        'title' => 'Input Manual Oleh Admin',
-        'ticket_number' => "Administrator/{$todayStr}/02",
-        'created_by' => $admin->id,
-    ]);
+    $ticket = Ticket::where('title', 'Input Manual Oleh Admin')->first();
+
+    expect($ticket)->not->toBeNull();
+    expect($ticket->created_by)->toBe($admin->id);
+    expect($ticket->source_app)->toBe('admin');
+    expect($ticket->period)->toBe(now()->format('Y-m'));
+    // Format baru sama dengan Laporan Masuk: L-1400/MMYYYY/[A-Z]{2}{urut}, urut melanjutkan (1 -> 02).
+    expect((int) preg_match('/^L-1400\/\d{6}\/[A-Z]{2}02$/', $ticket->ticket_number))->toBe(1);
 });
 
 test('admin can store ticket with direct response and response attachments', function () {

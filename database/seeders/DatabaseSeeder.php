@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ChannelSeeder::class,
+            CensoredWordSeeder::class,
             UserSeeder::class,
             SettingSeeder::class,
         ]);

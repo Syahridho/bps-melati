@@ -5,6 +5,7 @@ use App\Http\Controllers\Dashboard\SettingController;
 use App\Http\Controllers\Settings\ApiController;
 use App\Http\Controllers\Settings\ChannelController;
 use App\Http\Controllers\Settings\PasswordController;
+use App\Http\Controllers\Settings\SensorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,5 +32,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->parameters(['sumber-kanal' => 'channel'])
         ->only(['index', 'store', 'update', 'destroy'])
         ->names(['index' => 'settings.sumber-kanal.index', 'store' => 'settings.sumber-kanal.store', 'update' => 'settings.sumber-kanal.update', 'destroy' => 'settings.sumber-kanal.destroy']);
+    Route::get('settings/sensors', [SensorController::class, 'index'])->name('settings.sensors.index');
+    Route::post('settings/sensors', [SensorController::class, 'store'])->name('settings.sensors.store');
+    Route::post('settings/sensors/bulk', [SensorController::class, 'bulkStore'])->name('settings.sensors.bulk');
+    Route::put('settings/sensors/{censoredWord}', [SensorController::class, 'update'])->name('settings.sensors.update');
+    Route::patch('settings/sensors/{censoredWord}/toggle', [SensorController::class, 'toggle'])->name('settings.sensors.toggle');
+    Route::delete('settings/sensors/{censoredWord}', [SensorController::class, 'destroy'])->name('settings.sensors.destroy');
     Route::patch('settings/notification/dashboard-live', [NotificationController::class, 'updateDashboardLive'])->name('settings.notification.dashboard-live');
 });

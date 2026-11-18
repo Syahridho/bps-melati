@@ -58,17 +58,15 @@ class LaporanMasukController extends Controller
                 ->orderByDesc('created_at')
                 ->paginate($filter->perPage)
                 ->withQueryString()
-                ->through(fn (Ticket $ticket) => [
+                ->through(fn (Ticket $ticket) => array_merge([
                     'id' => $ticket->id,
                     'ticket_number' => $ticket->ticket_number,
                     'classification' => $ticket->classification,
-                    'title' => $ticket->title,
                     'service_type' => $ticket->service_type,
                     'satuan_tugas' => $ticket->satuan_tugas,
                     'reporter_name' => $ticket->reporter_name,
                     'reporter_email' => $ticket->reporter_email,
                     'reporter_wa' => $ticket->reporter_wa,
-                    'content' => $ticket->content,
                     'status' => $ticket->status,
                     'is_pengawasan' => (bool) $ticket->is_pengawasan,
                     'is_flagged' => (bool) $ticket->is_flagged,
@@ -83,7 +81,7 @@ class LaporanMasukController extends Controller
                     'last_responded_by' => $ticket->relationLoaded('lastResponse')
                         ? $ticket->lastResponse?->user?->name
                         : null,
-                ]);
+                ], $this->profanityTicketProps($ticket)));
         };
 
         if ($filter->search === '') {

@@ -18,6 +18,8 @@ export interface TicketResponseHistoryProps {
     onPreviewAttachment: (attachment: TicketAttachmentItem, list?: TicketAttachmentItem[]) => void;
     lastItemRef?: RefObject<HTMLDivElement | null>;
     getResendUrl?: (response: TicketResponseEntry) => string | undefined;
+    showOriginal?: boolean;
+    onToggle?: () => void;
 }
 
 export function TicketResponseHistory({
@@ -33,6 +35,8 @@ export function TicketResponseHistory({
     onPreviewAttachment,
     lastItemRef,
     getResendUrl,
+    showOriginal = false,
+    onToggle,
 }: TicketResponseHistoryProps) {
     const isCompleted = ticketStatus === 'selesai';
 
@@ -58,6 +62,8 @@ export function TicketResponseHistory({
                             <div key={response.id} ref={isLast ? lastItemRef : undefined}>
                                 <TicketResponseItem
                                     response={response}
+                                    showOriginal={showOriginal}
+                                    onToggle={onToggle}
                                     onPreviewAttachment={onPreviewAttachment}
                                     resendUrl={
                                         canResend && (response.email_status === 'failed' || response.email_status === 'bounced') && getResendUrl

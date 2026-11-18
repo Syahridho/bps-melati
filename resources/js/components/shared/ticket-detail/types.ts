@@ -13,6 +13,7 @@ export interface TicketResponseEntry {
     id: number;
     type: string;
     message: string;
+    message_original?: string | null;
     user_name: string;
     is_reporter?: boolean;
     is_system?: boolean;
@@ -23,6 +24,7 @@ export interface TicketResponseEntry {
     email_failed_at?: string | null;
     email_error?: string | null;
     attachments: TicketAttachmentItem[];
+    has_profanity?: boolean;
 }
 
 export interface TicketDetailData {
@@ -53,11 +55,15 @@ export interface TicketDetailData {
     flagged_at?: string | null;
     flagged_by_name?: string | null;
     flag_note?: string | null;
+    flag_note_original?: string | null;
     kadar_pengawasan_days?: number;
     classification_default_days?: number;
     auto_close_at?: string | null;
     created_at: string;
     updated_at?: string;
+    title_original?: string | null;
+    content_original?: string | null;
+    has_profanity?: boolean;
     attachments: TicketAttachmentItem[];
     responses: TicketResponseEntry[];
 }

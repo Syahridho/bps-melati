@@ -32,4 +32,5 @@ export interface TicketListEntry {
      * Hanya Laporan Masuk yang mengisinya; halaman lain biarkan null.
      */
     recently_answered_by?: string | null;
+    has_profanity?: boolean;
 }

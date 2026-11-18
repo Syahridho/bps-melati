@@ -8,6 +8,7 @@ use App\Mail\TicketCreatedMail;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\LaporanNotification;
+use App\Support\ProfanityFilter;
 use App\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
@@ -83,7 +84,7 @@ class TicketController extends Controller
             'ticket_number' => $ticket->ticket_number,
             'type' => $ticket->classification,
             'title' => 'Laporan baru masuk',
-            'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
+            'message' => app(ProfanityFilter::class)->censor(Str::limit((string) $ticket->title ?? (string) $ticket->content, 100)),
             'url' => '/dashboard/admin/laporan-masuk/'.$ticket->ticket_number,
             'actor_name' => $ticket->reporter_name ?? null,
         ];

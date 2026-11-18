@@ -18,10 +18,12 @@ export interface TicketResponseItem {
     id: number;
     type: 'respon_awal' | 'respon_substantif';
     message: string;
+    message_original?: string | null;
     user_name: string;
     sent_at: string | null;
     created_at: string;
     attachments: Attachment[];
+    has_profanity?: boolean;
 }
 
 export interface TicketItem {
@@ -39,11 +41,15 @@ export interface TicketItem {
     flagged_at?: string | null;
     flagged_by_name?: string | null;
     flag_note?: string | null;
+    flag_note_original?: string | null;
     source_app: string;
     channel: string;
     completed_at: string | null;
     created_at: string;
     updated_at: string;
+    title_original?: string | null;
+    content_original?: string | null;
+    has_profanity?: boolean;
 }
 
 export interface LaporanSelesaiProps extends SharedData {

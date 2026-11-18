@@ -13,6 +13,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
+use App\Support\ProfanityFilter;
 use App\UserRole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -88,17 +89,15 @@ class InputDataController extends Controller
             ->orderByDesc('created_at')
             ->paginate($filter->perPage)
             ->withQueryString()
-            ->through(fn (Ticket $ticket) => [
+            ->through(fn (Ticket $ticket) => array_merge([
                 'id' => $ticket->id,
                 'ticket_number' => $ticket->ticket_number,
                 'classification' => $ticket->classification,
-                'title' => $ticket->title,
                 'service_type' => $ticket->service_type,
                 'satuan_tugas' => $ticket->satuan_tugas,
                 'reporter_name' => $ticket->reporter_name,
                 'reporter_email' => $ticket->reporter_email,
                 'reporter_wa' => $ticket->reporter_wa,
-                'content' => $ticket->content,
                 'status' => $ticket->status,
                 'is_pengawasan' => (bool) $ticket->is_pengawasan,
                 'is_flagged' => (bool) $ticket->is_flagged,
@@ -109,7 +108,7 @@ class InputDataController extends Controller
                 'source_app' => $ticket->source_app,
                 'channel' => $ticket->channel?->name ?? '-',
                 'created_at' => $ticket->created_at->toIso8601String(),
-            ]);
+            ], $this->profanityTicketProps($ticket)));
 
         // Cache counts 20 detik untuk user/role yang relevan
         $userKey = $user->isOperatorTim() ? "user_{$user->id}" : 'shared';
@@ -224,11 +223,10 @@ class InputDataController extends Controller
 
         $period = now()->format('Y-m');
 
-        $creator = $request->user();
-        $creatorName = $creator?->name ?? 'Admin';
-
-        // Gunakan generator nomor tiket untuk input data admin (format: NamaPembuat/DDMMYYYY/Sequence).
-        $generated = Ticket::generateAdminTicketNumber($creatorName, $period);
+        // Jalur Input Data sekarang menggunakan generator nomor tiket yang sama
+        // dengan Laporan Masuk (format L-/A-/I-1400/mmyyyy/XX####). Identitas
+        // pembuat tetap tersimpan di kolom source_app dan created_by sendiri.
+        $generated = Ticket::generateTicketNumber($validated['classification'], $period);
 
         $ticket = Ticket::create([
             'ticket_number' => $generated['ticket_number'],
@@ -269,7 +267,7 @@ class InputDataController extends Controller
                     'ticket_number' => $ticket->ticket_number,
                     'type' => $ticket->classification,
                     'title' => 'Data tiket baru ditambahkan',
-                    'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
+                    'message' => app(ProfanityFilter::class)->censor(Str::limit((string) $ticket->title ?? (string) $ticket->content, 100)),
                     'url' => '/dashboard/admin/input-data/'.$ticket->ticket_number,
                     'actor_name' => null,
                 ]),
@@ -328,7 +326,7 @@ class InputDataController extends Controller
                 'ticket_id' => $ticket->id,
                 'type' => $response->type,
                 'message' => $response->message,
-                'user' => $creatorName,
+                'user' => $request->user()?->name ?? 'Petugas',
                 'sent_at' => $response->sent_at->toIso8601String(),
             ], now()->addHours(24));
 

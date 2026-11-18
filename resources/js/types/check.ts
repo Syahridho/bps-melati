@@ -21,6 +21,7 @@ export interface TicketResponse {
     sent_at: string | null;
     created_at: string;
     attachments: Attachment[];
+    has_profanity?: boolean;
 }
 
 export interface TicketDetail {
@@ -39,6 +40,7 @@ export interface TicketDetail {
     completed_at: string | null;
     closed_reason: 'reporter' | 'staff' | 'auto_close' | null;
     auto_close_at: string | null;
+    has_profanity?: boolean;
     attachments: Attachment[];
     responses: TicketResponse[];
 }

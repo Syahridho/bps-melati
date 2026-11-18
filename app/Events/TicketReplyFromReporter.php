@@ -5,6 +5,7 @@ namespace App\Events;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
+use App\Support\ProfanityFilter;
 use App\UserRole;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -81,7 +82,7 @@ class TicketReplyFromReporter implements ShouldBroadcastNow
             'ticket_number' => $this->ticket->ticket_number,
             'reply_id' => $this->response->id,
             'reporter_name' => $this->ticket->reporter_name ?: 'Pelapor',
-            'excerpt' => Str::limit((string) $this->response->message, 100),
+            'excerpt' => Str::limit(app(ProfanityFilter::class)->censor((string) $this->response->message), 100),
             'has_attachment' => $this->response->attachments()->exists(),
             'created_at' => ($this->response->created_at ?? now())->toIso8601String(),
             'is_input_data' => $this->ticket->source_app === 'admin',

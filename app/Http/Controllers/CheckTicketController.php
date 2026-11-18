@@ -8,6 +8,7 @@ use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
 use App\UserRole;
 use Illuminate\Http\RedirectResponse;
@@ -34,8 +35,9 @@ class CheckTicketController extends Controller
             $searched = true;
 
             $cacheKey = 'ticket_check:'.md5($ticketNumber);
+            $filter = app(ProfanityFilter::class);
 
-            $ticket = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($ticketNumber) {
+            $ticket = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($ticketNumber, $filter) {
                 $t = Ticket::with(['channel', 'attachments', 'responses.user', 'responses.attachments'])
                     ->where('ticket_number', $ticketNumber)
                     ->first();
@@ -55,11 +57,11 @@ class CheckTicketController extends Controller
                     'ticket_number' => $t->ticket_number,
                     'access_code' => $t->access_code,
                     'classification' => $t->classification,
-                    'title' => $t->title,
+                    'title' => $filter->censor($t->title),
                     'service_type' => $t->service_type,
                     'satuan_tugas' => $t->satuan_tugas,
                     'reporter_name' => $t->reporter_name,
-                    'content' => $t->content,
+                    'content' => $filter->censor($t->content),
                     'status' => $t->status,
                     'channel' => $t->channel?->name ?? '-',
                     'created_at' => $t->created_at->toIso8601String(),
@@ -75,7 +77,7 @@ class CheckTicketController extends Controller
                     'responses' => $t->responses
                         ->sortBy(fn ($response) => ($response->sent_at ?? $response->created_at)->getTimestamp())
                         ->values()
-                        ->map(function ($response) use ($t) {
+                        ->map(function ($response) use ($t, $filter) {
                             $isSystem = (bool) $response->is_system;
                             $isReporter = $isSystem || $response->user_id === null || $response->type === 'balasan_pelapor';
                             $userName = $isReporter
@@ -85,7 +87,7 @@ class CheckTicketController extends Controller
                             return [
                                 'id' => $response->id,
                                 'type' => $response->type,
-                                'message' => $response->message,
+                                'message' => $filter->censor($response->message),
                                 'user_name' => $isSystem ? 'Sistem' : $userName,
                                 'is_reporter' => $isReporter,
                                 'is_system' => $isSystem,

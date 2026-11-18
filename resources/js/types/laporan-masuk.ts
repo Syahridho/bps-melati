@@ -29,6 +29,7 @@ export interface TicketResponseItem {
     id: number;
     type: ResponseType | string;
     message: string;
+    message_original?: string | null;
     user_name: string;
     is_reporter?: boolean;
     is_system?: boolean;
@@ -39,6 +40,7 @@ export interface TicketResponseItem {
     email_failed_at?: string | null;
     email_error?: string | null;
     attachments: Attachment[];
+    has_profanity?: boolean;
 }
 
 /** Anggota presence channel (routes/channels.php -> ticket.{id}). */
@@ -135,12 +137,16 @@ export interface InboxTicketItem {
     flagged_at?: string | null;
     flagged_by_name?: string | null;
     flag_note?: string | null;
+    flag_note_original?: string | null;
     version: number;
     is_read: boolean;
     source_app: string;
     channel: string;
     created_at: string;
     last_responded_by: string | null;
+    title_original?: string | null;
+    content_original?: string | null;
+    has_profanity?: boolean;
 }
 
 export interface LaporanMasukProps extends SharedData {
@@ -194,11 +200,15 @@ export interface TicketDetail {
     flagged_at?: string | null;
     flagged_by_name?: string | null;
     flag_note?: string | null;
+    flag_note_original?: string | null;
     kadar_pengawasan_days?: number;
     classification_default_days?: number;
     auto_close_at: string | null;
     created_at: string;
     updated_at: string;
+    title_original?: string | null;
+    content_original?: string | null;
+    has_profanity?: boolean;
     attachments: Attachment[];
     responses: TicketResponseItem[];
 }

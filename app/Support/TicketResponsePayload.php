@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\EmailStatus;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +17,8 @@ class TicketResponsePayload
      *     is_system: bool,
      *     type: string,
      *     message: string,
+     *     message_original?: string|null,
+     *     has_profanity: bool,
      *     sent_at: string|null,
      *     created_at: string,
      *     email_status: string|null,
@@ -25,7 +28,7 @@ class TicketResponsePayload
      *     attachments: list<array{id: int, original_name: string, mime_type: string|null, size: int, url: string}>
      * }
      */
-    public static function from(TicketResponse $response, Ticket $ticket): array
+    public static function from(TicketResponse $response, Ticket $ticket, ?ProfanityFilter $filter = null, bool $includeOriginal = false): array
     {
         $response->loadMissing(['user', 'attachments']);
 
@@ -37,17 +40,22 @@ class TicketResponsePayload
                 ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
                 : ($response->user?->name ?? '-'));
 
-        $statusValue = $response->email_status instanceof \App\EmailStatus
+        $statusValue = $response->email_status instanceof EmailStatus
             ? $response->email_status->value
             : $response->email_status;
 
-        return [
+        $message = $response->message;
+        $masked = $filter ? $filter->censor($message) : $message;
+        $hasProfanity = $filter ? $filter->contains($message) : false;
+
+        $result = [
             'id' => $response->id,
             'user_name' => $userName,
             'is_reporter' => $isReporter,
             'is_system' => (bool) $response->is_system,
             'type' => $response->type,
-            'message' => $response->message,
+            'message' => $masked,
+            'has_profanity' => $hasProfanity,
             'sent_at' => $response->sent_at?->toIso8601String(),
             'created_at' => $response->created_at->toIso8601String(),
             'email_status' => $isReporter ? null : $statusValue,
@@ -62,5 +70,11 @@ class TicketResponsePayload
                 'url' => Storage::url($attachment->path),
             ])->values()->all(),
         ];
+
+        if ($includeOriginal && $filter) {
+            $result['message_original'] = $message;
+        }
+
+        return $result;
     }
 }

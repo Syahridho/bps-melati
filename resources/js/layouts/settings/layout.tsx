@@ -34,11 +34,16 @@ export default function SettingsLayout({
                       url: '/settings/api',
                       icon: null,
                   },
-                  {
-                      title: 'Sumber Kanal',
-                      url: '/settings/sumber-kanal',
-                      icon: null,
-                  },
+              {
+                  title: 'Sumber Kanal',
+                  url: '/settings/sumber-kanal',
+                  icon: null,
+              },
+              {
+                  title: 'Sensor',
+                  url: '/settings/sensors',
+                  icon: null,
+              },
               ]
             : []),
         ...(!isOperatorTim

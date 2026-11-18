@@ -111,6 +111,8 @@ export function LaporanMasukResponseHistory({
             senderName: response.user_name,
             badge: isSystem ? 'Otomatis' : responseTypeLabel(response.type),
             body: response.message,
+            messageOriginal: response.message_original,
+            hasProfanity: response.has_profanity,
             createdAt: response.sent_at || response.created_at || '',
             muted: isSystem,
             meta:

@@ -5,6 +5,7 @@ import { LaporanMasukPresenceBar } from '@/components/laporan-masuk/laporan-masu
 import { LaporanMasukReplyForm } from '@/components/laporan-masuk/laporan-masuk-reply-form';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
 import { mapLaporanMasukToDetailData } from '@/components/shared/ticket-detail/adapters';
+import SensorToggleButton from '@/components/shared/ticket-detail/sensor-toggle-button';
 import { SupervisionToggle } from '@/components/shared/ticket-detail/supervision-toggle';
 import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
 import { TicketContentCard } from '@/components/shared/ticket-detail/ticket-content-card';
@@ -34,6 +35,7 @@ export default function ShowLaporanMasukView() {
     const canDelete = can?.delete ?? auth.user.role === 'admin';
 
     const [showReplyForm, setShowReplyForm] = useState(false);
+    const [showOriginal, setShowOriginal] = useState(false);
     const [previewItem, setPreviewItem] = useState<AttachmentPreviewSource | null>(null);
     const [previewList, setPreviewList] = useState<AttachmentPreviewSource[]>([]);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -388,6 +390,7 @@ export default function ShowLaporanMasukView() {
                     kadarPengawasanDays={detailData.kadar_pengawasan_days}
                     actions={
                         <>
+                            <SensorToggleButton showOriginal={showOriginal} onToggle={() => setShowOriginal((prev) => !prev)} />
                             <SupervisionToggle
                                 ticketNumber={detailData.ticket_number}
                                 isPengawasan={detailData.is_pengawasan}
@@ -414,7 +417,15 @@ export default function ShowLaporanMasukView() {
 
                 {ticketStatus === 'selesai' && completedAt && <CompletedStamp completedAt={completedAt} />}
 
-                <TicketContentCard title={detailData.title} content={detailData.content} />
+                <TicketContentCard
+                    title={detailData.title}
+                    content={detailData.content}
+                    hasProfanity={detailData.has_profanity}
+                    titleOriginal={detailData.title_original}
+                    contentOriginal={detailData.content_original}
+                    showOriginal={showOriginal}
+                    onToggle={() => setShowOriginal((prev) => !prev)}
+                />
 
                 <TicketAttachments attachments={detailData.attachments} onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)} />
             </div>
@@ -436,6 +447,8 @@ export default function ShowLaporanMasukView() {
                         response: response.id,
                     })
                 }
+                showOriginal={showOriginal}
+                onToggle={() => setShowOriginal((prev) => !prev)}
                 footerExtra={
                     <LaporanMasukReplyForm
                         ticketId={ticket.id}

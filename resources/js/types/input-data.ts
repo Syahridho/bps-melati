@@ -28,10 +28,14 @@ export interface TicketItem {
     flagged_at?: string | null;
     flagged_by_name?: string | null;
     flag_note?: string | null;
+    flag_note_original?: string | null;
     is_read?: boolean;
     source_app: string;
     channel: string;
     created_at: string;
+    title_original?: string | null;
+    content_original?: string | null;
+    has_profanity?: boolean;
 }
 
 export interface ChannelChild {
@@ -84,6 +88,7 @@ export interface InputDataResponseItem {
     id: number;
     type: ResponseType | string;
     message: string;
+    message_original?: string | null;
     user_name: string;
     is_reporter?: boolean;
     is_system?: boolean;
@@ -94,6 +99,7 @@ export interface InputDataResponseItem {
     email_failed_at?: string | null;
     email_error?: string | null;
     attachments: InputDataAttachment[];
+    has_profanity?: boolean;
 }
 
 export interface InputDataTicketDetail {
@@ -124,11 +130,15 @@ export interface InputDataTicketDetail {
     flagged_at?: string | null;
     flagged_by_name?: string | null;
     flag_note?: string | null;
+    flag_note_original?: string | null;
     kadar_pengawasan_days?: number;
     classification_default_days?: number;
     auto_close_at: string | null;
     created_at: string;
     updated_at: string;
+    title_original?: string | null;
+    content_original?: string | null;
+    has_profanity?: boolean;
     attachments: InputDataAttachment[];
     responses: InputDataResponseItem[];
 }

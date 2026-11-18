@@ -10,16 +10,29 @@ import { TicketAttachmentItem, TicketResponseEntry } from './types';
 
 export interface TicketResponseItemProps {
     response: TicketResponseEntry;
+    showOriginal?: boolean;
+    onToggle?: () => void;
     onPreviewAttachment: (attachment: TicketAttachmentItem, list?: TicketAttachmentItem[]) => void;
     resendUrl?: string;
     reporterEmail?: string;
 }
 
-export function TicketResponseItem({ response, onPreviewAttachment, resendUrl, reporterEmail }: TicketResponseItemProps) {
+export function TicketResponseItem({
+    response,
+    showOriginal = false,
+    // onToggle,
+    onPreviewAttachment,
+    resendUrl,
+    reporterEmail,
+}: TicketResponseItemProps) {
     const dateSource = response.sent_at || response.created_at;
     const isSystem = response.is_system === true;
     const isReporter = response.is_reporter === true;
     const showEmailWarning = response.email_status === 'failed' || response.email_status === 'bounced';
+
+    // const canShowOriginal = Boolean(response.has_profanity && response.message_original != null);
+
+    const displayMessage = showOriginal && response.message_original ? response.message_original : response.message;
 
     return (
         <div className={cn('mb-4 flex w-full', isReporter ? 'justify-end' : 'justify-start')}>
@@ -50,11 +63,17 @@ export function TicketResponseItem({ response, onPreviewAttachment, resendUrl, r
                         isSystem
                             ? 'bg-muted text-muted-foreground border border-dashed italic'
                             : isReporter
-                              ? 'bg-secondary text-secondary-foreground rounded-tr-sm' // Tail untuk pelapor (kanan atas)
-                              : 'bg-primary text-primary-foreground rounded-tl-sm shadow-sm', // Tail untuk petugas (kiri atas)
+                              ? 'bg-secondary text-secondary-foreground rounded-tr-sm'
+                              : 'bg-primary text-primary-foreground rounded-tl-sm shadow-sm',
                     )}
                 >
-                    {response.message}
+                    {displayMessage}
+                    {/* {canShowOriginal && onToggle && (
+                        <SensorToggleButton
+                            showOriginal={showOriginal}
+                            onToggle={onToggle}
+                        />
+                    )} */}
                 </div>
 
                 {/* Bagian Bawah: Lampiran (Jika Ada) */}
