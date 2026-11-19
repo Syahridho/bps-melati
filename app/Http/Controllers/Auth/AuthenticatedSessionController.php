@@ -51,7 +51,7 @@ class AuthenticatedSessionController extends Controller
             'status' => $request->session()->get('status'),
             // Alasan sesi berakhir diteruskan lewat query string agar tetap
             // terbaca setelah Inertia::location() melakukan full page reload.
-            'noticeReason' => $request->query('alasan'),
+            'noticeReason' => $request->query('reason'),
             'throttleSeconds' => $throttleSeconds,
             'sessionConflict' => $conflict,
         ]);

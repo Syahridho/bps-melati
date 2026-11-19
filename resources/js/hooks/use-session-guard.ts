@@ -21,8 +21,8 @@ function SessionGuardListeners({ userId }: { userId: number }) {
         'user.' + userId,
         '.session.terminated',
         (event) => {
-            const reason = new URLSearchParams(window.location.search).get('alasan') ?? event.reason;
-            window.location.href = route('login', { alasan: reason });
+            const reason = new URLSearchParams(window.location.search).get('reason') ?? event.reason;
+            window.location.href = route('login', { reason: reason });
         },
         [userId],
     );

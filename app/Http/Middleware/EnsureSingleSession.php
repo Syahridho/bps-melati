@@ -126,7 +126,7 @@ class EnsureSingleSession
      */
     private function redirectToLogin(Request $request, string $reason): Response
     {
-        $url = route('login', ['alasan' => $reason]);
+        $url = route('login', ['reason' => $reason]);
 
         if ($request->header('X-Inertia')) {
             return Inertia::location($url);

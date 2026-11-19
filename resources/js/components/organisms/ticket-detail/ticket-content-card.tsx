@@ -37,7 +37,7 @@ export function TicketContentCard({
             <Separator />
             <div className="space-y-5 px-4 py-4 sm:px-6 sm:py-5">
                 {hasProfanity && (
-                    <span className="border-destructive/20 bg-destructive/5 text-destructive rounded-full border px-2 py-0.5 text-xs font-medium">
+                    <span className="border-destructive/20 bg-destructive/5 text-destructive mb-4 block w-fit rounded-full border px-2 py-0.5 text-xs font-medium">
                         Mengandung kata kasar
                     </span>
                 )}

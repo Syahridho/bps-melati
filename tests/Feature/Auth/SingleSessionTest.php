@@ -242,7 +242,7 @@ test('middleware memutus sesi yang current_session_id-nya tidak cocok', function
     $this->user->forceFill(['current_session_id' => 'sesi-yang-berbeda'])->save();
 
     test()->get(route('dashboard.operator.index'))
-        ->assertRedirect(route('login', ['alasan' => 'taken_over']));
+        ->assertRedirect(route('login', ['reason' => 'taken_over']));
 
     test()->assertGuest();
 });
@@ -262,7 +262,7 @@ test('middleware memutus sesi yang sudah melewati batas inaktivitas', function (
     ])->save();
 
     test()->get(route('dashboard.operator.index'))
-        ->assertRedirect(route('login', ['alasan' => 'expired']));
+        ->assertRedirect(route('login', ['reason' => 'expired']));
 
     test()->assertGuest();
     test()->assertDatabaseHas('auth_logs', ['event' => AuthLogger::SESSION_EXPIRED, 'user_id' => $this->user->id]);
