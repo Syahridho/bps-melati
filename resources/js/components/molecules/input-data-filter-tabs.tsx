@@ -1,4 +1,5 @@
 import { ScrollableTabs } from '@/components/molecules/scrollable-tabs';
+import { useAuthRole } from '@/hooks/use-auth-role';
 import { cn, formatCount } from '@/lib/utils';
 import { type FilterTab } from '@/types/input-data';
 
@@ -13,11 +14,14 @@ interface InputDataFilterTabsProps {
         respon_substantif?: number;
         berkadar_pengawasan?: number;
         ditandai?: number;
+        selesai?: number;
     };
     onFilterChange: (tab: FilterTab) => void;
 }
 
 export function InputDataFilterTabs({ currentFilter, counts, onFilterChange }: InputDataFilterTabsProps) {
+    const { isOperatorTim } = useAuthRole();
+
     const filterTabs: { key: FilterTab; label: string; count?: number }[] = [
         { key: 'semua', label: 'Semua', count: counts.semua },
         { key: 'pengaduan', label: 'Pengaduan', count: counts.pengaduan },
@@ -27,6 +31,7 @@ export function InputDataFilterTabs({ currentFilter, counts, onFilterChange }: I
         { key: 'respon_substantif', label: 'Respon Substantif', count: counts.respon_substantif ?? 0 },
         { key: 'berkadar_pengawasan', label: 'Berkadar Pengawasan', count: counts.berkadar_pengawasan ?? 0 },
         { key: 'ditandai', label: 'Ditandai', count: counts.ditandai ?? 0 },
+        ...(isOperatorTim ? [{ key: 'selesai' as FilterTab, label: 'Selesai', count: counts.selesai ?? 0 }] : []),
     ];
 
     return (

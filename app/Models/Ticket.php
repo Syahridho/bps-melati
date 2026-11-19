@@ -252,6 +252,7 @@ class Ticket extends Model
             'respon_substantif' => $query->where('status', 'respon_substantif'),
             'berkadar_pengawasan' => $query->where('is_pengawasan', true),
             'ditandai' => $query->where('is_flagged', true),
+            'selesai' => $query->where('status', 'selesai'),
             default => $query,
         };
     }

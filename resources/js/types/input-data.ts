@@ -4,7 +4,7 @@ import { SharedData } from '.';
 
 export type ClassificationType = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 export type StatusType = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
-export type FilterTab = 'semua' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif' | 'berkadar_pengawasan' | 'ditandai';
+export type FilterTab = 'semua' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif' | 'berkadar_pengawasan' | 'ditandai' | 'selesai';
 export type ResponseType = 'respon_awal' | 'respon_substantif';
 
 export interface TicketItem {
@@ -188,6 +188,7 @@ export interface InputDataPageProps extends SharedData {
         respon_substantif?: number;
         berkadar_pengawasan?: number;
         ditandai?: number;
+        selesai?: number;
     };
     flash: {
         ticket_number?: string;

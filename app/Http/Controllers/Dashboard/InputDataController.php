@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTicketRequest;
@@ -14,7 +15,6 @@ use App\Models\User;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
 use App\Support\ProfanityFilter;
-use App\Enums\UserRole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,20 +35,28 @@ class InputDataController extends Controller
      */
     public function index(Request $request): Response
     {
+        $user = $request->user();
         $filter = new LaporanFilter($request, 'semua', 10);
 
         // Whitelist filter
-        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'berkadar_pengawasan', 'ditandai'];
+        $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'berkadar_pengawasan', 'ditandai', 'selesai'];
         if (! in_array($filter->tab, $allowedFilters, true)) {
+            $filter->tab = 'semua';
+        }
+
+        // Tab 'selesai' hanya boleh diakses operator_tim; role lain dikembalikan ke 'semua'.
+        if ($filter->tab === 'selesai' && ! $user->isOperatorTim()) {
             $filter->tab = 'semua';
         }
 
         $frontendFilterKey = ($filter->tab === 'permintaan_informasi') ? 'permintaan' : $filter->tab;
 
         $searchClosure = LaporanFilterQuery::searchClosure($filter->search);
-        $user = $request->user();
 
-        // Query utama daftar tiket (hanya tiket yang diinput manual oleh admin/operator dan belum selesai)
+        $isSelesaiTab = $filter->tab === 'selesai';
+
+        // Query utama daftar tiket (hanya tiket yang diinput manual oleh admin/operator).
+        // Tab 'selesai': tampilkan hanya tiket selesai. Tab lain: sembunyikan tiket selesai.
         $ticketsQuery = Ticket::with(['channel', 'flaggedBy'])
             ->select([
                 'id',
@@ -74,14 +82,14 @@ class InputDataController extends Controller
                 'created_at',
             ])
             ->where('source_app', 'admin')
-            ->where('status', '!=', 'selesai')
+            ->when($isSelesaiTab, fn ($q) => $q->where('status', 'selesai'), fn ($q) => $q->where('status', '!=', 'selesai'))
             ->visibleTo($user)
             ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
                 $q->whereDate('created_at', '>=', $filter->from)
                     ->whereDate('created_at', '<=', $filter->to);
             })
             ->tap($searchClosure)
-            ->when($filter->tab !== 'semua', function ($query) use ($filter) {
+            ->when(! $isSelesaiTab && $filter->tab !== 'semua', function ($query) use ($filter) {
                 $query->applyTabFilter($filter->tab);
             });
 
@@ -115,6 +123,7 @@ class InputDataController extends Controller
         $countCacheKey = sprintf('input_data:counts:%s:%s_%s:%s', $userKey, $filter->from ?? 'all', $filter->to ?? 'all', $filter->search ?? '');
 
         $counts = Cache::remember($countCacheKey, 20, function () use ($user, $filter, $searchClosure) {
+            // Base query untuk tab selain selesai (status != 'selesai')
             $countBaseQuery = Ticket::query()
                 ->where('source_app', 'admin')
                 ->where('status', '!=', 'selesai')
@@ -138,6 +147,22 @@ class InputDataController extends Controller
                 ")
                 ->first();
 
+            // Hitungan 'selesai' hanya dihitung untuk operator_tim (hanya mereka yang melihat tab ini).
+            // visibleTo scope yang sama diterapkan untuk menjamin isolasi data per-user.
+            $selesaiCount = 0;
+            if ($user->isOperatorTim()) {
+                $selesaiCount = Ticket::query()
+                    ->where('source_app', 'admin')
+                    ->where('status', 'selesai')
+                    ->visibleTo($user)
+                    ->tap($searchClosure)
+                    ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
+                        $q->whereDate('created_at', '>=', $filter->from)
+                            ->whereDate('created_at', '<=', $filter->to);
+                    })
+                    ->count();
+            }
+
             return [
                 'semua' => (int) ($countsData->semua ?? 0),
                 'pengaduan' => (int) ($countsData->pengaduan ?? 0),
@@ -147,6 +172,7 @@ class InputDataController extends Controller
                 'respon_substantif' => (int) ($countsData->respon_substantif ?? 0),
                 'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
                 'ditandai' => (int) ($countsData->ditandai ?? 0),
+                'selesai' => $selesaiCount,
             ];
         });
 
