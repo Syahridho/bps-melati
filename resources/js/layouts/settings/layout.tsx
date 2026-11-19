@@ -1,4 +1,4 @@
-import Heading from '@/components/shared/heading';
+import Heading from '@/components/atoms/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useAuthRole } from '@/hooks/use-auth-role';

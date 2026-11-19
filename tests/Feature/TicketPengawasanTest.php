@@ -26,7 +26,7 @@ test('admin and operator can toggle ticket pengawasan', function () {
     ]);
 
     $this->actingAs($admin)
-        ->patch(route('dashboard.admin.laporan-masuk.pengawasan', ['ticketNumber' => $ticketAdmin->ticket_number]), [
+        ->patch(route('dashboard.admin.incoming-reports.pengawasan', ['ticketNumber' => $ticketAdmin->ticket_number]), [
             'aktif' => true,
         ])
         ->assertRedirect();
@@ -34,7 +34,7 @@ test('admin and operator can toggle ticket pengawasan', function () {
 
     // Turn off Admin
     $this->actingAs($admin)
-        ->patch(route('dashboard.admin.laporan-masuk.pengawasan', ['ticketNumber' => $ticketAdmin->ticket_number]), [
+        ->patch(route('dashboard.admin.incoming-reports.pengawasan', ['ticketNumber' => $ticketAdmin->ticket_number]), [
             'aktif' => false,
         ])
         ->assertRedirect();
@@ -56,7 +56,7 @@ test('admin and operator can toggle ticket pengawasan', function () {
     ]);
 
     $this->actingAs($operator)
-        ->patch(route('dashboard.operator.laporan-masuk.pengawasan', ['ticketNumber' => $ticketOp->ticket_number]), [
+        ->patch(route('dashboard.operator.incoming-reports.pengawasan', ['ticketNumber' => $ticketOp->ticket_number]), [
             'aktif' => true,
         ])
         ->assertRedirect();
@@ -79,12 +79,12 @@ test('operator_tim and guest cannot toggle pengawasan', function () {
     ]);
 
     $this->actingAs($operatorTim)
-        ->patch(route('dashboard.admin.laporan-masuk.pengawasan', ['ticketNumber' => $ticket->ticket_number]), [
+        ->patch(route('dashboard.admin.incoming-reports.pengawasan', ['ticketNumber' => $ticket->ticket_number]), [
             'aktif' => true,
         ])
         ->assertForbidden();
 
-    $this->patch(route('dashboard.admin.laporan-masuk.pengawasan', ['ticketNumber' => $ticket->ticket_number]), [
+    $this->patch(route('dashboard.admin.incoming-reports.pengawasan', ['ticketNumber' => $ticket->ticket_number]), [
         'aktif' => true,
     ])
         ->assertForbidden();
@@ -107,7 +107,7 @@ test('completed ticket cannot be toggled', function () {
     ]);
 
     $this->actingAs($admin)
-        ->patch(route('dashboard.admin.laporan-masuk.pengawasan', ['ticketNumber' => $ticket->ticket_number]), [
+        ->patch(route('dashboard.admin.incoming-reports.pengawasan', ['ticketNumber' => $ticket->ticket_number]), [
             'aktif' => true,
         ])
         ->assertSessionHasErrors();

@@ -1,23 +1,23 @@
-import CompletedStamp from '@/components/completed-stamp';
-import { LaporanMasukReplyForm } from '@/components/laporan-masuk/laporan-masuk-reply-form';
-import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/shared/attachment-preview-dialog';
-import { mapInputDataToDetailData } from '@/components/shared/ticket-detail/adapters';
-import SensorToggleButton from '@/components/shared/ticket-detail/sensor-toggle-button';
-import { SupervisionToggle } from '@/components/shared/ticket-detail/supervision-toggle';
-import { TicketAttachments } from '@/components/shared/ticket-detail/ticket-attachments';
-import { TicketContentCard } from '@/components/shared/ticket-detail/ticket-content-card';
-import { TicketDetailHeader } from '@/components/shared/ticket-detail/ticket-detail-header';
-import { TicketDetailLayout } from '@/components/shared/ticket-detail/ticket-detail-layout';
-import { TicketEditDeleteActions } from '@/components/shared/ticket-detail/ticket-edit-delete-actions';
-import { TicketInfoGrid } from '@/components/shared/ticket-detail/ticket-info-grid';
-import { TicketResponseHistory } from '@/components/shared/ticket-detail/ticket-response-history';
-import { TicketFlagButton } from '@/components/shared/ticket-flag-button';
+import CompletedStamp from '@/components/atoms/completed-stamp';
+import { IncomingReportsReplyForm } from '@/components/organisms/incoming-reports/incoming-reports-reply-form';
+import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/molecules/attachment-preview-dialog';
+import { mapInputDataToDetailData } from '@/components/organisms/ticket-detail/adapters';
+import SensorToggleButton from '@/components/organisms/ticket-detail/sensor-toggle-button';
+import { SupervisionToggle } from '@/components/organisms/ticket-detail/supervision-toggle';
+import { TicketAttachments } from '@/components/organisms/ticket-detail/ticket-attachments';
+import { TicketContentCard } from '@/components/organisms/ticket-detail/ticket-content-card';
+import { TicketDetailHeader } from '@/components/organisms/ticket-detail/ticket-detail-header';
+import { TicketDetailLayout } from '@/components/organisms/ticket-detail/ticket-detail-layout';
+import { TicketEditDeleteActions } from '@/components/organisms/ticket-detail/ticket-edit-delete-actions';
+import { TicketInfoGrid } from '@/components/organisms/ticket-detail/ticket-info-grid';
+import { TicketResponseHistory } from '@/components/organisms/ticket-detail/ticket-response-history';
+import { TicketFlagButton } from '@/components/molecules/ticket-flag-button';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import InputDataDeleteTicketDialog from '@/components/view/dashboard/input-data/modal-delete-ticket';
 import InputDataUpdateTicketDialog from '@/components/view/dashboard/input-data/modal-update-ticket';
 import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
-import { formatFullDate } from '@/lib/laporan-masuk-utils';
+import { formatFullDate } from '@/lib/incoming-reports-utils';
 import { type InputDataAttachment, type InputDataResponseItem, type InputDataShowProps, type StatusType } from '@/types/input-data';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Calendar, FileText, Globe, Layers, Mail, Phone, Reply, User } from 'lucide-react';
@@ -415,7 +415,7 @@ export default function ShowInputDataView() {
                                 Balas Laporan
                             </Button>
                         )}
-                        <LaporanMasukReplyForm
+                        <IncomingReportsReplyForm
                             ticketId={ticket.id}
                             ticketStatus={ticketStatus}
                             expectedVersion={ticket.version}

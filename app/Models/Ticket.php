@@ -219,7 +219,7 @@ class Ticket extends Model
      * "Invalid channel name". Karakter lain karena itu diganti `-`; nomor tiket
      * selalu berstruktur tetap sehingga hasil penggantian tetap unik.
      *
-     * Padanan frontend ada di `resources/js/lib/laporan-masuk-utils.ts`.
+     * Padanan frontend ada di `resources/js/lib/incoming-reports-utils.ts`.
      */
     public static function publicChannelName(string $ticketNumber): string
     {

@@ -56,7 +56,7 @@ Broadcast::channel('ticket.{ticketId}', function (User $user, int $ticketId) {
  * liar yang bisa dik subscribing dari sisi klien.
  */
 Broadcast::channel('inbox.{scope}', function (User $user, string $scope) {
-    if (! in_array($scope, ['laporan-masuk'], true)) {
+    if (! in_array($scope, ['incoming-reports'], true)) {
         return false;
     }
 

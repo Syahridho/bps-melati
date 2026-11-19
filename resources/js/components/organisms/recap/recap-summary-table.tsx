@@ -1,0 +1,30 @@
+import { RekapFixedMatrixTable } from '@/components/organisms/recap/recap-fixed-matrix-table';
+import { RekapPeriodMatrixTable } from '@/components/organisms/recap/recap-period-matrix-table';
+import { REKAP_VIEW_MODE_RINGKAS } from '@/lib/rekap-constants';
+import { type RekapMatrixPeriodColumn, type RekapMatrixRow, type RekapMatrixTotals } from '@/types/recap';
+
+interface RekapSummaryTableProps {
+    rows: RekapMatrixRow[];
+    totals: RekapMatrixTotals;
+    periods: RekapMatrixPeriodColumn[];
+    /**
+     * Gaya tabel yang dipakai, mengikuti tabel detail pada halaman terkait:
+     * `period` (shadcn Table, dipakai semesteran) atau `fixed` (tabel
+     * `table-fixed` + `colgroup`, dipakai tahunan).
+     */
+    variant: 'period' | 'fixed';
+    periodLabel: string;
+}
+
+/**
+ * Tabel rekap mode ringkas: tiap bulan satu kolom berisi jumlah PST + Lain +
+ * Asp + Inf, kolom Jumlah tetap di kanan. Data yang dipakai sama persis dengan
+ * tabel detail, penjumlahannya terjadi di `sumMonthCell()`.
+ */
+export function RekapSummaryTable({ rows, totals, periods, variant, periodLabel }: RekapSummaryTableProps) {
+    if (variant === 'period') {
+        return <RekapPeriodMatrixTable rows={rows} totals={totals} periods={periods} periodLabel={periodLabel} viewMode={REKAP_VIEW_MODE_RINGKAS} />;
+    }
+
+    return <RekapFixedMatrixTable rows={rows} totals={totals} periods={periods} viewMode={REKAP_VIEW_MODE_RINGKAS} />;
+}

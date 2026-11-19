@@ -17,6 +17,7 @@ export default function SensorFormDialog({
     setData,
     errors,
     processing,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     editingId,
     onSubmit,
 }: SensorFormDialogProps) {

@@ -1,4 +1,4 @@
-import { type InboxChangedEvent, type InboxUpdatedEvent } from '@/types/laporan-masuk';
+import { type InboxChangedEvent, type InboxUpdatedEvent } from '@/types/incoming-reports';
 import { router } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,7 +9,7 @@ const RELOAD_DEBOUNCE_MS = 500;
 /**
  * Realtime untuk halaman daftar Laporan Masuk.
  *
- * Event dari private channel `inbox.laporan-masuk` dipakai untuk:
+ * Event dari private channel `inbox.incoming-reports` dipakai untuk:
  *  - menandai baris yang barusan dibalas ("dibalas oleh X"),
  *  - memperbarui badge hitungan pada tab filter,
  *  - memicu reload parsial `tickets` + `counts` dengan debounce 500 ms supaya
@@ -43,7 +43,7 @@ export function useInboxRealtime({ searching }: { searching: boolean }) {
     const announcedRef = useRef<Set<number>>(new Set());
 
     useEcho<InboxUpdatedEvent>(
-        'inbox.laporan-masuk',
+        'inbox.incoming-reports',
         '.inbox.updated',
         (event) => {
             if (event.actor_id !== null && event.status !== 'selesai') {
@@ -67,7 +67,7 @@ export function useInboxRealtime({ searching }: { searching: boolean }) {
     // Sinyal agregat (mis. satu batch auto close): cukup memicu reload yang
     // sama, jadi baris yang hilang dan angka badge/tab ikut turun.
     useEcho<InboxChangedEvent>(
-        'inbox.laporan-masuk',
+        'inbox.incoming-reports',
         '.inbox.changed',
         () => {
             scheduleReload();

@@ -1,14 +1,10 @@
+import { PaginatedData } from '@/components/molecules/pagination';
+import { FormEvent } from 'react';
+import { SharedData } from '.';
+
 export type ClassificationType = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 export type StatusType = 'baru' | 'respon_awal' | 'respon_substantif' | 'selesai';
-export type FilterTab =
-    | 'semua'
-    | 'pengaduan'
-    | 'aspirasi'
-    | 'permintaan'
-    | 'respon_awal'
-    | 'respon_substantif'
-    | 'berkadar_pengawasan'
-    | 'ditandai';
+export type FilterTab = 'semua' | 'pengaduan' | 'aspirasi' | 'permintaan' | 'respon_awal' | 'respon_substantif' | 'berkadar_pengawasan' | 'ditandai';
 export type ResponseType = 'respon_awal' | 'respon_substantif';
 
 export interface TicketItem {
@@ -171,4 +167,64 @@ export interface InputDataShowProps {
         success?: string;
         conflict?: InputDataReplyConflict;
     };
+}
+
+export interface InputDataPageProps extends SharedData {
+    tickets: PaginatedData<TicketItem>;
+    channels: ChannelGroup[];
+    filters: {
+        search: string;
+        filter: FilterTab;
+        per_page: number;
+        from: string | null;
+        to: string | null;
+    };
+    counts: {
+        semua: number;
+        pengaduan: number;
+        aspirasi: number;
+        permintaan: number;
+        respon_awal?: number;
+        respon_substantif?: number;
+        berkadar_pengawasan?: number;
+        ditandai?: number;
+    };
+    flash: {
+        ticket_number?: string;
+        success?: string;
+    };
+}
+
+export interface InputDataAddTicketDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    channels: ChannelGroup[];
+    routePrefix: string;
+}
+
+export interface InputDataDeleteTicketDialogProps {
+    isDeleteOpen: boolean;
+    setIsDeleteOpen: (open: boolean) => void;
+    isDeleting: boolean;
+    ticket: { ticket_number: string };
+    handleDeleteSubmit: () => void;
+}
+
+export interface EditFormData {
+    data: {
+        title: string;
+        reporter_name: string;
+        reporter_email: string;
+        reporter_wa: string;
+        content: string;
+    };
+    setData: (field: string, value: string) => void;
+    processing: boolean;
+}
+
+export interface InputDataUpdateTicketDialogProps {
+    isEditOpen: boolean;
+    setIsEditOpen: (open: boolean) => void;
+    editForm: EditFormData;
+    handleEditSubmit: (e: FormEvent) => void;
 }

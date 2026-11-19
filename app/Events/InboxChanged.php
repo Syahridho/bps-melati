@@ -42,7 +42,7 @@ class InboxChanged implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('inbox.laporan-masuk'),
+            new PrivateChannel('inbox.incoming-reports'),
         ];
     }
 

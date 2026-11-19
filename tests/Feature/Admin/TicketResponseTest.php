@@ -46,7 +46,7 @@ test('admin can respond to a ticket and email is queued to reporter', function (
     ]);
 
     actingAs($this->admin)
-        ->post(route('dashboard.admin.laporan-masuk.responses.store', $ticket), [
+        ->post(route('dashboard.admin.incoming-reports.responses.store', $ticket), [
             'response_type' => 'respon_substantif',
             'response_message' => 'Terima kasih atas laporan Anda. Laporan telah kami tindak lanjuti.',
         ])
@@ -89,7 +89,7 @@ test('admin response includes attachments and updates redis cache', function () 
     $file = UploadedFile::fake()->create('bukti_tindak_lanjut.pdf', 500, 'application/pdf');
 
     actingAs($this->admin)
-        ->post(route('dashboard.admin.laporan-masuk.responses.store', $ticket), [
+        ->post(route('dashboard.admin.incoming-reports.responses.store', $ticket), [
             'response_type' => 'respon_awal',
             'response_message' => 'Respon awal dengan dokumen terlampir.',
             'response_attachments' => [$file],
@@ -122,7 +122,7 @@ test('response does not downgrade a higher ticket status', function () {
     ]);
 
     actingAs($this->admin)
-        ->post(route('dashboard.admin.laporan-masuk.responses.store', $ticket), [
+        ->post(route('dashboard.admin.incoming-reports.responses.store', $ticket), [
             'response_type' => 'respon_awal',
             'response_message' => 'Catatan tambahan tanpa menurunkan status tiket.',
         ])
@@ -147,7 +147,7 @@ test('completed ticket cannot receive a new response', function () {
     ]);
 
     actingAs($this->admin)
-        ->post(route('dashboard.admin.laporan-masuk.responses.store', $ticket), [
+        ->post(route('dashboard.admin.incoming-reports.responses.store', $ticket), [
             'response_type' => 'respon_substantif',
             'response_message' => 'Percobaan membalas tiket yang sudah selesai.',
         ])
@@ -190,10 +190,10 @@ test('laporan masuk detail lists responses oldest first', function () {
     ]);
 
     actingAs($this->admin)
-        ->get(route('dashboard.admin.laporan-masuk.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->get(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/admin/laporan-masuk/show/index')
+            ->component('dashboard/admin/incoming-reports/show/index')
             ->where('ticket.responses.0.id', $older->id)
             ->where('ticket.responses.1.id', $newer->id)
         );

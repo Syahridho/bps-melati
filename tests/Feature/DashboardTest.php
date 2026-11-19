@@ -63,10 +63,10 @@ class DashboardTest extends TestCase
         $this->actingAs(User::factory()->operator()->create());
 
         $this->get(route('dashboard.admin.input-data.index'))->assertForbidden();
-        $this->get(route('dashboard.admin.laporan-masuk.index'))->assertForbidden();
-        $this->get(route('dashboard.admin.laporan-selesai.index'))->assertForbidden();
-        $this->get(route('dashboard.admin.rekap-bulanan.index'))->assertForbidden();
-        $this->get(route('dashboard.admin.rekap-periodik.index'))->assertForbidden();
+        $this->get(route('dashboard.admin.incoming-reports.index'))->assertForbidden();
+        $this->get(route('dashboard.admin.completed-reports.index'))->assertForbidden();
+        $this->get(route('dashboard.admin.monthly-recap.index'))->assertForbidden();
+        $this->get(route('dashboard.admin.periodic-recap.index'))->assertForbidden();
     }
 
     public function test_admin_can_visit_admin_pages()
@@ -74,9 +74,9 @@ class DashboardTest extends TestCase
         $this->actingAs(User::factory()->admin()->create());
 
         $this->get(route('dashboard.admin.input-data.index'))->assertOk();
-        $this->get(route('dashboard.admin.laporan-masuk.index'))->assertOk();
-        $this->get(route('dashboard.admin.laporan-selesai.index'))->assertOk();
-        $this->get(route('dashboard.admin.rekap-bulanan.index'))->assertOk();
-        $this->get(route('dashboard.admin.rekap-periodik.index'))->assertOk();
+        $this->get(route('dashboard.admin.incoming-reports.index'))->assertOk();
+        $this->get(route('dashboard.admin.completed-reports.index'))->assertOk();
+        $this->get(route('dashboard.admin.monthly-recap.index'))->assertOk();
+        $this->get(route('dashboard.admin.periodic-recap.index'))->assertOk();
     }
 }

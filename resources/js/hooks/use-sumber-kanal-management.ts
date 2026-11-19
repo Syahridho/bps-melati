@@ -1,4 +1,4 @@
-import { type ChannelChildItem, type ChannelFormData, type ChannelItem } from '@/types/sumber-kanal';
+import { ChannelChildItem, ChannelFormData, ChannelItem } from '@/types/settings';
 import { router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';

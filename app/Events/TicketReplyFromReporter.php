@@ -88,7 +88,7 @@ class TicketReplyFromReporter implements ShouldBroadcastNow
             'is_input_data' => $this->ticket->source_app === 'admin',
             'url' => $this->ticket->source_app === 'admin'
                 ? '/dashboard/admin/input-data/'.$this->ticket->ticket_number
-                : '/dashboard/admin/laporan-masuk/'.$this->ticket->ticket_number,
+                : '/dashboard/admin/incoming-reports/'.$this->ticket->ticket_number,
         ];
     }
 }

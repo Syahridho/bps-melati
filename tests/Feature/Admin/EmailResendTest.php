@@ -52,9 +52,9 @@ test('admin can resend failed response email with new email', function () {
     [$ticket, $response, $admin] = makeTicketWithResponse();
 
     actingAs($admin)
-        ->from(route('dashboard.admin.laporan-masuk.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->from(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
         ->withHeader('Accept', 'text/html')
-        ->post(route('dashboard.admin.laporan-masuk.responses.resend', [
+        ->post(route('dashboard.admin.incoming-reports.responses.resend', [
             'ticket' => $ticket->id,
             'response' => $response->id,
         ]), [
@@ -82,7 +82,7 @@ test('operator cannot resend email (403)', function () {
     $operator = User::factory()->operator()->create();
 
     actingAs($operator)
-        ->post(route('dashboard.admin.laporan-masuk.responses.resend', [
+        ->post(route('dashboard.admin.incoming-reports.responses.resend', [
             'ticket' => $ticket->id,
             'response' => $response->id,
         ]), [
@@ -95,9 +95,9 @@ test('resend rejects placeholder email', function () {
     [$ticket, $response, $admin] = makeTicketWithResponse();
 
     actingAs($admin)
-        ->from(route('dashboard.admin.laporan-masuk.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->from(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
         ->withHeader('Accept', 'text/html')
-        ->post(route('dashboard.admin.laporan-masuk.responses.resend', [
+        ->post(route('dashboard.admin.incoming-reports.responses.resend', [
             'ticket' => $ticket->id,
             'response' => $response->id,
         ]), [
@@ -111,8 +111,8 @@ test('resend rejects response that is not failed or bounced', function () {
     [$ticket, $response, $admin] = makeTicketWithResponse(['email_status' => 'sent']);
 
     actingAs($admin)
-        ->from(route('dashboard.admin.laporan-masuk.show', ['ticketNumber' => $ticket->ticket_number]))
-        ->post(route('dashboard.admin.laporan-masuk.responses.resend', [
+        ->from(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->post(route('dashboard.admin.incoming-reports.responses.resend', [
             'ticket' => $ticket->id,
             'response' => $response->id,
         ]), [

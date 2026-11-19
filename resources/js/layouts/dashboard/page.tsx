@@ -1,4 +1,4 @@
-import Heading from '@/components/shared/heading';
+import Heading from '@/components/atoms/heading';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';

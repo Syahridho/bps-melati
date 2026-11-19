@@ -1,5 +1,5 @@
-import { PengaturanAutoCloseFields } from '@/components/pengaturan/pengaturan-auto-close-fields';
-import { PengaturanSignatureFields } from '@/components/pengaturan/pengaturan-signature-fields';
+import { PengaturanAutoCloseFields } from '@/components/organisms/settings/settings-auto-close-fields';
+import { PengaturanSignatureFields } from '@/components/organisms/settings/settings-signature-fields';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { usePengaturanForm } from '@/hooks/use-pengaturan-form';

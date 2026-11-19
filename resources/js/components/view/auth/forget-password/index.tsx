@@ -1,5 +1,5 @@
-import { FormField } from '@/components/auth/form-field';
-import LoginBrandPanel from '@/components/auth/login-brand-panel';
+import { FormField } from '@/components/molecules/form-field';
+import LoginBrandPanel from '@/components/organisms/auth/login-brand-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

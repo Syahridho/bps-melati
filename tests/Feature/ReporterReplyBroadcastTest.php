@@ -98,7 +98,7 @@ test('staff reply does not dispatch TicketReplyFromReporter', function () {
     $ticket = createBroadcastTestTicket($this->channel);
 
     actingAs($admin)
-        ->post("/dashboard/admin/laporan-masuk/{$ticket->id}/responses", [
+        ->post("/dashboard/admin/incoming-reports/{$ticket->id}/responses", [
             'response_type' => 'respon_substantif',
             'response_message' => 'Berikut tanggapan lengkap dari petugas BPS.',
         ])

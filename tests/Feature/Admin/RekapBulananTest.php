@@ -55,7 +55,7 @@ function createTicket(array $attributes = []): Ticket
 
 function rekapUrl(): string
 {
-    return route('dashboard.admin.rekap-bulanan.index', absolute: false);
+    return route('dashboard.admin.monthly-recap.index', absolute: false);
 }
 
 it('renders the monthly recap for an admin', function () {
@@ -78,11 +78,11 @@ it('blocks operators from the monthly recap', function () {
 
 it('exports the monthly recap as an excel spreadsheet', function () {
     $response = actingAs(User::factory()->admin()->create())
-        ->get(route('dashboard.admin.rekap-bulanan.excel'))
+        ->get(route('dashboard.admin.monthly-recap.excel'))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
 
-    expect($response->headers->get('Content-Disposition'))->toMatch('/^attachment; filename="Rekap-Bulanan-.+_\d{8}_\d{6}\.xls"$/');
+    expect($response->headers->get('Content-Disposition'))->toMatch('/^attachment; filename="Rekap-bulanan-.+_\d{8}_\d{6}\.xls"$/');
 });
 
 it('splits pengaduan by service type and counts every classification', function () {
@@ -127,7 +127,7 @@ it('renders the print view with the letterhead and signatory from settings', fun
     );
 
     actingAs(User::factory()->admin()->create())
-        ->get(route('dashboard.admin.rekap-bulanan.print', absolute: false))
+        ->get(route('dashboard.admin.monthly-recap.print', absolute: false))
         ->assertOk()
         ->assertSee('logo-bps.svg')
         ->assertSee('Badan Pusat Statistik')
@@ -138,7 +138,7 @@ it('renders the print view with the letterhead and signatory from settings', fun
 
 it('blocks operators from the printable recap', function () {
     actingAs(User::factory()->operator()->create())
-        ->get(route('dashboard.admin.rekap-bulanan.print', absolute: false))
+        ->get(route('dashboard.admin.monthly-recap.print', absolute: false))
         ->assertForbidden();
 });
 

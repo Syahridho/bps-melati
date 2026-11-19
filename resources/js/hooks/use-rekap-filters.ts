@@ -1,7 +1,7 @@
 import { generateExportFilename } from '@/lib/export-filename';
 import { REKAP_PRINT_FRAME_ID, REKAP_VIEW_MODE_PARAM } from '@/lib/rekap-constants';
 import { resolveRekapRolePrefix } from '@/lib/rekap-utils';
-import { type RekapViewMode } from '@/types/rekap';
+import { type RekapViewMode } from '@/types/recap';
 import { router } from '@inertiajs/react';
 import { useCallback, useMemo, useState } from 'react';
 

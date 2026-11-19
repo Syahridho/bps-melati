@@ -1,4 +1,4 @@
-import { OperatorTable } from '@/components/operator/operator-table';
+import { OperatorTable } from '@/components/organisms/operator/operator-table';
 import { Button } from '@/components/ui/button';
 import OperatorFormDialog from '@/components/view/dashboard/operator-management/modal-add-operator';
 import OperatorDeleteDialog from '@/components/view/dashboard/operator-management/modal-delete-operator';

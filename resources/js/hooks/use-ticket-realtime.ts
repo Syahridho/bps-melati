@@ -1,4 +1,4 @@
-import { type PresenceMember, type TicketBroadcastEvent, type TicketResponseItem, type TypingSignal } from '@/types/laporan-masuk';
+import { type PresenceMember, type TicketBroadcastEvent, type TicketResponseItem, type TypingSignal } from '@/types/incoming-reports';
 import { router } from '@inertiajs/react';
 import { useConnectionStatus, useEchoPresence } from '@laravel/echo-react';
 import { useCallback, useEffect, useRef, useState } from 'react';

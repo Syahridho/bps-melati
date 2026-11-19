@@ -1,4 +1,4 @@
-import { type CensoredWordItem, type SensorFormData } from '@/types/sensors';
+import { type CensoredWordItem, type SensorFormData } from '@/types/settings';
 import { router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -47,8 +47,7 @@ export function useSensorManagement(flashSuccess?: string) {
 
     const emptyForm: SensorFormData = { word: '', match_type: 'anywhere', is_active: true };
 
-    const defaultMatchType = (word: string): 'anywhere' | 'whole_word' =>
-        word.length >= 5 ? 'anywhere' : 'whole_word';
+    const defaultMatchType = (word: string): 'anywhere' | 'whole_word' => (word.length >= 5 ? 'anywhere' : 'whole_word');
 
     const openCreateModal = () => {
         createForm.setData({ ...emptyForm, match_type: 'anywhere', is_active: true });
@@ -124,13 +123,15 @@ export function useSensorManagement(flashSuccess?: string) {
     };
 
     const handleToggle = (word: CensoredWordItem) => {
-        router.patch(route('settings.sensors.toggle', word.id), {}, {
-            onSuccess: () => {
-                toast.success(
-                    `Kata ${word.word} berhasil ${word.is_active ? 'dinonaktifkan' : 'diaktifkan'}!`,
-                );
+        router.patch(
+            route('settings.sensors.toggle', word.id),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success(`Kata ${word.word} berhasil ${word.is_active ? 'dinonaktifkan' : 'diaktifkan'}!`);
+                },
             },
-        });
+        );
     };
 
     return {

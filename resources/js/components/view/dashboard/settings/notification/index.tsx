@@ -1,5 +1,5 @@
-import { PushNotificationCard } from '@/components/settings/push-notification-card';
-import RealTimeDashboard from '@/components/settings/real-time-dashboard';
+import { PushNotificationCard } from '@/components/organisms/settings/push-notification-card';
+import RealTimeDashboard from '@/components/organisms/settings/real-time-dashboard';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { BreadcrumbItem } from '@/types';

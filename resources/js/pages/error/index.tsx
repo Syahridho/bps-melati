@@ -1,4 +1,4 @@
-import AppLogo from '@/components/layout/app-logo';
+import AppLogo from '@/components/atoms/app-logo';
 import { Head, Link } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import { AlertOctagon, FileQuestion, HardHat, Lock, LogOut, ServerCrash, ShieldAlert } from 'lucide-react';

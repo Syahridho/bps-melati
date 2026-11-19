@@ -38,7 +38,7 @@ beforeEach(function () {
 
 test('admin can flag a ticket', function () {
     $this->actingAs($this->admin)
-        ->patchJson(route('dashboard.admin.laporan-selesai.tandai', $this->ticket->ticket_number), [
+        ->patchJson(route('dashboard.admin.completed-reports.tandai', $this->ticket->ticket_number), [
             'aktif' => true,
             'note' => 'Sulit dijawab',
         ])
@@ -64,7 +64,7 @@ test('admin can unflag a ticket', function () {
     ]);
 
     $this->actingAs($this->admin)
-        ->patchJson(route('dashboard.admin.laporan-selesai.tandai', $this->ticket->ticket_number), [
+        ->patchJson(route('dashboard.admin.completed-reports.tandai', $this->ticket->ticket_number), [
             'aktif' => false,
         ])
         ->assertOk()
@@ -80,7 +80,7 @@ test('admin can unflag a ticket', function () {
 
 test('operator can flag a ticket', function () {
     $this->actingAs($this->operator)
-        ->patchJson(route('dashboard.operator.laporan-selesai.tandai', $this->ticket->ticket_number), [
+        ->patchJson(route('dashboard.operator.completed-reports.tandai', $this->ticket->ticket_number), [
             'aktif' => true,
         ])
         ->assertOk()
@@ -89,7 +89,7 @@ test('operator can flag a ticket', function () {
 
 test('flag creates system response', function () {
     $this->actingAs($this->admin)
-        ->patchJson(route('dashboard.admin.laporan-selesai.tandai', $this->ticket->ticket_number), [
+        ->patchJson(route('dashboard.admin.completed-reports.tandai', $this->ticket->ticket_number), [
             'aktif' => true,
             'note' => 'Perlu koordinasi',
         ])
@@ -104,7 +104,7 @@ test('flag creates system response', function () {
 
 test('note max 255 validated', function () {
     $this->actingAs($this->admin)
-        ->patchJson(route('dashboard.admin.laporan-selesai.tandai', $this->ticket->ticket_number), [
+        ->patchJson(route('dashboard.admin.completed-reports.tandai', $this->ticket->ticket_number), [
             'aktif' => true,
             'note' => str_repeat('x', 256),
         ])
@@ -113,7 +113,7 @@ test('note max 255 validated', function () {
 });
 
 test('unauthenticated user cannot flag', function () {
-    $this->patchJson(route('dashboard.admin.laporan-selesai.tandai', $this->ticket->ticket_number), [
+    $this->patchJson(route('dashboard.admin.completed-reports.tandai', $this->ticket->ticket_number), [
         'aktif' => true,
     ])->assertUnauthorized();
 });
@@ -126,10 +126,10 @@ test('ditandai filter works in index', function () {
     ]);
 
     $this->actingAs($this->admin)
-        ->get(route('dashboard.admin.laporan-selesai.index', ['tab' => 'ditandai', 'from' => 'semua']))
+        ->get(route('dashboard.admin.completed-reports.index', ['tab' => 'ditandai', 'from' => 'semua']))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('dashboard/admin/laporan-selesai/index')
+            ->component('dashboard/admin/completed-reports/index')
             ->has('tickets.data', 1)
             ->where('tickets.data.0.ticket_number', $flagged->ticket_number)
         );
@@ -143,7 +143,7 @@ test('counts include ditandai', function () {
     ]);
 
     $this->actingAs($this->admin)
-        ->get(route('dashboard.admin.laporan-selesai.index', ['from' => 'semua']))
+        ->get(route('dashboard.admin.completed-reports.index', ['from' => 'semua']))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('counts.ditandai', 1)

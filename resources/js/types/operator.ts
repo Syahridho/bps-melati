@@ -1,4 +1,4 @@
-import { type PaginatedData } from '@/components/shared/pagination';
+import { type PaginatedData } from '@/components/molecules/pagination';
 import { type SharedData } from '@/types';
 import { FormEvent } from 'react';
 

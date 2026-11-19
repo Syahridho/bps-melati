@@ -31,7 +31,7 @@ test('admin can update allowed ticket fields', function () {
     ]);
 
     $response = $this->actingAs($this->admin)
-        ->put(route('dashboard.admin.laporan-masuk.update', ['ticketNumber' => $ticket->ticket_number]), [
+        ->put(route('dashboard.admin.incoming-reports.update', ['ticketNumber' => $ticket->ticket_number]), [
             'reporter_name' => 'Budi Baru',
             'reporter_email' => 'budi.baru@example.com',
             'reporter_wa' => '089876543210',
@@ -83,9 +83,9 @@ test('admin can delete a ticket and its attachments', function () {
     Storage::disk('public')->assertExists('attachments/test_file.pdf');
 
     $response = $this->actingAs($this->admin)
-        ->delete(route('dashboard.admin.laporan-masuk.destroy', ['ticketNumber' => $ticket->ticket_number]));
+        ->delete(route('dashboard.admin.incoming-reports.destroy', ['ticketNumber' => $ticket->ticket_number]));
 
-    $response->assertRedirect(route('dashboard.admin.laporan-masuk.index'));
+    $response->assertRedirect(route('dashboard.admin.incoming-reports.index'));
     $response->assertSessionHas('success');
 
     expect(Ticket::find($ticket->id))->toBeNull();
@@ -105,7 +105,7 @@ test('operator is forbidden from updating or deleting tickets', function () {
     ]);
 
     $updateResponse = $this->actingAs($this->operator)
-        ->put(route('dashboard.operator.laporan-masuk.update', ['ticketNumber' => $ticket->ticket_number]), [
+        ->put(route('dashboard.operator.incoming-reports.update', ['ticketNumber' => $ticket->ticket_number]), [
             'title' => 'Mencoba Update',
             'content' => 'Isi mencoba update',
         ]);
@@ -113,7 +113,7 @@ test('operator is forbidden from updating or deleting tickets', function () {
     $updateResponse->assertStatus(403);
 
     $deleteResponse = $this->actingAs($this->operator)
-        ->delete(route('dashboard.operator.laporan-masuk.destroy', ['ticketNumber' => $ticket->ticket_number]));
+        ->delete(route('dashboard.operator.incoming-reports.destroy', ['ticketNumber' => $ticket->ticket_number]));
 
     $deleteResponse->assertStatus(403);
 });

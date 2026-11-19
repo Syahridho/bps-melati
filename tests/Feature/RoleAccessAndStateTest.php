@@ -24,17 +24,17 @@ test('operator opening /settings/password receives auth.user with operator role 
 test('operator accessing admin routes gets 403 forbidden', function () {
     $operator = User::factory()->operator()->create();
 
-    $this->actingAs($operator)->get('/dashboard/admin/operator')->assertForbidden();
-    $this->actingAs($operator)->get('/dashboard/admin/laporan-masuk')->assertForbidden();
+    $this->actingAs($operator)->get('/dashboard/admin/operator-management')->assertForbidden();
+    $this->actingAs($operator)->get('/dashboard/admin/incoming-reports')->assertForbidden();
 });
 
 test('operator_tim accessing admin and operator-only routes gets 403 forbidden', function () {
     $operatorTim = User::factory()->create(['role' => UserRole::OperatorTim]);
 
     $this->actingAs($operatorTim)->get('/dashboard/admin')->assertForbidden();
-    $this->actingAs($operatorTim)->get('/dashboard/admin/operator')->assertForbidden();
-    $this->actingAs($operatorTim)->get('/dashboard/operator/laporan-masuk')->assertForbidden();
-    $this->actingAs($operatorTim)->get('/dashboard/operator/laporan-selesai')->assertForbidden();
+    $this->actingAs($operatorTim)->get('/dashboard/admin/operator-management')->assertForbidden();
+    $this->actingAs($operatorTim)->get('/dashboard/operator/incoming-reports')->assertForbidden();
+    $this->actingAs($operatorTim)->get('/dashboard/operator/completed-reports')->assertForbidden();
 });
 
 test('authenticated response contains Cache-Control no-store and private', function () {
@@ -94,7 +94,7 @@ test('operator cannot subscribe to admin broadcast channels', function () {
 
     $this->actingAs($operatorTim)
         ->post('/broadcasting/auth', [
-            'channel_name' => 'private-inbox.laporan-masuk',
+            'channel_name' => 'private-inbox.incoming-reports',
             'socket_id' => '1234.5678',
         ])
         ->assertForbidden();

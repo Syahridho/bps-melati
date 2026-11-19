@@ -1,47 +1,20 @@
-import { InputDataFilterTabs } from '@/components/input-data/input-data-filter-tabs';
-import { DateRangeFilter } from '@/components/shared/date-range-filter';
-import { Pagination, type PaginatedData } from '@/components/shared/pagination';
-import { TicketList } from '@/components/shared/ticket-list/ticket-list';
+import { InputDataFilterTabs } from '@/components/molecules/input-data-filter-tabs';
+import { DateRangeFilter } from '@/components/molecules/date-range-filter';
+import { Pagination } from '@/components/molecules/pagination';
+import { toTicketListEntry } from '@/components/organisms/ticket-list/adapter';
+import { TicketList } from '@/components/organisms/ticket-list/ticket-list';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { toTicketListEntry } from '@/components/view/dashboard/input-data/adapter';
 import InputDataAddTicketDialog from '@/components/view/dashboard/input-data/modal-add-ticket';
 import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
 import { useInputDataFilters } from '@/hooks/use-input-data-filters';
-import { useLaporanRealtime } from '@/hooks/use-laporan-realtime';
+import { useLaporanRealtime } from '@/hooks/use-reports-realtime';
 import AdminPage from '@/layouts/dashboard/page';
-import { type SharedData } from '@/types';
-import { type ChannelGroup, type FilterTab, type TicketItem } from '@/types/input-data';
+import { InputDataPageProps } from '@/types/input-data';
 import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, Plus, RotateCcw, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-
-interface InputDataPageProps extends SharedData {
-    tickets: PaginatedData<TicketItem>;
-    channels: ChannelGroup[];
-    filters: {
-        search: string;
-        filter: FilterTab;
-        per_page: number;
-        from: string | null;
-        to: string | null;
-    };
-    counts: {
-        semua: number;
-        pengaduan: number;
-        aspirasi: number;
-        permintaan: number;
-        respon_awal?: number;
-        respon_substantif?: number;
-        berkadar_pengawasan?: number;
-        ditandai?: number;
-    };
-    flash: {
-        ticket_number?: string;
-        success?: string;
-    };
-}
 
 export default function InputDataView() {
     const { auth, tickets, channels, filters, counts, flash } = usePage<InputDataPageProps>().props;

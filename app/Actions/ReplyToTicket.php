@@ -210,7 +210,7 @@ class ReplyToTicket
                         'type' => $ticket->classification,
                         'title' => 'Laporan selesai',
                         'message' => Str::limit((string) $ticket->title ?? (string) $ticket->content, 100),
-                        'url' => '/dashboard/admin/laporan-selesai/'.$ticket->ticket_number,
+                        'url' => '/dashboard/admin/completed-reports/'.$ticket->ticket_number,
                         'actor_name' => null,
                     ]),
                     'read_at' => null,

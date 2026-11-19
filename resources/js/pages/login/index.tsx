@@ -1,4 +1,4 @@
-import { type SessionConflictInfo } from '@/components/session/session-conflict-card';
+import { type SessionConflictInfo } from '@/components/organisms/session/session-conflict-card';
 import LoginView from '@/components/view/auth/login';
 
 interface LoginPageProps {

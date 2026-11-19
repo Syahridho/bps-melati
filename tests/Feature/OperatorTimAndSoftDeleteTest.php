@@ -15,11 +15,11 @@ test('operator_tim can access dashboard and input data but is forbidden elsewher
         ->assertSuccessful();
 
     $this->actingAs($operatorTim)
-        ->get('/dashboard/admin/operator')
+        ->get('/dashboard/admin/operator-management')
         ->assertForbidden();
 
     $this->actingAs($operatorTim)
-        ->get('/dashboard/admin/laporan-masuk')
+        ->get('/dashboard/admin/incoming-reports')
         ->assertForbidden();
 });
 

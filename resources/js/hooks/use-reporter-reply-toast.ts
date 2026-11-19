@@ -1,4 +1,4 @@
-import { type ReporterReplyEvent } from '@/types/laporan-masuk';
+import { type ReporterReplyEvent } from '@/types/incoming-reports';
 import { router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useCallback, useRef } from 'react';
@@ -43,7 +43,7 @@ export function useReporterReplyToast(userId: number | null) {
         // sebagai fallback, sedangkan operator memakai prefix dashboard.operator.
         const role = (currentPage.props as { auth?: { user?: { role?: string } } }).auth?.user?.role;
         const routePrefix = role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
-        const routeName = event.is_input_data ? `${routePrefix}.input-data.show` : `${routePrefix}.laporan-masuk.show`;
+        const routeName = event.is_input_data ? `${routePrefix}.input-data.show` : `${routePrefix}.incoming-reports.show`;
 
         let targetUrl = event.url;
         try {

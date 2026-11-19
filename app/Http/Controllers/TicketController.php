@@ -85,7 +85,7 @@ class TicketController extends Controller
             'type' => $ticket->classification,
             'title' => 'Laporan baru masuk',
             'message' => app(ProfanityFilter::class)->censor(Str::limit((string) $ticket->title ?? (string) $ticket->content, 100)),
-            'url' => '/dashboard/admin/laporan-masuk/'.$ticket->ticket_number,
+            'url' => '/dashboard/admin/incoming-reports/'.$ticket->ticket_number,
             'actor_name' => $ticket->reporter_name ?? null,
         ];
 

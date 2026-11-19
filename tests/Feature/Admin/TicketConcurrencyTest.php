@@ -53,7 +53,7 @@ function replyUrl(Ticket $ticket, User $actor): string
 {
     $prefix = $actor->isAdmin() ? 'dashboard.admin' : 'dashboard.operator';
 
-    return route("{$prefix}.laporan-masuk.responses.store", ['ticket' => $ticket->id]);
+    return route("{$prefix}.incoming-reports.responses.store", ['ticket' => $ticket->id]);
 }
 
 function replyPayload(string $type = 'respon_awal', ?string $key = null, array $overrides = []): array
@@ -350,7 +350,7 @@ test('tamu tidak boleh subscribe ke presence channel tiket', function () {
 test('operator boleh subscribe ke private channel inbox laporan masuk', function () {
     $this->actingAs($this->operator)
         ->post('/broadcasting/auth', [
-            'channel_name' => 'private-inbox.laporan-masuk',
+            'channel_name' => 'private-inbox.incoming-reports',
             'socket_id' => '1234.5678',
         ])
         ->assertOk();

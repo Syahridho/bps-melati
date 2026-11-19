@@ -1,0 +1,91 @@
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { cn } from '@/lib/utils';
+import { type PresenceMember } from '@/types/incoming-reports';
+
+const MAX_AVATARS = 3;
+const ROLE_LABEL: Record<PresenceMember['role'], string> = {
+    admin: 'Admin',
+    operator: 'Operator',
+    operator_tim: 'Operator Tim',
+};
+
+interface PresenceBarProps {
+    viewers?: PresenceMember[];
+    currentUserId: number;
+    typingNames: string[] | null | undefined;
+    className?: string;
+}
+/**
+ * Indikator "sedang dilihat" — murni informasi, tidak mengunci aksi siapa pun.
+ */
+export function IncomingReportsPresenceBar({ viewers = [], currentUserId, typingNames = null, className }: PresenceBarProps) {
+    const others = viewers.filter((viewer) => viewer.id !== currentUserId);
+
+    if (others.length === 0 && typingNames === null) {
+        return null;
+    }
+
+    const shown = others.slice(0, MAX_AVATARS);
+    const overflow = others.length - shown.length;
+
+    return (
+        <div className={cn('flex flex-wrap items-center gap-2 text-xs', className)}>
+            {others.length > 0 && (
+                <HoverCard openDelay={100} closeDelay={80}>
+                    <HoverCardTrigger asChild>
+                        <div
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`${others.length} orang sedang melihat laporan ini`}
+                            className="flex cursor-default items-center -space-x-1.5"
+                        >
+                            {shown.map((viewer) => (
+                                <span
+                                    key={viewer.id}
+                                    className="bg-muted text-muted-foreground ring-background inline-flex size-6 items-center justify-center rounded-full text-[10px] font-semibold uppercase ring-2"
+                                >
+                                    {viewer.name.slice(0, 2)}
+                                </span>
+                            ))}
+                            {overflow > 0 && (
+                                <span className="bg-muted text-muted-foreground ring-background inline-flex size-6 items-center justify-center rounded-full text-[10px] font-semibold ring-2">
+                                    +{overflow}
+                                </span>
+                            )}
+                        </div>
+                    </HoverCardTrigger>
+
+                    <HoverCardContent align="end" className="w-56 p-3 text-xs">
+                        <p className="text-muted-foreground mb-2 font-medium">Sedang dilihat ({others.length})</p>
+                        <ul className="space-y-2">
+                            {others.map((viewer) => (
+                                <li key={viewer.id} className="flex items-center gap-2">
+                                    <span className="bg-muted text-muted-foreground inline-flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold uppercase">
+                                        {viewer.name.slice(0, 2)}
+                                    </span>
+                                    <span className="min-w-0">
+                                        <span className="block truncate font-medium">{viewer.name}</span>
+                                        <span className="text-muted-foreground block">{ROLE_LABEL[viewer.role]}</span>
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </HoverCardContent>
+                </HoverCard>
+            )}
+
+            {typingNames !== null && typingNames.length > 0 && (
+                <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                    {typingNames.map((name, i) => (
+                        <span key={i} className="flex items-center gap-1.5">
+                            <span className="mr-1 inline-block size-1.5 animate-pulse rounded-full" aria-hidden="true" />
+                            {name} sedang mengetik balasan...
+                        </span>
+                    ))}
+                </span>
+            )}
+        </div>
+    );
+}
+
+export { IncomingReportsPresenceBar as PresenceBar };

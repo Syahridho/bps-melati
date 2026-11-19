@@ -241,7 +241,7 @@ class CheckTicketController extends Controller
                         'type' => $ticket->classification,
                         'title' => 'Laporan selesai',
                         'message' => 'Laporan telah ditandai selesai oleh pelapor.',
-                        'url' => '/dashboard/admin/laporan-selesai/'.$ticket->ticket_number,
+                        'url' => '/dashboard/admin/completed-reports/'.$ticket->ticket_number,
                         'actor_name' => null,
                     ]),
                     'read_at' => null,

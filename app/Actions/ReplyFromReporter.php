@@ -110,7 +110,7 @@ class ReplyFromReporter
                         'type' => $ticket->classification,
                         'title' => 'Balasan baru dari pelapor',
                         'message' => 'Pelapor telah membalas tanggapan Anda.',
-                        'url' => '/dashboard/admin/laporan-masuk/' . $ticket->ticket_number,
+                        'url' => '/dashboard/admin/incoming-reports/' . $ticket->ticket_number,
                         'actor_name' => $ticket->reporter_name ?? null,
                     ]),
                     'read_at' => null,

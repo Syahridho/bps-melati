@@ -29,17 +29,17 @@ it('builds dynamic years list and falls back on invalid parameters', function ()
     ]);
 
     actingAs($admin)
-        ->get(route('dashboard.admin.rekap-bulanan.index', ['year' => '9999', 'month' => '15'], absolute: false))
+        ->get(route('dashboard.admin.monthly-recap.index', ['year' => '9999', 'month' => '15'], absolute: false))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/admin/rekap/bulanan/index')
+            ->component('dashboard/admin/recap/monthly/index')
             ->has('years')
             ->where('year', (string) now()->year)
             ->where('month', (string) now()->month)
         );
 
     actingAs($admin)
-        ->get(route('dashboard.admin.rekap-bulanan.index', ['year' => '2024', 'month' => '5'], absolute: false))
+        ->get(route('dashboard.admin.monthly-recap.index', ['year' => '2024', 'month' => '5'], absolute: false))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('year', '2024')
@@ -65,7 +65,7 @@ it('invalidates RekapYears cache when a ticket is created or deleted', function 
     ]);
 
     actingAs($admin)
-        ->get(route('dashboard.admin.rekap-bulanan.index', absolute: false))
+        ->get(route('dashboard.admin.monthly-recap.index', absolute: false))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('years', fn ($years) => collect($years)->contains('value', '2023')));
 
@@ -74,7 +74,7 @@ it('invalidates RekapYears cache when a ticket is created or deleted', function 
     RekapYears::invalidate();
 
     actingAs($admin)
-        ->get(route('dashboard.admin.rekap-bulanan.index', absolute: false))
+        ->get(route('dashboard.admin.monthly-recap.index', absolute: false))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('years', fn ($years) => ! collect($years)->contains('value', '2023') || count($years) >= 1));
 });

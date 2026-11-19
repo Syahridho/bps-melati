@@ -8,11 +8,11 @@ use App\Http\Controllers\CheckAttachmentDownloadController;
 use App\Http\Controllers\CheckTicketController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\InputDataController;
-use App\Http\Controllers\Dashboard\LaporanMasukController;
-use App\Http\Controllers\Dashboard\LaporanSelesaiController;
+use App\Http\Controllers\Dashboard\IncomingReportsController;
+use App\Http\Controllers\Dashboard\CompletedReportsController;
 use App\Http\Controllers\Dashboard\OperatorController;
-use App\Http\Controllers\Dashboard\Rekap\RekapBulananController;
-use App\Http\Controllers\Dashboard\Rekap\RekapPeriodikController;
+use App\Http\Controllers\Dashboard\Recap\MonthlyRecapController;
+use App\Http\Controllers\Dashboard\Recap\PeriodicRecapController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\WelcomeController;
@@ -82,33 +82,33 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('input-data/{ticketNumber}', [InputDataController::class, 'destroy'])->name('input-data.destroy')->where('ticketNumber', '.*');
         Route::patch('input-data/{ticketNumber}/tandai', [InputDataController::class, 'tandai'])->middleware('throttle:60,1')->name('input-data.tandai')->where('ticketNumber', '.*');
         Route::patch('input-data/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('input-data.pengawasan')->where('ticketNumber', '.*');
-        Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
-        Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
-        Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
-        Route::delete('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'destroy'])->name('laporan-masuk.destroy')->where('ticketNumber', '.*');
-        Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])
+        Route::get('incoming-reports', [IncomingReportsController::class, 'index'])->name('incoming-reports.index');
+        Route::get('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'show'])->name('incoming-reports.show')->where('ticketNumber', '.*');
+        Route::put('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'update'])->name('incoming-reports.update')->where('ticketNumber', '.*');
+        Route::delete('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'destroy'])->name('incoming-reports.destroy')->where('ticketNumber', '.*');
+        Route::post('incoming-reports/{ticket}/responses', [TicketResponseController::class, 'store'])
             ->middleware('throttle:ticket-response')
-            ->name('laporan-masuk.responses.store');
-        Route::post('laporan-masuk/{ticket}/responses/{response}/resend', [TicketResponseController::class, 'resend'])
-            ->name('laporan-masuk.responses.resend');
-        Route::patch('laporan-masuk/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('laporan-masuk.pengawasan')->where('ticketNumber', '.*');
-        Route::patch('laporan-masuk/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('laporan-masuk.tandai')->where('ticketNumber', '.*');
-        Route::patch('laporan-selesai/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('laporan-selesai.tandai')->where('ticketNumber', '.*');
-        Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
-        Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
-        Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
-        Route::get('rekap-bulanan/print', [RekapBulananController::class, 'print'])->name('rekap-bulanan.print');
-        Route::get('rekap-bulanan/excel', [RekapBulananController::class, 'excel'])->name('rekap-bulanan.excel');
-        Route::get('rekap-periodik', RekapPeriodikController::class)->name('rekap-periodik.index');
-        Route::get('rekap-periodik/print', [RekapPeriodikController::class, 'print'])->name('rekap-periodik.print');
-        Route::get('rekap-periodik/excel', [RekapPeriodikController::class, 'excel'])->name('rekap-periodik.excel');
-        Route::permanentRedirect('rekap-semesteran', '/dashboard/admin/rekap-periodik');
-        Route::permanentRedirect('rekap-tahunan', '/dashboard/admin/rekap-periodik');
-        Route::get('operator', [OperatorController::class, 'index'])->name('operator.index');
-        Route::post('operator', [OperatorController::class, 'store'])->name('operator.store');
-        Route::put('operator/{operator}', [OperatorController::class, 'update'])->name('operator.update');
-        Route::delete('operator/{operator}', [OperatorController::class, 'destroy'])->name('operator.destroy');
-        Route::post('operator/{operator}/force-logout', [OperatorController::class, 'forceLogout'])->name('operator.force-logout');
+            ->name('incoming-reports.responses.store');
+        Route::post('incoming-reports/{ticket}/responses/{response}/resend', [TicketResponseController::class, 'resend'])
+            ->name('incoming-reports.responses.resend');
+        Route::patch('incoming-reports/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('incoming-reports.pengawasan')->where('ticketNumber', '.*');
+        Route::patch('incoming-reports/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('incoming-reports.tandai')->where('ticketNumber', '.*');
+        Route::patch('completed-reports/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('completed-reports.tandai')->where('ticketNumber', '.*');
+        Route::get('completed-reports', [CompletedReportsController::class, 'index'])->name('completed-reports.index');
+        Route::get('completed-reports/{ticketNumber}', [CompletedReportsController::class, 'show'])->name('completed-reports.show')->where('ticketNumber', '.*');
+        Route::get('monthly-recap', MonthlyRecapController::class)->name('monthly-recap.index');
+        Route::get('monthly-recap/print', [MonthlyRecapController::class, 'print'])->name('monthly-recap.print');
+        Route::get('monthly-recap/excel', [MonthlyRecapController::class, 'excel'])->name('monthly-recap.excel');
+        Route::get('periodic-recap', PeriodicRecapController::class)->name('periodic-recap.index');
+        Route::get('periodic-recap/print', [PeriodicRecapController::class, 'print'])->name('periodic-recap.print');
+        Route::get('periodic-recap/excel', [PeriodicRecapController::class, 'excel'])->name('periodic-recap.excel');
+        Route::permanentRedirect('rekap-semesteran', '/dashboard/admin/periodic-recap');
+        Route::permanentRedirect('rekap-tahunan', '/dashboard/admin/periodic-recap');
+        Route::get('operator-management', [OperatorController::class, 'index'])->name('operator.index');
+        Route::post('operator-management', [OperatorController::class, 'store'])->name('operator.store');
+        Route::put('operator-management/{operator}', [OperatorController::class, 'update'])->name('operator.update');
+        Route::delete('operator-management/{operator}', [OperatorController::class, 'destroy'])->name('operator.destroy');
+        Route::post('operator-management/{operator}/force-logout', [OperatorController::class, 'forceLogout'])->name('operator.force-logout');
     });
 
     Route::middleware('role:operator,operator_tim')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
@@ -123,26 +123,26 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware('role:operator')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
         Route::patch('input-data/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('input-data.pengawasan')->where('ticketNumber', '.*');
-        Route::get('laporan-masuk', [LaporanMasukController::class, 'index'])->name('laporan-masuk.index');
-        Route::get('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'show'])->name('laporan-masuk.show')->where('ticketNumber', '.*');
-        Route::put('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'update'])->name('laporan-masuk.update')->where('ticketNumber', '.*');
-        Route::delete('laporan-masuk/{ticketNumber}', [LaporanMasukController::class, 'destroy'])->name('laporan-masuk.destroy')->where('ticketNumber', '.*');
-        Route::post('laporan-masuk/{ticket}/responses', [TicketResponseController::class, 'store'])
+        Route::get('incoming-reports', [IncomingReportsController::class, 'index'])->name('incoming-reports.index');
+        Route::get('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'show'])->name('incoming-reports.show')->where('ticketNumber', '.*');
+        Route::put('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'update'])->name('incoming-reports.update')->where('ticketNumber', '.*');
+        Route::delete('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'destroy'])->name('incoming-reports.destroy')->where('ticketNumber', '.*');
+        Route::post('incoming-reports/{ticket}/responses', [TicketResponseController::class, 'store'])
             ->middleware('throttle:ticket-response')
-            ->name('laporan-masuk.responses.store');
-        Route::patch('laporan-masuk/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('laporan-masuk.pengawasan')->where('ticketNumber', '.*');
-        Route::patch('laporan-masuk/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('laporan-masuk.tandai')->where('ticketNumber', '.*');
-        Route::patch('laporan-selesai/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('laporan-selesai.tandai')->where('ticketNumber', '.*');
-        Route::get('laporan-selesai', [LaporanSelesaiController::class, 'index'])->name('laporan-selesai.index');
-        Route::get('laporan-selesai/{ticketNumber}', [LaporanSelesaiController::class, 'show'])->name('laporan-selesai.show')->where('ticketNumber', '.*');
-        Route::get('rekap-bulanan', RekapBulananController::class)->name('rekap-bulanan.index');
-        Route::get('rekap-bulanan/print', [RekapBulananController::class, 'print'])->name('rekap-bulanan.print');
-        Route::get('rekap-bulanan/excel', [RekapBulananController::class, 'excel'])->name('rekap-bulanan.excel');
-        Route::get('rekap-periodik', RekapPeriodikController::class)->name('rekap-periodik.index');
-        Route::get('rekap-periodik/print', [RekapPeriodikController::class, 'print'])->name('rekap-periodik.print');
-        Route::get('rekap-periodik/excel', [RekapPeriodikController::class, 'excel'])->name('rekap-periodik.excel');
-        Route::permanentRedirect('rekap-semesteran', '/dashboard/operator/rekap-periodik');
-        Route::permanentRedirect('rekap-tahunan', '/dashboard/operator/rekap-periodik');
+            ->name('incoming-reports.responses.store');
+        Route::patch('incoming-reports/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('incoming-reports.pengawasan')->where('ticketNumber', '.*');
+        Route::patch('incoming-reports/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('incoming-reports.tandai')->where('ticketNumber', '.*');
+        Route::patch('completed-reports/{ticketNumber}/tandai', [TicketFlagController::class, 'update'])->middleware('throttle:60,1')->name('completed-reports.tandai')->where('ticketNumber', '.*');
+        Route::get('completed-reports', [CompletedReportsController::class, 'index'])->name('completed-reports.index');
+        Route::get('completed-reports/{ticketNumber}', [CompletedReportsController::class, 'show'])->name('completed-reports.show')->where('ticketNumber', '.*');
+        Route::get('monthly-recap', MonthlyRecapController::class)->name('monthly-recap.index');
+        Route::get('monthly-recap/print', [MonthlyRecapController::class, 'print'])->name('monthly-recap.print');
+        Route::get('monthly-recap/excel', [MonthlyRecapController::class, 'excel'])->name('monthly-recap.excel');
+        Route::get('periodic-recap', PeriodicRecapController::class)->name('periodic-recap.index');
+        Route::get('periodic-recap/print', [PeriodicRecapController::class, 'print'])->name('periodic-recap.print');
+        Route::get('periodic-recap/excel', [PeriodicRecapController::class, 'excel'])->name('periodic-recap.excel');
+        Route::permanentRedirect('rekap-semesteran', '/dashboard/operator/periodic-recap');
+        Route::permanentRedirect('rekap-tahunan', '/dashboard/operator/periodic-recap');
     });
 });
 

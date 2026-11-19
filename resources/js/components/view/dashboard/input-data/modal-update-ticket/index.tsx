@@ -1,27 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-
-import { FormEvent } from 'react';
-
-interface EditFormData {
-    data: {
-        title: string;
-        reporter_name: string;
-        reporter_email: string;
-        reporter_wa: string;
-        content: string;
-    };
-    setData: (field: string, value: string) => void;
-    processing: boolean;
-}
-
-interface InputDataUpdateTicketDialogProps {
-    isEditOpen: boolean;
-    setIsEditOpen: (open: boolean) => void;
-    editForm: EditFormData;
-    handleEditSubmit: (e: FormEvent) => void;
-}
+import { InputDataUpdateTicketDialogProps } from '@/types/input-data';
 
 export default function InputDataUpdateTicketDialog({ setIsEditOpen, editForm, isEditOpen, handleEditSubmit }: InputDataUpdateTicketDialogProps) {
     return (

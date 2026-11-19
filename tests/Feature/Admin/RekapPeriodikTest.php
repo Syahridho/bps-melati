@@ -52,7 +52,7 @@ function periodikTicket(string $period, array $attributes = []): Ticket
 
 function periodikUrl(array $query = []): string
 {
-    return route('dashboard.admin.rekap-periodik.index', $query, absolute: false);
+    return route('dashboard.admin.periodic-recap.index', $query, absolute: false);
 }
 
 it('renders the periodic recap for an admin', function () {
@@ -79,22 +79,22 @@ it('redirects old semesteran and tahunan routes to periodic recap', function () 
     actingAs(User::factory()->admin()->create());
 
     test()->get('/dashboard/admin/rekap-semesteran')
-        ->assertRedirect('/dashboard/admin/rekap-periodik');
+        ->assertRedirect('/dashboard/admin/periodic-recap');
 
     test()->get('/dashboard/admin/rekap-tahunan')
-        ->assertRedirect('/dashboard/admin/rekap-periodik');
+        ->assertRedirect('/dashboard/admin/periodic-recap');
 });
 
 it('exports periodic recap to excel', function () {
     actingAs(User::factory()->admin()->create())
-        ->get(route('dashboard.admin.rekap-periodik.excel', ['year' => '2026', 'months' => '1,2,3']))
+        ->get(route('dashboard.admin.periodic-recap.excel', ['year' => '2026', 'months' => '1,2,3']))
         ->assertOk()
         ->assertHeader('content-type', 'application/vnd.ms-excel; charset=utf-8');
 });
 
 it('renders periodic print view', function () {
     actingAs(User::factory()->admin()->create())
-        ->get(route('dashboard.admin.rekap-periodik.print', ['year' => '2026', 'months' => '1,2,3'], absolute: false))
+        ->get(route('dashboard.admin.periodic-recap.print', ['year' => '2026', 'months' => '1,2,3'], absolute: false))
         ->assertOk()
         ->assertSee('REKAP LAPORAN PERIODIK BPS PROVINSI RIAU')
         ->assertDontSee('Lampiran: Daftar Percakapan Laporan');
@@ -133,7 +133,7 @@ it('passes chat prop to periodic recap page', function () {
 
 it('renders chat attachment in print view when chat=1 and shows empty state if no tickets', function () {
     actingAs(User::factory()->admin()->create())
-        ->get(route('dashboard.admin.rekap-periodik.print', ['year' => '2026', 'months' => '1,2,3', 'chat' => '1'], absolute: false))
+        ->get(route('dashboard.admin.periodic-recap.print', ['year' => '2026', 'months' => '1,2,3', 'chat' => '1'], absolute: false))
         ->assertOk()
         ->assertSee('Lampiran: Daftar Percakapan Laporan')
         ->assertSee('Tidak ada percakapan pada periode ini.');
@@ -194,7 +194,7 @@ it('renders full chat thread with responses, attachments, and escapes HTML in pr
     ]);
 
     $response = actingAs($admin)
-        ->get(route('dashboard.admin.rekap-periodik.print', ['year' => '2026', 'months' => '2', 'chat' => '2'], absolute: false))
+        ->get(route('dashboard.admin.periodic-recap.print', ['year' => '2026', 'months' => '2', 'chat' => '2'], absolute: false))
         ->assertOk();
 
     // Pastikan section lampiran muncul
@@ -220,17 +220,17 @@ it('produces identical excel output regardless of chat param', function () {
     $admin = User::factory()->admin()->create();
 
     $resWithoutChat = actingAs($admin)
-        ->get(route('dashboard.admin.rekap-periodik.excel', ['year' => '2026', 'months' => '1,2,3']))
+        ->get(route('dashboard.admin.periodic-recap.excel', ['year' => '2026', 'months' => '1,2,3']))
         ->assertOk()
         ->getContent();
 
     $resWithChat0 = actingAs($admin)
-        ->get(route('dashboard.admin.rekap-periodik.excel', ['year' => '2026', 'months' => '1,2,3', 'chat' => '0']))
+        ->get(route('dashboard.admin.periodic-recap.excel', ['year' => '2026', 'months' => '1,2,3', 'chat' => '0']))
         ->assertOk()
         ->getContent();
 
     $resWithChat1 = actingAs($admin)
-        ->get(route('dashboard.admin.rekap-periodik.excel', ['year' => '2026', 'months' => '1,2,3', 'chat' => '1']))
+        ->get(route('dashboard.admin.periodic-recap.excel', ['year' => '2026', 'months' => '1,2,3', 'chat' => '1']))
         ->assertOk()
         ->getContent();
 
@@ -243,11 +243,11 @@ it('allows operators to view operator periodic recap and print with chat', funct
     $operator = User::factory()->operator()->create();
 
     actingAs($operator)
-        ->get(route('dashboard.operator.rekap-periodik.index', ['year' => '2026', 'months' => '1,2,3']))
+        ->get(route('dashboard.operator.periodic-recap.index', ['year' => '2026', 'months' => '1,2,3']))
         ->assertOk();
 
     actingAs($operator)
-        ->get(route('dashboard.operator.rekap-periodik.print', ['year' => '2026', 'months' => '1,2,3', 'chat' => '1']))
+        ->get(route('dashboard.operator.periodic-recap.print', ['year' => '2026', 'months' => '1,2,3', 'chat' => '1']))
         ->assertOk()
         ->assertSee('Lampiran: Daftar Percakapan Laporan');
 });

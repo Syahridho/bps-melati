@@ -1,5 +1,5 @@
 import { REKAP_MATRIX_COLUMNS } from '@/lib/rekap-constants';
-import { type RekapMatrixColumnKey, type RekapPeriodCounts } from '@/types/rekap';
+import { type RekapMatrixColumnKey, type RekapPeriodCounts } from '@/types/recap';
 
 /**
  * Halaman rekap tersedia untuk dua role dengan prefix route berbeda

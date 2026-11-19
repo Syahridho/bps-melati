@@ -228,20 +228,20 @@ test('tiket hasil auto close pindah ke laporan selesai dan hilang dari laporan m
     $ticket = ticketWithStaffReply('pengaduan', 'respon_awal', Carbon::parse('2026-10-05 09:00:00'), '11');
 
     actingAs($this->admin)
-        ->get(route('dashboard.admin.laporan-masuk.index'))
+        ->get(route('dashboard.admin.incoming-reports.index'))
         ->assertInertia(fn (Assert $page) => $page->where('counts.semua', 1));
 
     app(AutoCloseTickets::class)->handle();
 
     actingAs($this->admin)
-        ->get(route('dashboard.admin.laporan-masuk.index'))
+        ->get(route('dashboard.admin.incoming-reports.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('counts.semua', 0)
             ->where('inbox_open_count', 0)
         );
 
     actingAs($this->admin)
-        ->get(route('dashboard.admin.laporan-selesai.index'))
+        ->get(route('dashboard.admin.completed-reports.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('counts.semua', 1)
             ->where('tickets.data.0.ticket_number', $ticket->ticket_number)

@@ -1,4 +1,4 @@
-import { type PeriodOption, type RekapMatrixColumnKey, type RekapTableColumn, type RekapViewMode } from '@/types/rekap';
+import { type PeriodOption, type RekapMatrixColumnKey, type RekapTableColumn, type RekapViewMode } from '@/types/recap';
 
 /**
  * Urutan kolom klasifikasi harus sama dengan RekapReport::COLUMNS di backend.

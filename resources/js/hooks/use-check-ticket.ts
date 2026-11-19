@@ -1,4 +1,4 @@
-import { ticketPublicChannel } from '@/lib/laporan-masuk-utils';
+import { ticketPublicChannel } from '@/lib/incoming-reports-utils';
 import { type TicketDetail } from '@/types/check';
 import { router } from '@inertiajs/react';
 import { useEchoPublic } from '@laravel/echo-react';

@@ -1,10 +1,10 @@
-import { ChartAreaLinear } from '@/components/dashboard/chart-area-linear';
-import { ChartBarDefault } from '@/components/dashboard/chart-bar';
-import { ChartPieLabel } from '@/components/dashboard/chart-pie-label';
-import { DashboardRecentTickets } from '@/components/dashboard/dashboard-recent-tickets';
-import { DashboardStatCards } from '@/components/dashboard/dashboard-stat-cards';
-import { DashboardStatusCards } from '@/components/dashboard/dashboard-status-cards';
-import { ConnectionIndicator } from '@/components/header/ConnectionIndicator';
+import { ConnectionIndicator } from '@/components/atoms/connection-indicator';
+import { ChartAreaLinear } from '@/components/organisms/dashboard/chart-area-linear';
+import { ChartBarDefault } from '@/components/organisms/dashboard/chart-bar';
+import { ChartPieLabel } from '@/components/organisms/dashboard/chart-pie-label';
+import { DashboardRecentTickets } from '@/components/organisms/dashboard/dashboard-recent-tickets';
+import { DashboardStatCards } from '@/components/organisms/dashboard/dashboard-stat-cards';
+import { DashboardStatusCards } from '@/components/organisms/dashboard/dashboard-status-cards';
 import { useAuthRole } from '@/hooks/use-auth-role';
 import AppLayout from '@/layouts/app-layout';
 import { ExtendedDashboardTemplateProps } from '@/types/dashboard';
@@ -19,6 +19,7 @@ export default function DashboardView({
     recentTickets,
     periodLabel,
     sumberKanal,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     channelCards,
     allTicketsRoute,
     ticketDetailRouteName,

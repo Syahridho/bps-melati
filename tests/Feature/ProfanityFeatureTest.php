@@ -83,10 +83,10 @@ test('halaman admin default tersensor, has_profanity true, dan teks asli hanya u
     $ticket = profaneTicket();
 
     $this->actingAs($this->admin)
-        ->get(route('dashboard.admin.laporan-masuk.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->get(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('dashboard/admin/laporan-masuk/show/index')
+            ->component('dashboard/admin/incoming-reports/show/index')
             ->where('ticket.has_profanity', true)
             ->where('ticket.title', 'Judul a***** ini')
             ->where('ticket.content', 'Isi laporan yang mengandung kata a***** dan m****.')

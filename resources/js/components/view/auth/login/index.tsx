@@ -1,5 +1,5 @@
-import LoginForm from '@/components/auth/login-form';
-import { type SessionConflictInfo } from '@/components/session/session-conflict-card';
+import LoginForm from '@/components/organisms/auth/login-form';
+import { type SessionConflictInfo } from '@/components/organisms/session/session-conflict-card';
 import { Head } from '@inertiajs/react';
 
 interface LoginPageProps {

@@ -1,7 +1,7 @@
-import { AppContent } from '@/components/layout/app-content';
-import { AppShell } from '@/components/layout/app-shell';
-import { AppSidebar } from '@/components/layout/app-sidebar';
-import { AppSidebarHeader } from '@/components/layout/app-sidebar-header';
+import { AppContent } from '@/components/templates/layout/app-content';
+import { AppShell } from '@/components/templates/layout/app-shell';
+import { AppSidebar } from '@/components/organisms/navigation/app-sidebar';
+import { AppSidebarHeader } from '@/components/organisms/navigation/app-sidebar-header';
 import { Toaster } from '@/components/ui/toaster';
 import { useOnlinePresence } from '@/hooks/use-online-presence';
 import { useReporterReplyToast } from '@/hooks/use-reporter-reply-toast';
