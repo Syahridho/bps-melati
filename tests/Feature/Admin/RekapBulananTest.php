@@ -63,7 +63,7 @@ it('renders the monthly recap for an admin', function () {
         ->get(rekapUrl())
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/admin/rekap/bulanan/index')
+            ->component('dashboard/admin/recap/monthly-recap/index')
             ->has('rows')
             ->has('totals')
             ->has('periods')
@@ -82,7 +82,7 @@ it('exports the monthly recap as an excel spreadsheet', function () {
         ->assertOk()
         ->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
 
-    expect($response->headers->get('Content-Disposition'))->toMatch('/^attachment; filename="Rekap-bulanan-.+_\d{8}_\d{6}\.xls"$/');
+    expect($response->headers->get('Content-Disposition'))->toMatch('/^attachment; filename="Rekap-Bulanan-.+_\d{8}_\d{6}\.xls"$/');
 });
 
 it('splits pengaduan by service type and counts every classification', function () {

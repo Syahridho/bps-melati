@@ -16,9 +16,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
-            return Promise.all(
-                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)),
-            );
+            return Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
         }),
     );
 });
@@ -48,11 +46,11 @@ self.addEventListener('push', (event) => {
         return;
     }
 
-    console.log('[PUSH-TIMING] T4 push event received in SW', {
-        ticket_number: data.ticket_number ?? null,
-        tag: data.tag || 'melati-notification',
-        t4: Date.now(),
-    });
+    // console.log('[PUSH-TIMING] T4 push event received in SW', {
+    //     ticket_number: data.ticket_number ?? null,
+    //     tag: data.tag || 'melati-notification',
+    //     t4: Date.now(),
+    // });
 
     const title = data.title || 'Notifikasi Melati';
     const options = {
@@ -66,11 +64,11 @@ self.addEventListener('push', (event) => {
     };
 
     const promiseChain = (async () => {
-        console.log('[PUSH-TIMING] T5 showNotification called', {
-            title,
-            tag: data.tag || 'melati-notification',
-            t5: Date.now(),
-        });
+        // console.log('[PUSH-TIMING] T5 showNotification called', {
+        //     title,
+        //     tag: data.tag || 'melati-notification',
+        //     t5: Date.now(),
+        // });
 
         await self.registration.showNotification(title, options);
     })();
@@ -84,9 +82,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
-    const url = event.notification.data && event.notification.data.url
-        ? event.notification.data.url
-        : '/';
+    const url = event.notification.data && event.notification.data.url ? event.notification.data.url : '/';
 
     const promiseChain = (async () => {
         // Coba fokuskan tab yang sudah terbuka dengan origin yang sama.
@@ -126,7 +122,7 @@ self.addEventListener('pushsubscriptionchange', (event) => {
 
                 // Kirim subscription baru ke server. Endpoint dipastikan ada di halaman;
                 // di sini cuma catat ke console karena SW tidak punya akses ke state React.
-                console.log('[Melati SW] Subscription baru:', newSubscription.endpoint);
+                // console.log('[Melati SW] Subscription baru:', newSubscription.endpoint);
             } catch (err) {
                 console.error('[Melati SW] Gagal subscribe ulang:', err);
             }
@@ -143,9 +139,7 @@ function urlBase64ToUint8Array(base64String) {
     }
 
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding)
-        .replace(/-/g, '+')
-        .replace(/_/g, '/');
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
 
     const rawData = atob(base64);
     const outputArray = new Uint8Array(rawData.length);

@@ -88,7 +88,6 @@ test('cache pola regex tersimpan di static property', function () {
 
     $reflection = new ReflectionClass($filter);
     $cache = $reflection->getProperty('patternCache');
-    $cache->setAccessible(true);
     $value = $cache->getValue($filter);
 
     expect($value)->toHaveKey('anjing:anywhere');

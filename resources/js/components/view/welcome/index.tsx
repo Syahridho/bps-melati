@@ -1,8 +1,5 @@
 import { TicketHistoryCard } from '@/components/organisms/check/ticket-history-card';
-import { DeleteTicketDialog } from '@/components/organisms/input-data/delete-ticket-dialog';
-import { FooterSection } from '@/components/templates/layout/footer';
-import { Toaster } from '@/components/ui/toaster';
-import { TicketSuccessDialog } from '@/components/view/welcome/ticket-success-dialog';
+
 import RelatedServices from '@/components/organisms/welcome/related-services';
 import { WelcomeReportForm } from '@/components/organisms/welcome/report-form';
 import { ReportingFlow } from '@/components/organisms/welcome/reporting-flow';
@@ -10,6 +7,10 @@ import { WelcomeAttachmentPreviewDialog } from '@/components/organisms/welcome/w
 import { WelcomeBackdrop } from '@/components/organisms/welcome/welcome-backdrop';
 import { WelcomeHeader } from '@/components/organisms/welcome/welcome-header';
 import { WelcomeHero } from '@/components/organisms/welcome/welcome-hero';
+import { FooterSection } from '@/components/templates/layout/footer';
+import { Toaster } from '@/components/ui/toaster';
+import { DeleteTicketDialog } from '@/components/view/welcome/ticket-delete-dialog';
+import { TicketSuccessDialog } from '@/components/view/welcome/ticket-success-dialog';
 import { useSuccessDialog } from '@/hooks/use-success-dialog';
 import { useTicketHistory } from '@/hooks/use-ticket-history';
 import { useWelcomeForm } from '@/hooks/use-welcome-form';

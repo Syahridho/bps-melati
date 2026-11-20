@@ -58,9 +58,8 @@ test('admin can update dashboard_live_enabled via PATCH endpoint', function () {
         ->patchJson(route('settings.notification.dashboard-live'), [
             'dashboard_live_enabled' => true,
         ])
-        ->assertStatus(200)
-        ->assertJsonPath('success', true)
-        ->assertJsonPath('dashboard_live_enabled', true);
+        ->assertRedirect()
+        ->assertSessionHas('flash.success');
 
     $this->assertDatabaseHas('settings', [
         'key' => 'dashboard_live_enabled',
@@ -80,9 +79,8 @@ test('admin can disable dashboard_live_enabled via PATCH endpoint', function () 
         ->patchJson(route('settings.notification.dashboard-live'), [
             'dashboard_live_enabled' => false,
         ])
-        ->assertStatus(200)
-        ->assertJsonPath('success', true)
-        ->assertJsonPath('dashboard_live_enabled', false);
+        ->assertRedirect()
+        ->assertSessionHas('flash.success');
 
     $this->assertDatabaseHas('settings', [
         'key' => 'dashboard_live_enabled',

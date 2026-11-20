@@ -60,7 +60,7 @@ it('renders the periodic recap for an admin', function () {
         ->get(periodikUrl(['year' => '2026', 'months' => '1,2,3']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/admin/rekap/periodik/index')
+            ->component('dashboard/admin/recap/periodic-recap/index')
             ->has('rows')
             ->has('totals')
             ->has('months', 3)
@@ -108,7 +108,7 @@ it('passes chat prop to periodic recap page', function () {
         ->get(periodikUrl(['year' => '2026', 'months' => '1,2,3']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/admin/rekap/periodik/index')
+            ->component('dashboard/admin/recap/periodic-recap/index')
             ->where('chat', '0')
         );
 
@@ -117,7 +117,7 @@ it('passes chat prop to periodic recap page', function () {
         ->get(periodikUrl(['year' => '2026', 'months' => '1,2,3', 'chat' => '1']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/admin/rekap/periodik/index')
+            ->component('dashboard/admin/recap/periodic-recap/index')
             ->where('chat', '1')
         );
 
@@ -126,7 +126,7 @@ it('passes chat prop to periodic recap page', function () {
         ->get(periodikUrl(['year' => '2026', 'months' => '1,2,3', 'chat' => 'invalid']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/admin/rekap/periodik/index')
+            ->component('dashboard/admin/recap/periodic-recap/index')
             ->where('chat', '0')
         );
 });

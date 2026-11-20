@@ -11,10 +11,12 @@
 </x-slot:subcopy>
 @endisset
 
-{{-- Footer --}}
-<x-slot:footer>
-<x-mail::footer>
-© {{ date('Y') }} Melati. Powered by BPS Provinsi Riu.
-</x-mail::footer>
-</x-slot:footer>
+    {{-- Footer --}}
+    <x-slot:footer>
+        <x-mail::footer>
+© {{ date('Y') }} Melati. All rights reserved.
+
+Melati: Manajemen Lapor, Aspirasi, dan Transparansi Informasi
+        </x-mail::footer>
+    </x-slot:footer>
 </x-mail::layout>

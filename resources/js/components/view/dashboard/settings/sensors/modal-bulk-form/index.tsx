@@ -58,7 +58,7 @@ export default function SensorBulkFormDialog({ open, onOpenChange }: SensorBulkF
                             rows={6}
                             value={data.words}
                             onChange={(e) => setData('words', e.target.value)}
-                            placeholder={'anjing\nbangsat\nbajingan'}
+                            placeholder={'kata kasar 1\nKata Kasar 2'}
                             className="font-mono text-sm"
                         />
                         {errors.words && <p className="text-destructive text-xs">{errors.words}</p>}

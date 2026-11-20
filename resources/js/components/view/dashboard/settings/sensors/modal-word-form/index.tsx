@@ -44,7 +44,7 @@ export default function SensorFormDialog({
                             id="sensor_word"
                             value={data.word}
                             onChange={(e) => setData('word', e.target.value)}
-                            placeholder="mis. anjing"
+                            placeholder="kata kasar"
                             maxLength={50}
                         />
                         {errors.word && <p className="text-destructive text-xs">{errors.word}</p>}

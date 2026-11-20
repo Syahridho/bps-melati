@@ -32,7 +32,7 @@ it('builds dynamic years list and falls back on invalid parameters', function ()
         ->get(route('dashboard.admin.monthly-recap.index', ['year' => '9999', 'month' => '15'], absolute: false))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('dashboard/admin/recap/monthly/index')
+            ->component('dashboard/admin/recap/monthly-recap/index')
             ->has('years')
             ->where('year', (string) now()->year)
             ->where('month', (string) now()->month)

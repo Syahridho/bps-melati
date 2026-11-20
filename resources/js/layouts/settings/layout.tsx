@@ -40,7 +40,7 @@ export default function SettingsLayout({
                       icon: null,
                   },
                   {
-                      title: 'Sensor',
+                      title: 'Sensor Kata Kasar',
                       url: '/settings/sensors',
                       icon: null,
                   },

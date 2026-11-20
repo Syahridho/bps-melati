@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\ReplyToTicket;
+use App\Enums\EmailStatus;
 use App\Exceptions\TicketAlreadyCompletedException;
 use App\Exceptions\TicketAlreadyRespondedException;
 use App\Http\Controllers\Controller;
@@ -156,7 +157,7 @@ class TicketResponseController extends Controller
         abort_unless($user instanceof User && $user->isAdmin(), 403);
         abort_unless($response->ticket_id === $ticket->id, 404);
 
-        $statusValue = $response->email_status instanceof App\Enums\EmailStatus
+        $statusValue = $response->email_status instanceof EmailStatus
             ? $response->email_status->value
             : $response->email_status;
 
