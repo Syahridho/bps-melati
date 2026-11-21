@@ -55,3 +55,22 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::delete('settings/sensors/{censoredWord}', [SensorController::class, 'destroy'])->name('settings.sensors.destroy');
     Route::patch('settings/notification/dashboard-live', [NotificationController::class, 'updateDashboardLive'])->name('settings.notification.dashboard-live');
 });
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    // Audit Log routes
+    Route::get('audit-log', [\App\Http\Controllers\Settings\AuditLogController::class, 'index'])->name('audit-log.index');
+    Route::get('audit-log/flags/summary', [\App\Http\Controllers\Settings\AuditLogController::class, 'flagsSummary'])->name('audit-log.flags-summary');
+    Route::get('audit-log/flags', [\App\Http\Controllers\Settings\AuditFlagController::class, 'index'])->name('audit-flag.index');
+    Route::get('audit-log/flags/{type}', [\App\Http\Controllers\Settings\AuditFlagController::class, 'byType'])->name('audit-flag.by-type');
+    Route::patch('audit-flags/{flag}', [\App\Http\Controllers\Settings\AuditFlagController::class, 'updateStatus'])->name('audit-flag.update');
+    Route::post('audit-log/export', [\App\Http\Controllers\Settings\AuditLogController::class, 'exportCsv'])->name('audit-log.export');
+
+    // Peninjauan admin
+    Route::get('audit-flags/review', [\App\Http\Controllers\Settings\ReviewController::class, 'index'])->name('review.index');
+    Route::patch('audit-flags/{flag}/review', [\App\Http\Controllers\Settings\ReviewController::class, 'updateStatus'])->name('review.update');
+    Route::post('audit-flags/{flag}/review', [\App\Http\Controllers\Settings\ReviewController::class, 'addNote'])->name('review.add-note');
+
+    // Ringkasan mingguan
+    Route::get('audit-log/summary-weekly', [\App\Http\Controllers\Settings\SummaryWeeklyController::class, 'index'])->name('audit-log.summary-weekly');
+    Route::post('audit-log/summary-weekly', [\App\Http\Controllers\Settings\SummaryWeeklyController::class, 'generate'])->name('audit-log.summary-weekly.generate');
+});

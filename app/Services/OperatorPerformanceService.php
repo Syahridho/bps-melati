@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AuditFlag;
 use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
@@ -12,6 +13,19 @@ class OperatorPerformanceService
     public const MODE_OTOMATIS = 'otomatis';
     public const MODE_SELESAI = 'selesai';
     public const MODE_GABUNGAN = 'gabungan';
+
+    // Ambil ticket IDs yang harus di-exclude dari perhitungan rating
+    // berdasarkan audit flag status tindak_lanjut dengan exclude_rating = true
+    protected function getExcludedTicketIds(): array
+    {
+        $excludedIds = AuditFlag::where('status', 'tindak_lanjut')
+            ->where('exclude_rating', true)
+            ->whereNotNull('ticket_id')
+            ->pluck('ticket_id')
+            ->toArray();
+
+        return array_unique($excludedIds);
+    }
 
     public function compute(array $params): array
     {
@@ -40,25 +54,46 @@ class OperatorPerformanceService
 
         $roleValues = ['operator', 'operator_tim'];
 
-        // Agregat tiket selesai yang dikreditkan ke PIC.
-        $completedQuery = Ticket::query()
+        // Query A: tanpa filter exclude (untuk menghitung rating total/min_ratings)
+        $completedQueryOriginal = Ticket::query()
             ->where('status', 'selesai')
             ->whereNotNull('assigned_to');
 
         if ($mode === self::MODE_OTOMATIS) {
-            $completedQuery->where('closed_reason', 'auto_close');
+            $completedQueryOriginal->where('closed_reason', 'auto_close');
         } elseif ($mode === self::MODE_SELESAI) {
-            $completedQuery->where(function ($q) {
+            $completedQueryOriginal->where(function ($q) {
                 $q->whereNull('closed_reason')
                     ->orWhere('closed_reason', '!=', 'auto_close');
             });
         }
 
         if (! $isSemua && $start && $end) {
-            $completedQuery->whereBetween('completed_at', [$start, $end]);
+            $completedQueryOriginal->whereBetween('completed_at', [$start, $end]);
         }
 
-        $completedAgg = $completedQuery
+        // Query B: dengan exclude ticket IDs yang memiliki flag exclude_rating=true dan status=tindak_lanjut
+        $excludedTicketIds = $this->getExcludedTicketIds();
+
+        $completedQueryFiltered = clone $completedQueryOriginal;
+        if (! empty($excludedTicketIds)) {
+            $completedQueryFiltered->whereNotIn('id', $excludedTicketIds);
+        }
+
+        // Ambil aggregat dari kedua query
+        $completedAggOriginal = $completedQueryOriginal
+            ->groupBy('assigned_to')
+            ->select([
+                'assigned_to',
+                DB::raw('COUNT(*) as completed_count'),
+                DB::raw('AVG(rating) as avg_rating'),
+                DB::raw('COUNT(rating) as rating_count'),
+                DB::raw('AVG(TIMESTAMPDIFF(SECOND, created_at, completed_at)) as avg_duration_seconds'),
+            ])
+            ->get()
+            ->keyBy('assigned_to');
+
+        $completedAggFiltered = $completedQueryFiltered
             ->groupBy('assigned_to')
             ->select([
                 'assigned_to',
@@ -105,15 +140,24 @@ class OperatorPerformanceService
 
         $rows = [];
         foreach ($operators as $user) {
-            $completed = $completedAgg->get($user->id);
+            $completedOriginal = $completedAggOriginal->get($user->id);
+            $completedFiltered = $completedAggFiltered->get($user->id);
             $inProgress = $inProgressAgg->get($user->id);
 
-            $completedCount = $completed ? (int) $completed->completed_count : 0;
-            $ratingCount = $completed ? (int) $completed->rating_count : 0;
-            $avgRating = ($completed && $ratingCount > 0) ? round((float) $completed->avg_rating, 1) : null;
-            $avgDuration = ($completed && $completedCount > 0 && $completed->avg_duration_seconds !== null)
-                ? (float) $completed->avg_duration_seconds
-                : null;
+            // Dari query asli: rating count dan avg rating lengkap (untuk meets_min_ratings)
+            $origRatingCount = $completedOriginal ? (int) $completedOriginal->rating_count : 0;
+            $origAvgRating = $completedOriginal ? round((float) $completedOriginal->avg_rating, 1) : null;
+
+            // Dari query filter: rating count dan avg rating setelah exclude flag dihapus
+            $filteredRatingCount = $completedFiltered ? (int) $completedFiltered->rating_count : 0;
+            $filteredAvgRating = $completedFiltered ? round((float) $completedFiltered->avg_rating, 1) : null;
+
+            // Gunakan rating setelah exclude untuk menampilkan di UI
+            // tapi hitsung meets_min_ratings berdasarkan rating asli (total) agar operator tetap tampil
+            $ratingCount = $origRatingCount;
+            $avgRating = $filteredAvgRating;
+            $completedCount = $completedOriginal ? (int) $completedOriginal->completed_count : 0;
+
             $inProgressCount = $inProgress ? (int) $inProgress->in_progress_count : 0;
 
             $isActive = (bool) $user->is_active;
@@ -134,11 +178,11 @@ class OperatorPerformanceService
                 'is_deleted' => $isDeleted,
                 'completed' => $completedCount,
                 'in_progress' => $inProgressCount,
-                'rating' => $avgRating,
-                'rating_count' => $ratingCount,
+                'rating' => $avgRating, // Rating setelah exclude flag ditampilkan di UI
+                'rating_count' => $ratingCount, // Total rating sebelum exclude (untuk meets_min_ratings)
                 'meets_min_ratings' => $ratingCount >= $minRatings,
-                'avg_duration_seconds' => $avgDuration,
-                'avg_duration_human' => $this->formatDuration($avgDuration),
+                'avg_duration_seconds' => $completedOriginal ? (float) $completedOriginal->avg_duration_seconds : null,
+                'avg_duration_human' => $this->formatDuration($completedOriginal ? (float) $completedOriginal->avg_duration_seconds : null),
             ];
         }
 

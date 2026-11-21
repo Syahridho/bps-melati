@@ -5,7 +5,7 @@ import { useAuthRole } from '@/hooks/use-auth-role';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEcho, useEchoPublic } from '@laravel/echo-react';
-import { ClipboardCheck, ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, SettingsIcon, Users } from 'lucide-react';
+import { ClipboardCheck, ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, ScrollText, SettingsIcon, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AppLogo from '@/components/atoms/app-logo';
@@ -80,6 +80,30 @@ export function AppSidebar() {
         [user?.id, canAccessInbox],
     );
 
+    // Hitung badge audit log dari backend
+    const [auditLogBadge, setAuditLogBadge] = useState(0);
+    useEffect(() => {
+        if (isAdmin) {
+            const fetchAuditLogBadge = async () => {
+                try {
+                    const response = await fetch(route('audit-log.flags-summary'), {
+                        credentials: 'include',
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setAuditLogBadge(data.new_count ?? 0);
+                    }
+                } catch (e) {
+                    // Silent fail - badge tetap 0
+                }
+            };
+            fetchAuditLogBadge();
+            // Refresh badge setiap 30 detik
+            const intervalId = setInterval(fetchAuditLogBadge, 30000);
+            return () => clearInterval(intervalId);
+        }
+    }, [isAdmin]);
+
     const adminNavItems: NavItem[] = [
         {
             title: 'Dashboard',
@@ -128,6 +152,12 @@ export function AppSidebar() {
             title: 'Pengaturan',
             url: '/settings/application',
             icon: SettingsIcon,
+        },
+        {
+            title: 'Audit Log',
+            url: '/audit-log',
+            icon: ScrollText,
+            badge: auditLogBadge,
         },
     ];
 
