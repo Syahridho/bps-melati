@@ -47,6 +47,9 @@ export interface TicketItem {
     completed_at: string | null;
     created_at: string;
     updated_at: string;
+    rating?: number | null;
+    rating_comment?: string | null;
+    rated_at?: string | null;
     title_original?: string | null;
     content_original?: string | null;
     has_profanity?: boolean;
@@ -82,6 +85,10 @@ export interface ShowProps extends SharedData {
         created_by_name: string | null;
         closed_reason: ClosedReason | null;
         auto_close_at: string | null;
+        rating: number | null;
+        rating_comment: string | null;
+        rating_comment_original?: string | null;
+        rated_at: string | null;
         attachments: Attachment[];
         responses: TicketResponseItem[];
     };

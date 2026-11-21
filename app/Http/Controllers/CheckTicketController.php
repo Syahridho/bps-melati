@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\AutoCloseTickets;
 use App\Actions\ReplyFromReporter;
+use App\Enums\UserRole;
 use App\Events\InboxUpdated;
+use App\Events\TicketClosedByReporter;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
-use App\Enums\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -67,6 +68,9 @@ class CheckTicketController extends Controller
                     'created_at' => $t->created_at->toIso8601String(),
                     'completed_at' => $t->completed_at?->toIso8601String(),
                     'closed_reason' => $t->closed_reason,
+                    'rating' => $t->rating,
+                    'rating_comment' => $filter->censor($t->rating_comment ?? ''),
+                    'rated_at' => $t->rated_at?->toIso8601String(),
                     'auto_close_at' => AutoCloseTickets::deadlineFor($t)?->toIso8601String(),
                     'attachments' => $t->attachments->map(fn ($attachment) => [
                         'id' => $attachment->id,
@@ -189,6 +193,8 @@ class CheckTicketController extends Controller
 
         $validated = $request->validate([
             'access_code' => ['required', 'string'],
+            'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'comment' => ['nullable', 'string', 'max:'.$this->ratingCommentMax()],
         ]);
 
         if (blank($ticket->access_code)) {
@@ -202,57 +208,137 @@ class CheckTicketController extends Controller
             ])->withInput();
         }
 
+        $rating = array_key_exists('rating', $validated) && $validated['rating'] !== null && $validated['rating'] !== ''
+            ? (int) $validated['rating']
+            : null;
+
+        $comment = isset($validated['comment']) ? trim((string) $validated['comment']) : null;
+        if ($comment === '') {
+            $comment = null;
+        }
+
+        $didComplete = false;
+        $completedAt = now();
+
         if ($ticket->status !== 'selesai') {
-            $ticket->update([
-                'status' => 'selesai',
-                'completed_at' => now(),
-                'closed_reason' => 'reporter',
-            ]);
+            $didComplete = DB::transaction(function () use ($ticket, $rating, $comment, &$completedAt): bool {
+                $locked = Ticket::query()->lockForUpdate()->find($ticket->id);
 
-            Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-            Cache::forget("ticket:{$ticket->ticket_number}");
+                if ($locked === null || $locked->status === 'selesai') {
+                    return false;
+                }
 
-            // InboxUpdated -> badge & angka tab daftar Laporan Masuk.
-            // TicketUpdated -> halaman detail tiket yang sedang dibuka petugas
-            // ikut tahu tiket ini baru saja diselesaikan pelapor.
-            $context = ['ticket_id' => $ticket->id, 'ticket_number' => $ticket->ticket_number];
-
-            SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);
-            SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket), $context);
-
-            // Notifikasi laporan_selesai ke admin dan semua operator aktif
-            // ketika pelapor menandai laporan sebagai selesai.
-            $recipients = User::query()
-                ->where('is_active', true)
-                ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
-                ->pluck('id')
-                ->map(fn ($id): int => (int) $id)
-                ->all();
-
-            foreach ($recipients as $recipientId) {
-                DB::table('notifications')->insert([
-                    'id' => Str::uuid()->toString(),
-                    'type' => 'laporan_selesai',
-                    'notifiable_type' => User::class,
-                    'notifiable_id' => $recipientId,
-                    'data' => json_encode([
-                        'id' => $ticket->id,
-                        'ticket_number' => $ticket->ticket_number,
-                        'type' => $ticket->classification,
-                        'title' => 'Laporan selesai',
-                        'message' => 'Laporan telah ditandai selesai oleh pelapor.',
-                        'url' => '/dashboard/admin/completed-reports/'.$ticket->ticket_number,
-                        'actor_name' => null,
-                    ]),
-                    'read_at' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                $locked->update([
+                    'status' => 'selesai',
+                    'completed_at' => $completedAt,
+                    'closed_reason' => 'reporter',
+                    'rating' => $rating,
+                    'rating_comment' => $comment,
+                    'rated_at' => ($rating !== null || $comment !== null) ? $completedAt : null,
                 ]);
+
+                return true;
+            }, 3);
+
+            if ($didComplete) {
+                $ticket->refresh();
+                $completedAt = $ticket->completed_at ?? $completedAt;
+
+                Cache::forget('ticket_check:'.md5($ticket->ticket_number));
+                Cache::forget("ticket:{$ticket->ticket_number}");
+
+                $context = ['ticket_id' => $ticket->id, 'ticket_number' => $ticket->ticket_number];
+
+                SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);
+                SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket), $context);
+
+                $operatorUserIds = [];
+                if ($ticket->created_by) {
+                    $creator = User::find($ticket->created_by);
+                    if ($creator && ($creator->isOperator() || $creator->isOperatorTim())) {
+                        $operatorUserIds[] = (int) $ticket->created_by;
+                    }
+                }
+
+                SafeBroadcast::send('TicketClosedByReporter', fn () => TicketClosedByReporter::dispatch(
+                    ticketId: (int) $ticket->id,
+                    ticketNumber: (string) $ticket->ticket_number,
+                    status: (string) $ticket->status,
+                    rating: $ticket->rating,
+                    ratingComment: $ticket->rating_comment,
+                    ratedAt: $ticket->rated_at?->toIso8601String(),
+                    closedAt: $ticket->completed_at?->toIso8601String(),
+                    operatorUserIds: $operatorUserIds,
+                ), $context);
+
+                $recipients = User::query()
+                    ->where('is_active', true)
+                    ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
+                    ->pluck('id')
+                    ->map(fn ($id): int => (int) $id)
+                    ->all();
+
+                $notificationMessage = 'Laporan telah ditandai selesai oleh pelapor.';
+                if ($ticket->rating !== null) {
+                    $notificationMessage .= ' Rating: '.$ticket->rating.'/5.';
+                }
+
+                foreach ($recipients as $recipientId) {
+                    DB::table('notifications')->insert([
+                        'id' => Str::uuid()->toString(),
+                        'type' => 'laporan_selesai',
+                        'notifiable_type' => User::class,
+                        'notifiable_id' => $recipientId,
+                        'data' => json_encode([
+                            'id' => $ticket->id,
+                            'ticket_number' => $ticket->ticket_number,
+                            'type' => $ticket->classification,
+                            'title' => 'Laporan selesai',
+                            'message' => $notificationMessage,
+                            'url' => '/dashboard/admin/completed-reports/'.$ticket->ticket_number,
+                            'actor_name' => null,
+                            'rating' => $ticket->rating,
+                        ]),
+                        'read_at' => null,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
 
         return redirect()->back()->with('flash', [
             'success' => 'Laporan telah ditandai selesai. Terima kasih!',
         ]);
+    }
+
+    private function ratingCommentMax(): int
+    {
+        $candidates = [
+            config('ticket.rating_comment_max'),
+            config('ticket.rating_comment_max_length'),
+            config('ticket.rating.comment_max'),
+            config('ticket.rating.comment_max_length'),
+            config('ticket.rating.max_comment_length'),
+            config('rating.comment_max'),
+            config('rating.comment_max_length'),
+            config('rating.max_comment_length'),
+            config('rating.rating_comment_max'),
+            config('tickets.rating_comment_max'),
+            config('tickets.rating_comment_max_length'),
+            config('tickets.rating.comment_max'),
+            config('feedback.rating_comment_max'),
+            config('feedback.comment_max'),
+            config('feedback.comment_max_length'),
+            config('feedback.max_comment_length'),
+        ];
+
+        foreach ($candidates as $value) {
+            if (is_numeric($value) && (int) $value > 0) {
+                return (int) $value;
+            }
+        }
+
+        return 1000;
     }
 }

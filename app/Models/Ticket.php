@@ -45,6 +45,9 @@ class Ticket extends Model
         'flagged_at',
         'flagged_by',
         'flag_note',
+        'rating',
+        'rating_comment',
+        'rated_at',
     ];
 
     protected function casts(): array
@@ -59,6 +62,8 @@ class Ticket extends Model
             'version' => 'integer',
             'is_flagged' => 'boolean',
             'flagged_at' => 'datetime',
+            'rating' => 'integer',
+            'rated_at' => 'datetime',
         ];
     }
 

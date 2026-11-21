@@ -4,9 +4,11 @@ import { useId } from 'react';
 
 interface CompletedStampProps {
     completedAt: string; // ISO string
+    rating?: number | null;
 }
 
-export default function CompletedStamp({ completedAt }: CompletedStampProps) {
+export default function CompletedStamp({ completedAt, rating }: CompletedStampProps) {
+    const starCount = rating && rating >= 1 && rating <= 5 ? rating : 0;
     // id unik untuk filter SVG (titik dua dari useId dibuang supaya aman dipakai di url(#...))
     const filterId = `stamp-rough-${useId().replace(/:/g, '')}`;
 
@@ -63,6 +65,22 @@ export default function CompletedStamp({ completedAt }: CompletedStampProps) {
                             >
                                 SELESAI
                             </text>
+                            {starCount > 0 && (
+                                <text
+                                    x="100"
+                                    y="72"
+                                    dominantBaseline="middle"
+                                    textAnchor="middle"
+                                    fontSize="26"
+                                    fontWeight="900"
+                                    letterSpacing="2"
+                                    stroke="none"
+                                    className="fill-red-600 dark:fill-red-500"
+                                    style={{ fontFamily: "Impact, 'Arial Black', system-ui, sans-serif" }}
+                                >
+                                    {'★'.repeat(starCount)}
+                                </text>
+                            )}
                         </g>
                     </svg>
                 </div>

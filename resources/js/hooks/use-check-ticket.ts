@@ -48,7 +48,7 @@ export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail
         setTimeout(() => setCopied(false), 2000);
     }, []);
 
-    function handleComplete(accessCodeOverride?: string) {
+    function handleComplete(accessCodeOverride?: string, rating?: number | null, comment?: string | null) {
         if (!ticket) return;
         setCompleting(true);
         const code = accessCodeOverride || ticket.access_code || getStoredAccessCode() || '';
@@ -65,6 +65,8 @@ export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail
             route('tickets.check.complete', { ticketNumber: ticket.ticket_number }),
             {
                 access_code: code,
+                rating: rating ?? null,
+                comment: comment ?? null,
             },
             {
                 preserveScroll: true,

@@ -12,7 +12,7 @@ import { useCheckReplyForm } from '@/hooks/use-check-reply-form';
 import { useCheckTicket } from '@/hooks/use-check-ticket';
 import { type Attachment, type CheckPageProps } from '@/types/check';
 import { Head, usePage } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Star } from 'lucide-react';
 import { useState } from 'react';
 
 export default function CheckView() {
@@ -97,6 +97,33 @@ export default function CheckView() {
                     {searched && ticket && (
                         <div className="space-y-6">
                             <CheckTicketSummary ticket={ticket} copied={copied} onCopy={handleCopy} onPreviewAttachment={handlePreviewAttachment} />
+
+                            {ticket.status === 'selesai' && (ticket.rating != null || (ticket.rating_comment && ticket.rating_comment.trim() !== '')) && (
+                                <Card className="border-emerald-500/30 bg-emerald-500/5">
+                                    <CardContent className="space-y-2 p-6">
+                                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                                            Terima kasih atas penilaian Anda.
+                                        </p>
+                                        {ticket.rating != null && (
+                                            <div className="flex items-center gap-1" aria-label={`Rating ${ticket.rating} dari 5`}>
+                                                {[1, 2, 3, 4, 5].map((value) => (
+                                                    <Star
+                                                        key={value}
+                                                        className={
+                                                            value <= (ticket.rating ?? 0)
+                                                                ? 'h-5 w-5 fill-amber-400 text-amber-400'
+                                                                : 'text-muted-foreground h-5 w-5'
+                                                        }
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                        {ticket.rating_comment && ticket.rating_comment.trim() !== '' && (
+                                            <p className="text-muted-foreground text-sm whitespace-pre-wrap">{ticket.rating_comment}</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
 
                             <CheckConversationCard
                                 ticket={ticket}

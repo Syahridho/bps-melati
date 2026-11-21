@@ -48,6 +48,10 @@ export interface TicketDetailData {
     created_by_name?: string | null;
     completed_at?: string | null;
     closed_reason?: string | null;
+    rating?: number | null;
+    rating_comment?: string | null;
+    rating_comment_original?: string | null;
+    rated_at?: string | null;
     is_pengawasan?: boolean;
     pengawasan_at?: string | null;
     pengawasan_by_name?: string | null;

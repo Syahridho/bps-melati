@@ -61,6 +61,9 @@ class TicketUpdated implements ShouldBroadcastNow
             'version' => $this->ticket->version,
             'actor_id' => $this->actorId,
             'completed_at' => $this->ticket->completed_at?->toIso8601String(),
+            'rating' => $this->ticket->rating,
+            'rating_comment' => $this->ticket->rating_comment,
+            'rated_at' => $this->ticket->rated_at?->toIso8601String(),
         ];
 
         if ($this->response !== null) {

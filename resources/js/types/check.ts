@@ -39,6 +39,9 @@ export interface TicketDetail {
     created_at: string;
     completed_at: string | null;
     closed_reason: 'reporter' | 'staff' | 'auto_close' | null;
+    rating: number | null;
+    rating_comment: string | null;
+    rated_at: string | null;
     auto_close_at: string | null;
     has_profanity?: boolean;
     attachments: Attachment[];
