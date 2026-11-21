@@ -50,6 +50,9 @@
             page-break-before: always;
             break-before: page;
             margin-top: 5mm;
+            /* Jangan paksa background ikut tercetak (hemat tinta). */
+            -webkit-print-color-adjust: economy;
+            print-color-adjust: economy;
         }
         .lampiran-header {
             border-bottom: 2pt solid #000;
@@ -67,38 +70,34 @@
         }
         .lampiran-subjudul {
             font-size: 8.5pt;
-            color: #333;
+            color: #222;
             margin-top: 1mm;
         }
         .lampiran-warning {
-            border: 1pt solid #b45309;
-            background-color: #fffbeb;
+            border: 1pt solid #000;
             padding: 2.5mm 3.5mm;
             font-size: 7.5pt;
-            color: #92400e;
+            color: #000;
             margin-bottom: 4mm;
             page-break-inside: avoid;
             break-inside: avoid;
         }
         .lampiran-empty {
-            border: 1pt dashed #888;
+            border: 1pt dashed #666;
             padding: 8mm;
             text-align: center;
             font-size: 8.5pt;
-            color: #555;
+            color: #222;
             font-style: italic;
-            background: #fafafa;
         }
         .chat-card {
             border: 0.75pt solid #555;
             margin-bottom: 5mm;
-            background: #ffffff;
             page-break-inside: auto;
             break-inside: auto;
         }
         .chat-card-header {
-            background: #f1f5f9;
-            border-bottom: 0.75pt solid #555;
+            border-bottom: 0.75pt solid #000;
             padding: 2.5mm 3.5mm;
             page-break-after: avoid;
             break-after: avoid;
@@ -117,7 +116,7 @@
         }
         .chat-ticket-date {
             font-size: 7.5pt;
-            color: #444;
+            color: #222;
         }
         .chat-ticket-subject {
             font-size: 8.5pt;
@@ -129,7 +128,7 @@
         }
         .chat-ticket-meta {
             font-size: 7pt;
-            color: #444;
+            color: #222;
             margin-top: 1mm;
         }
         .chat-card-body {
@@ -143,22 +142,22 @@
         .chat-message-row:last-child {
             margin-bottom: 0;
         }
+        /* Pesan pelapor: garis kiri tipis sebagai penanda, tanpa fill. */
         .msg-pelapor {
-            border: 0.75pt solid #94a3b8;
-            border-left: 3.5pt solid #1e293b;
-            background: #f8fafc;
+            border: 0.75pt solid #777;
+            border-left: 2pt solid #000;
             padding: 2mm 3mm;
         }
+        /* Pesan petugas: indentasi + garis kiri lebih tebal, tanpa fill. */
         .msg-petugas {
-            border: 0.75pt solid #94a3b8;
-            border-left: 3.5pt solid #047857;
-            background: #f0fdf4;
+            border: 0.75pt solid #777;
+            border-left: 3.5pt solid #000;
+            margin-left: 6mm;
             padding: 2mm 3mm;
         }
         .msg-sistem {
-            border: 0.75pt dashed #94a3b8;
-            border-left: 3.5pt solid #64748b;
-            background: #f8fafc;
+            border: 0.75pt dashed #777;
+            border-left: 2pt dashed #000;
             padding: 1.5mm 2.5mm;
         }
         .msg-header {
@@ -167,7 +166,7 @@
             align-items: center;
             font-size: 7pt;
             margin-bottom: 1.5mm;
-            border-bottom: 0.5pt solid #cbd5e1;
+            border-bottom: 0.5pt solid #999;
             padding-bottom: 0.8mm;
         }
         .msg-badge {
@@ -179,18 +178,13 @@
             padding: 0.5px 3.5px;
             border: 0.5pt solid #000;
             border-radius: 2px;
+            color: #000;
         }
-        .msg-badge-pelapor {
-            background: #e2e8f0;
-            color: #0f172a;
-        }
-        .msg-badge-petugas {
-            background: #dcfce7;
-            color: #14532d;
-        }
+        .msg-badge-pelapor,
+        .msg-badge-petugas,
         .msg-badge-sistem {
-            background: #f1f5f9;
-            color: #334155;
+            background: transparent;
+            color: #000;
         }
         .msg-sender-name {
             font-weight: bold;
@@ -200,7 +194,7 @@
         }
         .msg-time {
             font-size: 7pt;
-            color: #555;
+            color: #222;
         }
         .msg-content {
             font-size: 7.5pt;
@@ -213,7 +207,7 @@
         .msg-attachment-info {
             margin-top: 1.2mm;
             font-size: 7pt;
-            color: #475569;
+            color: #222;
             font-style: italic;
         }
         @media screen {
