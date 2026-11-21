@@ -15,6 +15,7 @@ interface CheckCompleteDialogProps {
     onConfirm: (accessCode?: string, rating?: number | null, comment?: string | null) => void;
     error?: string;
     commentMaxLength?: number;
+    ratingEnabled?: boolean;
 }
 
 const RATING_LABELS: Record<number, string> = {
@@ -34,6 +35,7 @@ export function CheckCompleteDialog({
     onConfirm,
     error,
     commentMaxLength = 1000,
+    ratingEnabled = true,
 }: CheckCompleteDialogProps) {
     const [accessCode, setAccessCode] = useState(defaultAccessCode);
     const [rating, setRating] = useState<number | null>(null);
@@ -106,6 +108,8 @@ export function CheckCompleteDialog({
                     </div>
                 )}
 
+                {ratingEnabled && (
+                    <>
                 <div className="space-y-2 py-2">
                     <Label>Rating (opsional)</Label>
                     <div
@@ -163,6 +167,8 @@ export function CheckCompleteDialog({
                         {comment.length}/{commentMaxLength}
                     </p>
                 </div>
+                    </>
+                )}
 
                 <DialogFooter className="mt-4 flex flex-row gap-2 sm:gap-0">
                     <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => onOpenChange(false)} disabled={completing}>

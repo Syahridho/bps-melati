@@ -13,6 +13,7 @@ use App\Mail\TicketCreatedMail;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\AppSettings;
 use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\JsonResponse;
@@ -366,6 +367,11 @@ class TicketApiController extends Controller
 
         $comment = isset($validated['comment']) ? trim((string) $validated['comment']) : null;
         if ($comment === '') {
+            $comment = null;
+        }
+
+        if (! AppSettings::ratingEnabled()) {
+            $rating = null;
             $comment = null;
         }
 

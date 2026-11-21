@@ -112,3 +112,12 @@ Broadcast::channel('laporan.operator.{userId}', function (User $user, int $userI
     }
     return (int) $user->id === (int) $userId && $user->is_active === true;
 });
+
+/**
+ * Kanal privat staf (admin, operator, operator_tim) untuk pembaruan pengaturan.
+ */
+foreach (['staff', 'settings', 'settings.staff', 'dashboard.staff'] as $staffChannel) {
+    Broadcast::channel($staffChannel, function (User $user) {
+        return ($user->isAdmin() || $user->isOperator() || $user->isOperatorTim()) && $user->is_active === true;
+    });
+}

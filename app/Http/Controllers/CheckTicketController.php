@@ -10,6 +10,7 @@ use App\Events\TicketClosedByReporter;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\AppSettings;
 use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\RedirectResponse;
@@ -141,6 +142,8 @@ class CheckTicketController extends Controller
             'ticketNumber' => $ticketNumber,
             'ticket' => $ticket,
             'searched' => $searched,
+            'ratingEnabled' => AppSettings::ratingEnabled(),
+            'rating_enabled' => AppSettings::ratingEnabled(),
         ]);
     }
 
@@ -214,6 +217,11 @@ class CheckTicketController extends Controller
 
         $comment = isset($validated['comment']) ? trim((string) $validated['comment']) : null;
         if ($comment === '') {
+            $comment = null;
+        }
+
+        if (! AppSettings::ratingEnabled()) {
+            $rating = null;
             $comment = null;
         }
 

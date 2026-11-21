@@ -9,10 +9,13 @@ export interface SettingValues {
     auto_close_aspirasi_days: string;
     auto_close_permintaan_informasi_days: string;
     kadar_pengawasan_hari: string;
+    rating_enabled?: boolean;
 }
 
 export interface SettingPageProps extends SharedData {
     settings: SettingValues;
+    ratingEnabled?: boolean;
+    rating_enabled?: boolean;
     flash: {
         success?: string;
     };

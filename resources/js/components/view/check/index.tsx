@@ -16,7 +16,7 @@ import { AlertCircle, CheckCircle2, Star } from 'lucide-react';
 import { useState } from 'react';
 
 export default function CheckView() {
-    const { ticketNumber, ticket, searched, flash, errors: pageErrors } = usePage<CheckPageProps>().props;
+    const { ticketNumber, ticket, searched, flash, errors: pageErrors, ratingEnabled, rating_enabled } = usePage<CheckPageProps>().props;
 
     const {
         inputQuery,
@@ -167,6 +167,7 @@ export default function CheckView() {
                         ticketNumber={ticket.ticket_number}
                         defaultAccessCode={ticket.access_code}
                         error={pageErrors?.access_code || pageErrors?.message}
+                        ratingEnabled={ratingEnabled ?? rating_enabled ?? false}
                     />
                 )}
 

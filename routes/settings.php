@@ -27,6 +27,18 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('settings/application', [SettingController::class, 'index'])->name('settings.application.edit');
     Route::post('settings/application', [SettingController::class, 'update'])->name('settings.application.update');
+    Route::match(['patch', 'post'], 'settings/application/rating', [SettingController::class, 'updateRating'])
+        ->name('settings.application.rating')
+        ->middleware('throttle:30,1');
+    Route::match(['patch', 'post'], 'settings/application/rating-enabled', [SettingController::class, 'updateRating'])
+        ->name('settings.application.rating-enabled')
+        ->middleware('throttle:30,1');
+    Route::match(['patch', 'post'], 'settings/rating', [SettingController::class, 'updateRating'])
+        ->name('settings.rating')
+        ->middleware('throttle:30,1');
+    Route::match(['patch', 'post'], 'settings/rating/toggle', [SettingController::class, 'updateRating'])
+        ->name('settings.rating.toggle')
+        ->middleware('throttle:30,1');
     Route::get('settings/api', [ApiController::class, 'index'])->name('settings.api');
     Route::resource('settings/sumber-kanal', ChannelController::class)
         ->parameters(['sumber-kanal' => 'channel'])
