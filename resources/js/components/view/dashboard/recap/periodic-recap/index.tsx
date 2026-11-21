@@ -10,6 +10,7 @@ import AdminPage from '@/layouts/dashboard/page';
 import { REKAP_TABLE_NOTES, REKAP_VIEW_MODE_RINGKAS } from '@/lib/rekap-constants';
 import { PeriodicRecapProps } from '@/types/recap';
 import { Info } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const PRINT_FRAME_ID = 'periodic-recap-print-frame';
 
@@ -24,12 +25,15 @@ export default function PeriodicRecapView({
     periodeLabel,
     tampilan,
     chat = '0',
+    chat_limit = '500',
+    chat_limit_max = 2000,
+    chat_warning_threshold = 500,
 }: PeriodicRecapProps) {
     const monthsParam = selectedMonths.join(',');
 
     const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleParamChange, handleViewModeChange, handlePrint } = useRekapFilters({
         routeKey: 'periodic-recap',
-        queryParams: { year, months: monthsParam, chat },
+        queryParams: { year, months: monthsParam, chat, chat_limit },
         frameId: PRINT_FRAME_ID,
         viewMode: tampilan,
         exportPrefix: 'Rekap-Periodik',
@@ -39,6 +43,9 @@ export default function PeriodicRecapView({
     const handleMonthsChange = (newMonths: string[]) => {
         handleParamChange('months', newMonths.join(','));
     };
+
+    const chatLimitNumber = Number.parseInt(chat_limit, 10) || 500;
+    const showChatLimitWarning = chat !== '0' && chatLimitNumber > chat_warning_threshold;
 
     return (
         <AdminPage
@@ -62,6 +69,29 @@ export default function PeriodicRecapView({
                             monthOptions={monthOptions}
                             onMonthsChange={handleMonthsChange}
                         />
+
+                        {chat !== '0' && (
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="chat-limit" className="text-sm whitespace-nowrap">
+                                    Jumlah chat
+                                </label>
+                                <Input
+                                    id="chat-limit"
+                                    type="number"
+                                    min={1}
+                                    max={chat_limit_max}
+                                    step={1}
+                                    value={chat_limit}
+                                    className="w-24"
+                                    onChange={(e) => {
+                                        const raw = e.target.value;
+                                        const parsed = Number.parseInt(raw, 10);
+                                        const next = Number.isFinite(parsed) && parsed >= 1 ? Math.min(parsed, chat_limit_max) : 500;
+                                        handleParamChange('chat_limit', next);
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         <RekapChatSelect
                             value={chat === '0' ? '0' : '1'}
@@ -104,6 +134,15 @@ export default function PeriodicRecapView({
                             <strong>Perhatian Privasi:</strong> PDF akan memuat data pelapor dan seluruh isi percakapan tiket. Gunakan dengan
                             hati-hati untuk menjaga kerahasiaan data pelapor. Chat hanya ditampilkan pada export PDF (tabel rekap dan Excel tetap
                             tanpa chat).
+                        </span>
+                    </div>
+                )}
+
+                {showChatLimitWarning && (
+                    <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+                        <Info className="size-4 shrink-0" />
+                        <span>
+                            Jumlah chat lebih dari {chat_warning_threshold} dapat membuat pratinjau dan cetak PDF menjadi lambat atau gagal. Disarankan mempersempit periode (bulan) atau mengurangi jumlah chat.
                         </span>
                     </div>
                 )}
