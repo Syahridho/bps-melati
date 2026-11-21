@@ -39,7 +39,7 @@ interface AuditFlag {
 
 }
 
-export function AuditLogPage() {
+export default function AuditLogPage() {
   const { user, isAdmin } = useAuthRole();
   const { axios } = usePage().props as any;
 
