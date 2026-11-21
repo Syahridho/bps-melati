@@ -1,6 +1,7 @@
 import { AssignmentModeCard } from '@/components/organisms/settings/assignment-mode-card';
 import { PengaturanAutoCloseFields } from '@/components/organisms/settings/settings-auto-close-fields';
 import { PengaturanSignatureFields } from '@/components/organisms/settings/settings-signature-fields';
+import RatingSetting from '@/components/organisms/settings/rating-setting';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { usePengaturanForm } from '@/hooks/use-pengaturan-form';
@@ -9,8 +10,16 @@ import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
 import { type SettingPageProps } from '@/types/settings';
 import { Transition } from '@headlessui/react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useEcho } from '@laravel/echo-react';
 import { CheckCircle2, LoaderCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+interface RatingSettingChangedEvent {
+    enabled: boolean;
+    changed_by?: string | null;
+    changed_at?: string | null;
+}
 
 export default function ApplicationSettingsView() {
     const { settings, assignmentMode, flash } = usePage<SettingPageProps>().props;
@@ -26,6 +35,34 @@ export default function ApplicationSettingsView() {
         settings,
         flashSuccess: flash?.success,
     });
+
+    const [ratingEnabled, setRatingEnabled] = useState<boolean>(settings?.rating_enabled ?? false);
+    const [ratingProcessing, setRatingProcessing] = useState(false);
+
+    useEffect(() => {
+        setRatingEnabled(settings?.rating_enabled ?? false);
+    }, [settings?.rating_enabled]);
+
+    const handleRatingToggle = (checked: boolean) => {
+        router.patch(
+            route('settings.application.rating'),
+            { rating_enabled: checked },
+            {
+                preserveScroll: true,
+                onStart: () => setRatingProcessing(true),
+                onFinish: () => setRatingProcessing(false),
+            },
+        );
+    };
+
+    useEcho<RatingSettingChangedEvent>(
+        'staff',
+        '.rating.setting.changed',
+        (event) => {
+            setRatingEnabled(event.enabled);
+        },
+        [],
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -45,6 +82,10 @@ export default function ApplicationSettingsView() {
                     <Separator />
 
                     <PengaturanSignatureFields data={data} setData={setData} errors={errors} />
+
+                    <Separator />
+
+                    <RatingSetting enabled={ratingEnabled} processing={ratingProcessing} onToggle={handleRatingToggle} />
 
                     <div className="flex items-center gap-4 pt-2">
                         <Button disabled={processing}>

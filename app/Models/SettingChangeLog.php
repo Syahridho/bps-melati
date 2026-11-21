@@ -46,3 +46,4 @@ class SettingChangeLog extends Model
             ->where('scheduled_at', '<=', now());
     }
 }
+

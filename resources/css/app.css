@@ -94,7 +94,23 @@
     }
 }
 
+@keyframes star-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0) rotate(-18deg);
+    }
+    55% {
+        opacity: 1;
+        transform: scale(1.35) rotate(8deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
 :root {
+    --rating-star: #FACC15;
     --footer-bg: #eef4fb;
     --footer-foreground: #0f2a47;
     --footer-muted: #475569;
@@ -136,6 +152,7 @@
 }
 
 .dark {
+    --rating-star: #FACC15;
     --footer-bg: hsl(224, 18%, 10%);
     --footer-foreground: hsl(210, 20%, 95%);
     --footer-muted: hsl(215, 15%, 70%);

@@ -116,6 +116,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('operator-management/{operator}', [OperatorController::class, 'update'])->name('operator.update');
         Route::delete('operator-management/{operator}', [OperatorController::class, 'destroy'])->name('operator.destroy');
         Route::post('operator-management/{operator}/force-logout', [OperatorController::class, 'forceLogout'])->name('operator.force-logout');
+        Route::get('operator-management/performance', [OperatorController::class, 'performance'])->name('operator.performance');
     });
 
     Route::middleware('role:operator,operator_tim')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {

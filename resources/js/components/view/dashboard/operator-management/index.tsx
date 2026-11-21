@@ -1,5 +1,7 @@
 import { OperatorTable } from '@/components/organisms/operator/operator-table';
+import OperatorPerformanceTab from '@/components/view/dashboard/operator-management/performance-tab';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OperatorFormDialog from '@/components/view/dashboard/operator-management/modal-add-operator';
 import OperatorDeleteDialog from '@/components/view/dashboard/operator-management/modal-delete-operator';
 import OperatorFormDialogUpdate from '@/components/view/dashboard/operator-management/modal-update-operator';
@@ -8,11 +10,17 @@ import { useOperatorPresence } from '@/hooks/use-operator-presence';
 import AdminPage from '@/layouts/dashboard/page';
 import { type OperatorPageProps } from '@/types/operator';
 import { Head, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import { CheckCircle2, UserPlus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
 export default function OperatorManagementView() {
     const { auth, operators, filters, flash } = usePage<OperatorPageProps>().props;
+
+    const initialTab = typeof window !== 'undefined'
+        ? (new URLSearchParams(window.location.search).get('tab') ?? 'daftar')
+        : 'daftar';
+    const [activeTab, setActiveTab] = useState<string>(initialTab === 'kinerja' ? 'kinerja' : 'daftar');
 
     const {
         search,
@@ -86,19 +94,39 @@ export default function OperatorManagementView() {
                     </div>
                 )}
 
-                <OperatorTable
-                    operators={displayOperators}
-                    authUserId={auth.user.id}
-                    search={search}
-                    roles={filters.roles}
-                    availableRoles={filters.available_roles}
-                    onSearchChange={handleSearchChange}
-                    onRolesChange={handleRolesChange}
-                    onPerPageChange={handlePerPageChange}
-                    onEdit={openEditModal}
-                    onForceLogout={handleForceLogout}
-                    onDelete={openDeleteModal}
-                />
+                <Tabs value={activeTab} onValueChange={(v) => {
+                    setActiveTab(v);
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', v);
+                    window.history.replaceState({}, '', url.toString());
+                }}>
+                    <TabsList>
+                        <TabsTrigger value="daftar">Daftar Operator</TabsTrigger>
+                        {auth.user.role === 'admin' && (
+                            <TabsTrigger value="kinerja">Kinerja</TabsTrigger>
+                        )}
+                    </TabsList>
+                    <TabsContent value="daftar" className="mt-4">
+                        <OperatorTable
+                            operators={displayOperators}
+                            authUserId={auth.user.id}
+                            search={search}
+                            roles={filters.roles}
+                            availableRoles={filters.available_roles}
+                            onSearchChange={handleSearchChange}
+                            onRolesChange={handleRolesChange}
+                            onPerPageChange={handlePerPageChange}
+                            onEdit={openEditModal}
+                            onForceLogout={handleForceLogout}
+                            onDelete={openDeleteModal}
+                        />
+                    </TabsContent>
+                    {auth.user.role === 'admin' && (
+                        <TabsContent value="kinerja" className="mt-4">
+                            <OperatorPerformanceTab active={activeTab === 'kinerja'} />
+                        </TabsContent>
+                    )}
+                </Tabs>
             </div>
 
             {/* Modal Tambah Pengguna */}

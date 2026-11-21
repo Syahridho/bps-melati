@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\SettingChangeLog;
 use App\Services\AssignmentModeService;
+use App\Services\RatingSettingService;
+use App\Support\AppSettings;
 use App\Support\DashboardStats;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,7 +65,9 @@ class SettingController extends Controller
                 'auto_close_aspirasi_days' => Setting::get('auto_close_aspirasi_days', '1'),
                 'auto_close_permintaan_informasi_days' => Setting::get('auto_close_permintaan_informasi_days', '5'),
                 'kadar_pengawasan_hari' => Setting::get('kadar_pengawasan_hari', '30'),
+                'rating_enabled' => AppSettings::ratingEnabled(),
             ],
+            'ratingEnabled' => AppSettings::ratingEnabled(),
         ]);
     }
 
@@ -80,6 +84,7 @@ class SettingController extends Controller
             'auto_close_aspirasi_days' => ['required', 'integer', 'min:0', 'max:365'],
             'auto_close_permintaan_informasi_days' => ['required', 'integer', 'min:0', 'max:365'],
             'kadar_pengawasan_hari' => ['required', 'integer', 'min:0', 'max:365'],
+            'rating_enabled' => ['sometimes', 'boolean'],
         ], [
             'auto_close_pengaduan_days.min' => 'Batas waktu pengaduan minimal 0 hari. Isi 0 untuk menonaktifkan.',
             'auto_close_aspirasi_days.min' => 'Batas waktu aspirasi minimal 0 hari. Isi 0 untuk menonaktifkan.',
@@ -96,7 +101,14 @@ class SettingController extends Controller
         ]);
 
         foreach ($validated as $key => $value) {
+            if ($key === 'rating_enabled') {
+                continue;
+            }
             Setting::set($key, is_bool($value) ? ($value ? '1' : '0') : (string) $value);
+        }
+
+        if (array_key_exists('rating_enabled', $validated)) {
+            RatingSettingService::setRatingEnabled((bool) $validated['rating_enabled'], $request->user());
         }
 
         // Bump versi cache dashboard agar saat setting diubah, payload langsung sinkron
@@ -108,8 +120,24 @@ class SettingController extends Controller
         ]);
     }
 
-    public function indexAppearce()
+    /**
+     * Perbarui pengaturan penilaian pelapor (hanya admin).
+     */
+    public function updateRating(\Illuminate\Http\Request $request): \Illuminate\Http\RedirectResponse
     {
-        return Inertia::render('settings/appearance/index');
+        $validated = $request->validate([
+            'rating_enabled' => ['required', 'boolean'],
+        ], [
+            'rating_enabled.required' => 'Pengaturan penilaian pelapor wajib diisi.',
+            'rating_enabled.boolean' => 'Pengaturan penilaian pelapor harus bernilai ya atau tidak.',
+        ]);
+
+        RatingSettingService::setRatingEnabled((bool) $validated['rating_enabled'], $request->user());
+
+        return back();
+    }
+
+    public function indexAppearce() {
+         return Inertia::render('settings/appearance/index');
     }
 }

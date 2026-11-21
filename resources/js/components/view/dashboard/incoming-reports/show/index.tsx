@@ -68,6 +68,7 @@ export default function ShowIncomingReportsView() {
     const [responses, setResponses] = useState<TicketResponseItem[]>(ticket.responses);
     const [ticketStatus, setTicketStatus] = useState<Status>(ticket.status);
     const [completedAt, setCompletedAt] = useState<string | null>(ticket.completed_at ?? null);
+    const [rating, setRating] = useState<number | null>(ticket.rating ?? null);
     const [ticketVersion, setTicketVersion] = useState<number>(ticket.version ?? 0);
     const [highlightLast, setHighlightLast] = useState(false);
     const [conflict, setConflict] = useState<ReplyConflict | null>(flash?.conflict ?? null);
@@ -123,6 +124,7 @@ export default function ShowIncomingReportsView() {
         setResponses(ticket.responses);
         setTicketStatus(ticket.status);
         setCompletedAt(ticket.completed_at ?? null);
+        setRating(ticket.rating ?? null);
         setTicketVersion(ticket.version ?? 0);
     }, [ticket]);
 
@@ -227,8 +229,9 @@ export default function ShowIncomingReportsView() {
             setTicketStatus(status);
             setTicketVersion((prev) => Math.max(prev, version));
         },
-        onCompleted: (eventCompletedAt) => {
+        onCompleted: (eventCompletedAt, eventRating) => {
             setCompletedAt(eventCompletedAt ?? new Date().toISOString());
+            setRating(eventRating ?? null);
             setShowReplyForm(false);
             setPendingNotice(null);
             setSuccessMessage('Pelapor menandai laporan ini selesai.');
@@ -475,7 +478,7 @@ export default function ShowIncomingReportsView() {
 
                 <TicketInfoGrid fields={infoFields} />
 
-                {ticketStatus === 'selesai' && completedAt && <CompletedStamp completedAt={completedAt} />}
+                {ticketStatus === 'selesai' && completedAt && <CompletedStamp completedAt={completedAt} rating={rating} />}
 
                 <TicketContentCard
                     title={detailData.title}

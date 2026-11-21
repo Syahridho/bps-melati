@@ -169,7 +169,39 @@ export default function ShowCompletedReportsView() {
 
                 <TicketInfoGrid fields={infoFields} />
                 {/* Completed stamp */}
-                {detailData.completed_at && <CompletedStamp completedAt={detailData.completed_at} />}
+                {detailData.completed_at && <CompletedStamp completedAt={detailData.completed_at} rating={detailData.rating} />}
+
+                {(detailData.rating != null || (detailData.rating_comment && String(detailData.rating_comment).trim() !== '')) && (
+                    <div className="mx-4 mb-4 rounded-md border border-amber-500/30 bg-amber-500/5 p-4 sm:mx-6">
+                        <h3 className="mb-2 text-sm font-semibold text-amber-800 dark:text-amber-300">Penilaian Pelapor</h3>
+                        {detailData.rating != null && (
+                            <div className="mb-1 flex items-center gap-1" aria-label={`Rating ${detailData.rating} dari 5`}>
+                                {[1, 2, 3, 4, 5].map((value) => (
+                                    <span
+                                        key={value}
+                                        className={
+                                            value <= (detailData.rating ?? 0)
+                                                ? 'text-[var(--rating-star)]'
+                                                : 'text-muted-foreground/40'
+                                        }
+                                    >
+                                        {value <= (detailData.rating ?? 0) ? '★' : '☆'}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                        {detailData.rated_at && (
+                            <p className="text-muted-foreground mb-2 text-xs">{formatFullDate(detailData.rated_at)}</p>
+                        )}
+                        {(() => {
+                            const commentText = showOriginal
+                                ? detailData.rating_comment_original
+                                : detailData.rating_comment;
+                            if (!commentText || String(commentText).trim() === '') return null;
+                            return <p className="text-foreground text-sm whitespace-pre-wrap">{commentText}</p>;
+                        })()}
+                    </div>
+                )}
 
                 <TicketContentCard
                     title={detailData.title}

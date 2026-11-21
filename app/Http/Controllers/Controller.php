@@ -39,17 +39,21 @@ abstract class Controller
         $title = $ticket->title ?? '';
         $content = $ticket->content ?? '';
         $flagNote = $ticket->flag_note ?? '';
+        $ratingComment = $ticket->rating_comment ?? '';
 
         return [
             'title' => $filter->censor($title),
             'content' => $filter->censor($content),
             'flag_note' => $filter->censor($flagNote),
+            'rating_comment' => $filter->censor($ratingComment),
             'title_original' => $isStaff ? $title : null,
             'content_original' => $isStaff ? $content : null,
             'flag_note_original' => $isStaff ? $flagNote : null,
+            'rating_comment_original' => $isStaff ? $ratingComment : null,
             'has_profanity' => $filter->contains($title)
                 || $filter->contains($content)
-                || $filter->contains($flagNote),
+                || $filter->contains($flagNote)
+                || $filter->contains($ratingComment),
         ];
     }
 
@@ -92,6 +96,9 @@ abstract class Controller
             'is_orphaned' => $ticket->isOrphaned(),
             'completed_at' => $ticket->completed_at?->toIso8601String(),
             'closed_reason' => $ticket->closed_reason,
+            'rating' => $ticket->rating,
+            'rating_comment' => $ticket->rating_comment,
+            'rated_at' => $ticket->rated_at?->toIso8601String(),
             'is_pengawasan' => (bool) $ticket->is_pengawasan,
             'pengawasan_at' => $ticket->pengawasan_at?->toIso8601String(),
             'pengawasan_by_name' => $ticket->pengawasanBy?->name,

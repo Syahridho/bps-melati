@@ -48,6 +48,9 @@ class Ticket extends Model
         'flagged_at',
         'flagged_by',
         'flag_note',
+        'rating',
+        'rating_comment',
+        'rated_at',
     ];
 
     protected function casts(): array
@@ -63,6 +66,9 @@ class Ticket extends Model
             'version' => 'integer',
             'is_flagged' => 'boolean',
             'flagged_at' => 'datetime',
+            'rating' => 'integer',
+            'rated_at' => 'datetime',
+            'assigned_at' => 'datetime',
         ];
     }
 
@@ -76,9 +82,14 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'created_by')->withTrashed();
     }
 
-    public function assignedTo(): BelongsTo
+public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to')->withTrashed();
+    }
+
+    public function assignee(): BelongsTo
+    {
+        return $this->assignedTo();
     }
 
     public function assignmentLogs(): HasMany
