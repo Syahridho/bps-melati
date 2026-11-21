@@ -384,7 +384,7 @@
 
             @if ($chatLimitReached ?? false)
                 <div class="lampiran-warning">
-                    <strong>Perhatian:</strong> Menampilkan {{ count($chatTickets) }} dari total {{ $chatTotalCount }} tiket dalam periode ini karena batas kapasitas dokumen. Untuk melihat percakapan selengkapnya, filter periode bulan yang lebih spesifik.
+                    <strong>Perhatian:</strong> Menampilkan {{ count($chatTickets) }} dari total {{ $chatTotalCount }} tiket dalam periode ini karena batas jumlah chat yang dipilih. Untuk melihat percakapan selengkapnya, filter periode bulan yang lebih spesifik atau tingkatkan jumlah chat.
                 </div>
             @endif
 

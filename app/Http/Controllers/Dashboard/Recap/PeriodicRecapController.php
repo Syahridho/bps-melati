@@ -10,6 +10,7 @@ use App\Support\RekapCache;
 use App\Support\RekapReport;
 use App\Support\RekapYears;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -23,18 +24,19 @@ class PeriodicRecapController extends Controller
         9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
     ];
 
-    /** Batas aman jumlah tiket yang dimuat percakapannya pada export PDF */
-    private const MAX_CHAT_TICKETS = 500;
+    /** Fallback ketika config tidak tersedia. */
+    private const FALLBACK_CHAT_LIMIT = 500;
 
     public function __invoke(Request $request): Response
     {
         [$year, $months] = $this->resolveParams($request->query('year'), $request->query('months'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
         $chat = $this->resolveChatParam($request->query('chat'));
+        $chatLimit = $this->resolveChatLimit($request->query('chat_limit'));
 
         return Inertia::render('dashboard/admin/recap/periodic-recap/index', array_merge(
             $this->payloadWithMode($year, $months, $tampilan),
-            $this->filterPayload($year, $months, $tampilan, $chat)
+            $this->filterPayload($year, $months, $tampilan, $chat, $chatLimit)
         ));
     }
 
@@ -43,6 +45,7 @@ class PeriodicRecapController extends Controller
         [$year, $months] = $this->resolveParams($request->query('year'), $request->query('months'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
         $chat = $this->resolveChatParam($request->query('chat'));
+        $chatLimit = $this->resolveChatLimit($request->query('chat_limit'));
         $withChat = ($chat !== '0');
 
         $chatMonths = [];
@@ -52,12 +55,13 @@ class PeriodicRecapController extends Controller
 
         $data = array_merge(
             $this->payloadWithMode($year, $months, $tampilan),
-            $this->filterPayload($year, $months, $tampilan, $chat),
+            $this->filterPayload($year, $months, $tampilan, $chat, $chatLimit),
             [
                 'withChat' => $withChat,
-                'chatTickets' => $withChat ? $this->getChatTickets($year, $chatMonths) : collect(),
+                'chatTickets' => $withChat ? $this->getChatTickets($year, $chatMonths, $chatLimit) : collect(),
                 'chatTotalCount' => $withChat ? $this->getChatTotalCount($year, $chatMonths) : 0,
-                'chatLimitReached' => $withChat ? $this->isChatLimitReached($year, $chatMonths) : false,
+                'chatLimitReached' => $withChat ? $this->isChatLimitReached($year, $chatMonths, $chatLimit) : false,
+                'chatLimit' => $chatLimit,
             ]
         );
 
@@ -70,7 +74,7 @@ class PeriodicRecapController extends Controller
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
 
         $monthsStr = count($months) === 12 ? 'Full' : implode('-', $months);
-        $periodeStr = $year . '-M' . $monthsStr . ($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
+        $periodeStr = $year.'-M'.$monthsStr.($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
         $filename = ExportFilename::make('Rekap-Periodik', $periodeStr, 'xls');
 
         return response()
@@ -79,11 +83,11 @@ class PeriodicRecapController extends Controller
                 $this->filterPayload($year, $months, $tampilan, '0')
             ))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 
     /**
-     * @param list<int> $months
+     * @param  list<int>  $months
      */
     private function payloadWithMode(int $year, array $months, string $tampilan): array
     {
@@ -104,13 +108,13 @@ class PeriodicRecapController extends Controller
     }
 
     /**
-     * @param list<int> $months
+     * @param  list<int>  $months
      */
     private function payload(int $year, array $months): array
     {
         $currentYear = (int) now()->year;
         $ttl = ($year < $currentYear) ? RekapCache::TTL : 60;
-        $cacheKey = $year . ':' . implode(',', $months);
+        $cacheKey = $year.':'.implode(',', $months);
 
         return Cache::remember(
             RekapCache::key('periodik', $cacheKey),
@@ -161,14 +165,14 @@ class PeriodicRecapController extends Controller
     }
 
     /**
-     * @param list<int> $months
+     * @param  list<int>  $months
      */
-    private function filterPayload(int $selectedYear, array $selectedMonths, string $tampilan, string $chat = '0'): array
+    private function filterPayload(int $selectedYear, array $selectedMonths, string $tampilan, string $chat = '0', int $chatLimit = 500): array
     {
         $years = RekapYears::get();
         $yearOptions = array_map(fn (string $y): array => [
             'value' => $y,
-            'label' => 'Tahun ' . $y,
+            'label' => 'Tahun '.$y,
         ], $years);
 
         $monthOptions = [];
@@ -187,6 +191,9 @@ class PeriodicRecapController extends Controller
             'periodeLabel' => $this->periodeLabel($selectedYear, $selectedMonths),
             'tampilan' => $tampilan,
             'chat' => $chat,
+            'chat_limit' => (string) $chatLimit,
+            'chat_limit_max' => (int) config('recap.chat_max', 2000),
+            'chat_warning_threshold' => (int) config('recap.chat_warning_threshold', 500),
         ];
     }
 
@@ -203,23 +210,38 @@ class PeriodicRecapController extends Controller
                     $months[] = $m;
                 }
             }
-            if (!empty($months)) {
+            if (! empty($months)) {
                 $months = array_unique($months);
                 sort($months);
+
                 return implode(',', $months);
             }
         }
+
         return '0';
+    }
+
+    private function resolveChatLimit(mixed $input): int
+    {
+        $default = (int) config('recap.chat_default', self::FALLBACK_CHAT_LIMIT);
+        $max = (int) config('recap.chat_max', 2000);
+
+        $value = filter_var($input, FILTER_VALIDATE_INT);
+        if ($value === false || $value < 1) {
+            $value = $default;
+        }
+
+        return min($value, $max);
     }
 
     /**
      * Memuat tiket beserta seluruh riwayat balasan dan lampiran untuk cetak PDF.
      * Menggunakan eager loading untuk menghindari N+1.
      *
-     * @param list<int> $months
-     * @return \Illuminate\Database\Eloquent\Collection<int, Ticket>
+     * @param  list<int>  $months
+     * @return Collection<int, Ticket>
      */
-    private function getChatTickets(int $year, array $months)
+    private function getChatTickets(int $year, array $months, int $limit = 500)
     {
         $periods = array_map(fn (int $m): string => sprintf('%04d-%02d', $year, $m), $months);
 
@@ -231,12 +253,12 @@ class PeriodicRecapController extends Controller
             ->whereIn('period', $periods)
             ->orderBy('created_at', 'asc')
             ->orderBy('id', 'asc')
-            ->limit(self::MAX_CHAT_TICKETS)
+            ->limit($limit)
             ->get();
     }
 
     /**
-     * @param list<int> $months
+     * @param  list<int>  $months
      */
     private function getChatTotalCount(int $year, array $months): int
     {
@@ -246,15 +268,15 @@ class PeriodicRecapController extends Controller
     }
 
     /**
-     * @param list<int> $months
+     * @param  list<int>  $months
      */
-    private function isChatLimitReached(int $year, array $months): bool
+    private function isChatLimitReached(int $year, array $months, int $limit = 500): bool
     {
-        return $this->getChatTotalCount($year, $months) > self::MAX_CHAT_TICKETS;
+        return $this->getChatTotalCount($year, $months) > $limit;
     }
 
     /**
-     * @param list<int> $months
+     * @param  list<int>  $months
      */
     private function buildReport(int $year, array $months): array
     {
@@ -270,6 +292,7 @@ class PeriodicRecapController extends Controller
                 $row['children'] = $channel->children
                     ->map(fn (Channel $child): array => $this->rowFor($child, false, $periods, $counts))
                     ->all();
+
                 return $row;
             })
             ->all();
@@ -298,16 +321,16 @@ class PeriodicRecapController extends Controller
     }
 
     /**
-     * @param list<int> $months
+     * @param  list<int>  $months
      */
     private function periodeLabel(int $year, array $months): string
     {
         if (count($months) === 12) {
-            return 'Tahun ' . $year . ' (Januari - Desember)';
+            return 'Tahun '.$year.' (Januari - Desember)';
         }
 
         if (count($months) === 1) {
-            return self::MONTH_NAMES[$months[0]] . ' ' . $year;
+            return self::MONTH_NAMES[$months[0]].' '.$year;
         }
 
         // Cek apakah berurutan (consecutive)
@@ -322,20 +345,21 @@ class PeriodicRecapController extends Controller
         if ($isConsecutive) {
             $first = self::MONTH_NAMES[$months[0]];
             $last = self::MONTH_NAMES[end($months)];
+
             return sprintf('%s - %s %d', $first, $last, $year);
         }
 
         $names = array_map(fn (int $m) => self::MONTH_NAMES[$m], $months);
         if (count($names) <= 3) {
-            return implode(', ', $names) . ' ' . $year;
+            return implode(', ', $names).' '.$year;
         }
 
-        return count($months) . ' Bulan Terpilih Tahun ' . $year;
+        return count($months).' Bulan Terpilih Tahun '.$year;
     }
 
     /**
-     * @param list<string> $periods
-     * @param array<int, array<string, array<string, int>>> $counts
+     * @param  list<string>  $periods
+     * @param  array<int, array<string, array<string, int>>>  $counts
      */
     private function rowFor(Channel $channel, bool $isParent, array $periods, array $counts): array
     {

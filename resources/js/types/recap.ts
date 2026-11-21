@@ -76,4 +76,7 @@ export interface PeriodicRecapProps {
     periodeLabel: string;
     tampilan: RekapViewMode;
     chat?: string;
+    chat_limit?: string;
+    chat_limit_max?: number;
+    chat_warning_threshold?: number;
 }
