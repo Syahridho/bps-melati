@@ -42,7 +42,7 @@ class AuditFlagController extends Controller
 
         $flags = $query->latest('created_at')->paginate(20);
 
-        if ($request->ajax() || $request->wantsJson()) {
+        if (! $request->header('X-Inertia') && ($request->ajax() || $request->wantsJson())) {
             return response()->json([
                 'flags' => $flags->items(),
                 'total' => $flags->total(),

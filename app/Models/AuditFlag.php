@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditFlag extends Model
 {
+    const UPDATED_AT = null;
+
     public const TYPE_JARINGAN_SAMA = 'jaringan_sama';
     public const TYPE_RATING_CEPAT = 'rating_cepat';
     public const TYPE_RATING_BERUNTUN_IP = 'rating_beruntun_ip';

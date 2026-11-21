@@ -58,7 +58,7 @@ class AuditLogController extends Controller
         $perPage = $request->query('per_page', 50);
         $logs = $query->latest('created_at')->paginate($perPage);
 
-        if ($request->ajax() || $request->wantsJson()) {
+        if (! $request->header('X-Inertia') && ($request->ajax() || $request->wantsJson())) {
             return response()->json([
                 'logs' => $logs->items(),
                 'total' => $logs->total(),
@@ -188,7 +188,7 @@ class AuditLogController extends Controller
         return response()->json([
             'total' => $total,
             'new_count' => $newCount,
-            'reviewed_count' => reviewedCount,
+            'reviewed_count' => $reviewedCount,
             'by_type' => $byType ?: [],
             'by_severity' => $bySeverity ?: [],
         ]);

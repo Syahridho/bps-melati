@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditLog extends Model
 {
+    const UPDATED_AT = null;
+
     protected $fillable = [
         'event_type',
         'category',

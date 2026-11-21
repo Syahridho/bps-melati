@@ -64,7 +64,7 @@ class SummaryWeeklyController extends Controller
             ->get()
             ->keyBy('type');
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if (! request()->header('X-Inertia') && (request()->ajax() || request()->wantsJson())) {
             return response()->json([
                 'logs_this_week' => $logsThisWeek,
                 'new_flags_this_week' => $newFlagsThisWeek,
