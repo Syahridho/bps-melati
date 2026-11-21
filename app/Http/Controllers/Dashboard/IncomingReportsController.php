@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Http\Controllers\Concerns\BuildsLaporanListPayload;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Models\Ticket;
+use App\Models\User;
+use App\Services\AssignmentModeService;
 use App\Support\LaporanCache;
 use App\Support\LaporanFilter;
-use App\Support\LaporanFilterQuery;
+use App\Support\LaporanTicketQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -19,7 +22,7 @@ use Inertia\Response;
 
 class IncomingReportsController extends Controller
 {
-    use RendersRolePage;
+    use BuildsLaporanListPayload, RendersRolePage;
 
     /**
      * Daftar laporan masuk dengan paginasi dan pencarian.
@@ -29,59 +32,25 @@ class IncomingReportsController extends Controller
         $filter = new LaporanFilter($request, 'semua', 10);
 
         // Whitelist filter
-        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'berkadar_pengawasan', 'ditandai'];
+        $allowedFilters = ['semua', 'belum_dibaca', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'respon_awal', 'respon_substantif', 'berkadar_pengawasan', 'ditandai', 'tanpa_pic'];
         if (! in_array($filter->tab, $allowedFilters, true)) {
             $filter->tab = 'semua';
         }
 
         $frontendFilterKey = ($filter->tab === 'permintaan_informasi') ? 'permintaan' : $filter->tab;
 
-        $searchClosure = LaporanFilterQuery::searchClosure($filter->search);
-
         // Query utama daftar tiket laporan masuk (kecuali tiket yang diinput manual dari admin dan yang sudah selesai)
-        $baseQueryBuilder = function () use ($filter, $searchClosure) {
-            return Ticket::with(['channel', 'lastResponse.user', 'flaggedBy'])
-                ->where('source_app', '!=', 'admin')
-                ->where('status', '!=', 'selesai')
-                ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
-                    $q->whereDate('created_at', '>=', $filter->from)
-                        ->whereDate('created_at', '<=', $filter->to);
-                })
-                ->tap($searchClosure)
-                ->when($filter->tab !== 'semua', function ($q) use ($filter) {
-                    $q->applyTabFilter($filter->tab);
-                });
-        };
+        $baseQueryBuilder = fn () => LaporanTicketQuery::activeList($filter)
+            ->when($filter->tab !== 'semua', function ($q) use ($filter) {
+                $q->applyTabFilter($filter->tab);
+            });
 
         $fetchTickets = function () use ($baseQueryBuilder, $filter) {
             return $baseQueryBuilder()
                 ->orderByDesc('created_at')
                 ->paginate($filter->perPage)
                 ->withQueryString()
-                ->through(fn (Ticket $ticket) => array_merge([
-                    'id' => $ticket->id,
-                    'ticket_number' => $ticket->ticket_number,
-                    'classification' => $ticket->classification,
-                    'service_type' => $ticket->service_type,
-                    'satuan_tugas' => $ticket->satuan_tugas,
-                    'reporter_name' => $ticket->reporter_name,
-                    'reporter_email' => $ticket->reporter_email,
-                    'reporter_wa' => $ticket->reporter_wa,
-                    'status' => $ticket->status,
-                    'is_pengawasan' => (bool) $ticket->is_pengawasan,
-                    'is_flagged' => (bool) $ticket->is_flagged,
-                    'flagged_at' => $ticket->flagged_at?->toIso8601String(),
-                    'flagged_by_name' => $ticket->flaggedBy?->name,
-                    'flag_note' => $ticket->flag_note,
-                    'version' => $ticket->version,
-                    'is_read' => $ticket->is_read,
-                    'source_app' => $ticket->source_app,
-                    'channel' => $ticket->channel?->name ?? '-',
-                    'created_at' => $ticket->created_at->toIso8601String(),
-                    'last_responded_by' => $ticket->relationLoaded('lastResponse')
-                        ? $ticket->lastResponse?->user?->name
-                        : null,
-                ], $this->profanityTicketProps($ticket)));
+                ->through(fn (Ticket $ticket) => $this->laporanListTicket($ticket));
         };
 
         if ($filter->search === '') {
@@ -117,8 +86,11 @@ class IncomingReportsController extends Controller
                 ")
                 ->first();
 
+            $tanpaPicCount = (clone $countBaseQuery)->withoutActivePic()->count();
+
             return [
                 'semua' => (int) ($countsData->semua ?? 0),
+                'tanpa_pic' => $tanpaPicCount,
                 'belum_dibaca' => (int) ($countsData->belum_dibaca ?? 0),
                 'pengaduan' => (int) ($countsData->pengaduan ?? 0),
                 'aspirasi' => (int) ($countsData->aspirasi ?? 0),
@@ -136,6 +108,7 @@ class IncomingReportsController extends Controller
             'tickets' => $tickets,
             'filters' => $filter->toFilterProps($frontendFilterKey),
             'counts' => $counts,
+            'activeAssignmentMode' => app(AssignmentModeService::class)->current()->value,
         ]);
     }
 
@@ -147,27 +120,65 @@ class IncomingReportsController extends Controller
      */
     public function show(Request $request, string $ticketNumber): Response
     {
+        $fromMyReports = $request->query('origin') === 'my-reports';
+
         $ticket = Ticket::with([
             'channel',
             'creator',
             'flaggedBy',
+            'assignedTo',
             'attachments',
+            'assignmentLogs.fromUser',
+            'assignmentLogs.toUser',
+            'assignmentLogs.performer',
             'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
         ])
             ->where('ticket_number', $ticketNumber)
             ->firstOrFail();
+
+        // Detail yang dibuka dari Laporan Saya tidak boleh menampilkan tiket
+        // milik operator lain meskipun URL dimanipulasi.
+        if ($fromMyReports) {
+            abort_unless((int) $ticket->assigned_to === (int) $request->user()?->id, 404);
+        }
 
         // Tandai sudah dibaca
         if (! $ticket->is_read) {
             $ticket->update(['is_read' => true]);
         }
 
+        $user = $request->user();
+        $isAdmin = $user?->isAdmin() ?? false;
+
         return $this->renderPage($request, 'incoming-reports/show/index', [
-            'from' => 'incoming-reports',
+            'from' => $fromMyReports ? 'my-reports' : 'incoming-reports',
             'can' => [
                 'edit' => false,
                 'delete' => false,
+                'reply' => $user?->can('reply', $ticket) ?? false,
+                'claim' => $user?->can('claim', $ticket) ?? false,
+                'reassign' => $isAdmin,
+                'view_assignment_history' => $isAdmin,
             ],
+            'assignableOperators' => $isAdmin
+                ? User::query()->assignable()->get(['id', 'name'])->map(fn (User $operator): array => [
+                    'id' => $operator->id,
+                    'name' => $operator->name,
+                ])->all()
+                : [],
+            'assignmentLogs' => $isAdmin
+                ? $ticket->assignmentLogs->map(fn ($log): array => [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'action_label' => $log->actionLabel(),
+                    'from_user_name' => $log->fromUser?->name,
+                    'to_user_name' => $log->toUser?->name,
+                    'performed_by_name' => $log->performer?->name,
+                    'note' => $log->note,
+                    'created_at' => $log->created_at?->toIso8601String(),
+                ])->values()->all()
+                : [],
+            'activeAssignmentMode' => app(AssignmentModeService::class)->current()->value,
             'ticket' => $this->ticketPayload($ticket),
         ]);
     }
