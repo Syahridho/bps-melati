@@ -35,6 +35,9 @@ class Ticket extends Model
         'is_read',
         'source_app',
         'created_by',
+        'assigned_to',
+        'assigned_at',
+        'assignment_mode',
         'completed_at',
         'closed_reason',
         'last_staff_response_at',
@@ -53,6 +56,7 @@ class Ticket extends Model
             'is_read' => 'boolean',
             'is_pengawasan' => 'boolean',
             'completed_at' => 'datetime',
+            'assigned_at' => 'datetime',
             'pengawasan_at' => 'datetime',
             'last_staff_response_at' => 'datetime',
             'sequence' => 'integer',
@@ -70,6 +74,39 @@ class Ticket extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by')->withTrashed();
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to')->withTrashed();
+    }
+
+    public function assignmentLogs(): HasMany
+    {
+        return $this->hasMany(TicketAssignmentLog::class)->latest('id');
+    }
+
+    /**
+     * Tiket dianggap tanpa PIC aktif bila belum punya PIC, atau PIC-nya
+     * sudah nonaktif/tidak tersedia/dihapus. Hanya relevan untuk mode claim
+     * dan round robin; tiket mode free memang tanpa PIC.
+     */
+    public function isOrphaned(): bool
+    {
+        if (! in_array($this->assignment_mode, ['claim', 'round_robin'], true)) {
+            return false;
+        }
+
+        if ($this->assigned_to === null) {
+            return true;
+        }
+
+        $pic = $this->assignedTo;
+
+        return $pic === null
+            || $pic->trashed()
+            || ! $pic->is_active
+            || ! $pic->is_available;
     }
 
     public function pengawasanBy(): BelongsTo
@@ -241,9 +278,27 @@ class Ticket extends Model
     /**
      * Scope filter per tab yang dipakai bersama di Laporan Masuk dan Input Data.
      */
+    /**
+     * Tiket aktif pada mode claim/round robin yang PIC-nya kosong atau tidak aktif.
+     */
+    public function scopeWithoutActivePic(Builder $query): Builder
+    {
+        return $query->where('status', '!=', 'selesai')
+            ->whereIn('assignment_mode', ['claim', 'round_robin'])
+            ->where(function (Builder $query): void {
+                $query->whereNull('assigned_to')
+                    ->orWhereHas('assignedTo', function (Builder $userQuery): void {
+                        $userQuery->where('is_active', false)
+                            ->orWhere('is_available', false)
+                            ->orWhereNotNull('deleted_at');
+                    });
+            });
+    }
+
     public function scopeApplyTabFilter(Builder $query, string $tab): Builder
     {
         return match ($tab) {
+            'tanpa_pic' => $query->withoutActivePic(),
             'belum_dibaca' => $query->where('is_read', false),
             'pengaduan' => $query->where('classification', 'pengaduan'),
             'aspirasi' => $query->where('classification', 'aspirasi'),

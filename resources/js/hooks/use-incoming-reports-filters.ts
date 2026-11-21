@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 export function useIncomingReportsFilters(
-    routePrefix: string,
+    routeName: string,
     initialFilters: { search: string; filter: FilterTab; per_page: number; from: string | null; to: string | null },
 ) {
     const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
@@ -30,7 +30,7 @@ export function useIncomingReportsFilters(
 
         const timer = setTimeout(() => {
             router.get(
-                route(`${routePrefix}.incoming-reports.index`),
+                route(routeName),
                 {
                     tab: initialFilters.filter,
                     q: searchQuery,
@@ -50,10 +50,10 @@ export function useIncomingReportsFilters(
         }, 400);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, initialFilters.filter, initialFilters.per_page, initialFilters.from, initialFilters.to, initialFilters.search, routePrefix]);
+    }, [searchQuery, initialFilters.filter, initialFilters.per_page, initialFilters.from, initialFilters.to, initialFilters.search, routeName]);
 
     const handleFilterChange = (tab: FilterTab) => {
-        router.get(route(`${routePrefix}.incoming-reports.index`), queryParams({ tab }), {
+        router.get(route(routeName), queryParams({ tab }), {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -63,7 +63,7 @@ export function useIncomingReportsFilters(
     };
 
     const handleRangeChange = (from: string | null, to: string | null) => {
-        router.get(route(`${routePrefix}.incoming-reports.index`), queryParams({ from, to }), {
+        router.get(route(routeName), queryParams({ from, to }), {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -73,7 +73,7 @@ export function useIncomingReportsFilters(
     };
 
     const handlePerPageChange = (newPerPage: number) => {
-        router.get(route(`${routePrefix}.incoming-reports.index`), queryParams({ per_page: newPerPage }), {
+        router.get(route(routeName), queryParams({ per_page: newPerPage }), {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -84,7 +84,7 @@ export function useIncomingReportsFilters(
 
     const handleResetFilters = () => {
         router.get(
-            route(`${routePrefix}.incoming-reports.index`),
+            route(routeName),
             {
                 tab: 'semua',
                 q: '',

@@ -61,6 +61,22 @@ class InboxCounter
     }
 
     /**
+     * Jumlah tiket aktif yang PIC-nya adalah operator tersebut.
+     * Dipakai badge menu "Laporan Saya".
+     */
+    public static function getAssignedActiveCount(?User $user = null): int
+    {
+        if ($user === null || ! $user->isOperator()) {
+            return 0;
+        }
+
+        return Ticket::query()
+            ->where('assigned_to', $user->id)
+            ->where('status', '!=', 'selesai')
+            ->count();
+    }
+
+    /**
      * Jumlah notifikasi belum dibaca untuk user login.
      */
     public static function getUnreadCount(?User $user = null): int

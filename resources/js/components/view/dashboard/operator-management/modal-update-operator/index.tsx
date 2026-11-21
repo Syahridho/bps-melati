@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { OperatorFormDialogProps } from '@/types/operator';
 import { Edit, LoaderCircle, UserPlus } from 'lucide-react';
 
@@ -62,6 +63,18 @@ export default function OperatorFormDialogUpdate({ open, onOpenChange, mode, dat
                             onChange={(e) => setData('email', e.target.value)}
                         />
                         {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5">
+                        <div className="space-y-0.5">
+                            <Label htmlFor={`${fieldPrefix}_is_available`}>Tersedia untuk penugasan</Label>
+                            <p className="text-muted-foreground text-xs">Operator yang cuti/tidak tersedia dilewati oleh round robin.</p>
+                        </div>
+                        <Switch
+                            id={`${fieldPrefix}_is_available`}
+                            checked={Boolean(data.is_available)}
+                            onCheckedChange={(value) => setData('is_available', value)}
+                        />
                     </div>
 
                     <div className="space-y-2">

@@ -23,6 +23,16 @@ Schedule::command('tickets:auto-close')
 // Jaring pengaman untuk sesi yang ditinggalkan browser tanpa logout.
 Schedule::command('sessions:cleanup')->everyMinute()->withoutOverlapping();
 
+// Terapkan perubahan mode penanganan laporan yang sudah dijadwalkan admin.
+Schedule::command('settings:apply-assignment-mode')
+    ->everyMinute()
+    ->timezone('Asia/Jakarta')
+    ->onOneServer()
+    ->withoutOverlapping(5)
+    ->onFailure(function (string $message): void {
+        Log::error('Jadwal settings:apply-assignment-mode gagal dijalankan.', ['message' => $message]);
+    });
+
 // Audit log autentikasi dipangkas sesuai retensi config.
 Schedule::command('auth:prune-logs')->dailyAt('02:15');
 

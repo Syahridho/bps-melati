@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Enums\EmailStatus;
+use App\Enums\UserRole;
 use App\Events\InboxUpdated;
 use App\Events\TicketResponseCreated;
 use App\Events\TicketUpdated;
@@ -13,10 +14,11 @@ use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
 use App\Support\SafeBroadcast;
-use App\Enums\UserRole;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -87,6 +89,12 @@ class ReplyToTicket
 
                     if ($locked->status === 'selesai') {
                         throw new TicketAlreadyCompletedException;
+                    }
+
+                    // Pertahanan berlapis: jalur mana pun yang memanggil action ini
+                    // tetap tunduk pada aturan balas yang sama.
+                    if (! Gate::forUser($actor)->allows('reply', $locked)) {
+                        throw new AuthorizationException('Anda tidak berhak membalas tiket ini.');
                     }
 
                     // "Respon awal hanya sekali" — dicek di dalam lock agar pesan 409-nya informatif.

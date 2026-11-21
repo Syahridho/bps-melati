@@ -33,4 +33,9 @@ export interface TicketListEntry {
      */
     recently_answered_by?: string | null;
     has_profanity?: boolean;
+
+    /** PIC dan mode penanganan tiket (Laporan Masuk). */
+    assigned_to_name?: string | null;
+    assignment_mode?: 'free' | 'claim' | 'round_robin';
+    show_assignment_mode_badge?: boolean;
 }

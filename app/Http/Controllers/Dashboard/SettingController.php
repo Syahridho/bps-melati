@@ -2,24 +2,59 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Enums\AssignmentMode;
+use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\SettingChangeLog;
+use App\Services\AssignmentModeService;
+use App\Support\DashboardStats;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Http\Controllers\Concerns\RendersRolePage;
 
 class SettingController extends Controller
 {
     use RendersRolePage;
+
     /**
      * Tampilkan halaman pengaturan aplikasi.
      */
-    public function index(): Response
+    public function index(AssignmentModeService $modeService): Response
     {
+        $pendingChange = $modeService->pending();
+
         return Inertia::render('settings/application/index', [
+            'assignmentMode' => [
+                'current' => $modeService->current()->value,
+                'current_label' => $modeService->current()->label(),
+                'options' => array_map(fn (AssignmentMode $mode): array => [
+                    'value' => $mode->value,
+                    'label' => $mode->label(),
+                    'description' => $mode->description(),
+                ], AssignmentMode::cases()),
+                'pending' => $pendingChange !== null
+                    ? [
+                        'mode' => $pendingChange->new_value,
+                        'label' => AssignmentMode::tryFrom((string) $pendingChange->new_value)?->label() ?? $pendingChange->new_value,
+                        'scheduled_at' => $pendingChange->scheduled_at?->toIso8601String(),
+                    ]
+                    : null,
+                'history' => array_map(fn (SettingChangeLog $log): array => [
+                    'id' => $log->id,
+                    'old_label' => AssignmentMode::tryFrom((string) $log->old_value)?->label() ?? $log->old_value,
+                    'new_label' => AssignmentMode::tryFrom((string) $log->new_value)?->label() ?? $log->new_value,
+                    'changed_by_name' => $log->changedBy?->name,
+                    'scheduled_at' => $log->scheduled_at?->toIso8601String(),
+                    'applied_at' => $log->applied_at?->toIso8601String(),
+                    'cancelled_at' => $log->cancelled_at?->toIso8601String(),
+                    'status' => $log->applied_at !== null
+                        ? 'applied'
+                        : ($log->cancelled_at !== null ? 'cancelled' : 'scheduled'),
+                ], $modeService->history()),
+            ],
             'settings' => [
                 'nama_penanda_tangan' => Setting::get('nama_penanda_tangan', ''),
                 'jabatan_penanda_tangan' => Setting::get('jabatan_penanda_tangan', 'KETUA TIM PENGADUAN'),
@@ -65,15 +100,16 @@ class SettingController extends Controller
         }
 
         // Bump versi cache dashboard agar saat setting diubah, payload langsung sinkron
-        Cache::add(\App\Support\DashboardStats::VERSION_KEY, 0);
-        Cache::increment(\App\Support\DashboardStats::VERSION_KEY);
+        Cache::add(DashboardStats::VERSION_KEY, 0);
+        Cache::increment(DashboardStats::VERSION_KEY);
 
         return redirect()->back()->with('flash', [
             'success' => 'Pengaturan berhasil diperbarui!',
         ]);
     }
 
-    public function indexAppearce() {
-         return Inertia::render('settings/appearance/index');
+    public function indexAppearce()
+    {
+        return Inertia::render('settings/appearance/index');
     }
 }

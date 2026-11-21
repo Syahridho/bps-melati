@@ -11,8 +11,42 @@ export interface SettingValues {
     kadar_pengawasan_hari: string;
 }
 
+export type AssignmentModeValue = 'free' | 'claim' | 'round_robin';
+
+export interface AssignmentModeOption {
+    value: AssignmentModeValue;
+    label: string;
+    description: string;
+}
+
+export interface AssignmentModePending {
+    mode: AssignmentModeValue;
+    label: string;
+    scheduled_at: string | null;
+}
+
+export interface AssignmentModeHistoryItem {
+    id: number;
+    old_label: string | null;
+    new_label: string | null;
+    changed_by_name: string | null;
+    scheduled_at: string | null;
+    applied_at: string | null;
+    cancelled_at: string | null;
+    status: 'applied' | 'cancelled' | 'scheduled';
+}
+
+export interface AssignmentModeSettings {
+    current: AssignmentModeValue;
+    current_label: string;
+    options: AssignmentModeOption[];
+    pending: AssignmentModePending | null;
+    history: AssignmentModeHistoryItem[];
+}
+
 export interface SettingPageProps extends SharedData {
     settings: SettingValues;
+    assignmentMode: AssignmentModeSettings;
     flash: {
         success?: string;
     };

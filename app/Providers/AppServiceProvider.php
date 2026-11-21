@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Observers\ChannelObserver;
 use App\Observers\TicketObserver;
+use App\Policies\TicketPolicy;
 use App\Support\LaporanCache;
 use App\Support\ProfanityFilter;
 use App\Support\RekapCache;
@@ -20,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -61,6 +63,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login-ip', function (Request $request) {
             return Limit::perMinute(20)->by('login-ip|'.$request->ip());
         });
+
+        Gate::policy(Ticket::class, TicketPolicy::class);
 
         Ticket::observe(TicketObserver::class);
         Channel::observe(ChannelObserver::class);

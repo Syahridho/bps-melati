@@ -18,7 +18,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasPushSubscriptions, SoftDeletes;
+    use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +31,7 @@ class User extends Authenticatable
         'password',
         'role',
         'is_active',
+        'is_available',
         'current_session_id',
         'last_activity_at',
         'last_login_at',
@@ -46,6 +47,7 @@ class User extends Authenticatable
     protected $attributes = [
         'role' => 'operator',
         'is_active' => true,
+        'is_available' => true,
     ];
 
     /**
@@ -71,6 +73,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',
+            'is_available' => 'boolean',
             'last_activity_at' => 'datetime',
             'last_login_at' => 'datetime',
         ];
@@ -189,5 +192,22 @@ class User extends Authenticatable
     public function scopeInactive(Builder $query): Builder
     {
         return $query->where('is_active', false);
+    }
+
+    /**
+     * Operator yang boleh menerima giliran round robin / menjadi PIC.
+     */
+    public function scopeAssignable(Builder $query): Builder
+    {
+        return $query->where('role', UserRole::Operator)
+            ->where('is_active', true)
+            ->where('is_available', true)
+            ->whereNull('deleted_at')
+            ->orderBy('id');
+    }
+
+    public function assignedTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'assigned_to');
     }
 }

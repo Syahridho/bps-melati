@@ -5,13 +5,13 @@ import { useAuthRole } from '@/hooks/use-auth-role';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEcho, useEchoPublic } from '@laravel/echo-react';
-import { ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, SettingsIcon, Users } from 'lucide-react';
+import { ClipboardCheck, ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, SettingsIcon, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import AppLogo from '@/components/atoms/app-logo';
 
 export function AppSidebar() {
-    const { inbox_open_count } = usePage<SharedData>().props;
+    const { inbox_open_count, my_reports_open_count } = usePage<SharedData>().props;
     const { user, isAdmin, isOperator, isOperatorTim, canAccessInbox } = useAuthRole();
 
     const [openCount, setOpenCount] = useState(inbox_open_count ?? 0);
@@ -147,6 +147,12 @@ export function AppSidebar() {
             url: '/dashboard/operator/incoming-reports',
             icon: Inbox,
             badge: openCount,
+        },
+        {
+            title: 'Laporan Saya',
+            url: '/dashboard/operator/my-reports',
+            icon: ClipboardCheck,
+            badge: my_reports_open_count ?? 0,
         },
 
         {

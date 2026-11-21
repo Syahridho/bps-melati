@@ -46,6 +46,11 @@ export interface TicketDetailData {
     source_app?: string;
     channel?: string;
     created_by_name?: string | null;
+    assigned_to?: number | null;
+    assigned_to_name?: string | null;
+    assigned_at?: string | null;
+    assignment_mode?: 'free' | 'claim' | 'round_robin';
+    is_orphaned?: boolean;
     completed_at?: string | null;
     closed_reason?: string | null;
     is_pengawasan?: boolean;

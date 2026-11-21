@@ -96,6 +96,11 @@ export function OperatorTable({
                                         <TableCell>
                                             <div className="flex flex-wrap items-center gap-1.5">
                                                 <OperatorStatusBadge isActive={op.is_active} isOnline={op.is_online} />
+                                                {!op.is_available && (
+                                                    <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                                                        Cuti / Tidak Tersedia
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground text-xs">

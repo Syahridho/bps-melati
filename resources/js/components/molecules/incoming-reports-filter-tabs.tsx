@@ -6,9 +6,11 @@ interface IncomingReportsFilterTabsProps {
     currentFilter: FilterTab;
     counts: IncomingReportsProps['counts'];
     onFilterChange: (tab: FilterTab) => void;
+    /** Tab "Tanpa PIC Aktif" tidak relevan di Laporan Saya. */
+    showTanpaPic?: boolean;
 }
 
-export function IncomingReportsFilterTabs({ currentFilter, counts, onFilterChange }: IncomingReportsFilterTabsProps) {
+export function IncomingReportsFilterTabs({ currentFilter, counts, onFilterChange, showTanpaPic = true }: IncomingReportsFilterTabsProps) {
     const filterTabs: { key: FilterTab; label: string; count?: number }[] = [
         { key: 'semua', label: 'Semua', count: counts.semua },
         { key: 'belum_dibaca', label: 'Belum Dibaca', count: counts.belum_dibaca },
@@ -19,6 +21,7 @@ export function IncomingReportsFilterTabs({ currentFilter, counts, onFilterChang
         { key: 'respon_substantif', label: 'Respon Substantif', count: counts.respon_substantif },
         { key: 'berkadar_pengawasan', label: 'Berkadar Pengawasan', count: counts.berkadar_pengawasan },
         { key: 'ditandai', label: 'Ditandai', count: counts.ditandai },
+        ...(showTanpaPic ? [{ key: 'tanpa_pic' as FilterTab, label: 'Tanpa PIC Aktif', count: counts.tanpa_pic }] : []),
     ];
 
     return (
