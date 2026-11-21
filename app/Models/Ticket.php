@@ -35,6 +35,9 @@ class Ticket extends Model
         'is_read',
         'source_app',
         'created_by',
+        'assigned_to',
+        'assigned_at',
+        'assignment_mode',
         'completed_at',
         'closed_reason',
         'last_staff_response_at',
@@ -64,6 +67,7 @@ class Ticket extends Model
             'flagged_at' => 'datetime',
             'rating' => 'integer',
             'rated_at' => 'datetime',
+            'assigned_at' => 'datetime',
         ];
     }
 
@@ -75,6 +79,11 @@ class Ticket extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by')->withTrashed();
+    }
+
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to')->withTrashed();
     }
 
     public function pengawasanBy(): BelongsTo

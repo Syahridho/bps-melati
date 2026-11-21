@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Concerns\RendersRolePage;
+use App\Http\Requests\OperatorPerformanceRequest;
+use App\Services\OperatorPerformanceService;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\SessionTerminator;
@@ -248,6 +250,27 @@ class OperatorController extends Controller
     /**
      * Invalidate operator Redis cache.
      */
+    /**
+     * Endpoint JSON performa operator (hanya admin).
+     */
+    public function performance(OperatorPerformanceRequest $request, OperatorPerformanceService $service): \Illuminate\Http\JsonResponse
+    {
+        abort_unless($request->user()?->isAdmin(), 403);
+
+        $params = $request->validatedParams();
+        $cacheKey = 'operator:performance:' . md5(json_encode($params));
+
+        if ($params['refresh']) {
+            Cache::forget($cacheKey);
+        }
+
+        $data = Cache::remember($cacheKey, now()->addSeconds(60), function () use ($service, $params) {
+            return $service->compute($params);
+        });
+
+        return response()->json($data);
+    }
+
     public static function clearCache(): void
     {
         if (Cache::has('operators:version')) {
