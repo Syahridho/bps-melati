@@ -11,6 +11,7 @@ use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketCreatedMail;
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Services\TicketAssignmentService;
 use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\JsonResponse;
@@ -28,7 +29,7 @@ class TicketApiController extends Controller
      * POST /api/tickets
      * Buat tiket baru dari aplikasi (Flutter/API).
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, TicketAssignmentService $assignmentService): JsonResponse
     {
         // Temukan ID channel default website bila tidak dikirim
         $websiteChannelId = Channel::where('slug', 'website')->value('id');
@@ -70,7 +71,7 @@ class TicketApiController extends Controller
         $sourceApp = ! empty($validated['source_app']) ? trim($validated['source_app']) : 'flutter';
 
         // Buat tiket (Eloquent PDO Parameter Binding mencegah SQL Injection)
-        $ticket = Ticket::create([
+        $ticket = $assignmentService->createTicket([
             'ticket_number' => $generated['ticket_number'],
             'period' => $period,
             'sequence' => $generated['sequence'],

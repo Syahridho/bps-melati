@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Events\TicketCreated;
 use App\Http\Requests\StoreTicketRequest;
 use App\Mail\TicketCreatedMail;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\LaporanNotification;
+use App\Services\TicketAssignmentService;
 use App\Support\ProfanityFilter;
-use App\Enums\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 
 class TicketController extends Controller
 {
-    public function store(StoreTicketRequest $request): RedirectResponse
+    public function store(StoreTicketRequest $request, TicketAssignmentService $assignmentService): RedirectResponse
     {
         $validated = $request->validated();
 
@@ -30,7 +31,7 @@ class TicketController extends Controller
         );
 
         // Buat tiket di database
-        $ticket = Ticket::create([
+        $ticket = $assignmentService->createTicket([
             'ticket_number' => $generated['ticket_number'],
             'period' => $period,
             'sequence' => $generated['sequence'],

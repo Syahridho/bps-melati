@@ -1,10 +1,10 @@
 import { TicketFlagButton } from '@/components/molecules/ticket-flag-button';
 import type { TicketListEntry } from '@/components/organisms/ticket-list/types';
 import { Badge } from '@/components/ui/badge';
-import { classificationLabel, classificationVariant, formatDate, statusLabel } from '@/lib/incoming-reports-utils';
+import { assignmentModeLabel, classificationLabel, classificationVariant, formatDate, statusLabel } from '@/lib/incoming-reports-utils';
 import { cn } from '@/lib/utils';
 import { Link, router } from '@inertiajs/react';
-import { CheckCircle2, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, ShieldAlert, UserRound } from 'lucide-react';
 import { memo } from 'react';
 
 interface TicketListItemProps {
@@ -61,6 +61,17 @@ export const TicketListItem = memo(function TicketListItem({ ticket, isPopoverOp
                             </Badge>
                         ) : null}
                         <span className="text-muted-foreground text-[10px]">{ticket.channel}</span>
+                        {ticket.assigned_to_name && (
+                            <Badge variant="outline" className="gap-1 text-[10px]">
+                                <UserRound className="size-3" />
+                                PIC: {ticket.assigned_to_name}
+                            </Badge>
+                        )}
+                        {ticket.show_assignment_mode_badge && (
+                            <Badge variant="secondary" className="text-[10px]">
+                                Mode: {assignmentModeLabel(ticket.assignment_mode)}
+                            </Badge>
+                        )}
                         {ticket.recently_answered_by && (
                             <Badge variant="outline" className="text-[10px]">
                                 dibalas oleh {ticket.recently_answered_by}

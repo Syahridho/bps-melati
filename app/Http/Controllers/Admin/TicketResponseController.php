@@ -13,6 +13,7 @@ use App\Jobs\SendTicketResponseNotification;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
@@ -84,6 +85,16 @@ class TicketResponseController extends Controller
                     'message' => $e->getMessage(),
                     'data' => ['code' => 'already_completed'],
                 ], Response::HTTP_CONFLICT);
+            }
+
+            return back()->withErrors(['response_message' => $e->getMessage()]);
+        } catch (AuthorizationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'data' => ['code' => 'forbidden'],
+                ], Response::HTTP_FORBIDDEN);
             }
 
             return back()->withErrors(['response_message' => $e->getMessage()]);

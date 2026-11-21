@@ -28,6 +28,7 @@ export function useOperatorManagement(
         role: 'operator',
         email: '',
         password: '',
+        is_available: true,
     });
 
     // Form Edit Operator/User
@@ -36,6 +37,7 @@ export function useOperatorManagement(
         role: 'operator',
         email: '',
         password: '',
+        is_available: true,
     });
 
     useEffect(() => {
@@ -130,6 +132,7 @@ export function useOperatorManagement(
             role: op.role || 'operator',
             email: op.email,
             password: '',
+            is_available: op.is_available,
         });
         editForm.clearErrors();
         setIsEditOpen(true);

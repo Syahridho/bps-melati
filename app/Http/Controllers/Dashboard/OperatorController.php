@@ -2,24 +2,25 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\SessionTerminator;
+use App\Services\TicketAssignmentService;
 use App\Support\IpMasker;
 use App\Support\UserAgentParser;
-use App\Enums\UserRole;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
 use Inertia\Response;
 
 class OperatorController extends Controller
 {
     use RendersRolePage;
+
     /**
      * Tampilkan daftar pengguna (admin & operator) dengan paginasi, pencarian,
      * dan status online.
@@ -64,6 +65,7 @@ class OperatorController extends Controller
                 'email' => $user->email,
                 'role' => $user->role->value,
                 'is_active' => $user->is_active,
+                'is_available' => $user->is_available,
                 'created_at' => $user->created_at->toIso8601String(),
                 ...self::presenceFor($user),
             ]);
@@ -87,6 +89,7 @@ class OperatorController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'role' => ['required', 'in:admin,operator,operator_tim'],
+            'is_available' => ['nullable', 'boolean'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->whereNull('deleted_at')],
             'password' => ['required', 'string', 'min:8'],
         ], [
@@ -105,6 +108,7 @@ class OperatorController extends Controller
             'role' => $validated['role'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'is_available' => $request->has('is_available') ? $request->boolean('is_available') : true,
         ]);
 
         self::clearCache();
@@ -128,6 +132,7 @@ class OperatorController extends Controller
             'role' => ['required', 'in:admin,operator,operator_tim'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->whereNull('deleted_at')->ignore($operator->id)],
             'is_active' => ['nullable', 'boolean'],
+            'is_available' => ['nullable', 'boolean'],
             'password' => ['nullable', 'string', 'min:8'],
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
@@ -146,13 +151,16 @@ class OperatorController extends Controller
         }
 
         $wasActive = $operator->is_active;
+        $wasAvailable = $operator->is_available;
         $willBeActive = $request->has('is_active') ? $request->boolean('is_active') : true;
+        $willBeAvailable = $request->has('is_available') ? $request->boolean('is_available') : true;
 
         $updateData = [
             'name' => $validated['name'],
             'role' => $validated['role'],
             'email' => $validated['email'],
             'is_active' => $willBeActive,
+            'is_available' => $willBeAvailable,
         ];
 
         $passwordChanged = ! empty($validated['password']);
@@ -175,6 +183,11 @@ class OperatorController extends Controller
         if ($reason !== null) {
             // SessionTerminator sudah mencatat audit log (reason + forced_by).
             app(SessionTerminator::class)->terminate($operator, $reason, actor: auth()->user(), request: $request);
+        }
+
+        // Tiket tidak dipindahkan otomatis; admin hanya diberi tahu agar bisa reassign.
+        if (($wasActive && ! $willBeActive) || ($wasAvailable && ! $willBeAvailable)) {
+            app(TicketAssignmentService::class)->notifyOrphanedTickets($operator->fresh() ?? $operator);
         }
 
         return redirect()->back()->with('flash', [
@@ -207,6 +220,8 @@ class OperatorController extends Controller
         app(SessionTerminator::class)->terminate($operator, SessionTerminator::REASON_FORCED_LOGOUT, actor: auth()->user(), request: $request);
 
         $operator->delete();
+
+        app(TicketAssignmentService::class)->notifyOrphanedTickets($operator);
 
         self::clearCache();
 

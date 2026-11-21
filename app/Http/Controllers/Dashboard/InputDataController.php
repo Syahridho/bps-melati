@@ -12,6 +12,7 @@ use App\Mail\TicketResponseSubmitted;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\TicketAssignmentService;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
 use App\Support\ProfanityFilter;
@@ -240,7 +241,7 @@ class InputDataController extends Controller
     /**
      * Simpan data tiket baru yang diinput oleh admin.
      */
-    public function store(StoreTicketRequest $request): RedirectResponse
+    public function store(StoreTicketRequest $request, TicketAssignmentService $assignmentService): RedirectResponse
     {
         // $validated = $request->validated();
         // $period = now()->format('Y-m');
@@ -254,7 +255,7 @@ class InputDataController extends Controller
         // pembuat tetap tersimpan di kolom source_app dan created_by sendiri.
         $generated = Ticket::generateTicketNumber($validated['classification'], $period);
 
-        $ticket = Ticket::create([
+        $ticket = $assignmentService->createTicket([
             'ticket_number' => $generated['ticket_number'],
             'period' => $period,
             'sequence' => $generated['sequence'],

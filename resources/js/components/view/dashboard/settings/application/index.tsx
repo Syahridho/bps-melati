@@ -1,3 +1,4 @@
+import { AssignmentModeCard } from '@/components/organisms/settings/assignment-mode-card';
 import { PengaturanAutoCloseFields } from '@/components/organisms/settings/settings-auto-close-fields';
 import { PengaturanSignatureFields } from '@/components/organisms/settings/settings-signature-fields';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, LoaderCircle } from 'lucide-react';
 
 export default function ApplicationSettingsView() {
-    const { settings, flash } = usePage<SettingPageProps>().props;
+    const { settings, assignmentMode, flash } = usePage<SettingPageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -34,6 +35,10 @@ export default function ApplicationSettingsView() {
                 title="Pengaturan"
                 description="Kelola pengaturan aplikasi, batas waktu otomatis selesai, dan informasi penanda tangan rekap"
             >
+                <AssignmentModeCard assignmentMode={assignmentMode} />
+
+                <Separator />
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <PengaturanAutoCloseFields data={data} setData={setData} errors={errors} />
 

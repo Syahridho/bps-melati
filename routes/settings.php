@@ -3,6 +3,7 @@
 use App\Http\Controllers\Dashboard\NotificationController;
 use App\Http\Controllers\Dashboard\SettingController;
 use App\Http\Controllers\Settings\ApiController;
+use App\Http\Controllers\Settings\AssignmentModeController;
 use App\Http\Controllers\Settings\ChannelController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\SensorController;
@@ -27,6 +28,8 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('settings/application', [SettingController::class, 'index'])->name('settings.application.edit');
     Route::post('settings/application', [SettingController::class, 'update'])->name('settings.application.update');
+    Route::post('settings/application/assignment-mode', [AssignmentModeController::class, 'update'])
+        ->name('settings.application.assignment-mode');
     Route::get('settings/api', [ApiController::class, 'index'])->name('settings.api');
     Route::resource('settings/sumber-kanal', ChannelController::class)
         ->parameters(['sumber-kanal' => 'channel'])

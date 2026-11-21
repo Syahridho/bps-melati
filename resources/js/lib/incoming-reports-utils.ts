@@ -99,6 +99,19 @@ export function statusVariant(status: Status): 'default' | 'secondary' | 'outlin
     }
 }
 
+export function assignmentModeLabel(mode?: 'free' | 'claim' | 'round_robin' | null): string {
+    switch (mode) {
+        case 'claim':
+            return 'Ambil Tiket';
+        case 'round_robin':
+            return 'Round Robin';
+        case 'free':
+            return 'Keroyokan';
+        default:
+            return 'Keroyokan';
+    }
+}
+
 export function formatDate(dateStr: string): string {
     const date = new Date(dateStr);
     const now = new Date();

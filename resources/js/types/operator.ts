@@ -8,6 +8,7 @@ export interface Operator {
     email: string;
     role: string;
     is_active: boolean;
+    is_available: boolean;
     created_at: string;
     is_online: boolean;
     last_active_at: string | null;
@@ -22,7 +23,8 @@ export interface OperatorFormData {
     role: string;
     email: string;
     password: string;
-    [key: string]: string;
+    is_available: boolean;
+    [key: string]: string | boolean;
 }
 
 export interface OperatorPageProps extends SharedData {

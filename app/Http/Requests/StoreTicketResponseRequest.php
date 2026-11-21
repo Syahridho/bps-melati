@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Ticket;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -10,8 +11,17 @@ class StoreTicketResponseRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
+        $ticket = $this->route('ticket');
 
-        return $user !== null && ($user->isAdmin() || $user->isOperator());
+        if ($user === null) {
+            return false;
+        }
+
+        if ($ticket instanceof Ticket) {
+            return $user->can('reply', $ticket);
+        }
+
+        return $user->isAdmin() || $user->isOperator();
     }
 
     protected function prepareForValidation(): void
