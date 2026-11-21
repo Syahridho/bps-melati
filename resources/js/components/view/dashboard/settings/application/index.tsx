@@ -1,7 +1,7 @@
 import { AssignmentModeCard } from '@/components/organisms/settings/assignment-mode-card';
+import RatingSetting from '@/components/organisms/settings/rating-setting';
 import { PengaturanAutoCloseFields } from '@/components/organisms/settings/settings-auto-close-fields';
 import { PengaturanSignatureFields } from '@/components/organisms/settings/settings-signature-fields';
-import RatingSetting from '@/components/organisms/settings/rating-setting';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { usePengaturanForm } from '@/hooks/use-pengaturan-form';

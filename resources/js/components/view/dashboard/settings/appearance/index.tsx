@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 
-import AppearanceTabs from '@/components/molecules/appearance-tabs';
 import HeadingSmall from '@/components/atoms/heading-small';
+import AppearanceTabs from '@/components/molecules/appearance-tabs';
 import { type BreadcrumbItem } from '@/types';
 
 import AppLayout from '@/layouts/app-layout';

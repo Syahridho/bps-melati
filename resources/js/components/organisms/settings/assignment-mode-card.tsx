@@ -1,3 +1,6 @@
+import { AnimatedBeamClaim } from '@/components/molecules/animated-beam-claim';
+import { AnimatedBeamFree } from '@/components/molecules/animated-beam-free';
+import { AnimatedBeamRoundRobin } from '@/components/molecules/animated-beam-round-robin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,12 +12,18 @@ import { formatFullDate } from '@/lib/incoming-reports-utils';
 import { type AssignmentModeSettings, type AssignmentModeValue } from '@/types/settings';
 import { useForm } from '@inertiajs/react';
 import { CalendarClock, CheckCircle2, History, LoaderCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ComponentType } from 'react';
 import { toast } from 'sonner';
 
 interface AssignmentModeCardProps {
     assignmentMode: AssignmentModeSettings;
 }
+
+const modePreviews: Record<AssignmentModeValue, ComponentType> = {
+    free: AnimatedBeamFree,
+    claim: AnimatedBeamClaim,
+    round_robin: AnimatedBeamRoundRobin,
+};
 
 export function AssignmentModeCard({ assignmentMode }: AssignmentModeCardProps) {
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -102,6 +111,11 @@ export function AssignmentModeCard({ assignmentMode }: AssignmentModeCardProps) 
                 {form.errors.mode && <p className="text-destructive text-xs">{form.errors.mode}</p>}
             </div>
 
+            {(() => {
+                const Preview = modePreviews[form.data.mode];
+                return Preview ? <Preview key={form.data.mode} /> : null;
+            })()}
+
             <div className="space-y-2">
                 <Label>Waktu Penerapan</Label>
                 <ToggleGroup
@@ -154,9 +168,7 @@ export function AssignmentModeCard({ assignmentMode }: AssignmentModeCardProps) 
                                     Mode akan diubah menjadi <strong>{selectedOption?.label ?? form.data.mode}</strong>.
                                 </p>
                                 <p>Hanya berlaku untuk laporan baru. Laporan lama tidak berubah, termasuk PIC yang sudah ada.</p>
-                                {form.data.apply === 'scheduled' && (
-                                    <p>Perubahan akan diterapkan otomatis sesuai jadwal yang dipilih.</p>
-                                )}
+                                {form.data.apply === 'scheduled' && <p>Perubahan akan diterapkan otomatis sesuai jadwal yang dipilih.</p>}
                             </div>
                         </DialogDescription>
                     </DialogHeader>
