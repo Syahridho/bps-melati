@@ -26,9 +26,9 @@ export default function CompletedStamp({ completedAt, rating }: CompletedStampPr
             style={
                 {
                     '--stamp-duration': '0.35s',
-                    '--star-duration': '0.45s',
-                    '--star-start': 'calc(var(--stamp-duration) + 0.25s)',
-                    '--star-stagger': '0.18s',
+                    '--star-duration': '0.24s',
+                    '--star-start': 'calc(var(--stamp-duration) + 0.10s)',
+                    '--star-stagger': '0.075s',
                 } as React.CSSProperties
             }
         >
@@ -90,6 +90,7 @@ export default function CompletedStamp({ completedAt, rating }: CompletedStampPr
                                                 className="opacity-0 motion-reduce:opacity-100 motion-reduce:transform-none print:opacity-100 print:transform-none motion-safe:animate-[star-pop_var(--star-duration)_cubic-bezier(0.34,1.56,0.64,1)] print:animate-none motion-reduce:animate-none"
                                                 style={{
                                                     animationDelay: `calc(var(--star-start) + ${index} * var(--star-stagger))`,
+                                                    animationFillMode: 'both',
                                                     transformOrigin: 'center',
                                                     transformBox: 'fill-box',
                                                 } as React.CSSProperties}
