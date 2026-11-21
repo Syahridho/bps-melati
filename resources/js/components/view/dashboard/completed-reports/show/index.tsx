@@ -175,9 +175,16 @@ export default function ShowCompletedReportsView() {
                     <div className="mx-4 mb-4 rounded-md border border-amber-500/30 bg-amber-500/5 p-4 sm:mx-6">
                         <h3 className="mb-2 text-sm font-semibold text-amber-800 dark:text-amber-300">Penilaian Pelapor</h3>
                         {detailData.rating != null && (
-                            <div className="mb-1 flex items-center gap-1 text-amber-600 dark:text-amber-400" aria-label={`Rating ${detailData.rating} dari 5`}>
+                            <div className="mb-1 flex items-center gap-1" aria-label={`Rating ${detailData.rating} dari 5`}>
                                 {[1, 2, 3, 4, 5].map((value) => (
-                                    <span key={value}>
+                                    <span
+                                        key={value}
+                                        className={
+                                            value <= (detailData.rating ?? 0)
+                                                ? 'text-[var(--rating-star)]'
+                                                : 'text-muted-foreground/40'
+                                        }
+                                    >
                                         {value <= (detailData.rating ?? 0) ? '★' : '☆'}
                                     </span>
                                 ))}
