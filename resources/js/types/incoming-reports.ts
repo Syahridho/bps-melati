@@ -15,7 +15,8 @@ export type FilterTab =
     | 'respon_awal'
     | 'respon_substantif'
     | 'berkadar_pengawasan'
-    | 'ditandai';
+    | 'ditandai'
+    | 'tanpa_pic';
 
 export interface Attachment {
     id: number;
@@ -144,6 +145,9 @@ export interface InboxTicketItem {
     channel: string;
     created_at: string;
     last_responded_by: string | null;
+    assigned_to?: number | null;
+    assigned_to_name?: string | null;
+    assignment_mode?: 'free' | 'claim' | 'round_robin';
     title_original?: string | null;
     content_original?: string | null;
     has_profanity?: boolean;
@@ -168,8 +172,10 @@ export interface IncomingReportsProps extends SharedData {
         respon_substantif: number;
         berkadar_pengawasan: number;
         ditandai: number;
+        tanpa_pic: number;
     };
     inbox_open_count: number;
+    activeAssignmentMode: 'free' | 'claim' | 'round_robin';
 }
 
 export interface TicketDetail {
@@ -191,6 +197,11 @@ export interface TicketDetail {
     source_app: string;
     channel: string;
     created_by_name: string | null;
+    assigned_to?: number | null;
+    assigned_to_name?: string | null;
+    assigned_at?: string | null;
+    assignment_mode?: 'free' | 'claim' | 'round_robin';
+    is_orphaned?: boolean;
     completed_at: string | null;
     closed_reason: ClosedReason | null;
     is_pengawasan?: boolean;
@@ -213,15 +224,39 @@ export interface TicketDetail {
     responses: TicketResponseItem[];
 }
 
+export interface AssignmentLogItem {
+    id: number;
+    action: string;
+    action_label: string;
+    from_user_name: string | null;
+    to_user_name: string | null;
+    performed_by_name: string | null;
+    note: string | null;
+    created_at: string | null;
+}
+
+export interface AssignableOperator {
+    id: number;
+    name: string;
+}
+
 export interface ShowProps extends SharedData {
     ticket: TicketDetail;
     can?: {
         edit: boolean;
         delete: boolean;
+        reply?: boolean;
+        claim?: boolean;
+        reassign?: boolean;
+        view_assignment_history?: boolean;
     };
-    from?: 'input-data' | 'incoming-reports';
+    assignableOperators?: AssignableOperator[];
+    assignmentLogs?: AssignmentLogItem[];
+    activeAssignmentMode?: 'free' | 'claim' | 'round_robin';
+    from?: 'input-data' | 'incoming-reports' | 'my-reports';
     flash: {
         success?: string;
+        error?: string;
         conflict?: ReplyConflict;
     };
 }

@@ -12,16 +12,31 @@ import { useIncomingReportsFilters } from '@/hooks/use-incoming-reports-filters'
 import { useLaporanRealtime } from '@/hooks/use-reports-realtime';
 import AdminPage from '@/layouts/dashboard/page';
 import { type IncomingReportsProps } from '@/types/incoming-reports';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { RotateCcw, Search, X } from 'lucide-react';
 import { useState } from 'react';
 
-export default function IncomingReportsView() {
-    const { auth, tickets, filters, counts } = usePage<IncomingReportsProps>().props;
+interface IncomingReportsViewProps {
+    /**
+     * `my-reports` memakai komponen yang sama dengan Laporan Masuk, tetapi
+     * route, judul, empty state, dan tautan detailnya berbeda.
+     */
+    mode?: 'incoming' | 'my-reports';
+}
+
+export default function IncomingReportsView({ mode = 'incoming' }: IncomingReportsViewProps) {
+    const { auth, tickets, filters, counts, activeAssignmentMode } = usePage<IncomingReportsProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+    const isMyReports = mode === 'my-reports';
+
+    const routeName = isMyReports ? `${routePrefix}.my-reports.index` : `${routePrefix}.incoming-reports.index`;
+    const title = isMyReports ? 'Laporan Saya' : 'Laporan Masuk';
+    const description = isMyReports
+        ? 'Daftar laporan aktif yang Anda tangani sebagai PIC.'
+        : 'Daftar laporan pengaduan, aspirasi, dan permohonan informasi yang masuk.';
 
     const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
-        useIncomingReportsFilters(routePrefix, filters);
+        useIncomingReportsFilters(routeName, filters);
 
     const isSearching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
     const { recentlyAnswered, clearRecentlyAnswered } = useInboxRealtime({ searching: isSearching });
@@ -31,20 +46,34 @@ export default function IncomingReportsView() {
     useLaporanRealtime({
         isBusy: flagPopoverOpen,
         searching: isSearching,
-        only: ['tickets', 'counts', 'inbox_open_count'],
+        only: ['tickets', 'counts', 'inbox_open_count', 'my_reports_open_count'],
     });
 
     const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
 
-    const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix, recentlyAnswered));
+    const detailQuery = isMyReports
+        ? Object.fromEntries(
+              Object.entries({
+                  origin: 'my-reports',
+                  tab: filters.filter,
+                  q: filters.search,
+                  per_page: filters.per_page,
+                  from: filters.from,
+                  to: filters.to,
+                  page: tickets.current_page,
+              }).filter(([, value]) => value !== null && value !== ''),
+          )
+        : {};
+
+    const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix, recentlyAnswered, activeAssignmentMode, detailQuery));
 
     return (
-        <AdminPage breadcrumbs={[{ title: 'Laporan Masuk', href: route(`${routePrefix}.incoming-reports.index`) }]}>
-            <Head title="Laporan Masuk" />
+        <AdminPage breadcrumbs={[{ title, href: route(routeName) }]}>
+            <Head title={title} />
             <div className="space-y-6">
                 <div>
-                    <h2 className="text-xl font-bold tracking-tight">Laporan Masuk</h2>
-                    <p className="text-muted-foreground text-sm">Daftar laporan pengaduan, aspirasi, dan permohonan informasi yang masuk.</p>
+                    <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+                    <p className="text-muted-foreground text-sm">{description}</p>
                 </div>
 
                 <div className="bg-card overflow-hidden rounded-lg border">
@@ -98,12 +127,40 @@ export default function IncomingReportsView() {
                     )}
 
                     {/* Filter tabs */}
-                    <IncomingReportsFilterTabs currentFilter={filters.filter} counts={counts} onFilterChange={handleFilterChange} />
+                    <IncomingReportsFilterTabs
+                        currentFilter={filters.filter}
+                        counts={counts}
+                        onFilterChange={handleFilterChange}
+                        showTanpaPic={!isMyReports}
+                    />
 
                     {/* Ticket list */}
                     {tickets.data.length === 0 ? (
-                        <div className="text-muted-foreground flex flex-col items-center justify-center py-16">
-                            <p className="text-sm">Tidak ada laporan pada rentang ini</p>
+                        <div className="text-muted-foreground flex flex-col items-center justify-center gap-1 py-16 text-center">
+                            {isMyReports ? (
+                                hasActiveFilters ? (
+                                    <p className="text-sm">Tidak ada laporan yang cocok dengan filter.</p>
+                                ) : activeAssignmentMode === 'free' ? (
+                                    <>
+                                        <p className="text-sm">Belum ada laporan yang Anda tangani.</p>
+                                        <p className="max-w-md text-xs">
+                                            Pada mode keroyokan (free), laporan tidak memiliki penanggung jawab (PIC), sehingga daftar ini bisa kosong.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-sm">Belum ada laporan yang Anda tangani.</p>
+                                        <Link
+                                            href={route(`${routePrefix}.incoming-reports.index`)}
+                                            className="text-primary text-xs font-medium hover:underline"
+                                        >
+                                            Ambil tiket di Laporan Masuk
+                                        </Link>
+                                    </>
+                                )
+                            ) : (
+                                <p className="text-sm">Tidak ada laporan pada rentang ini</p>
+                            )}
                         </div>
                     ) : (
                         <TicketList

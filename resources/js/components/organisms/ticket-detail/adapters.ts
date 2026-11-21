@@ -6,6 +6,11 @@ import { InputDataTicketDetail } from '@/types/input-data';
 
 export function mapIncomingReportsToDetailData(ticket: TicketDetail): TicketDetailData {
     return {
+        assigned_to: ticket.assigned_to,
+        assigned_to_name: ticket.assigned_to_name,
+        assigned_at: ticket.assigned_at,
+        assignment_mode: ticket.assignment_mode,
+        is_orphaned: ticket.is_orphaned,
         id: ticket.id,
         ticket_number: ticket.ticket_number,
         period: ticket.period,
@@ -207,7 +212,13 @@ export function mapInputDataToDetailData(ticket: InputDataTicketDetail): TicketD
     };
 }
 
-export function toTicketListEntry(ticket: InboxTicketItem, routePrefix: string, recentlyAnswered: Record<number, string> = {}): TicketListEntry {
+export function toTicketListEntry(
+    ticket: InboxTicketItem,
+    routePrefix: string,
+    recentlyAnswered: Record<number, string> = {},
+    activeAssignmentMode: 'free' | 'claim' | 'round_robin' = 'free',
+    detailQuery: Record<string, string | number | null> = {},
+): TicketListEntry {
     const title =
         ticket.title && ticket.title.trim().length > 0
             ? ticket.title
@@ -227,7 +238,7 @@ export function toTicketListEntry(ticket: InboxTicketItem, routePrefix: string, 
         channel: ticket.channel,
         created_at: ticket.created_at,
         reporter_name: ticket.reporter_name,
-        show_href: route(`${routePrefix}.incoming-reports.show`, { ticketNumber: ticket.ticket_number }),
+        show_href: route(`${routePrefix}.incoming-reports.show`, { ticketNumber: ticket.ticket_number, ...detailQuery }),
         is_flagged: ticket.is_flagged,
         flag_note: ticket.flag_note,
         flagged_by_name: ticket.flagged_by_name,
@@ -236,5 +247,8 @@ export function toTicketListEntry(ticket: InboxTicketItem, routePrefix: string, 
         is_pengawasan: ticket.is_pengawasan,
         recently_answered_by: recentlyAnswered[ticket.id] ?? null,
         has_profanity: ticket.has_profanity,
+        assigned_to_name: ticket.assigned_to_name ?? null,
+        assignment_mode: ticket.assignment_mode,
+        show_assignment_mode_badge: ticket.assignment_mode !== undefined && ticket.assignment_mode !== activeAssignmentMode,
     };
 }

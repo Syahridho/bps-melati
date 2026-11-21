@@ -3,6 +3,9 @@ import { IncomingReportsDeleteDialog } from '@/components/organisms/incoming-rep
 import { IncomingReportsEditDialog } from '@/components/organisms/incoming-reports/incoming-reports-edit-dialog';
 import { IncomingReportsPresenceBar } from '@/components/molecules/incoming-reports-presence-bar';
 import { IncomingReportsReplyForm } from '@/components/organisms/incoming-reports/incoming-reports-reply-form';
+import { TicketAssignmentHistory } from '@/components/organisms/incoming-reports/ticket-assignment-history';
+import { TicketClaimButton } from '@/components/organisms/incoming-reports/ticket-claim-button';
+import { TicketReassignDialog } from '@/components/organisms/incoming-reports/ticket-reassign-dialog';
 import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/molecules/attachment-preview-dialog';
 import { mapIncomingReportsToDetailData } from '@/components/organisms/ticket-detail/adapters';
 import SensorToggleButton from '@/components/organisms/ticket-detail/sensor-toggle-button';
@@ -17,22 +20,43 @@ import { TicketResponseHistory } from '@/components/organisms/ticket-detail/tick
 import { TicketFlagButton } from '@/components/molecules/ticket-flag-button';
 import { Separator } from '@/components/ui/separator';
 import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
-import { formatFullDate } from '@/lib/incoming-reports-utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { assignmentModeLabel, formatFullDate } from '@/lib/incoming-reports-utils';
 import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketResponseItem } from '@/types/incoming-reports';
 import { router, useForm, usePage } from '@inertiajs/react';
-import { Calendar, FileText, Globe, Layers, Mail, Phone, User } from 'lucide-react';
+import { Calendar, FileText, Globe, Layers, Mail, Phone, User, UserRoundCog } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
 export default function ShowIncomingReportsView() {
-    const { auth, ticket, can, flash } = usePage<ShowProps>().props;
+    const { auth, ticket, can, flash, assignableOperators = [], assignmentLogs = [], activeAssignmentMode = 'free', from } =
+        usePage<ShowProps>().props;
+    const { url } = usePage();
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
-    const backRouteName = `${routePrefix}.incoming-reports.index`;
-    const backLabel = 'Laporan Masuk';
+    const openedFromMyReports = from === 'my-reports';
+    const backRouteName = openedFromMyReports ? `${routePrefix}.my-reports.index` : `${routePrefix}.incoming-reports.index`;
+    const backLabel = openedFromMyReports ? 'Laporan Saya' : 'Laporan Masuk';
+
+    // Kembali ke Laporan Saya dengan filter/pagination yang tadi dipakai.
+    const backHref = (() => {
+        if (!openedFromMyReports) {
+            return route(backRouteName);
+        }
+
+        const params = new URLSearchParams(url.split('?')[1] ?? '');
+        params.delete('origin');
+
+        return route(backRouteName, Object.fromEntries(params.entries()));
+    })();
 
     const canEdit = can?.edit ?? auth.user.role === 'admin';
     const canDelete = can?.delete ?? auth.user.role === 'admin';
+    const canReply = can?.reply ?? auth.user.role === 'admin';
+    const canClaim = can?.claim ?? false;
+    const canReassign = can?.reassign ?? auth.user.role === 'admin';
+    const canViewAssignmentHistory = can?.view_assignment_history ?? auth.user.role === 'admin';
 
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [showOriginal, setShowOriginal] = useState(false);
@@ -51,6 +75,7 @@ export default function ShowIncomingReportsView() {
 
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isReassignOpen, setIsReassignOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const editForm = useForm({
@@ -331,7 +356,7 @@ export default function ShowIncomingReportsView() {
     return (
         <TicketDetailLayout
             ticketNumber={ticket.ticket_number}
-            backHref={route(backRouteName)}
+            backHref={backHref}
             backLabel={backLabel}
             successMessage={successMessage}
             headerActions={
@@ -366,6 +391,16 @@ export default function ShowIncomingReportsView() {
                         />
                     )}
 
+                    {canReassign && (
+                        <TicketReassignDialog
+                            open={isReassignOpen}
+                            onOpenChange={setIsReassignOpen}
+                            ticketId={ticket.id}
+                            currentPicId={ticket.assigned_to ?? null}
+                            operators={assignableOperators}
+                        />
+                    )}
+
                     <AttachmentPreviewDialog
                         item={previewItem}
                         items={previewList}
@@ -388,8 +423,33 @@ export default function ShowIncomingReportsView() {
                     pengawasanAt={detailData.pengawasan_at}
                     pengawasanByName={detailData.pengawasan_by_name}
                     kadarPengawasanDays={detailData.kadar_pengawasan_days}
+                    badges={
+                        <>
+                            {detailData.assigned_to_name && (
+                                <Badge variant="outline" className="gap-1">
+                                    <UserRoundCog className="size-3" />
+                                    PIC: {detailData.assigned_to_name}
+                                </Badge>
+                            )}
+                            {detailData.assignment_mode && detailData.assignment_mode !== activeAssignmentMode && (
+                                <Badge variant="secondary">Mode: {assignmentModeLabel(detailData.assignment_mode)}</Badge>
+                            )}
+                            {detailData.is_orphaned && (
+                                <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                                    Tanpa PIC aktif
+                                </Badge>
+                            )}
+                        </>
+                    }
                     actions={
                         <>
+                            {canClaim && <TicketClaimButton ticketId={ticket.id} />}
+                            {canReassign && (
+                                <Button type="button" variant="outline" onClick={() => setIsReassignOpen(true)} className="gap-2">
+                                    <UserRoundCog className="size-4" />
+                                    Ubah PIC
+                                </Button>
+                            )}
                             <SensorToggleButton showOriginal={showOriginal} onToggle={() => setShowOriginal((prev) => !prev)} />
                             <SupervisionToggle
                                 ticketNumber={detailData.ticket_number}
@@ -430,6 +490,8 @@ export default function ShowIncomingReportsView() {
                 <TicketAttachments attachments={detailData.attachments} onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)} />
             </div>
 
+            {canViewAssignmentHistory && <TicketAssignmentHistory logs={assignmentLogs} />}
+
             <TicketResponseHistory
                 responses={detailData.responses}
                 ticketStatus={ticketStatus}
@@ -437,7 +499,7 @@ export default function ShowIncomingReportsView() {
                 showReplyForm={showReplyForm}
                 canResend={auth.user.role === 'admin'}
                 reporterEmail={ticket.reporter_email ?? ''}
-                onToggleReply={() => setShowReplyForm((prev) => !prev)}
+                onToggleReply={canReply ? () => setShowReplyForm((prev) => !prev) : undefined}
                 onPreviewAttachment={(att) => handlePreviewAttachment(att, detailData.attachments)}
                 lastItemRef={lastItemRef}
                 headerExtra={
@@ -452,24 +514,26 @@ export default function ShowIncomingReportsView() {
                 showOriginal={showOriginal}
                 onToggle={() => setShowOriginal((prev) => !prev)}
                 footerExtra={
-                    <IncomingReportsReplyForm
-                        ticketId={ticket.id}
-                        ticketStatus={ticketStatus}
-                        expectedVersion={liveVersion}
-                        hasResponAwal={hasResponAwal}
-                        routePrefix={routePrefix}
-                        open={showReplyForm && ticketStatus !== 'selesai'}
-                        pendingNotice={pendingNotice}
-                        conflict={conflict}
-                        onDismissConflict={() => setConflict(null)}
-                        onCancel={() => setShowReplyForm(false)}
-                        onSuccess={() => setShowReplyForm(false)}
-                        onPreviewFile={handlePreviewFile}
-                        onTyping={broadcastTyping}
-                        currentUserId={auth.user.id}
-                        viewers={viewers}
-                        typingNames={typingNames}
-                    />
+                    canReply ? (
+                        <IncomingReportsReplyForm
+                            ticketId={ticket.id}
+                            ticketStatus={ticketStatus}
+                            expectedVersion={liveVersion}
+                            hasResponAwal={hasResponAwal}
+                            routePrefix={routePrefix}
+                            open={showReplyForm && ticketStatus !== 'selesai'}
+                            pendingNotice={pendingNotice}
+                            conflict={conflict}
+                            onDismissConflict={() => setConflict(null)}
+                            onCancel={() => setShowReplyForm(false)}
+                            onSuccess={() => setShowReplyForm(false)}
+                            onPreviewFile={handlePreviewFile}
+                            onTyping={broadcastTyping}
+                            currentUserId={auth.user.id}
+                            viewers={viewers}
+                            typingNames={typingNames}
+                        />
+                    ) : undefined
                 }
             />
         </TicketDetailLayout>
