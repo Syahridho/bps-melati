@@ -1,3 +1,5 @@
+import { type SharedData } from '@/types';
+import { usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
@@ -9,10 +11,12 @@ interface RatingSettingChangedEvent {
 }
 
 export function useRatingSettingToast() {
+    const { auth } = usePage<SharedData>().props;
+    const isStaff = !!auth?.user;
     const seenRef = useRef<Set<string>>(new Set());
 
     useEcho<RatingSettingChangedEvent>(
-        'staff',
+        isStaff ? 'staff' : '',
         '.rating.setting.changed',
         (event) => {
             const key = `${event.enabled}-${event.changed_at ?? ''}`;
@@ -26,6 +30,6 @@ export function useRatingSettingToast() {
 
             toast.info(event.enabled ? 'Penilaian pelapor dinyalakan' : 'Penilaian pelapor dimatikan');
         },
-        [],
+        [isStaff],
     );
 }

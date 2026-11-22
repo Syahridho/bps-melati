@@ -15,7 +15,7 @@ interface RatingSettingChangedEvent {
 }
 
 export default function PenilaianSettingsView() {
-    const { ratingEnabled: initialRatingEnabled } = usePage<RatingSettingPageProps>().props;
+    const { ratingEnabled: initialRatingEnabled, auth } = usePage<RatingSettingPageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -53,13 +53,15 @@ export default function PenilaianSettingsView() {
         submitRating(checked);
     };
 
+    const isStaff = !!auth?.user;
+
     useEcho<RatingSettingChangedEvent>(
-        'staff',
+        isStaff ? 'staff' : '',
         '.rating.setting.changed',
         (event) => {
             setRatingEnabled(event.enabled);
         },
-        [],
+        [isStaff],
     );
 
     return (

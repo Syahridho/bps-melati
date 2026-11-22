@@ -144,16 +144,16 @@ export function AppSidebar() {
         return () => clearInterval(intervalId);
     }, [isAdmin, fetchAuditLogBadge]);
 
-    // Realtime: perbarui badge audit log saat ada log/penanda baru.
+    // Realtime: perbarui badge audit log saat ada log/penanda baru (hanya admin).
     useEcho(
-        'audit.log',
+        user && isAdmin ? 'audit.log' : '',
         '.audit.log.created',
         () => {
             if (isAdmin) {
                 fetchAuditLogBadge();
             }
         },
-        [isAdmin, fetchAuditLogBadge],
+        [user?.id, isAdmin, fetchAuditLogBadge],
     );
 
     const adminNavItems: NavItem[] = [

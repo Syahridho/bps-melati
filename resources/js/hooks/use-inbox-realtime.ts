@@ -1,5 +1,7 @@
+import { useAuthRole } from '@/hooks/use-auth-role';
+import { type SharedData } from '@/types';
 import { type InboxChangedEvent, type InboxUpdatedEvent } from '@/types/incoming-reports';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -38,12 +40,17 @@ export function useInboxRealtime({ searching }: { searching: boolean }) {
         }, RELOAD_DEBOUNCE_MS);
     }, []);
 
+    const { auth } = usePage<SharedData>().props;
+    const { isAdmin, isOperator } = useAuthRole();
+    const canAccessInbox = !!auth?.user && (isAdmin || isOperator);
+    const channelName = canAccessInbox ? 'inbox.incoming-reports' : '';
+
     // Event yang sudah pernah ditampilkan, supaya satu penyelesaian tidak
     // memunculkan toast berkali-kali (reload memicu balasan ulang).
     const announcedRef = useRef<Set<number>>(new Set());
 
     useEcho<InboxUpdatedEvent>(
-        'inbox.incoming-reports',
+        channelName,
         '.inbox.updated',
         (event) => {
             if (event.actor_id !== null && event.status !== 'selesai') {
@@ -61,18 +68,18 @@ export function useInboxRealtime({ searching }: { searching: boolean }) {
 
             scheduleReload();
         },
-        [],
+        [canAccessInbox, scheduleReload],
     );
 
     // Sinyal agregat (mis. satu batch auto close): cukup memicu reload yang
     // sama, jadi baris yang hilang dan angka badge/tab ikut turun.
     useEcho<InboxChangedEvent>(
-        'inbox.incoming-reports',
+        channelName,
         '.inbox.changed',
         () => {
             scheduleReload();
         },
-        [],
+        [canAccessInbox, scheduleReload],
     );
 
     useEffect(() => {

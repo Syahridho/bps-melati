@@ -140,7 +140,7 @@ export default function AuditLogPage() {
     }, []);
 
     // ---------- Real-time (HOOK HARUS DI BODY KOMPONEN, BUKAN DI DALAM useEffect) ----------
-    useEcho('audit.log', '.audit.log.created', (event: any) => {
+    useEcho(isAdmin ? 'audit.log' : '', '.audit.log.created', (event: any) => {
         const newLog: AuditLog = {
             id: event.id,
             event_type: event.event_type,
@@ -154,7 +154,7 @@ export default function AuditLogPage() {
         };
         setLogs((prev) => [newLog, ...prev.slice(0, 49)]);
         setAuditLogBadge((prev) => prev + 1);
-    });
+    }, [isAdmin]);
 
     // ---------- Initial load + polling fallback ----------
     useEffect(() => {

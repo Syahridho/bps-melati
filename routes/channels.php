@@ -36,7 +36,7 @@ Broadcast::channel('user.{userId}', function (User $user, int $userId) {
  * karena presence channel butuh data anggota untuk `.here()` di frontend.
  */
 Broadcast::channel('ticket.{ticketId}', function (User $user, int $ticketId) {
-    if (! ($user->isAdmin() || $user->isOperator())) {
+    if (! (($user->isAdmin() || $user->isOperator() || $user->isOperatorTim()) && $user->is_active === true)) {
         return false;
     }
 
@@ -60,7 +60,7 @@ Broadcast::channel('inbox.{scope}', function (User $user, string $scope) {
         return false;
     }
 
-    return $user->isAdmin() || $user->isOperator();
+    return ($user->isAdmin() || $user->isOperator()) && $user->is_active === true;
 });
 
 /**
@@ -95,11 +95,11 @@ Broadcast::channel('audit.log', function (User $user) {
 });
 
 /**
- * Private channel dashboard admin untuk pembaruan realtime kartu statistik, grafik, dan laporan terbaru.
- * Hanya role admin yang diizinkan.
+ * Private channel dashboard untuk pembaruan realtime kartu statistik, grafik, dan laporan terbaru.
+ * Diizinkan untuk admin & operator aktif yang mengakses dashboard.
  */
 Broadcast::channel('dashboard.admin', function (User $user) {
-    return $user->isAdmin() && $user->is_active;
+    return ($user->isAdmin() || $user->isOperator()) && $user->is_active === true;
 });
 
 /**

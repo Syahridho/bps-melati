@@ -1,4 +1,6 @@
-import { router } from '@inertiajs/react';
+import { useAuthRole } from '@/hooks/use-auth-role';
+import { type SharedData } from '@/types';
+import { router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -39,26 +41,31 @@ export function useDashboardRealtime(enabled: boolean = true) {
         }, RELOAD_DEBOUNCE_MS);
     }, [enabled]);
 
+    const { auth } = usePage<SharedData>().props;
+    const { isAdmin, isOperator } = useAuthRole();
+    const canSubscribe = enabled && !!auth?.user && (isAdmin || isOperator);
+    const channelName = canSubscribe ? 'dashboard.admin' : '';
+
     useEcho<DashboardUpdatedEvent>(
-        'dashboard.admin',
+        channelName,
         '.dashboard.updated',
         () => {
-            if (enabled) {
+            if (canSubscribe) {
                 scheduleReload();
             }
         },
-        [enabled],
+        [canSubscribe, scheduleReload],
     );
 
     useEcho<ChannelStatsUpdatedEvent>(
-        'dashboard.admin',
+        channelName,
         '.channel.stats.updated',
         () => {
-            if (enabled) {
+            if (canSubscribe) {
                 scheduleReload();
             }
         },
-        [enabled],
+        [canSubscribe, scheduleReload],
     );
 
     useEffect(() => {
