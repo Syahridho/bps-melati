@@ -25,3 +25,9 @@ admin | audit-log.summary-weekly | q_med=10 (min=10 max=10) | ms_med=15.19
 operator | dashboard.operator.incoming-reports.index | q_med=12 (min=12 max=12) | ms_med=19.83
 operator | dashboard.operator.my-reports.index | q_med=11 (min=11 max=11) | ms_med=18.04
 public | tickets.check | q_med=8 (min=8 max=9) | ms_med=9.47
+
+=== Cold vs Warm Query Measurements ===
+Cold (Cache::flush() sebelum pengukuran): 64/10 untuk summary-weekly, 35/5 flags-summary, 28/9 periodic-recap,
+18/12 incoming-reports, 12/6 input-data, 11-12/6 untuk my-reports/incoming.
+Warm (setelah cache terisi): 10/5/9/12/6/6 respectively.
+Semua pengukuran menggunakan Model::preventLazyLoading(). "64/10" format merujuk pada query dingin→setelah cache aktif.
