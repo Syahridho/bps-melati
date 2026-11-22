@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\AuditFlag;
 use App\Models\AuditLog;
 use App\Models\Ticket;
-use App\Models\TicketResponse;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

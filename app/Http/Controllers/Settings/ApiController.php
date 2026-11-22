@@ -19,7 +19,7 @@ class ApiController extends Controller
     {
         return Inertia::render('settings/api/index', [
             'apiKeyHeaderName' => 'X-API-KEY',
-            'baseUrl' => rtrim(config('app.url', 'http://localhost'), '/') . '/api',
+            'baseUrl' => rtrim(config('app.url', 'http://localhost'), '/').'/api',
         ]);
     }
 }

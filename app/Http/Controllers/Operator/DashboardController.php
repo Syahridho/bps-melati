@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Operator;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Support\DashboardStats;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,7 +19,7 @@ class DashboardController extends Controller
     public function __invoke(): Response
     {
         return Inertia::render('operator/dashboard', array_merge(DashboardStats::cached(), [
-            'isLiveEnabled' => (bool) \App\Models\Setting::get('dashboard_live_enabled', true),
+            'isLiveEnabled' => (bool) Setting::get('dashboard_live_enabled', true),
         ]));
     }
 }

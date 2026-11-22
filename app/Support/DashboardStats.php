@@ -20,7 +20,7 @@ class DashboardStats
     /**
      * Counter versi yang juga di-bump oleh Ticket::booted().
      */
-    public const VERSION_KEY = 'dashboard:admin:version';
+    public const VERSION_KEY = \App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION;
 
     /**
      * Berapa lama payload dashboard disimpan (detik).

@@ -58,7 +58,7 @@ class WelcomeController extends Controller
     private function publicStats(): array
     {
         return Cache::remember(
-            'welcome:stats:v'.Cache::get('dashboard:admin:version', 0),
+            'welcome:stats:v'.Cache::get(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION, 0),
             now()->addMinutes(10),
             function () {
                 $summary = Ticket::query()

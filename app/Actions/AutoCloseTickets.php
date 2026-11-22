@@ -306,7 +306,7 @@ class AutoCloseTickets
 
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget('dashboard:admin:version');
+        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
         LaporanCache::invalidate();
         InboxCounter::invalidate();
     }

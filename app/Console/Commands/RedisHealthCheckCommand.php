@@ -16,20 +16,23 @@ class RedisHealthCheckCommand extends Command
     {
         try {
             $pong = Redis::connection('default')->ping();
-            $this->info('Redis ping: ' . (is_array($pong) ? implode(',', $pong) : (string) $pong));
+            $this->info('Redis ping: '.(is_array($pong) ? implode(',', $pong) : (string) $pong));
 
             Cache::store('redis')->put('redis:health:check', 'ok', 60);
             $value = Cache::store('redis')->get('redis:health:check');
 
             if ($value !== 'ok') {
                 $this->error('Cache roundtrip gagal.');
+
                 return self::FAILURE;
             }
 
             $this->info('Cache roundtrip: OK');
+
             return self::SUCCESS;
         } catch (\Throwable $e) {
-            $this->error('Redis tidak tersedia: ' . $e->getMessage());
+            $this->error('Redis tidak tersedia: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }

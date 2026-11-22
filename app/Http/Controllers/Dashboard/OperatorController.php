@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\RendersRolePage;
-use App\Http\Requests\OperatorPerformanceRequest;
-use App\Services\OperatorPerformanceService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OperatorPerformanceRequest;
 use App\Models\User;
+use App\Services\OperatorPerformanceService;
 use App\Services\SessionTerminator;
 use App\Services\TicketAssignmentService;
 use App\Support\IpMasker;
 use App\Support\UserAgentParser;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -268,12 +269,12 @@ class OperatorController extends Controller
     /**
      * Endpoint JSON performa operator (hanya admin).
      */
-    public function performance(OperatorPerformanceRequest $request, OperatorPerformanceService $service): \Illuminate\Http\JsonResponse
+    public function performance(OperatorPerformanceRequest $request, OperatorPerformanceService $service): JsonResponse
     {
         abort_unless($request->user()?->isAdmin(), 403);
 
         $params = $request->validatedParams();
-        $cacheKey = 'operator:performance:' . md5(json_encode($params));
+        $cacheKey = 'operator:performance:'.md5(json_encode($params));
 
         if ($params['refresh']) {
             Cache::forget($cacheKey);

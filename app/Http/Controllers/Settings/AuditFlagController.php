@@ -4,10 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditFlag;
-use App\Models\AuditLog;
 use App\Services\AuditLogger;
-use App\Models\Ticket;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

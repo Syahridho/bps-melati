@@ -83,7 +83,7 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'created_by')->withTrashed();
     }
 
-public function assignedTo(): BelongsTo
+    public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to')->withTrashed();
     }
@@ -206,8 +206,8 @@ public function assignedTo(): BelongsTo
     protected static function booted(): void
     {
         $bump = function () {
-            Cache::add('dashboard:admin:version', 0);
-            Cache::increment('dashboard:admin:version');
+            Cache::add(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION, 0);
+            Cache::increment(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
             InboxCounter::invalidate();
         };
 

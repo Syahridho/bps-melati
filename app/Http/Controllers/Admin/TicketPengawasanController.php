@@ -60,7 +60,7 @@ class TicketPengawasanController extends Controller
 
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget('dashboard:admin:version');
+        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
 
         return back()->with('success', $aktif ? 'Kadar pengawasan berhasil diaktifkan.' : 'Kadar pengawasan berhasil dinonaktifkan.');
     }

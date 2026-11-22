@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\UserLoggedIn;
 use App\Exceptions\AccountDisabledException;
 use App\Exceptions\AccountInUseException;
 use App\Exceptions\InvalidCredentialsException;
@@ -79,7 +80,7 @@ class AuthenticateUser
             'session_id_suffix' => substr((string) $loggedIn->current_session_id, -8),
         ]);
 
-        \App\Events\UserLoggedIn::dispatch($loggedIn);
+        UserLoggedIn::dispatch($loggedIn);
 
         return $loggedIn;
     }

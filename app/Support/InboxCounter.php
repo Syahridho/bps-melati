@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Cache;
 class InboxCounter
 {
     private const COUNTS_TTL = 30;
+
     private const MY_REPORTS_TTL = 30;
+
     private const UNREAD_TTL = 15;
 
     /**
@@ -38,7 +40,7 @@ class InboxCounter
             ];
         }
 
-        $key = 'inbox:counts:' . self::version();
+        $key = 'inbox:counts:'.self::version();
 
         try {
             return Cache::remember($key, self::COUNTS_TTL, function (): array {
@@ -59,7 +61,7 @@ class InboxCounter
             return 0;
         }
 
-        $key = 'inbox:myreports:' . $user->id . ':' . self::version();
+        $key = 'inbox:myreports:'.$user->id.':'.self::version();
 
         try {
             return (int) Cache::remember($key, self::MY_REPORTS_TTL, function () use ($user): int {
@@ -85,7 +87,7 @@ class InboxCounter
             return 0;
         }
 
-        $key = 'inbox:unread:' . $user->id;
+        $key = 'inbox:unread:'.$user->id;
 
         try {
             return (int) Cache::remember($key, self::UNREAD_TTL, function () use ($user): int {

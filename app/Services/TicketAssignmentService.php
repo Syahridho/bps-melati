@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AssignmentMode;
 use App\Events\LaporanChanged;
+use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\TicketAssignmentLog;
 use App\Models\User;
@@ -159,7 +160,7 @@ class TicketAssignmentService
             return;
         }
 
-        if (! (bool) \App\Models\Setting::get('dashboard_live_enabled', true)) {
+        if (! (bool) Setting::get('dashboard_live_enabled', true)) {
             return;
         }
 
@@ -168,7 +169,7 @@ class TicketAssignmentService
             return;
         }
 
-        $user = \App\Models\User::find($assignedTo);
+        $user = User::find($assignedTo);
         if (! $user || (! $user->isOperator() && ! $user->isOperatorTim())) {
             return;
         }
@@ -357,7 +358,7 @@ class TicketAssignmentService
     {
         LaporanCache::invalidate();
         InboxCounter::invalidate();
-        Cache::forget('dashboard:admin:version');
+        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
         Cache::forget('dashboard:admin:stats');
         Cache::forget('dashboard:operator:stats');
         Cache::forget('ticket_check:'.md5((string) $ticket->ticket_number));

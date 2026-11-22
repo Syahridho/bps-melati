@@ -137,7 +137,7 @@ class SettingController extends Controller
     /**
      * Perbarui pengaturan penilaian pelapor (hanya admin).
      */
-    public function updateRating(\Illuminate\Http\Request $request): \Illuminate\Http\RedirectResponse
+    public function updateRating(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'rating_enabled' => ['required', 'boolean'],
@@ -151,7 +151,8 @@ class SettingController extends Controller
         return back();
     }
 
-    public function indexAppearce() {
-         return Inertia::render('settings/appearance/index');
+    public function indexAppearce()
+    {
+        return Inertia::render('settings/appearance/index');
     }
 }

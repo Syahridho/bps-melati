@@ -12,23 +12,37 @@ class AuditFlag extends Model
     const UPDATED_AT = null;
 
     public const TYPE_JARINGAN_SAMA = 'jaringan_sama';
+
     public const TYPE_RATING_CEPAT = 'rating_cepat';
+
     public const TYPE_RATING_BERUNTUN_IP = 'rating_beruntun_ip';
+
     public const TYPE_PERANGKAT_SAMA = 'perangkat_sama';
+
     public const TYPE_PENYELESAIAN_TIDAK_WAJAR = 'penyelesaian_tidak_wajar';
+
     public const TYPE_SELESAI_CEPAT_SETELAH_BALASAN = 'selesai_cepat_setelah_balasan';
+
     public const TYPE_LOGIN_GAGAL_BERULANG = 'login_gagal_berulang';
+
     public const TYPE_LOGIN_BARU = 'login_baru';
+
     public const TYPE_EKSPOR_SENSITIF = 'ekspor_sensitif';
+
     public const TYPE_PERUBAHAN_PENGATURAN_KRITIS = 'perubahan_pengaturan_kritis';
 
     public const STATUS_BARU = 'baru';
+
     public const STATUS_DITINJAU = 'ditinjau';
+
     public const STATUS_WAJAR = 'wajar';
+
     public const STATUS_TINDAK_LANJUT = 'tindak_lanjut';
 
     public const SEVERITY_INFO = 'info';
+
     public const SEVERITY_NOTICE = 'notice';
+
     public const SEVERITY_WARNING = 'warning';
 
     protected $fillable = [

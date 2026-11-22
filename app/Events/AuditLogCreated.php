@@ -32,8 +32,7 @@ class AuditLogCreated implements ShouldBroadcast, ShouldDispatchAfterCommit
         public array $meta = [],
         public ?int $id = null,
         public ?string $ticketNumber = null,
-    ) {
-    }
+    ) {}
 
     public function broadcastOn(): array
     {

@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
 use App\Models\AuditFlag;
-use Illuminate\Http\Request;
+use App\Models\AuditLog;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class SummaryWeeklyController extends Controller
 {
@@ -18,7 +16,7 @@ class SummaryWeeklyController extends Controller
      */
     public function index()
     {
-        $cacheKey = 'audit:weekly:summary:' . now()->format('Y-W') . ':' . AuditFlag::cacheVersion();
+        $cacheKey = 'audit:weekly:summary:'.now()->format('Y-W').':'.AuditFlag::cacheVersion();
 
         $compute = function (): array {
             $startOfWeek = now()->startOfWeek();
@@ -144,7 +142,7 @@ class SummaryWeeklyController extends Controller
                 ->get();
 
             // Cache the summary
-            Cache::put('weekly_audit_summary_' . $now->format('Y-W'), [
+            Cache::put('weekly_audit_summary_'.$now->format('Y-W'), [
                 'logs' => $logsThisWeek,
                 'flags' => $flagsThisWeek,
                 'new_flags' => $newFlagsThisWeek,
@@ -167,7 +165,8 @@ class SummaryWeeklyController extends Controller
                 ],
             ];
         } catch (\Exception $e) {
-            \Log::error('Weekly audit summary generation error: ' . $e->getMessage());
+            \Log::error('Weekly audit summary generation error: '.$e->getMessage());
+
             return ['success' => false, 'message' => 'Error generating weekly summary'];
         }
     }

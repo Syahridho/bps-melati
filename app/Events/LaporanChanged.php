@@ -47,7 +47,7 @@ class LaporanChanged implements ShouldBroadcast, ShouldDispatchAfterCommit
         ];
 
         foreach ($this->operatorUserIds as $userId) {
-            $channels[] = new PrivateChannel('laporan.operator.' . $userId);
+            $channels[] = new PrivateChannel('laporan.operator.'.$userId);
         }
 
         return $channels;

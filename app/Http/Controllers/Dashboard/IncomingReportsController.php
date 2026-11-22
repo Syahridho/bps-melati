@@ -200,7 +200,7 @@ class IncomingReportsController extends Controller
             'content' => $request->validated('content'),
         ]);
 
-        Cache::forget('dashboard:admin:version');
+        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
 
         return back()->with('success', 'Laporan berhasil diperbarui.');
     }
@@ -236,7 +236,7 @@ class IncomingReportsController extends Controller
             $ticket->delete();
         });
 
-        Cache::forget('dashboard:admin:version');
+        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
 
         $routePrefix = $request->user()->role->value === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 

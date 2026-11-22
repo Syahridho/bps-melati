@@ -17,8 +17,7 @@ class RatingSettingChanged implements ShouldBroadcast, ShouldDispatchAfterCommit
         public bool $enabled,
         public ?string $changedBy = null,
         public ?string $changedAt = null,
-    ) {
-    }
+    ) {}
 
     public function broadcastOn(): array
     {

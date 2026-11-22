@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\DB;
 class OperatorPerformanceService
 {
     public const MODE_OTOMATIS = 'otomatis';
+
     public const MODE_SELESAI = 'selesai';
+
     public const MODE_GABUNGAN = 'gabungan';
 
     // Ambil ticket IDs yang harus di-exclude dari perhitungan rating
@@ -288,13 +290,13 @@ class OperatorPerformanceService
         $minutes = intdiv($seconds % 3600, 60);
 
         if ($days > 0) {
-            return $days . ' hari ' . $hours . ' jam';
+            return $days.' hari '.$hours.' jam';
         }
 
         if ($hours > 0) {
-            return $hours . ' jam ' . $minutes . ' menit';
+            return $hours.' jam '.$minutes.' menit';
         }
 
-        return $minutes . ' menit';
+        return $minutes.' menit';
     }
 }

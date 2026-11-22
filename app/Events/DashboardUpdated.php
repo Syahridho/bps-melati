@@ -14,7 +14,7 @@ class DashboardUpdated implements ShouldBroadcast, ShouldDispatchAfterCommit
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
-     * @param array<string, mixed> $ticketSummary
+     * @param  array<string, mixed>  $ticketSummary
      */
     public function __construct(
         public string $type,

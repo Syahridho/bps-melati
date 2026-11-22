@@ -13,6 +13,7 @@ use App\Mail\TicketCreatedMail;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\AuditFlagDetector;
 use App\Services\AuditLogger;
 use App\Services\TicketAssignmentService;
 use App\Support\AppSettings;
@@ -131,7 +132,7 @@ class TicketApiController extends Controller
             'created_at' => $ticket->created_at->toIso8601String(),
         ], now()->addHours(24));
 
-        Cache::forget('dashboard:admin:version');
+        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
         TicketCreated::dispatch($ticket);
 
         $filter = app(ProfanityFilter::class);
@@ -406,7 +407,7 @@ class TicketApiController extends Controller
 
                 Cache::forget('ticket_check:'.md5($ticket->ticket_number));
                 Cache::forget("ticket:{$ticket->ticket_number}");
-                Cache::forget('dashboard:admin:version');
+                Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
 
                 $context = ['ticket_id' => $ticket->id, 'ticket_number' => $ticket->ticket_number];
 
@@ -450,7 +451,7 @@ class TicketApiController extends Controller
                     severity: 'notice',
                 );
 
-                app(\App\Services\AuditFlagDetector::class)->detectForTicketCompletion($ticket, $auditLog, $request);
+                app(AuditFlagDetector::class)->detectForTicketCompletion($ticket, $auditLog, $request);
             }
         }
 

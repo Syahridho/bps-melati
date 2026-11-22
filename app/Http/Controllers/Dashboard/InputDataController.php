@@ -499,7 +499,7 @@ class InputDataController extends Controller
 
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget('dashboard:admin:version');
+        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
 
         return back()->with('success', 'Data tiket berhasil diperbarui.');
     }
@@ -535,7 +535,7 @@ class InputDataController extends Controller
 
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget('dashboard:admin:version');
+        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
 
         $routePrefix = $request->user()->isAdmin() ? 'dashboard.admin' : 'dashboard.operator';
 

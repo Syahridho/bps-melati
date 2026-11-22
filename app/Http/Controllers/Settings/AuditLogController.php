@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\AuditLog;
 use App\Models\AuditFlag;
+use App\Models\AuditLog;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class AuditLogController extends Controller
 {
@@ -198,9 +197,9 @@ class AuditLogController extends Controller
             }
 
             fclose($handle);
-        }, 'audit-logs-' . now()->format('Ymd_His') . '.csv')
+        }, 'audit-logs-'.now()->format('Ymd_His').'.csv')
             ->header('Content-Type', 'text/csv; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="audit-logs-' . now()->format('Ymd_His') . '.csv"');
+            ->header('Content-Disposition', 'attachment; filename="audit-logs-'.now()->format('Ymd_His').'.csv"');
     }
 
     /**
@@ -210,7 +209,7 @@ class AuditLogController extends Controller
     {
         $status = $request->query('status', 'baru'); // default: baru/unreviewed
 
-        $cacheKey = 'auditflags:summary:' . $status . ':' . AuditFlag::cacheVersion();
+        $cacheKey = 'auditflags:summary:'.$status.':'.AuditFlag::cacheVersion();
 
         $compute = function () {
             $total = AuditFlag::selectRaw('COUNT(DISTINCT COALESCE(ticket_id, id)) as c')->value('c');

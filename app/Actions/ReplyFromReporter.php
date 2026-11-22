@@ -2,19 +2,18 @@
 
 namespace App\Actions;
 
+use App\Enums\UserRole;
 use App\Events\InboxUpdated;
 use App\Events\TicketReplyFromReporter;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
-use App\Enums\UserRole;
 use App\Services\AuditLogger;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -79,7 +78,7 @@ class ReplyFromReporter
 
             Cache::forget('ticket_check:'.md5($ticket->ticket_number));
             Cache::forget("ticket:{$ticket->ticket_number}");
-            Cache::forget('dashboard:admin:version');
+            Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
 
             $context = [
                 'ticket_id' => $ticket->id,
@@ -121,7 +120,7 @@ class ReplyFromReporter
                         'type' => $ticket->classification,
                         'title' => 'Balasan baru dari pelapor',
                         'message' => 'Pelapor telah membalas tanggapan Anda.',
-                        'url' => '/dashboard/admin/incoming-reports/' . $ticket->ticket_number,
+                        'url' => '/dashboard/admin/incoming-reports/'.$ticket->ticket_number,
                         'actor_name' => $ticket->reporter_name ?? null,
                     ]),
                     'read_at' => null,

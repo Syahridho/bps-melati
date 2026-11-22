@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class MonthlyRecapController extends Controller 
+class MonthlyRecapController extends Controller
 {
     private const MONTH_NAMES = [
         1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
@@ -68,7 +68,7 @@ class MonthlyRecapController extends Controller
     {
         $currentYear = (string) now()->year;
         $periodYear = substr($period, 0, 4);
-        
+
         // Periode lampau di-cache lebih lama (1 jam), periode berjalan/future pendek (60 detik)
         $ttl = ($periodYear < $currentYear) ? RekapCache::TTL : 60;
 
@@ -114,7 +114,7 @@ class MonthlyRecapController extends Controller
         $years = RekapYears::get();
         $yearOptions = array_map(fn (string $y): array => [
             'value' => $y,
-            'label' => 'Tahun ' . $y,
+            'label' => 'Tahun '.$y,
         ], $years);
 
         $currentYear = (int) now()->year;

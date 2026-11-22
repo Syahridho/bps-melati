@@ -28,8 +28,8 @@ class ChannelObserver
     private function bump(Channel $channel, string $action): void
     {
         Cache::forget('channels:tree');
-        Cache::add('dashboard:admin:version', 0);
-        Cache::increment('dashboard:admin:version');
+        Cache::add(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION, 0);
+        Cache::increment(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
 
         if (config('app.disable_dashboard_broadcast', false)) {
             return;
