@@ -6,6 +6,8 @@ use App\Actions\RecordSettingUpdateAudit;
 use App\Enums\AssignmentMode;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Settings\UpdateAutoCloseSettingsRequest;
+use App\Http\Requests\Settings\UpdateReportSignatureSettingsRequest;
 use App\Models\Setting;
 use App\Models\SettingChangeLog;
 use App\Services\AssignmentModeService;
@@ -23,13 +25,21 @@ class SettingController extends Controller
     use RendersRolePage;
 
     /**
-     * Tampilkan halaman pengaturan aplikasi.
+     * Redirect route lama ke halaman pertama pengaturan (Penugasan).
      */
-    public function index(AssignmentModeService $modeService): Response
+    public function index(): RedirectResponse
+    {
+        return redirect()->route('settings.application.penugasan');
+    }
+
+    /**
+     * Tampilkan halaman pengaturan penugasan.
+     */
+    public function penugasan(AssignmentModeService $modeService): Response
     {
         $pendingChange = $modeService->pending();
 
-        return Inertia::render('settings/application/index', [
+        return Inertia::render('settings/application/penugasan', [
             'assignmentMode' => [
                 'current' => $modeService->current()->value,
                 'current_label' => $modeService->current()->label(),
@@ -58,70 +68,93 @@ class SettingController extends Controller
                         : ($log->cancelled_at !== null ? 'cancelled' : 'scheduled'),
                 ], $modeService->history()),
             ],
-            'settings' => [
-                'nama_penanda_tangan' => Setting::get('nama_penanda_tangan', ''),
-                'jabatan_penanda_tangan' => Setting::get('jabatan_penanda_tangan', 'KETUA TIM PENGADUAN'),
-                'kota_penanda_tangan' => Setting::get('kota_penanda_tangan', 'Pekanbaru'),
-                'auto_close_pengaduan_days' => Setting::get('auto_close_pengaduan_days', '3'),
-                'auto_close_aspirasi_days' => Setting::get('auto_close_aspirasi_days', '1'),
-                'auto_close_permintaan_informasi_days' => Setting::get('auto_close_permintaan_informasi_days', '5'),
-                'kadar_pengawasan_hari' => Setting::get('kadar_pengawasan_hari', '30'),
-                'rating_enabled' => AppSettings::ratingEnabled(),
-            ],
-            'ratingEnabled' => AppSettings::ratingEnabled(),
         ]);
     }
 
     /**
-     * Perbarui pengaturan aplikasi (penanda tangan & batas waktu otomatis selesai).
+     * Tampilkan halaman pengaturan batas waktu otomatis selesai & kadar pengawasan.
      */
-    public function update(Request $request): RedirectResponse
+    public function autoClose(): Response
     {
-        $validated = $request->validate([
-            'nama_penanda_tangan' => ['nullable', 'string', 'max:255'],
-            'jabatan_penanda_tangan' => ['nullable', 'string', 'max:255'],
-            'kota_penanda_tangan' => ['nullable', 'string', 'max:255'],
-            'auto_close_pengaduan_days' => ['required', 'integer', 'min:0', 'max:365'],
-            'auto_close_aspirasi_days' => ['required', 'integer', 'min:0', 'max:365'],
-            'auto_close_permintaan_informasi_days' => ['required', 'integer', 'min:0', 'max:365'],
-            'kadar_pengawasan_hari' => ['required', 'integer', 'min:0', 'max:365'],
-            'rating_enabled' => ['sometimes', 'boolean'],
-        ], [
-            'auto_close_pengaduan_days.min' => 'Batas waktu pengaduan minimal 0 hari. Isi 0 untuk menonaktifkan.',
-            'auto_close_aspirasi_days.min' => 'Batas waktu aspirasi minimal 0 hari. Isi 0 untuk menonaktifkan.',
-            'auto_close_permintaan_informasi_days.min' => 'Batas waktu permintaan informasi minimal 0 hari. Isi 0 untuk menonaktifkan.',
-            'kadar_pengawasan_hari.min' => 'Kadar pengawasan minimal 0 hari.',
-            'auto_close_pengaduan_days.max' => 'Batas waktu pengaduan maksimal 365 hari.',
-            'auto_close_aspirasi_days.max' => 'Batas waktu aspirasi maksimal 365 hari.',
-            'auto_close_permintaan_informasi_days.max' => 'Batas waktu permintaan informasi maksimal 365 hari.',
-            'kadar_pengawasan_hari.max' => 'Kadar pengawasan maksimal 365 hari.',
-            'auto_close_pengaduan_days.required' => 'Batas waktu pengaduan wajib diisi. Isi 0 untuk menonaktifkan.',
-            'auto_close_aspirasi_days.required' => 'Batas waktu aspirasi wajib diisi. Isi 0 untuk menonaktifkan.',
-            'auto_close_permintaan_informasi_days.required' => 'Batas waktu permintaan informasi wajib diisi. Isi 0 untuk menonaktifkan.',
-            'kadar_pengawasan_hari.required' => 'Kadar pengawasan wajib diisi.',
+        return Inertia::render('settings/application/auto-close', [
+            'settings' => [
+                'auto_close_pengaduan_days' => Setting::get('auto_close_pengaduan_days', '3'),
+                'auto_close_aspirasi_days' => Setting::get('auto_close_aspirasi_days', '1'),
+                'auto_close_permintaan_informasi_days' => Setting::get('auto_close_permintaan_informasi_days', '5'),
+                'kadar_pengawasan_hari' => Setting::get('kadar_pengawasan_hari', '30'),
+            ],
         ]);
+    }
+
+    /**
+     * Perbarui pengaturan batas waktu otomatis selesai & kadar pengawasan.
+     */
+    public function updateAutoClose(UpdateAutoCloseSettingsRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
 
         foreach ($validated as $key => $value) {
-            if ($key === 'rating_enabled') {
-                continue;
-            }
-            Setting::set($key, is_bool($value) ? ($value ? '1' : '0') : (string) $value);
+            Setting::set($key, (string) $value);
         }
 
-        if (array_key_exists('rating_enabled', $validated)) {
-            RatingSettingService::setRatingEnabled((bool) $validated['rating_enabled'], $request->user());
-        }
-
-        $changedKeys = array_values(array_diff(array_keys($validated), ['rating_enabled']));
+        $changedKeys = array_keys($validated);
 
         app(RecordSettingUpdateAudit::class)->handle($request->user(), $request, $changedKeys);
 
-        // Bump versi cache dashboard agar saat setting diubah, payload langsung sinkron
+        // Bump versi cache dashboard agar payload langsung sinkron
         Cache::add(DashboardStats::VERSION_KEY, 0);
         Cache::increment(DashboardStats::VERSION_KEY);
 
         return redirect()->back()->with('flash', [
-            'success' => 'Pengaturan berhasil diperbarui!',
+            'success' => 'Pengaturan batas waktu otomatis berhasil diperbarui!',
+        ]);
+    }
+
+    /**
+     * Tampilkan halaman pengaturan laporan & tanda tangan.
+     */
+    public function laporan(): Response
+    {
+        return Inertia::render('settings/application/laporan', [
+            'settings' => [
+                'nama_penanda_tangan' => Setting::get('nama_penanda_tangan', ''),
+                'jabatan_penanda_tangan' => Setting::get('jabatan_penanda_tangan', 'KETUA TIM PENGADUAN'),
+                'kota_penanda_tangan' => Setting::get('kota_penanda_tangan', 'Pekanbaru'),
+            ],
+        ]);
+    }
+
+    /**
+     * Perbarui pengaturan laporan & tanda tangan.
+     */
+    public function updateLaporan(UpdateReportSignatureSettingsRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        foreach ($validated as $key => $value) {
+            Setting::set($key, (string) ($value ?? ''));
+        }
+
+        $changedKeys = array_keys($validated);
+
+        app(RecordSettingUpdateAudit::class)->handle($request->user(), $request, $changedKeys);
+
+        // Bump versi cache dashboard agar payload langsung sinkron
+        Cache::add(DashboardStats::VERSION_KEY, 0);
+        Cache::increment(DashboardStats::VERSION_KEY);
+
+        return redirect()->back()->with('flash', [
+            'success' => 'Pengaturan penanda tangan laporan berhasil diperbarui!',
+        ]);
+    }
+
+    /**
+     * Tampilkan halaman pengaturan penilaian pelapor.
+     */
+    public function penilaian(): Response
+    {
+        return Inertia::render('settings/application/penilaian', [
+            'ratingEnabled' => AppSettings::ratingEnabled(),
         ]);
     }
 
@@ -139,7 +172,9 @@ class SettingController extends Controller
 
         RatingSettingService::setRatingEnabled((bool) $validated['rating_enabled'], $request->user());
 
-        return back();
+        return back()->with('flash', [
+            'success' => 'Pengaturan penilaian pelapor berhasil diperbarui!',
+        ]);
     }
 
     public function indexAppearce()
