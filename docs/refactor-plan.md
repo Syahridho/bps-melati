@@ -128,3 +128,52 @@ See `docs/query-baseline.txt`:
 - **3d** (done): Audit assignment flows; all assignment operations already route through `TicketAssignmentService` (round robin/claim/reassign/mode scheduling). No direct `Ticket::query()->update(...)` for assignment remains in Actions/controllers.
 
 - **3e** (done): Completed reports now use unified LaporanFilter/LaporanFilterQuery and shared BuildsLaporanListPayload trait; resolveDateRange delegated to LaporanFilter.
+
+## Phase 3 — final status (3f)
+
+### Final definitions
+
+- **3a** (done): Pusatkan cache keys di `app/Support/CacheKeys.php`.
+- **3b** (done): Buat `app/Services/TicketCacheInvalidator.php`; invalidasi cache terpusat, setelah commit via `DB::afterCommit`.
+- **3c** (done): Pintu tunggal audit log. Semua pencatatan audit lewat `AuditLogger`, dipanggil dari Action/Observer/listener, bukan controller. Tidak ada `AuditLogger` atau `AuditLog::create` di `app/Http/Controllers`. Kejadian: reporter completion, setting update, audit flag review, export. String `event_type`, `severity`, payload tetap.
+- **3d** (done): Semua alur assignment lewat `TicketAssignmentService`. Tidak ada `Ticket::query()->update(...)` langsung di Action/controller untuk assignment.
+- **3e** (done): Satu implementasi filter laporan (`LaporanTicketQuery`, `LaporanFilter`, `LaporanFilterQuery`, `BuildsLaporanListPayload`) dipakai incoming/my/completed; keluaran identik.
+
+### Status
+
+| Sub-step | Status |
+|---|---|
+| 3a | done |
+| 3b | done |
+| 3c | done |
+| 3d | done |
+| 3e | done |
+
+### Keputusan yang disetujui
+
+- Event broadcast tidak digabung; nama `broadcastAs()` tetap.
+- Nilai database, nama route, JSON, dan Inertia props tetap.
+- Fase 5b (rename massal) ditunda.
+
+### N+1 / query report (bahan Fase 4, belum diperbaiki)
+
+Top 6 endpoint boros dari `docs/query-baseline.txt`:
+
+| # | Endpoint | Query (med) | Penyebab dominan |
+|---|---|---|---|
+| 1 | audit-log.summary-weekly | 64 (empty DB run) / 10 (200/400) | Agregat berulang di `SummaryWeeklyController::index`. |
+| 2 | audit-log.flags-summary | 35 (empty) / 5 | Agregat berulang + per-status count. |
+| 3 | periodic-recap.index | 28 (empty) / 9 | Rekap per periode dengan query berulang. |
+| 4 | operator incoming-reports.index | 18 (empty) / 12 | Count per tab + cache list. |
+| 5 | admin input-data.index | 12 (empty) / 6 | Query terpisah untuk stats/filter. |
+| 6 | admin/operator incoming & my reports | 11-12 | Duplikasi count base query + tab aggregate. |
+
+### 3d — daftar assignment
+
+Diubah: `TicketAssignmentService`, `AutoCloseTickets` (delegasi), `TicketAssignmentController`.
+Sudah benar: grep `Ticket::query()->update(...)` untuk assignment di luar service tidak ditemukan.
+
+### 3c — bukti
+
+Grep `AuditLogger`/`AuditLog::create` di `app/Http/Controllers`: tidak ditemukan.
+Semua `Record*Audit` (4 class) memakai `AuditLogger::log`.

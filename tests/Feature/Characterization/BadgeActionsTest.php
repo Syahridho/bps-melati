@@ -1,6 +1,8 @@
 <?php
 
 use App\Actions\AutoCloseTickets;
+use App\Actions\ReplyFromReporter;
+use App\Actions\ReplyToTicket;
 use App\Models\AuditFlag;
 use App\Models\AuditLog;
 use App\Models\Channel;
@@ -11,6 +13,7 @@ use App\Services\AssignmentModeService;
 use App\Services\TicketAssignmentService;
 use App\Support\InboxCounter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -37,7 +40,7 @@ test('badge: auto assign via round robin creates ticket', function () {
     ]);
 
     expect($ticket)->not->toBeNull();
-    expect(InboxCounter::getAssignedActiveCount($operator))->toBeGreaterThanOrEqual($before);
+    expect(InboxCounter::getAssignedActiveCount($operator))->toBe(1);
 });
 
 test('badge: claim increments laporan saya', function () {
@@ -113,8 +116,10 @@ test('badge: audit flag review decrements new count', function () {
     ]);
 
     expect(AuditFlag::where('status', 'baru')->count())->toBe(1);
+    $versionBefore = AuditFlag::cacheVersion();
 
     $flag->update(['status' => 'wajar', 'reviewed_by' => $admin->id, 'reviewed_at' => now()]);
+    expect(AuditFlag::cacheVersion())->not->toBe($versionBefore);
     expect(AuditFlag::where('status', 'baru')->count())->toBe(0);
 });
 
@@ -152,6 +157,7 @@ test('badge: audit flag creation increments new count', function () {
     ]);
 
     expect(AuditFlag::where('status', 'baru')->count())->toBe(0);
+    $versionBefore = AuditFlag::cacheVersion();
 
     AuditFlag::create([
         'type' => 'jaringan_sama',
@@ -161,5 +167,66 @@ test('badge: audit flag creation increments new count', function () {
         'details' => ['tingkat' => 'tinggi'],
     ]);
 
+    expect(AuditFlag::cacheVersion())->not->toBe($versionBefore);
     expect(AuditFlag::where('status', 'baru')->count())->toBe(1);
+});
+
+test('badge: balasan operator memperbarui cache laporan masuk', function () {
+    $operator = User::factory()->create(['role' => 'operator']);
+    $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true, 'sort_order' => 1]);
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'T-8010',
+        'period' => now()->format('mY'),
+        'sequence' => 8010,
+        'classification' => 'pengaduan',
+        'title' => 'Ticket',
+        'content' => 'Content',
+        'channel_id' => $channel->id,
+        'reporter_name' => 'Reporter',
+        'status' => 'baru',
+        'assignment_mode' => 'claim',
+        'assigned_to' => $operator->id,
+        'source_app' => 'web',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    InboxCounter::invalidate();
+    expect(InboxCounter::getCounts()['respon_awal'])->toBe(0);
+
+    app(ReplyToTicket::class)->handle($ticket, $operator, [
+        'type' => 'respon_awal',
+        'message' => 'Balasan operator',
+        'idempotency_key' => (string) Str::uuid(),
+    ]);
+
+    expect(InboxCounter::getCounts()['respon_awal'])->toBe(1);
+});
+
+test('badge: balasan pelapor memperbarui cache laporan masuk', function () {
+    $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true, 'sort_order' => 1]);
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'T-8011',
+        'period' => now()->format('mY'),
+        'sequence' => 8011,
+        'classification' => 'pengaduan',
+        'title' => 'Ticket',
+        'content' => 'Content',
+        'channel_id' => $channel->id,
+        'reporter_name' => 'Reporter',
+        'status' => 'respon_substantif',
+        'is_read' => true,
+        'source_app' => 'web',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    InboxCounter::invalidate();
+    expect(InboxCounter::getCounts()['belum_dibaca'])->toBe(0);
+
+    app(ReplyFromReporter::class)->handle($ticket, 'Balasan pelapor');
+
+    expect(InboxCounter::getCounts()['belum_dibaca'])->toBe(1);
 });
