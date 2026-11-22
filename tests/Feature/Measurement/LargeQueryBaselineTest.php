@@ -8,6 +8,7 @@ use App\Models\TicketResponse;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
@@ -16,7 +17,8 @@ beforeEach(function () {
     Model::preventLazyLoading();
 });
 
-test('large query baseline', function () {
+function seedLargeDataset(int $ticketCount): array
+{
     $admin = User::factory()->create(['role' => 'admin']);
     $operators = User::factory()->count(5)->create(['role' => 'operator']);
     $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true, 'sort_order' => 1]);
@@ -24,12 +26,10 @@ test('large query baseline', function () {
     $statuses = ['baru', 'respon_awal', 'respon_substantif', 'selesai'];
     $classifications = ['pengaduan', 'aspirasi', 'permintaan_informasi'];
 
-    $ticketCount = 200;
-    $tickets = [];
     for ($i = 1; $i <= $ticketCount; $i++) {
         $status = $statuses[$i % count($statuses)];
         $ticket = Ticket::create([
-            'ticket_number' => 'T-'.str_pad((string) $i, 5, '0', STR_PAD_LEFT),
+            'ticket_number' => 'T-'.str_pad((string) $i, 5, '0', STR_PAD_LEFT).'-'.$ticketCount,
             'period' => now()->format('mY'),
             'sequence' => $i,
             'classification' => $classifications[$i % count($classifications)],
@@ -46,7 +46,6 @@ test('large query baseline', function () {
             'created_at' => now()->subDays($i % 30),
             'updated_at' => now()->subDays($i % 30),
         ]);
-        $tickets[] = $ticket;
 
         if ($i % 3 === 0) {
             TicketResponse::create([
@@ -75,61 +74,88 @@ test('large query baseline', function () {
         }
     }
 
-    $operator = $operators[0];
+    return [$admin, $operators[0]];
+}
+
+function runMeasurements($admin, $operator): array
+{
+    $GLOBALS['qcount'] = 0;
+    DB::listen(function () {
+        $GLOBALS['qcount']++;
+    });
 
     $endpoints = [
-        ['admin', 'GET', 'dashboard.admin.incoming-reports.index', []],
-        ['admin', 'GET', 'dashboard.admin.completed-reports.index', []],
-        ['admin', 'GET', 'dashboard.admin.input-data.index', []],
-        ['admin', 'GET', 'dashboard.admin.periodic-recap.index', []],
-        ['admin', 'GET', 'audit-log.index', []],
-        ['admin', 'GET', 'audit-flag.index', []],
-        ['admin', 'GET', 'audit-log.flags-summary', []],
-        ['admin', 'GET', 'audit-log.summary-weekly', []],
-        ['operator', 'GET', 'dashboard.operator.incoming-reports.index', []],
-        ['operator', 'GET', 'dashboard.operator.my-reports.index', []],
+        ['admin', 'dashboard.admin.index'],
+        ['admin', 'dashboard.admin.incoming-reports.index'],
+        ['admin', 'dashboard.admin.completed-reports.index'],
+        ['admin', 'dashboard.admin.input-data.index'],
+        ['admin', 'dashboard.admin.periodic-recap.index'],
+        ['admin', 'audit-log.index'],
+        ['admin', 'audit-flag.index'],
+        ['admin', 'audit-log.flags-summary'],
+        ['admin', 'audit-log.summary-weekly'],
+        ['operator', 'dashboard.operator.incoming-reports.index'],
+        ['operator', 'dashboard.operator.my-reports.index'],
     ];
 
-    $lines = [];
-    $lines[] = 'Large query baseline (preventLazyLoading enabled)';
-    $lines[] = 'Rows: tickets='.$ticketCount.', operators=5, audit_flags='.AuditFlag::count().', audit_logs='.AuditLog::count();
-    $lines[] = str_repeat('-', 80);
-
-    foreach ($endpoints as [$role, $method, $name, $params]) {
+    $results = [];
+    foreach ($endpoints as [$role, $name]) {
         $user = $role === 'admin' ? $admin : $operator;
-        $count = 0;
+        $counts = [];
+        $times = [];
+        for ($run = 0; $run < 5; $run++) {
+            Cache::flush();
+            $GLOBALS['qcount'] = 0;
+            $start = microtime(true);
+            try {
+                $response = test()->actingAs($user)->get(route($name));
+                $status = $response->getStatusCode();
+            } catch (Throwable $e) {
+                $status = 'EXC';
+            }
+            $counts[] = $GLOBALS['qcount'];
+            $times[] = round((microtime(true) - $start) * 1000, 2);
+        }
+        sort($counts);
+        sort($times);
+        $results[] = sprintf('%s | %s | q_med=%d (min=%d max=%d) | ms_med=%s',
+            $role, $name, $counts[2], $counts[0], $counts[4], $times[2]);
+    }
+
+    $firstTicket = Ticket::query()->first();
+    $counts = [];
+    $times = [];
+    for ($run = 0; $run < 5; $run++) {
+        Cache::flush();
+        $GLOBALS['qcount'] = 0;
         $start = microtime(true);
-        DB::listen(function () use (&$count) {
-            $count++;
-        });
         try {
-            $response = $this->actingAs($user)->get(route($name, $params));
+            $response = test()->get(route('tickets.check').'?ticket_number='.urlencode($firstTicket->ticket_number));
             $status = $response->getStatusCode();
         } catch (Throwable $e) {
-            $status = 'EXC: '.get_class($e).' '.$e->getMessage();
+            $status = 'EXC';
         }
-        $ms = round((microtime(true) - $start) * 1000, 2);
-        $lines[] = sprintf('%s | %s | queries=%d | %sms | status=%s', $role, $name, $count, $ms, $status);
+        $counts[] = $GLOBALS['qcount'];
+        $times[] = round((microtime(true) - $start) * 1000, 2);
     }
+    sort($counts);
+    sort($times);
+    $results[] = sprintf('public | tickets.check | q_med=%d (min=%d max=%d) | ms_med=%s',
+        $counts[2], $counts[0], $counts[4], $times[2]);
 
-    // cek tiket (public check endpoint)
-    $checkTicket = $tickets[0];
-    $count = 0;
-    $start = microtime(true);
-    DB::listen(function () use (&$count) {
-        $count++;
-    });
-    try {
-        $response = $this->get(route('tickets.check').'?ticket_number='.urlencode($checkTicket->ticket_number));
-        $status = $response->getStatusCode();
-    } catch (Throwable $e) {
-        $status = 'EXC: '.get_class($e);
-    }
-    $ms = round((microtime(true) - $start) * 1000, 2);
-    $lines[] = sprintf('public | tickets.check | queries=%d | %sms | status=%s', $count, $ms, $status);
+    return $results;
+}
 
-    // API tiket store not measured (write)
-
-    file_put_contents(base_path('docs/query-baseline.txt'), implode("\n", $lines)."\n");
+test('large query baseline 200', function () {
+    [$admin, $operator] = seedLargeDataset(200);
+    $results = runMeasurements($admin, $operator);
+    file_put_contents(base_path('docs/query-baseline.txt'), "=== 200 tickets ===\n".implode("\n", $results)."\n");
     expect(true)->toBeTrue();
-});
+})->group('measurement');
+
+test('large query baseline 400', function () {
+    [$admin, $operator] = seedLargeDataset(400);
+    $results = runMeasurements($admin, $operator);
+    file_put_contents(base_path('docs/query-baseline.txt'), file_get_contents(base_path('docs/query-baseline.txt'))."\n=== 400 tickets ===\n".implode("\n", $results)."\n");
+    expect(true)->toBeTrue();
+})->group('measurement');
