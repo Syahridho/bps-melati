@@ -1,11 +1,11 @@
 import HeadingSmall from '@/components/atoms/heading-small';
-import { type SetSettingField, type SettingValues } from '@/types/settings';
+import { type AutoCloseSettingValues } from '@/types/settings';
 import { PengaturanFormField } from '@/components/molecules/settings-form-field';
 
 interface PengaturanAutoCloseFieldsProps {
-    data: SettingValues;
-    setData: SetSettingField;
-    errors: Partial<Record<keyof SettingValues, string>>;
+    data: AutoCloseSettingValues;
+    setData: (field: keyof AutoCloseSettingValues, value: string) => void;
+    errors: Partial<Record<keyof AutoCloseSettingValues, string>>;
 }
 
 export function PengaturanAutoCloseFields({ data, setData, errors }: PengaturanAutoCloseFieldsProps) {

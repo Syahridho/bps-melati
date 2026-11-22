@@ -19,14 +19,27 @@ export default function SettingsLayout({
     const pageUrl = usePage().url;
     const currentPath = pageUrl.split('?')[0].split('#')[0];
 
-    const appSettingUrl = isAdmin ? '/settings/application' : null;
-
     const sidebarNavItems: NavItem[] = [
-        ...(appSettingUrl
+        ...(isAdmin
             ? [
                   {
-                      title: 'Pengaturan Aplikasi',
-                      url: appSettingUrl,
+                      title: 'Penugasan',
+                      url: '/settings/application/penugasan',
+                      icon: null,
+                  },
+                  {
+                      title: 'Auto Close',
+                      url: '/settings/application/auto-close',
+                      icon: null,
+                  },
+                  {
+                      title: 'Laporan & Tanda Tangan',
+                      url: '/settings/application/laporan',
+                      icon: null,
+                  },
+                  {
+                      title: 'Penilaian Pelapor',
+                      url: '/settings/application/penilaian',
                       icon: null,
                   },
                   {

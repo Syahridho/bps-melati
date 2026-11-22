@@ -29,14 +29,17 @@ function isUrlActive(itemUrl: string, currentUrl: string): boolean {
         return currentPath === itemPath;
     }
 
-    if (itemPath.startsWith('/settings') && currentPath.startsWith('/settings')) {
-        return true;
-    }
-
     return currentPath === itemPath || currentPath.startsWith(itemPath + '/');
 }
 
 function isItemActive(item: NavItem, currentUrl: string): boolean {
+    const currentPath = getPath(currentUrl);
+    const itemPath = getPath(item.url);
+
+    if (itemPath.startsWith('/settings') && currentPath.startsWith('/settings')) {
+        return true;
+    }
+
     if (isUrlActive(item.url, currentUrl)) {
         return true;
     }

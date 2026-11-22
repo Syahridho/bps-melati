@@ -45,9 +45,9 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
     const pageUrl = usePage().url;
     const currentPath = pageUrl.split('?')[0].split('#')[0];
 
-    const isSettingsPage = currentPath.startsWith('/settings/');
+    const isSettingsPage = currentPath.startsWith('/settings');
 
-    const settingsUrl = user.role === 'admin' ? route('settings.application.edit') : route('appearance');
+    const settingsUrl = user.role === 'admin' ? route('settings.application.penugasan') : route('appearance');
 
     const handleLogout = async (e: Event) => {
         e.preventDefault();

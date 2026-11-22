@@ -129,7 +129,7 @@ export function AppSidebar() {
                 const data = await response.json();
                 setAuditLogBadge(data.new_count ?? 0);
             }
-        } catch (e) {
+        } catch {
             // Silent fail - badge tetap 0
         }
     }, [isAdmin]);
@@ -197,8 +197,26 @@ export function AppSidebar() {
         },
         {
             title: 'Pengaturan',
-            url: '/settings/application',
+            url: '/settings/application/penugasan',
             icon: SettingsIcon,
+            items: [
+                {
+                    title: 'Penugasan',
+                    url: '/settings/application/penugasan',
+                },
+                {
+                    title: 'Auto Close',
+                    url: '/settings/application/auto-close',
+                },
+                {
+                    title: 'Laporan & Tanda Tangan',
+                    url: '/settings/application/laporan',
+                },
+                {
+                    title: 'Penilaian Pelapor',
+                    url: '/settings/application/penilaian',
+                },
+            ],
         },
         {
             title: 'Audit Log',

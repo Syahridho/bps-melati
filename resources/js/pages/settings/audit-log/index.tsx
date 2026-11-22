@@ -52,7 +52,7 @@ interface AuditFlag {
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Pengaturan',
-        href: route('settings.application.edit'),
+        href: route('settings.application.penugasan'),
     },
 ];
 

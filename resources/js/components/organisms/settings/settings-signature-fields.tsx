@@ -1,11 +1,11 @@
-import { PengaturanFormField } from '@/components/molecules/settings-form-field';
 import HeadingSmall from '@/components/atoms/heading-small';
-import { type SetSettingField, type SettingValues } from '@/types/settings';
+import { PengaturanFormField } from '@/components/molecules/settings-form-field';
+import { type ReportSignatureSettingValues } from '@/types/settings';
 
 interface PengaturanSignatureFieldsProps {
-    data: SettingValues;
-    setData: SetSettingField;
-    errors: Partial<Record<keyof SettingValues, string>>;
+    data: ReportSignatureSettingValues;
+    setData: (field: keyof ReportSignatureSettingValues, value: string) => void;
+    errors: Partial<Record<keyof ReportSignatureSettingValues, string>>;
 }
 
 export function PengaturanSignatureFields({ data, setData, errors }: PengaturanSignatureFieldsProps) {

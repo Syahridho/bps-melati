@@ -12,6 +12,21 @@ export interface SettingValues {
     rating_enabled?: boolean;
 }
 
+export interface AutoCloseSettingValues {
+    [key: string]: string;
+    auto_close_pengaduan_days: string;
+    auto_close_aspirasi_days: string;
+    auto_close_permintaan_informasi_days: string;
+    kadar_pengawasan_hari: string;
+}
+
+export interface ReportSignatureSettingValues {
+    [key: string]: string;
+    nama_penanda_tangan: string;
+    jabatan_penanda_tangan: string;
+    kota_penanda_tangan: string;
+}
+
 export type AssignmentModeValue = 'free' | 'claim' | 'round_robin';
 
 export interface AssignmentModeOption {
@@ -50,6 +65,31 @@ export interface SettingPageProps extends SharedData {
     assignmentMode: AssignmentModeSettings;
     ratingEnabled?: boolean;
     flash: {
+        success?: string;
+    };
+}
+
+export interface AssignmentSettingPageProps extends SharedData {
+    assignmentMode: AssignmentModeSettings;
+}
+
+export interface AutoCloseSettingPageProps extends SharedData {
+    settings: AutoCloseSettingValues;
+    flash?: {
+        success?: string;
+    };
+}
+
+export interface ReportSignatureSettingPageProps extends SharedData {
+    settings: ReportSignatureSettingValues;
+    flash?: {
+        success?: string;
+    };
+}
+
+export interface RatingSettingPageProps extends SharedData {
+    ratingEnabled: boolean;
+    flash?: {
         success?: string;
     };
 }
