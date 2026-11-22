@@ -22,6 +22,7 @@ export interface NavItem {
     badge?: number;
     external?: boolean;
     items?: NavItem[];
+    activePrefix?: string;
 }
 
 export interface SharedData {

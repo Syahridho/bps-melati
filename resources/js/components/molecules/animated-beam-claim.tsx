@@ -1,6 +1,6 @@
 'use client';
 
-import { Headphones, Inbox, Server, User } from 'lucide-react';
+import { Inbox, Server, User } from 'lucide-react';
 import { forwardRef, useRef, type ReactNode } from 'react';
 
 import { AnimatedBeam } from '@/components/ui/animated-beam';
@@ -62,18 +62,18 @@ export function AnimatedBeamClaim() {
 
                 <div className="flex flex-col gap-4">
                     <Step ref={op1Ref} label="Operator 1" wrapperClassName="opacity-40">
-                        <Headphones className="size-6" />
+                        <User className="size-6" />
                     </Step>
 
                     <Step ref={op2Ref} label="Operator 2" className="border-primary ring-primary/20 ring-4">
-                        <Headphones className="size-6" />
+                        <User className="size-6" />
                         <span className="bg-primary text-primary-foreground absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap">
                             Diambil
                         </span>
                     </Step>
 
                     <Step ref={op3Ref} label="Operator 3" wrapperClassName="opacity-40">
-                        <Headphones className="size-6" />
+                        <User className="size-6" />
                     </Step>
                 </div>
 

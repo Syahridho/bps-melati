@@ -33,18 +33,8 @@ export default function SettingsLayout({
                       icon: null,
                   },
                   {
-                      title: 'Laporan & Tanda Tangan',
-                      url: '/settings/application/laporan',
-                      icon: null,
-                  },
-                  {
                       title: 'Penilaian Pelapor',
                       url: '/settings/application/penilaian',
-                      icon: null,
-                  },
-                  {
-                      title: 'API Dokumentasi',
-                      url: '/settings/api',
                       icon: null,
                   },
                   {
@@ -55,6 +45,16 @@ export default function SettingsLayout({
                   {
                       title: 'Sensor Kata Kasar',
                       url: '/settings/sensors',
+                      icon: null,
+                  },
+                  {
+                      title: 'Laporan & Tanda Tangan',
+                      url: '/settings/application/laporan',
+                      icon: null,
+                  },
+                  {
+                      title: 'API Dokumentasi',
+                      url: '/settings/api',
                       icon: null,
                   },
               ]

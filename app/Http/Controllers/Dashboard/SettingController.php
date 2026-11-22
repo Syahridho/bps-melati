@@ -39,7 +39,7 @@ class SettingController extends Controller
     {
         $pendingChange = $modeService->pending();
 
-        return Inertia::render('settings/application/penugasan', [
+        return Inertia::render('settings/assignment/index', [
             'assignmentMode' => [
                 'current' => $modeService->current()->value,
                 'current_label' => $modeService->current()->label(),
@@ -76,7 +76,7 @@ class SettingController extends Controller
      */
     public function autoClose(): Response
     {
-        return Inertia::render('settings/application/auto-close', [
+        return Inertia::render('settings/auto-close/index', [
             'settings' => [
                 'auto_close_pengaduan_days' => Setting::get('auto_close_pengaduan_days', '3'),
                 'auto_close_aspirasi_days' => Setting::get('auto_close_aspirasi_days', '1'),
@@ -115,7 +115,7 @@ class SettingController extends Controller
      */
     public function laporan(): Response
     {
-        return Inertia::render('settings/application/laporan', [
+        return Inertia::render('settings/recap/index', [
             'settings' => [
                 'nama_penanda_tangan' => Setting::get('nama_penanda_tangan', ''),
                 'jabatan_penanda_tangan' => Setting::get('jabatan_penanda_tangan', 'KETUA TIM PENGADUAN'),
@@ -153,7 +153,7 @@ class SettingController extends Controller
      */
     public function penilaian(): Response
     {
-        return Inertia::render('settings/application/penilaian', [
+        return Inertia::render('settings/rating/index', [
             'ratingEnabled' => AppSettings::ratingEnabled(),
         ]);
     }

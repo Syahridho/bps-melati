@@ -1,15 +1,15 @@
+import AppLogo from '@/components/atoms/app-logo';
 import { NavMain } from '@/components/organisms/navigation/nav-main';
 import { NavUser } from '@/components/organisms/navigation/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { useAuthRole } from '@/hooks/use-auth-role';
+import { type LaporanChangedEvent } from '@/hooks/use-reports-realtime';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEcho, useEchoPublic } from '@laravel/echo-react';
-import { type LaporanChangedEvent } from '@/hooks/use-reports-realtime';
 import { ClipboardCheck, ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, ScrollText, SettingsIcon, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import AppLogo from '@/components/atoms/app-logo';
 
 export function AppSidebar() {
     const { inbox_open_count, my_reports_open_count } = usePage<SharedData>().props;
@@ -145,11 +145,16 @@ export function AppSidebar() {
     }, [isAdmin, fetchAuditLogBadge]);
 
     // Realtime: perbarui badge audit log saat ada log/penanda baru.
-    useEcho('audit.log', '.audit.log.created', () => {
-        if (isAdmin) {
-            fetchAuditLogBadge();
-        }
-    }, [isAdmin, fetchAuditLogBadge]);
+    useEcho(
+        'audit.log',
+        '.audit.log.created',
+        () => {
+            if (isAdmin) {
+                fetchAuditLogBadge();
+            }
+        },
+        [isAdmin, fetchAuditLogBadge],
+    );
 
     const adminNavItems: NavItem[] = [
         {
@@ -198,25 +203,8 @@ export function AppSidebar() {
         {
             title: 'Pengaturan',
             url: '/settings/application/penugasan',
+            activePrefix: '/settings',
             icon: SettingsIcon,
-            items: [
-                {
-                    title: 'Penugasan',
-                    url: '/settings/application/penugasan',
-                },
-                {
-                    title: 'Auto Close',
-                    url: '/settings/application/auto-close',
-                },
-                {
-                    title: 'Laporan & Tanda Tangan',
-                    url: '/settings/application/laporan',
-                },
-                {
-                    title: 'Penilaian Pelapor',
-                    url: '/settings/application/penilaian',
-                },
-            ],
         },
         {
             title: 'Audit Log',

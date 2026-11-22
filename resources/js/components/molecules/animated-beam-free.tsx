@@ -1,6 +1,6 @@
 'use client';
 
-import { Headphones, Inbox, Server, User } from 'lucide-react';
+import { Inbox, Server, User } from 'lucide-react';
 import { forwardRef, useRef, type ReactNode } from 'react';
 
 import { AnimatedBeam } from '@/components/ui/animated-beam';
@@ -62,13 +62,13 @@ export function AnimatedBeamFree() {
 
                 <div className="flex flex-col gap-4">
                     <Step ref={op1Ref} label="Operator 1">
-                        <Headphones className="size-6" />
+                        <User className="size-6" />
                     </Step>
                     <Step ref={op2Ref} label="Operator 2">
-                        <Headphones className="size-6" />
+                        <User className="size-6" />
                     </Step>
                     <Step ref={op3Ref} label="Operator 3">
-                        <Headphones className="size-6" />
+                        <User className="size-6" />
                     </Step>
                 </div>
 

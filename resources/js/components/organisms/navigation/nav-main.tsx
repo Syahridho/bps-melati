@@ -84,7 +84,7 @@ export function NavMain({ items = [] }: { items?: NavItem[] }) {
                         </Collapsible>
                     ) : (
                         <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild isActive={isUrlActive(item.url, page.url)}>
+                            <SidebarMenuButton asChild isActive={isItemActive(item, page.url)}>
                                 {item.external ? (
                                     <a href={item.url} target="_blank" rel="noopener noreferrer">
                                         {item.icon && <item.icon />}

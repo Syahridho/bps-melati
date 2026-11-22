@@ -1,6 +1,6 @@
 'use client';
 
-import { Headphones, Server, User } from 'lucide-react';
+import { Server, User } from 'lucide-react';
 import { forwardRef, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 
 import { AnimatedBeam } from '@/components/ui/animated-beam';
@@ -106,7 +106,7 @@ export function AnimatedBeamRoundRobin() {
 
                         return (
                             <Step key={index} ref={ref} label={`Operator ${index + 1}`} className={isTarget ? activeRing : undefined}>
-                                <Headphones className="size-6" />
+                                <User className="size-6" />
                                 <TurnBadge n={index + 1} />
                             </Step>
                         );

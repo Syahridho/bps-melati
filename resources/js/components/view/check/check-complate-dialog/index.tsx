@@ -110,63 +110,55 @@ export function CheckCompleteDialog({
 
                 {ratingEnabled && (
                     <>
-                <div className="space-y-2 py-2">
-                    <Label>Rating (opsional)</Label>
-                    <div
-                        role="radiogroup"
-                        aria-label="Rating 1 sampai 5"
-                        className="flex items-center gap-1"
-                        onMouseLeave={() => setHoverRating(null)}
-                    >
-                        {[1, 2, 3, 4, 5].map((value) => {
-                            const filled = activeRating !== null && value <= activeRating;
-                            return (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={rating === value}
-                                    aria-label={`${value} bintang${rating === value ? ', terpilih' : ''}`}
-                                    className="rounded-sm p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    onClick={() => setRating((prev) => (prev === value ? null : value))}
-                                    onMouseEnter={() => setHoverRating(value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault();
-                                            setRating((prev) => (prev === value ? null : value));
-                                        }
-                                    }}
-                                >
-                                    <Star
-                                        className={
-                                            filled
-                                                ? 'h-6 w-6 fill-amber-400 text-amber-400'
-                                                : 'text-muted-foreground h-6 w-6'
-                                        }
-                                    />
-                                </button>
-                            );
-                        })}
-                    </div>
-                    {activeRating !== null && (
-                        <p className="text-muted-foreground text-xs">{RATING_LABELS[activeRating]}</p>
-                    )}
-                    <p className="text-muted-foreground text-xs">Klik bintang yang sama untuk mengosongkan rating.</p>
-                </div>
+                        <div className="space-y-2 py-2">
+                            <Label>Rating (opsional)</Label>
+                            <div
+                                role="radiogroup"
+                                aria-label="Rating 1 sampai 5"
+                                className="flex items-center gap-1"
+                                onMouseLeave={() => setHoverRating(null)}
+                            >
+                                {[1, 2, 3, 4, 5].map((value) => {
+                                    const filled = activeRating !== null && value <= activeRating;
+                                    return (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={rating === value}
+                                            aria-label={`${value} bintang${rating === value ? ', terpilih' : ''}`}
+                                            className="focus-visible:ring-ring rounded-sm p-1 focus:outline-none focus-visible:ring-2"
+                                            onClick={() => setRating((prev) => (prev === value ? null : value))}
+                                            onMouseEnter={() => setHoverRating(value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    setRating((prev) => (prev === value ? null : value));
+                                                }
+                                            }}
+                                        >
+                                            <Star className={filled ? 'h-6 w-6 fill-amber-400 text-amber-400' : 'text-muted-foreground h-6 w-6'} />
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-muted-foreground h-4 text-xs">{activeRating !== null ? RATING_LABELS[activeRating] : '\u00A0'}</p>
+                            <p className="text-muted-foreground text-xs">Klik bintang yang sama untuk mengosongkan rating.</p>
+                        </div>
 
-                <div className="space-y-2 py-2">
-                    <Label htmlFor="complete-comment">Komentar (opsional)</Label>
-                    <Textarea
-                        id="complete-comment"
-                        placeholder="Tulis komentar Anda (opsional)..."
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value.slice(0, commentMaxLength))}
-                        rows={4}
-                    />
-                    <p className="text-muted-foreground text-xs text-right">
-                        {comment.length}/{commentMaxLength}
-                    </p>
-                </div>
+                        <div className="space-y-2 py-2">
+                            <Label htmlFor="complete-comment">Komentar (opsional)</Label>
+                            <Textarea
+                                id="complete-comment"
+                                placeholder="Tulis komentar Anda (opsional)..."
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value.slice(0, commentMaxLength))}
+                                rows={4}
+                            />
+                            <p className="text-muted-foreground text-right text-xs">
+                                {comment.length}/{commentMaxLength}
+                            </p>
+                        </div>
                     </>
                 )}
 

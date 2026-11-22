@@ -18,6 +18,10 @@ test('operator and operator_tim can access settings password and appearance but 
         $this->actingAs($user)
             ->get('/settings/application')
             ->assertForbidden();
+
+        $this->actingAs($user)
+            ->get('/settings/application/penugasan')
+            ->assertForbidden();
     }
 });
 
@@ -34,5 +38,9 @@ test('admin can access all settings', function () {
 
     $this->actingAs($admin)
         ->get('/settings/application')
+        ->assertRedirect('/settings/application/penugasan');
+
+    $this->actingAs($admin)
+        ->get('/settings/application/penugasan')
         ->assertSuccessful();
 });
