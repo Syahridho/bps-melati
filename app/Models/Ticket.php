@@ -206,8 +206,7 @@ class Ticket extends Model
     protected static function booted(): void
     {
         $bump = function () {
-            Cache::add(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION, 0);
-            Cache::increment(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
+            app(\App\Services\TicketCacheInvalidator::class)->invalidateDashboard();
             InboxCounter::invalidate();
         };
 

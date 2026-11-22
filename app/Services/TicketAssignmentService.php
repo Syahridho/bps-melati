@@ -47,7 +47,7 @@ class TicketAssignmentService
                 'assignment_mode' => $mode->value,
             ])));
 
-            $this->invalidateTicketCaches($ticket);
+            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
             $this->dispatchAssignedLaporanChanged($ticket);
 
@@ -73,7 +73,7 @@ class TicketAssignmentService
                 $this->notifyNoEligibleOperator($ticket);
             }
 
-            $this->invalidateTicketCaches($ticket);
+            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
             $this->dispatchAssignedLaporanChanged($ticket);
 
@@ -108,7 +108,7 @@ class TicketAssignmentService
         });
 
         if ($claimed) {
-            $this->invalidateTicketCaches($ticket);
+            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
             $ticket->refresh();
             $this->dispatchAssignedLaporanChanged($ticket, $actor->id);
@@ -147,7 +147,7 @@ class TicketAssignmentService
             );
         });
 
-        $this->invalidateTicketCaches($ticket->fresh() ?? $ticket);
+        app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket->fresh() ?? $ticket);
     }
 
     /**
@@ -354,13 +354,5 @@ class TicketAssignmentService
         ]);
     }
 
-    private function invalidateTicketCaches(Ticket $ticket): void
-    {
-        LaporanCache::invalidate();
-        InboxCounter::invalidate();
-        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
-        Cache::forget('dashboard:admin:stats');
-        Cache::forget('dashboard:operator:stats');
-        Cache::forget('ticket_check:'.md5((string) $ticket->ticket_number));
-    }
+
 }

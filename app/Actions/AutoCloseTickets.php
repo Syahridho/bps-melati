@@ -277,7 +277,8 @@ class AutoCloseTickets
             }, 3);
 
             if ($closed) {
-                $this->forgetTicketCaches($ticketId);
+                $ticket = \App\Models\Ticket::query()->find($ticketId);
+                app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
             }
 
             return $closed;
@@ -291,24 +292,6 @@ class AutoCloseTickets
 
             return false;
         }
-    }
-
-    /**
-     * Invalidasi cache yang menyimpan isi/hitungan tiket.
-     */
-    public function forgetTicketCaches(int $ticketId): void
-    {
-        $ticket = Ticket::query()->find($ticketId);
-
-        if ($ticket === null) {
-            return;
-        }
-
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
-        LaporanCache::invalidate();
-        InboxCounter::invalidate();
     }
 
     /**

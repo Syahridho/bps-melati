@@ -72,21 +72,13 @@ class AppServiceProvider extends ServiceProvider
         // Rekap di-cache per periode. Rotasi token saat tiket/kanal berubah
         // supaya halaman rekap otomatis menghitung ulang pada request berikutnya.
         Ticket::saved(function (Ticket $ticket) {
-            RekapCache::invalidate();
             RekapYears::invalidate();
-            LaporanCache::invalidate();
-            Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-            Cache::forget('dashboard:admin:stats');
-            Cache::forget('dashboard:operator:stats');
+            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
         });
 
         Ticket::deleted(function (Ticket $ticket) {
-            RekapCache::invalidate();
             RekapYears::invalidate();
-            LaporanCache::invalidate();
-            Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-            Cache::forget('dashboard:admin:stats');
-            Cache::forget('dashboard:operator:stats');
+            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
         });
 
         Channel::saved(function () {
