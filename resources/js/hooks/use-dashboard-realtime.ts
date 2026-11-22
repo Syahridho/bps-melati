@@ -42,8 +42,8 @@ export function useDashboardRealtime(enabled: boolean = true) {
     }, [enabled]);
 
     const { auth } = usePage<SharedData>().props;
-    const { isAdmin, isOperator } = useAuthRole();
-    const canSubscribe = enabled && !!auth?.user && (isAdmin || isOperator);
+    const { isAdmin } = useAuthRole();
+    const canSubscribe = enabled && !!auth?.user && isAdmin;
     const channelName = canSubscribe ? 'dashboard.admin' : '';
 
     useEcho<DashboardUpdatedEvent>(

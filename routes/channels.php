@@ -95,11 +95,11 @@ Broadcast::channel('audit.log', function (User $user) {
 });
 
 /**
- * Private channel dashboard untuk pembaruan realtime kartu statistik, grafik, dan laporan terbaru.
- * Diizinkan untuk admin & operator aktif yang mengakses dashboard.
+ * Private channel dashboard admin untuk pembaruan realtime kartu statistik, grafik, dan laporan terbaru.
+ * Hanya role admin aktif yang diizinkan.
  */
 Broadcast::channel('dashboard.admin', function (User $user) {
-    return ($user->isAdmin() || $user->isOperator()) && $user->is_active === true;
+    return $user->isAdmin() && $user->is_active === true;
 });
 
 /**

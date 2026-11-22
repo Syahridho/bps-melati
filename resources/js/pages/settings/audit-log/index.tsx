@@ -140,17 +140,17 @@ export default function AuditLogPage() {
     }, []);
 
     // ---------- Real-time (HOOK HARUS DI BODY KOMPONEN, BUKAN DI DALAM useEffect) ----------
-    useEcho(isAdmin ? 'audit.log' : '', '.audit.log.created', (event: any) => {
+    useEcho(isAdmin ? 'audit.log' : '', '.audit.log.created', (event: Record<string, unknown>) => {
         const newLog: AuditLog = {
-            id: event.id,
-            event_type: event.event_type,
-            category: event.category,
-            severity: event.severity || 'info',
-            actor_name: event.actor_name || null,
-            actor_role: event.actor_role || null,
-            ticket_number: event.ticket_number ?? (event.ticket_id ? `#${event.ticket_id}` : null),
-            ip: event.ip || null,
-            created_at: event.created_at || new Date().toISOString(),
+            id: Number(event.id),
+            event_type: String(event.event_type ?? ''),
+            category: String(event.category ?? ''),
+            severity: (event.severity as Severity) || 'info',
+            actor_name: (event.actor_name as string) || null,
+            actor_role: (event.actor_role as string) || null,
+            ticket_number: (event.ticket_number as string) ?? (event.ticket_id ? `#${event.ticket_id}` : null),
+            ip: (event.ip as string) || null,
+            created_at: (event.created_at as string) || new Date().toISOString(),
         };
         setLogs((prev) => [newLog, ...prev.slice(0, 49)]);
         setAuditLogBadge((prev) => prev + 1);
