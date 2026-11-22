@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditFlag;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -58,18 +59,36 @@ class ReviewController extends Controller
         $flag = AuditFlag::findOrFail($flagId);
 
         DB::transaction(function () use ($flag, $request) {
-            $flag->status = $request->status;
-            $flag->review_note = $request->note;
-            $flag->reviewed_by = $request->user()?->id;
-            $flag->reviewed_at = now();
-            $flag->save();
+            $query = AuditFlag::query();
+            if ($flag->ticket_id !== null) {
+                $query->where('ticket_id', $flag->ticket_id);
+            } else {
+                $query->whereKey($flag->id);
+            }
 
-            // When status changed to wajar, exclude_rating should be false
+            $query->update([
+                'status' => $request->status,
+                'review_note' => $request->note,
+                'reviewed_by' => $request->user()?->id,
+                'reviewed_at' => now(),
+            ]);
+
             if ($request->status === 'wajar') {
-                $flag->exclude_rating = false;
-                $flag->save();
+                $query->update(['exclude_rating' => false]);
             }
         });
+
+        AuditLogger::log(
+            eventType: 'audit.flag_reviewed',
+            category: 'audit',
+            actor: $request->user(),
+            ticket: $flag->ticket,
+            meta: [
+                'flag_id' => $flagId,
+                'new_status' => $request->status,
+            ],
+            severity: 'info',
+        );
 
         return response()->json([
             'status' => 'success',

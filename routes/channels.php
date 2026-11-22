@@ -87,6 +87,14 @@ Broadcast::channel('admin.operators', function (User $user) {
 });
 
 /**
+ * Private channel admin untuk aliran log audit realtime (event AuditLogCreated).
+ * Hanya role admin aktif yang diizinkan berlangganan.
+ */
+Broadcast::channel('audit.log', function (User $user) {
+    return $user->isAdmin() && $user->is_active;
+});
+
+/**
  * Private channel dashboard admin untuk pembaruan realtime kartu statistik, grafik, dan laporan terbaru.
  * Hanya role admin yang diizinkan.
  */
@@ -108,6 +116,17 @@ Broadcast::channel('laporan.admin', function (User $user) {
  */
 Broadcast::channel('laporan.operator.{userId}', function (User $user, int $userId) {
     if (! ($user->isOperator() || $user->isOperatorTim())) {
+        return false;
+    }
+    return (int) $user->id === (int) $userId && $user->is_active === true;
+});
+
+/**
+ * Alias kanal privat operator (nama pendek) untuk konsistensi dengan pola
+ * `operator.{userId}` yang dipakai sidebar badge realtime.
+ */
+Broadcast::channel('operator.{userId}', function (User $user, int $userId) {
+    if (! ($user->isAdmin() || $user->isOperator() || $user->isOperatorTim())) {
         return false;
     }
     return (int) $user->id === (int) $userId && $user->is_active === true;

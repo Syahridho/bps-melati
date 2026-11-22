@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\SettingChangeLog;
 use App\Services\AssignmentModeService;
+use App\Services\AuditLogger;
 use App\Services\RatingSettingService;
 use App\Support\AppSettings;
 use App\Support\DashboardStats;
@@ -109,6 +110,19 @@ class SettingController extends Controller
 
         if (array_key_exists('rating_enabled', $validated)) {
             RatingSettingService::setRatingEnabled((bool) $validated['rating_enabled'], $request->user());
+        }
+
+        $changedKeys = array_values(array_diff(array_keys($validated), ['rating_enabled']));
+
+        if ($changedKeys !== []) {
+            AuditLogger::log(
+                eventType: 'setting.updated',
+                category: 'setting',
+                actor: $request->user(),
+                request: $request,
+                meta: ['keys' => $changedKeys],
+                severity: 'notice',
+            );
         }
 
         // Bump versi cache dashboard agar saat setting diubah, payload langsung sinkron

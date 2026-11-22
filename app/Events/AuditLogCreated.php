@@ -30,6 +30,8 @@ class AuditLogCreated implements ShouldBroadcast, ShouldDispatchAfterCommit
         public ?string $ip = null,
         public ?string $userAgent = null,
         public array $meta = [],
+        public ?int $id = null,
+        public ?string $ticketNumber = null,
     ) {
     }
 
@@ -49,6 +51,7 @@ class AuditLogCreated implements ShouldBroadcast, ShouldDispatchAfterCommit
     public function broadcastWith(): array
     {
         return [
+            'id' => $this->id,
             'event_type' => $this->eventType,
             'category' => $this->category,
             'severity' => $this->severity,
@@ -56,6 +59,7 @@ class AuditLogCreated implements ShouldBroadcast, ShouldDispatchAfterCommit
             'actor_name' => $this->actorName,
             'actor_role' => $this->actorRole,
             'ticket_id' => $this->ticketId,
+            'ticket_number' => $this->ticketNumber,
             'ip' => $this->ip,
             // user_agent dan meta dimasukkan dengan hati-hati, tanpa data sensitif
             'meta_keys' => array_keys($this->meta ?? []),

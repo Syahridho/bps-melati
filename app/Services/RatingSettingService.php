@@ -38,6 +38,18 @@ class RatingSettingService
                 'applied_at' => now(),
             ]);
 
+            AuditLogger::log(
+                eventType: 'setting.rating_enabled_changed',
+                category: 'setting',
+                actor: $actor,
+                meta: [
+                    'key' => self::KEY,
+                    'old_value' => $old ? '1' : '0',
+                    'new_value' => $enabled ? '1' : '0',
+                ],
+                severity: 'notice',
+            );
+
             RatingSettingChanged::dispatch(
                 $enabled,
                 $actor?->name,

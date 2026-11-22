@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AuthLog;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -70,14 +71,60 @@ final class AuthLogger
             'meta' => $extra === [] ? null : $extra,
         ];
 
+        // Hanya skalar yang ditangkap closure. Objek Request/User tidak boleh
+        // ikut karena closure afterResponse diserialisasi oleh queue.
+        $auditAttributes = self::auditAttributes($event, $user, $request, $payload);
+
         try {
             // Ditunda sampai response terkirim: audit log tidak menambah latensi
             // login, dan tidak bisa ikut ter-rollback oleh transaksi yang gagal.
-            dispatch(fn () => self::write($payload))->afterResponse();
+            dispatch(function () use ($payload, $auditAttributes): void {
+                self::write($payload);
+                AuditLogger::write($auditAttributes);
+            })->afterResponse();
         } catch (Throwable $e) {
             // Tidak ada handler antrean pun? tetap jangan menggagalkan login.
             self::write($payload);
+            AuditLogger::write($auditAttributes);
         }
+    }
+
+    /**
+     * Cerminkan aksi autentikasi ke tabel audit_logs agar tampil di /audit-log.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private static function auditAttributes(string $event, ?User $user, ?Request $request, array $payload): array
+    {
+        $meta = is_array($payload['meta'] ?? null) ? $payload['meta'] : [];
+        $meta['context'] = $payload['context'] ?? null;
+
+        if (! empty($payload['email_masked'])) {
+            $meta['email_masked'] = $payload['email_masked'];
+        }
+
+        return [
+            'event_type' => 'auth.'.$event,
+            'category' => 'auth',
+            'severity' => self::auditSeverity($event),
+            'actor_id' => $user?->id,
+            'actor_name' => $user?->name,
+            'actor_role' => $user?->role?->value,
+            'ticket_id' => null,
+            'ip' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+            'meta' => array_filter($meta, static fn ($value): bool => $value !== null),
+        ];
+    }
+
+    private static function auditSeverity(string $event): string
+    {
+        return match ($event) {
+            self::LOGIN_FAILED, self::BLOCKED_ACTIVE_SESSION, self::LOCKED_OUT => 'warning',
+            self::SESSION_EXPIRED, self::FORCED_LOGOUT, self::FORCE_LOGIN => 'notice',
+            default => 'info',
+        };
     }
 
     /**

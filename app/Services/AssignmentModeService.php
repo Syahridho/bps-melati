@@ -33,7 +33,7 @@ class AssignmentModeService
         return DB::transaction(function () use ($mode, $changedBy, $scheduledAt): SettingChangeLog {
             $this->cancelPendingChanges();
 
-            return SettingChangeLog::create([
+            $log = SettingChangeLog::create([
                 'key' => self::SETTING_KEY,
                 'old_value' => $this->current()->value,
                 'new_value' => $mode->value,
@@ -41,6 +41,21 @@ class AssignmentModeService
                 'scheduled_at' => $scheduledAt,
                 'applied_at' => null,
             ]);
+
+            AuditLogger::log(
+                eventType: 'setting.assignment_mode_scheduled',
+                category: 'setting',
+                actor: $changedBy,
+                meta: [
+                    'key' => self::SETTING_KEY,
+                    'old_value' => $log->old_value,
+                    'new_value' => $log->new_value,
+                    'scheduled_at' => $log->scheduled_at?->toIso8601String(),
+                ],
+                severity: 'notice',
+            );
+
+            return $log;
         });
     }
 
@@ -55,7 +70,7 @@ class AssignmentModeService
             $this->cancelPendingChanges();
             $this->writeMode($mode);
 
-            return SettingChangeLog::create([
+            $log = SettingChangeLog::create([
                 'key' => self::SETTING_KEY,
                 'old_value' => $oldMode->value,
                 'new_value' => $mode->value,
@@ -63,6 +78,20 @@ class AssignmentModeService
                 'scheduled_at' => null,
                 'applied_at' => now(),
             ]);
+
+            AuditLogger::log(
+                eventType: 'setting.assignment_mode_changed',
+                category: 'setting',
+                actor: $changedBy,
+                meta: [
+                    'key' => self::SETTING_KEY,
+                    'old_value' => $oldMode->value,
+                    'new_value' => $mode->value,
+                ],
+                severity: 'notice',
+            );
+
+            return $log;
         });
     }
 
@@ -87,6 +116,18 @@ class AssignmentModeService
             $this->writeMode($mode);
 
             $locked->forceFill(['applied_at' => now()])->save();
+
+            AuditLogger::log(
+                eventType: 'setting.assignment_mode_applied',
+                category: 'setting',
+                actor: $locked->changed_by !== null ? User::find($locked->changed_by) : null,
+                meta: [
+                    'key' => self::SETTING_KEY,
+                    'old_value' => $locked->old_value,
+                    'new_value' => $locked->new_value,
+                ],
+                severity: 'notice',
+            );
 
             return true;
         });

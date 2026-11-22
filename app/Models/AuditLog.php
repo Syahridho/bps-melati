@@ -38,7 +38,7 @@ class AuditLog extends Model
 
     public function ticket(): BelongsTo
     {
-        return $this->belongsTo(Ticket::class, 'ticket_id')->withTrashed();
+        return $this->belongsTo(Ticket::class, 'ticket_id');
     }
 
     public function scopeForEvent(Builder $query, string $event): Builder

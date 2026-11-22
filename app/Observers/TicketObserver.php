@@ -8,6 +8,7 @@ use App\Events\LaporanChanged;
 use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\Cache;
 
 class TicketObserver
@@ -26,10 +27,24 @@ class TicketObserver
      */
     public function updated(Ticket $ticket): void
     {
-        $changedFields = $ticket->wasChanged(['status', 'classification', 'channel_id', 'is_pengawasan', 'completed_at', 'is_flagged']);
+        $changedFields = $ticket->wasChanged(['status', 'classification', 'channel_id', 'is_pengawasan', 'completed_at', 'is_flagged', 'assigned_to', 'is_read']);
 
         if (empty($changedFields)) {
             return;
+        }
+
+        if ($ticket->wasChanged('status')) {
+            AuditLogger::log(
+                eventType: 'ticket.status_changed',
+                category: 'ticket',
+                actor: auth()->user(),
+                ticket: $ticket,
+                meta: [
+                    'old_status' => $ticket->getOriginal('status'),
+                    'new_status' => $ticket->status,
+                ],
+                severity: $ticket->status === 'selesai' ? 'notice' : 'info',
+            );
         }
 
         // DashboardUpdated untuk perubahan status/klasifikasi/channel/completed_at.
@@ -50,6 +65,8 @@ class TicketObserver
             $laporanAction = $ticket->is_flagged ? 'flagged' : 'unflagged';
         } elseif ($ticket->wasChanged('is_pengawasan')) {
             $laporanAction = $ticket->is_pengawasan ? 'pengawasan_activated' : 'pengawasan_deactivated';
+        } elseif ($ticket->wasChanged('assigned_to') || $ticket->wasChanged('is_read')) {
+            $laporanAction = 'updated';
         }
 
         if ($laporanAction !== null) {
@@ -159,13 +176,16 @@ class TicketObserver
 
         // Kumpulkan ID operator yang berhak menerima event (pembuat tiket jika operator).
         $operatorUserIds = [];
-        $createdBy = $ticket->created_by;
-        if ($createdBy) {
-            $creator = User::find($createdBy);
-            if ($creator && ($creator->isOperator() || $creator->isOperatorTim())) {
-                $operatorUserIds[] = (int) $createdBy;
+        foreach ([$ticket->created_by, $ticket->assigned_to, $ticket->getOriginal('assigned_to')] as $candidateUserId) {
+            if (! $candidateUserId) {
+                continue;
+            }
+            $candidate = User::find($candidateUserId);
+            if ($candidate && ($candidate->isOperator() || $candidate->isOperatorTim())) {
+                $operatorUserIds[] = (int) $candidateUserId;
             }
         }
+        $operatorUserIds = array_values(array_unique($operatorUserIds));
 
         event(new LaporanChanged(
             action: $action,

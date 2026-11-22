@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\AuditFlag;
 use App\Models\AuditLog;
+use App\Services\AuditLogger;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -40,7 +41,10 @@ class AuditFlagController extends Controller
             $query->where('ticket_id', $ticketId);
         }
 
-        $flags = $query->latest('created_at')->paginate(20);
+        $flags = $query->latest('created_at')->paginate(20)
+            ->through(fn (AuditFlag $flag): array => array_merge($flag->toArray(), [
+                'ticket_number' => $flag->ticket?->ticket_number,
+            ]));
 
         if (! $request->header('X-Inertia') && ($request->ajax() || $request->wantsJson())) {
             return response()->json([
@@ -69,7 +73,10 @@ class AuditFlagController extends Controller
             $query->where('severity', $severity);
         }
 
-        $flags = $query->latest('created_at')->paginate(20);
+        $flags = $query->latest('created_at')->paginate(20)
+            ->through(fn (AuditFlag $flag): array => array_merge($flag->toArray(), [
+                'ticket_number' => $flag->ticket?->ticket_number,
+            ]));
 
         return response()->json([
             'flags' => $flags->items(),
@@ -100,24 +107,41 @@ class AuditFlagController extends Controller
         }
 
         DB::transaction(function () use ($flag, $request) {
-            $flag->status = $request->status;
-            $flag->review_note = $request->note;
-            $flag->reviewed_by = $request->user()?->id;
-            $flag->reviewed_at = now();
-            $flag->save();
-
-            // If status changed to wajar, remove exclude_rating
-            if ($request->status === 'wajar') {
-                $flag->exclude_rating = false;
-                $flag->save();
+            // Konsolidasi: semua penanda pada tiket yang sama ikut diperbarui.
+            $query = AuditFlag::query();
+            if ($flag->ticket_id !== null) {
+                $query->where('ticket_id', $flag->ticket_id);
+            } else {
+                $query->whereKey($flag->id);
             }
 
-            // If status changed to tindak_lanjut, may affect kinerja rating exclusion
-            // This is handled in the OperatorPerformanceService integration
+            $query->update([
+                'status' => $request->status,
+                'review_note' => $request->note,
+                'reviewed_by' => $request->user()?->id,
+                'reviewed_at' => now(),
+            ]);
+
+            if ($request->status === 'wajar') {
+                $query->update(['exclude_rating' => false]);
+            }
         });
 
-        // Broadcast the change
-        // AuditFlagChanged event will be dispatched
+        // Invalidate cache badge audit flag agar angka terbaru.
+        AuditFlag::invalidateCache();
+
+        // Catat perubahan status ke audit log agar sidebar badge terbarui secara realtime.
+        AuditLogger::log(
+            eventType: 'audit.flag_reviewed',
+            category: 'audit',
+            actor: $request->user(),
+            ticket: $flag->ticket,
+            meta: [
+                'flag_id' => $flagId,
+                'new_status' => $request->status,
+            ],
+            severity: 'info',
+        );
 
         return response()->json([
             'status' => 'success',
@@ -158,6 +182,7 @@ class AuditFlagController extends Controller
             AuditFlag::TYPE_JARINGAN_SAMA => 'Jaringan Sama (IP)',
             AuditFlag::TYPE_RATING_CEPAT => 'Rating Cepat',
             AuditFlag::TYPE_RATING_BERUNTUN_IP => 'Rating Beruntun IP',
+            AuditFlag::TYPE_SELESAI_CEPAT_SETELAH_BALASAN => 'Selesai Cepat Setelah Balasan',
             AuditFlag::TYPE_PERANGKAT_SAMA => 'Perangkat Sama',
             AuditFlag::TYPE_PENYELESAIAN_TIDAK_WAJAR => 'Penyelesaian Tidak Wajar',
             AuditFlag::TYPE_LOGIN_GAGAL_BERULANG => 'Login Gagal Berulang',

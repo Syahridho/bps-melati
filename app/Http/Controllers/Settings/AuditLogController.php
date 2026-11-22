@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\AuditFlag;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,24 @@ class AuditLogController extends Controller
 
         // Paginate - 50 items per page
         $perPage = $request->query('per_page', 50);
-        $logs = $query->latest('created_at')->paginate($perPage);
+        $logs = $query->with('ticket:id,ticket_number')
+            ->latest('created_at')
+            ->paginate($perPage)
+            ->through(fn (AuditLog $log): array => [
+                'id' => $log->id,
+                'event_type' => $log->event_type,
+                'category' => $log->category,
+                'severity' => $log->severity,
+                'actor_id' => $log->actor_id,
+                'actor_name' => $log->actor_name,
+                'actor_role' => $log->actor_role,
+                'ticket_id' => $log->ticket_id,
+                'ticket_number' => $log->ticket?->ticket_number,
+                'ip' => $log->ip,
+                'user_agent' => $log->user_agent,
+                'meta' => $log->meta,
+                'created_at' => $log->created_at?->toIso8601String(),
+            ]);
 
         if (! $request->header('X-Inertia') && ($request->ajax() || $request->wantsJson())) {
             return response()->json([
@@ -119,6 +137,27 @@ class AuditLogController extends Controller
         // Log the export action
         $exportCount = $query->count();
 
+        AuditLogger::log(
+            eventType: 'export.audit_logs',
+            category: 'export',
+            actor: $request->user(),
+            request: $request,
+            meta: [
+                'count' => $exportCount,
+                'filters' => array_filter([
+                    'event_type' => $eventType,
+                    'category' => $category,
+                    'severity' => $severity,
+                    'actor' => $actor,
+                    'ticket_id' => $ticketId,
+                    'ip' => $ip,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ], static fn ($value): bool => $value !== null && $value !== ''),
+            ],
+            severity: 'notice',
+        );
+
         $logs = $query->latest('created_at')->get(['id', 'event_type', 'category', 'severity', 'actor_name', 'actor_role', 'ticket_id', 'ip', 'user_agent', 'meta', 'created_at']);
 
         return response()->streamDownload(function () use ($logs) {
@@ -171,26 +210,40 @@ class AuditLogController extends Controller
     {
         $status = $request->query('status', 'baru'); // default: baru/unreviewed
 
-        $total = AuditFlag::count();
-        $newCount = AuditFlag::where('status', 'baru')->count();
-        $reviewedCount = AuditFlag::where('status', 'ditinjau')->count();
+        $cacheKey = 'auditflags:summary:' . $status . ':' . AuditFlag::cacheVersion();
 
-        $byType = AuditFlag::select('type', DB::raw('count(*) as total'))
-            ->groupBy('type')
-            ->get()
-            ->keyBy('type');
+        $compute = function () {
+            $total = AuditFlag::selectRaw('COUNT(DISTINCT COALESCE(ticket_id, id)) as c')->value('c');
+            $newCount = AuditFlag::where('status', 'baru')
+                ->selectRaw('COUNT(DISTINCT COALESCE(ticket_id, id)) as c')->value('c');
+            $reviewedCount = AuditFlag::where('status', 'ditinjau')
+                ->selectRaw('COUNT(DISTINCT COALESCE(ticket_id, id)) as c')->value('c');
 
-        $bySeverity = AuditFlag::select('severity', DB::raw('count(*) as total'))
-            ->groupBy('severity')
-            ->get()
-            ->keyBy('severity');
+            $byType = AuditFlag::select('type', DB::raw('count(*) as total'))
+                ->groupBy('type')
+                ->get()
+                ->keyBy('type');
 
-        return response()->json([
-            'total' => $total,
-            'new_count' => $newCount,
-            'reviewed_count' => $reviewedCount,
-            'by_type' => $byType ?: [],
-            'by_severity' => $bySeverity ?: [],
-        ]);
+            $bySeverity = AuditFlag::select('severity', DB::raw('count(*) as total'))
+                ->groupBy('severity')
+                ->get()
+                ->keyBy('severity');
+
+            return [
+                'total' => $total,
+                'new_count' => $newCount,
+                'reviewed_count' => $reviewedCount,
+                'by_type' => $byType ?: [],
+                'by_severity' => $bySeverity ?: [],
+            ];
+        };
+
+        try {
+            $data = Cache::remember($cacheKey, 30, $compute);
+        } catch (\Throwable $e) {
+            $data = $compute();
+        }
+
+        return response()->json($data);
     }
 }

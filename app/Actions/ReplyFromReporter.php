@@ -9,6 +9,7 @@ use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
 use App\Enums\UserRole;
+use App\Services\AuditLogger;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -85,6 +86,16 @@ class ReplyFromReporter
                 'ticket_number' => $ticket->ticket_number,
                 'response_id' => $response->id,
             ];
+
+            AuditLogger::log(
+                eventType: 'ticket.reporter_replied',
+                category: 'ticket',
+                ticket: $ticket,
+                meta: [
+                    'response_id' => $response->id,
+                    'status' => $ticket->status,
+                ],
+            );
 
             SafeBroadcast::send('TicketUpdated', fn () => TicketUpdated::dispatch($ticket, $response), $context);
             SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);

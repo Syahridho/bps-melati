@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\Setting;
 use App\Models\Ticket;
+use App\Support\InboxCounter;
 use App\Support\LaporanCache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -307,6 +308,7 @@ class AutoCloseTickets
         Cache::forget("ticket:{$ticket->ticket_number}");
         Cache::forget('dashboard:admin:version');
         LaporanCache::invalidate();
+        InboxCounter::invalidate();
     }
 
     /**

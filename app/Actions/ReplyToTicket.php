@@ -13,6 +13,7 @@ use App\Jobs\SendTicketResponseNotification;
 use App\Models\Ticket;
 use App\Models\TicketResponse;
 use App\Models\User;
+use App\Services\AuditLogger;
 use App\Support\SafeBroadcast;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\UploadedFile;
@@ -166,6 +167,18 @@ class ReplyToTicket
     {
         $ticket = $ticket->fresh() ?? $ticket;
         $response->loadMissing(['user', 'attachments']);
+
+        AuditLogger::log(
+            eventType: 'ticket.replied',
+            category: 'ticket',
+            actor: $actor,
+            ticket: $ticket,
+            meta: [
+                'response_id' => $response->id,
+                'response_type' => $response->type,
+                'status' => $ticket->status,
+            ],
+        );
 
         Cache::forget('ticket_check:'.md5($ticket->ticket_number));
         Cache::forget("ticket:{$ticket->ticket_number}");

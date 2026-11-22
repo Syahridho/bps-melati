@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 class AuditFlag extends Model
 {
@@ -15,6 +16,7 @@ class AuditFlag extends Model
     public const TYPE_RATING_BERUNTUN_IP = 'rating_beruntun_ip';
     public const TYPE_PERANGKAT_SAMA = 'perangkat_sama';
     public const TYPE_PENYELESAIAN_TIDAK_WAJAR = 'penyelesaian_tidak_wajar';
+    public const TYPE_SELESAI_CEPAT_SETELAH_BALASAN = 'selesai_cepat_setelah_balasan';
     public const TYPE_LOGIN_GAGAL_BERULANG = 'login_gagal_berulang';
     public const TYPE_LOGIN_BARU = 'login_baru';
     public const TYPE_EKSPOR_SENSITIF = 'ekspor_sensitif';
@@ -56,7 +58,7 @@ class AuditFlag extends Model
 
     public function ticket(): BelongsTo
     {
-        return $this->belongsTo(Ticket::class, 'ticket_id')->withTrashed();
+        return $this->belongsTo(Ticket::class, 'ticket_id');
     }
 
     public function reviewedBy(): BelongsTo
@@ -87,5 +89,31 @@ class AuditFlag extends Model
     public function scopeBySeverity(Builder $query, string $severity): Builder
     {
         return $query->where('severity', $severity);
+    }
+
+    public const CACHE_VERSION_KEY = 'auditflags:version';
+
+    public static function cacheVersion(): string
+    {
+        try {
+            return (string) Cache::rememberForever(self::CACHE_VERSION_KEY, fn (): string => (string) hrtime(true));
+        } catch (\Throwable $e) {
+            return (string) hrtime(true);
+        }
+    }
+
+    public static function invalidateCache(): void
+    {
+        try {
+            Cache::forever(self::CACHE_VERSION_KEY, (string) hrtime(true));
+        } catch (\Throwable $e) {
+            // ignore
+        }
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => self::invalidateCache());
+        static::deleted(fn () => self::invalidateCache());
     }
 }

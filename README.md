@@ -600,3 +600,19 @@ sudah tersedia. Jalankan `php artisan test` sebelum menentukan kode siap.
 ## Lisensi
 
 Hak cipta dilindungi.
+
+## Redis (cache, queue, session)
+
+Aplikasi menggunakan Redis untuk cache, queue, dan session. Jalankan Redis di Laragon (default 127.0.0.1:6379) lalu pastikan proses berikut berjalan:
+
+- `php artisan queue:work redis --queue=default,notifications,broadcasts --tries=3`
+- `php artisan reverb:start`
+- `npm run dev`
+
+Atau gunakan `composer run dev` untuk menjalankan server, queue, reverb, dan vite sekaligus.
+
+Health check koneksi Redis:
+
+- `php artisan redis:health`
+
+Migrasi dari driver database ke Redis tidak menghapus tabel lama (`cache`, `jobs`, `sessions`, dll.); tabel tersebut dibiarkan sebagai cadangan.

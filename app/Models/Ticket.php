@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Actions\AutoCloseTickets;
 use App\Services\TicketNumberGenerator;
+use App\Support\InboxCounter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -207,6 +208,7 @@ public function assignedTo(): BelongsTo
         $bump = function () {
             Cache::add('dashboard:admin:version', 0);
             Cache::increment('dashboard:admin:version');
+            InboxCounter::invalidate();
         };
 
         static::saved($bump);

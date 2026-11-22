@@ -18,68 +18,89 @@ class SummaryWeeklyController extends Controller
      */
     public function index()
     {
-        $now = now();
-        $startOfWeek = $now->startOfWeek();
-        $endOfWeek = $now->endOfWeek();
+        $cacheKey = 'audit:weekly:summary:' . now()->format('Y-W') . ':' . AuditFlag::cacheVersion();
 
-        // This week's stats
-        $logsThisWeek = AuditLog::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
-        $flagsThisWeek = AuditFlag::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
+        $compute = function (): array {
+            $startOfWeek = now()->startOfWeek();
+            $endOfWeek = now()->endOfWeek();
 
-        // New flags this week
-        $newFlagsThisWeek = AuditFlag::where('status', 'baru')
-            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-            ->count();
+            // This week's stats
+            $logsThisWeek = AuditLog::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
+            $flagsThisWeek = AuditFlag::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
 
-        // By severity
-        $bySeverity = AuditFlag::where('status', 'baru')
-            ->select('severity', DB::raw('count(*) as total'))
-            ->groupBy('severity')
-            ->get()
-            ->keyBy('severity');
+            // New flags this week
+            $newFlagsThisWeek = AuditFlag::where('status', 'baru')
+                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->selectRaw('COUNT(DISTINCT COALESCE(ticket_id, id)) as c')
+                ->value('c');
 
-        // Top tickets with flags
-        $ticketsWithFlags = AuditFlag::where('status', 'baru')
-            ->select('ticket_id', DB::raw('count(*) as flag_count'))
-            ->groupBy('ticket_id')
-            ->latest('created_at')
-            ->take(10)
-            ->get();
+            // By severity
+            $bySeverity = AuditFlag::where('status', 'baru')
+                ->select('severity', DB::raw('count(*) as total'))
+                ->groupBy('severity')
+                ->get()
+                ->keyBy('severity');
 
-        $reviewedCount = AuditFlag::where('status', 'ditinjau')->count();
+            // Top tickets with flags
+            $ticketsWithFlags = AuditFlag::where('status', 'baru')
+                ->select('ticket_id', DB::raw('count(*) as flag_count'))
+                ->groupBy('ticket_id')
+                ->orderByRaw('MAX(created_at) DESC')
+                ->take(10)
+                ->get();
 
-        // Admin with most flags
-        $adminsWithMostFlags = AuditFlag::where('status', 'baru')
-            ->whereNotNull('reviewed_by')
-            ->select('reviewed_by', DB::raw('count(*) as reviewed_count'))
-            ->groupBy('reviewed_by')
-            ->latest('reviewed_at')
-            ->take(5)
-            ->get();
+            $reviewedCount = AuditFlag::where('status', 'ditinjau')->count();
 
-        // Summary by type
-        $byType = AuditFlag::where('status', 'baru')
-            ->select('type', DB::raw('count(*) as total'))
-            ->groupBy('type')
-            ->get()
-            ->keyBy('type');
+            // Admin with most flags
+            $adminsWithMostFlags = AuditFlag::where('status', 'baru')
+                ->whereNotNull('reviewed_by')
+                ->select('reviewed_by', DB::raw('count(*) as reviewed_count'))
+                ->groupBy('reviewed_by')
+                ->orderByRaw('MAX(reviewed_at) DESC')
+                ->take(5)
+                ->get();
+
+            // Summary by type
+            $byType = AuditFlag::where('status', 'baru')
+                ->select('type', DB::raw('count(*) as total'))
+                ->groupBy('type')
+                ->get()
+                ->keyBy('type');
+
+            return [
+                'logs_this_week' => $logsThisWeek,
+                'flags_this_week' => $flagsThisWeek,
+                'new_flags_this_week' => $newFlagsThisWeek,
+                'reviewed_count' => $reviewedCount,
+                'by_severity' => $bySeverity ?: [],
+                'by_type' => $byType ?: [],
+                'tickets_with_flags' => $ticketsWithFlags->toArray(),
+                'admins_with_flags' => $adminsWithMostFlags->toArray(),
+            ];
+        };
+
+        try {
+            $data = Cache::remember($cacheKey, 60, $compute);
+        } catch (\Throwable $e) {
+            $data = $compute();
+        }
 
         if (! request()->header('X-Inertia') && (request()->ajax() || request()->wantsJson())) {
             return response()->json([
-                'logs_this_week' => $logsThisWeek,
-                'new_flags_this_week' => $newFlagsThisWeek,
-                'reviewed_count' => $reviewedCount,
+                'logs_this_week' => $data['logs_this_week'],
+                'new_flags_this_week' => $data['new_flags_this_week'],
+                'reviewed_count' => $data['reviewed_count'],
             ]);
         }
 
         return inertia('settings/summary-weekly/index', [
-            'logs_this_week' => $logsThisWeek,
-            'flags_this_week' => $flagsThisWeek,
-            'new_flags_this_week' => $newFlagsThisWeek,
-            'by_severity' => $bySeverity ?: [],
-            'by_type' => $byType ?: [],
-            'tickets_with_flags' => $ticketsWithFlags->toArray(),
-            'admins_with_flags' => $adminsWithMostFlags->toArray(),
+            'logs_this_week' => $data['logs_this_week'],
+            'flags_this_week' => $data['flags_this_week'],
+            'new_flags_this_week' => $data['new_flags_this_week'],
+            'by_severity' => $data['by_severity'],
+            'by_type' => $data['by_type'],
+            'tickets_with_flags' => $data['tickets_with_flags'],
+            'admins_with_flags' => $data['admins_with_flags'],
         ]);
     }
 
@@ -91,8 +112,8 @@ class SummaryWeeklyController extends Controller
     {
         try {
             $now = now();
-            $startOfWeek = $now->startOfWeek();
-            $endOfWeek = $now->endOfWeek();
+            $startOfWeek = now()->startOfWeek();
+            $endOfWeek = now()->endOfWeek();
 
             // Get stats for the week
             $logsThisWeek = AuditLog::whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();

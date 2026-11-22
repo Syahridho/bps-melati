@@ -5,6 +5,7 @@ import { useAuthRole } from '@/hooks/use-auth-role';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEcho, useEchoPublic } from '@laravel/echo-react';
+import { type LaporanChangedEvent } from '@/hooks/use-reports-realtime';
 import { ClipboardCheck, ClipboardList, FilePlus2, Folder, Inbox, LayoutGrid, ScrollText, SettingsIcon, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -15,12 +16,17 @@ export function AppSidebar() {
     const { user, isAdmin, isOperator, isOperatorTim, canAccessInbox } = useAuthRole();
 
     const [openCount, setOpenCount] = useState(inbox_open_count ?? 0);
+    const [myReportsCount, setMyReportsCount] = useState(my_reports_open_count ?? 0);
     const reloadTimerRef = useRef<number | null>(null);
 
     // Sinkronkan state lokal dengan prop Inertia saat navigasi
     useEffect(() => {
         setOpenCount(inbox_open_count ?? 0);
     }, [inbox_open_count]);
+
+    useEffect(() => {
+        setMyReportsCount(my_reports_open_count ?? 0);
+    }, [my_reports_open_count]);
 
     useEffect(() => {
         return () => {
@@ -38,7 +44,7 @@ export function AppSidebar() {
         reloadTimerRef.current = window.setTimeout(() => {
             // router.reload() sudah mempertahankan state & scroll secara default.
             router.reload({
-                only: ['tickets', 'counts', 'inbox_open_count'],
+                only: ['tickets', 'counts', 'inbox_open_count', 'my_reports_open_count'],
             });
         }, 400);
     }, []);
@@ -80,29 +86,70 @@ export function AppSidebar() {
         [user?.id, canAccessInbox],
     );
 
+    // Realtime untuk badge "Laporan Saya" (operator). Kanal khusus operator
+    // yang bersangkutan; event memicu reload parsial prop badge.
+    useEcho<LaporanChangedEvent>(
+        user && isOperator ? `laporan.operator.${user.id}` : '',
+        '.laporan.changed',
+        () => {
+            scheduleReload();
+        },
+        [user?.id, isOperator],
+    );
+
+    // Fallback polling ringan saat WebSocket terputus/tab aktif.
+    useEffect(() => {
+        if (!isOperator && !canAccessInbox) {
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                router.reload({
+                    only: ['inbox_open_count', 'my_reports_open_count'],
+                });
+            }
+        }, 45000);
+
+        return () => window.clearInterval(intervalId);
+    }, [isOperator, canAccessInbox]);
+
     // Hitung badge audit log dari backend
     const [auditLogBadge, setAuditLogBadge] = useState(0);
-    useEffect(() => {
-        if (isAdmin) {
-            const fetchAuditLogBadge = async () => {
-                try {
-                    const response = await fetch(route('audit-log.flags-summary'), {
-                        credentials: 'include',
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        setAuditLogBadge(data.new_count ?? 0);
-                    }
-                } catch (e) {
-                    // Silent fail - badge tetap 0
-                }
-            };
-            fetchAuditLogBadge();
-            // Refresh badge setiap 30 detik
-            const intervalId = setInterval(fetchAuditLogBadge, 30000);
-            return () => clearInterval(intervalId);
+
+    const fetchAuditLogBadge = useCallback(async () => {
+        if (!isAdmin) {
+            return;
+        }
+        try {
+            const response = await fetch(route('audit-log.flags-summary'), {
+                credentials: 'include',
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setAuditLogBadge(data.new_count ?? 0);
+            }
+        } catch (e) {
+            // Silent fail - badge tetap 0
         }
     }, [isAdmin]);
+
+    useEffect(() => {
+        if (!isAdmin) {
+            return;
+        }
+        fetchAuditLogBadge();
+        // Refresh badge setiap 30 detik (fallback polling)
+        const intervalId = setInterval(fetchAuditLogBadge, 30000);
+        return () => clearInterval(intervalId);
+    }, [isAdmin, fetchAuditLogBadge]);
+
+    // Realtime: perbarui badge audit log saat ada log/penanda baru.
+    useEcho('audit.log', '.audit.log.created', () => {
+        if (isAdmin) {
+            fetchAuditLogBadge();
+        }
+    }, [isAdmin, fetchAuditLogBadge]);
 
     const adminNavItems: NavItem[] = [
         {
@@ -182,7 +229,7 @@ export function AppSidebar() {
             title: 'Laporan Saya',
             url: '/dashboard/operator/my-reports',
             icon: ClipboardCheck,
-            badge: my_reports_open_count ?? 0,
+            badge: myReportsCount ?? 0,
         },
 
         {

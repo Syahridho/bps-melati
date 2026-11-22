@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\AssignmentMode;
+use App\Events\LaporanChanged;
 use App\Models\Ticket;
 use App\Models\TicketAssignmentLog;
 use App\Models\User;
 use App\Notifications\LaporanNotification;
+use App\Support\InboxCounter;
 use App\Support\LaporanCache;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +48,8 @@ class TicketAssignmentService
 
             $this->invalidateTicketCaches($ticket);
 
+            $this->dispatchAssignedLaporanChanged($ticket);
+
             return $ticket;
         }
 
@@ -69,6 +73,8 @@ class TicketAssignmentService
             }
 
             $this->invalidateTicketCaches($ticket);
+
+            $this->dispatchAssignedLaporanChanged($ticket);
 
             return $ticket;
         });
@@ -102,6 +108,9 @@ class TicketAssignmentService
 
         if ($claimed) {
             $this->invalidateTicketCaches($ticket);
+
+            $ticket->refresh();
+            $this->dispatchAssignedLaporanChanged($ticket, $actor->id);
         }
 
         return $claimed;
@@ -138,6 +147,46 @@ class TicketAssignmentService
         });
 
         $this->invalidateTicketCaches($ticket->fresh() ?? $ticket);
+    }
+
+    /**
+     * Siarkan perubahan penugasan ke kanal operator yang bersangkutan agar
+     * badge "Laporan Saya" di sidebar ikut terbarui secara realtime.
+     */
+    protected function dispatchAssignedLaporanChanged(Ticket $ticket, ?int $actorId = null): void
+    {
+        if (config('app.disable_dashboard_broadcast', false)) {
+            return;
+        }
+
+        if (! (bool) \App\Models\Setting::get('dashboard_live_enabled', true)) {
+            return;
+        }
+
+        $assignedTo = $ticket->assigned_to;
+        if ($assignedTo === null) {
+            return;
+        }
+
+        $user = \App\Models\User::find($assignedTo);
+        if (! $user || (! $user->isOperator() && ! $user->isOperatorTim())) {
+            return;
+        }
+
+        // Hindari duplikasi bila operator yang ditugaskan sama dengan pembuat tiket
+        // (observer "created" sudah menyiarkan ke pembuat).
+        if ($ticket->created_by !== null && (int) $ticket->created_by === (int) $assignedTo) {
+            return;
+        }
+
+        event(new LaporanChanged(
+            action: 'updated',
+            ticketId: (int) $ticket->id,
+            ticketNumber: $ticket->ticket_number,
+            type: $ticket->classification,
+            actorId: $actorId ?? auth()->user()?->id,
+            operatorUserIds: [(int) $assignedTo],
+        ));
     }
 
     /**
@@ -237,6 +286,28 @@ class TicketAssignmentService
             'performed_by' => $performedBy,
             'note' => $note,
         ]);
+
+        $eventType = match ($action) {
+            TicketAssignmentLog::ACTION_CLAIMED => 'ticket.assignment_claimed',
+            TicketAssignmentLog::ACTION_AUTO_ASSIGNED => 'ticket.assignment_auto_assigned',
+            TicketAssignmentLog::ACTION_REASSIGNED => 'ticket.assignment_reassigned',
+            TicketAssignmentLog::ACTION_RELEASED => 'ticket.assignment_released',
+            default => 'ticket.assignment_changed',
+        };
+
+        AuditLogger::log(
+            eventType: $eventType,
+            category: 'ticket',
+            actor: $performedBy !== null ? User::find($performedBy) : null,
+            ticket: $ticket,
+            meta: [
+                'action' => $action,
+                'from_user_id' => $fromUserId,
+                'to_user_id' => $toUserId,
+                'note' => $note,
+            ],
+            severity: $action === TicketAssignmentLog::ACTION_REASSIGNED ? 'notice' : 'info',
+        );
     }
 
     private function notifyNoEligibleOperator(Ticket $ticket): void
@@ -285,6 +356,7 @@ class TicketAssignmentService
     private function invalidateTicketCaches(Ticket $ticket): void
     {
         LaporanCache::invalidate();
+        InboxCounter::invalidate();
         Cache::forget('dashboard:admin:version');
         Cache::forget('dashboard:admin:stats');
         Cache::forget('dashboard:operator:stats');

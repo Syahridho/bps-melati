@@ -24,6 +24,13 @@ return [
             'window_minutes' => 60,
         ],
 
+        'selesai_cepat_setelah_balasan' => [
+            'enabled' => true,
+            'high_seconds' => 120,
+            'medium_seconds' => 600,
+            'short_reply_chars' => 30,
+        ],
+
         'login_gagal_berulang' => [
             'enabled' => true,
             'threshold' => 3,
@@ -50,6 +57,6 @@ return [
 
     ],
 
-    'ignore_private_ips' => env('AUDIT_IGNORE_PRIVATE_IPS', true),
+    'ignore_private_ips' => env('AUDIT_IGNORE_PRIVATE_IPS', false),
 
 ];
