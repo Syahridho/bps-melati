@@ -90,7 +90,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $operator = User::factory()->create(['role' => 'operator']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($operator)->put('/settings/sensors/' . $word->id, [
+        $response = $this->actingAs($operator)->put('/settings/sensors/'.$word->id, [
             'word' => 'anjingbaru',
             'match_type' => 'anywhere',
             'is_active' => true,
@@ -105,7 +105,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $operatorTim = User::factory()->create(['role' => 'operator_tim']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($operatorTim)->put('/settings/sensors/' . $word->id, [
+        $response = $this->actingAs($operatorTim)->put('/settings/sensors/'.$word->id, [
             'word' => 'anjingbaru',
             'match_type' => 'anywhere',
             'is_active' => true,
@@ -120,7 +120,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($admin)->put('/settings/sensors/' . $word->id, [
+        $response = $this->actingAs($admin)->put('/settings/sensors/'.$word->id, [
             'word' => 'anjingbaru',
             'match_type' => 'anywhere',
             'is_active' => true,
@@ -136,7 +136,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $operator = User::factory()->create(['role' => 'operator']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($operator)->delete('/settings/sensors/' . $word->id);
+        $response = $this->actingAs($operator)->delete('/settings/sensors/'.$word->id);
 
         $response->assertStatus(403);
         $this->assertDatabaseHas('censored_words', ['word' => 'anjing']);
@@ -147,7 +147,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $operatorTim = User::factory()->create(['role' => 'operator_tim']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($operatorTim)->delete('/settings/sensors/' . $word->id);
+        $response = $this->actingAs($operatorTim)->delete('/settings/sensors/'.$word->id);
 
         $response->assertStatus(403);
         $this->assertDatabaseHas('censored_words', ['word' => 'anjing']);
@@ -158,7 +158,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($admin)->delete('/settings/sensors/' . $word->id);
+        $response = $this->actingAs($admin)->delete('/settings/sensors/'.$word->id);
 
         $response->assertStatus(302);
         $this->assertDatabaseMissing('censored_words', ['word' => 'anjing']);
@@ -169,7 +169,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $operator = User::factory()->create(['role' => 'operator']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($operator)->patch('/settings/sensors/' . $word->id . '/toggle');
+        $response = $this->actingAs($operator)->patch('/settings/sensors/'.$word->id.'/toggle');
 
         $response->assertStatus(403);
         $this->assertTrue($word->fresh()->is_active);
@@ -180,7 +180,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $operatorTim = User::factory()->create(['role' => 'operator_tim']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($operatorTim)->patch('/settings/sensors/' . $word->id . '/toggle');
+        $response = $this->actingAs($operatorTim)->patch('/settings/sensors/'.$word->id.'/toggle');
 
         $response->assertStatus(403);
         $this->assertTrue($word->fresh()->is_active);
@@ -191,7 +191,7 @@ class SensorSettingsAuthorizationTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $word = CensoredWord::create(['word' => 'anjing', 'match_type' => 'anywhere', 'is_active' => true]);
 
-        $response = $this->actingAs($admin)->patch('/settings/sensors/' . $word->id . '/toggle');
+        $response = $this->actingAs($admin)->patch('/settings/sensors/'.$word->id.'/toggle');
 
         $response->assertStatus(302);
         $this->assertFalse($word->fresh()->is_active);

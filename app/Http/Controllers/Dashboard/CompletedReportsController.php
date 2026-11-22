@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Http\Controllers\Concerns\BuildsLaporanListPayload;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Support\LaporanFilter;
+use App\Support\LaporanFilterQuery;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Inertia\Response;
 
 class CompletedReportsController extends Controller
 {
-    use RendersRolePage;
+    use BuildsLaporanListPayload, RendersRolePage;
 
     /**
      * Status yang dianggap "selesai" (sudah direspon).
@@ -25,71 +27,24 @@ class CompletedReportsController extends Controller
      */
     public function index(Request $request): Response
     {
-        $search = trim((string) ($request->query('q', $request->query('search', ''))));
-        $filter = (string) ($request->query('tab', $request->query('filter', 'semua')));
-        $perPage = (int) $request->query('per_page', 15);
-        $fromInput = $request->query('from');
-        $toInput = $request->query('to');
+        $filter = new LaporanFilter($request, 'bulan_ini', 15);
 
-        // Whitelist filter / tab
         $allowedFilters = ['semua', 'pengaduan', 'aspirasi', 'permintaan', 'permintaan_informasi', 'berkadar_pengawasan', 'ditandai'];
-        if (! in_array($filter, $allowedFilters, true)) {
-            $filter = 'semua';
+        if (! in_array($filter->tab, $allowedFilters, true)) {
+            $filter->tab = 'semua';
         }
 
-        // Whitelist per_page
-        if (! in_array($perPage, [10, 15, 20, 50, 100], true)) {
-            $perPage = 15;
-        }
+        $frontendFilterKey = ($filter->tab === 'permintaan_informasi') ? 'permintaan' : $filter->tab;
 
-        $frontendFilterKey = ($filter === 'permintaan_informasi') ? 'permintaan' : $filter;
+        $search = $filter->search;
+        $filterTab = $filter->tab;
+        $perPage = $filter->perPage;
+        $isSemuaWaktu = $filter->isSemuaWaktu;
+        $fromInput = $filter->from;
+        $toInput = $filter->to;
 
-        // Resolusi rentang tanggal (Timezone: Asia/Jakarta)
-        $tz = 'Asia/Jakarta';
-        $isSemuaWaktu = ($fromInput === 'semua' || $toInput === 'semua');
+        $searchQueryClosure = LaporanFilterQuery::searchClosure($search);
 
-        if (! $isSemuaWaktu) {
-            if ($fromInput && $toInput) {
-                try {
-                    $fromDate = Carbon::parse($fromInput, $tz)->toDateString();
-                    $toDate = Carbon::parse($toInput, $tz)->toDateString();
-                    if ($toDate < $fromDate) {
-                        $toDate = $fromDate;
-                        $toInput = $fromInput;
-                    }
-                    $fromInput = $fromDate;
-                    $toInput = $toDate;
-                } catch (\Throwable) {
-                    $now = Carbon::now($tz);
-                    $fromInput = $now->copy()->startOfMonth()->toDateString();
-                    $toInput = $now->copy()->endOfMonth()->toDateString();
-                }
-            } else {
-                // Default: Bulan ini
-                $now = Carbon::now($tz);
-                $fromInput = $now->copy()->startOfMonth()->toDateString();
-                $toInput = $now->copy()->endOfMonth()->toDateString();
-            }
-        } else {
-            $fromInput = 'semua';
-            $toInput = 'semua';
-        }
-
-        // Callback pencarian kata kunci (Catatan: untuk performa tabel besar, pertimbangkan MySQL FULLTEXT index)
-        $searchQueryClosure = function ($query) use ($search) {
-            if ($search !== '') {
-                $query->where(function ($q) use ($search) {
-                    $q->where('ticket_number', 'like', "%{$search}%")
-                        ->orWhere('title', 'like', "%{$search}%")
-                        ->orWhere('reporter_name', 'like', "%{$search}%")
-                        ->orWhere('reporter_email', 'like', "%{$search}%")
-                        ->orWhere('reporter_wa', 'like', "%{$search}%")
-                        ->orWhere('content', 'like', "%{$search}%");
-                });
-            }
-        };
-
-        // Query utama daftar tiket laporan selesai
         $ticketsQuery = Ticket::with(['channel', 'flaggedBy'])
             ->whereIn('status', self::COMPLETED_STATUSES)
             ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($query) use ($fromInput, $toInput) {
@@ -97,16 +52,16 @@ class CompletedReportsController extends Controller
                     ->whereDate('updated_at', '<=', $toInput);
             })
             ->tap($searchQueryClosure)
-            ->when($filter !== 'semua', function ($query) use ($filter) {
-                if ($filter === 'pengaduan') {
+            ->when($filterTab !== 'semua', function ($query) use ($filterTab) {
+                if ($filterTab === 'pengaduan') {
                     $query->where('classification', 'pengaduan');
-                } elseif ($filter === 'aspirasi') {
+                } elseif ($filterTab === 'aspirasi') {
                     $query->where('classification', 'aspirasi');
-                } elseif ($filter === 'permintaan' || $filter === 'permintaan_informasi') {
+                } elseif ($filterTab === 'permintaan' || $filterTab === 'permintaan_informasi') {
                     $query->where('classification', 'permintaan_informasi');
-                } elseif ($filter === 'berkadar_pengawasan') {
+                } elseif ($filterTab === 'berkadar_pengawasan') {
                     $query->where('is_pengawasan', true);
-                } elseif ($filter === 'ditandai') {
+                } elseif ($filterTab === 'ditandai') {
                     $query->where('is_flagged', true);
                 }
             });
@@ -115,30 +70,8 @@ class CompletedReportsController extends Controller
             ->orderByDesc('updated_at')
             ->paginate($perPage)
             ->withQueryString()
-            ->through(fn (Ticket $ticket) => array_merge([
-                'id' => $ticket->id,
-                'ticket_number' => $ticket->ticket_number,
-                'classification' => $ticket->classification,
-                'service_type' => $ticket->service_type,
-                'satuan_tugas' => $ticket->satuan_tugas,
-                'reporter_name' => $ticket->reporter_name,
-                'reporter_email' => $ticket->reporter_email,
-                'reporter_wa' => $ticket->reporter_wa,
-                'status' => $ticket->status,
-                'is_pengawasan' => (bool) $ticket->is_pengawasan,
-                'is_flagged' => (bool) $ticket->is_flagged,
-                'flagged_at' => $ticket->flagged_at?->toIso8601String(),
-                'flagged_by_name' => $ticket->flaggedBy?->name,
-                'flag_note' => $ticket->flag_note,
-                'source_app' => $ticket->source_app,
-                'channel' => $ticket->channel?->name ?? '-',
-                'closed_reason' => $ticket->closed_reason,
-                'completed_at' => $ticket->completed_at?->toIso8601String(),
-                'created_at' => $ticket->created_at->toIso8601String(),
-                'updated_at' => $ticket->updated_at->toIso8601String(),
-            ], $this->profanityTicketProps($ticket)));
+            ->through(fn (Ticket $ticket) => $this->completedListTicket($ticket));
 
-        // Base query untuk counts (mengikuti rentang tanggal dan pencarian, tanpa filter tab)
         $countBaseQuery = Ticket::query()
             ->whereIn('status', self::COMPLETED_STATUSES)
             ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($q) use ($fromInput, $toInput) {

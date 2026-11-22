@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Services\TicketCacheInvalidator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class TicketPengawasanController extends Controller
 {
@@ -58,9 +58,7 @@ class TicketPengawasanController extends Controller
             ]);
         }
 
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
+        app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
         return back()->with('success', $aktif ? 'Kadar pengawasan berhasil diaktifkan.' : 'Kadar pengawasan berhasil dinonaktifkan.');
     }

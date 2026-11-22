@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\RecordAuditFlagReviewAudit;
 use App\Http\Controllers\Controller;
 use App\Models\AuditFlag;
-use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -78,17 +78,7 @@ class ReviewController extends Controller
             }
         });
 
-        AuditLogger::log(
-            eventType: 'audit.flag_reviewed',
-            category: 'audit',
-            actor: $request->user(),
-            ticket: $flag->ticket,
-            meta: [
-                'flag_id' => $flagId,
-                'new_status' => $request->status,
-            ],
-            severity: 'info',
-        );
+        app(RecordAuditFlagReviewAudit::class)->handle($request->user(), $flag->ticket, $flagId, $request->status);
 
         return response()->json([
             'status' => 'success',

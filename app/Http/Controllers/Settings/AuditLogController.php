@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\RecordAuditLogExportAudit;
 use App\Http\Controllers\Controller;
 use App\Models\AuditFlag;
 use App\Models\AuditLog;
-use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -136,26 +136,16 @@ class AuditLogController extends Controller
         // Log the export action
         $exportCount = $query->count();
 
-        AuditLogger::log(
-            eventType: 'export.audit_logs',
-            category: 'export',
-            actor: $request->user(),
-            request: $request,
-            meta: [
-                'count' => $exportCount,
-                'filters' => array_filter([
-                    'event_type' => $eventType,
-                    'category' => $category,
-                    'severity' => $severity,
-                    'actor' => $actor,
-                    'ticket_id' => $ticketId,
-                    'ip' => $ip,
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                ], static fn ($value): bool => $value !== null && $value !== ''),
-            ],
-            severity: 'notice',
-        );
+        app(RecordAuditLogExportAudit::class)->handle($request->user(), $request, $exportCount, [
+            'event_type' => $eventType,
+            'category' => $category,
+            'severity' => $severity,
+            'actor' => $actor,
+            'ticket_id' => $ticketId,
+            'ip' => $ip,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
 
         $logs = $query->latest('created_at')->get(['id', 'event_type', 'category', 'severity', 'actor_name', 'actor_role', 'ticket_id', 'ip', 'user_agent', 'meta', 'created_at']);
 

@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 use Inertia\Testing\AssertableInertia as Assert;
 

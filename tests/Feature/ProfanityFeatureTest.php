@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Channel;
 use App\Models\CensoredWord;
+use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Support\ProfanityFilter;

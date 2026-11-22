@@ -13,6 +13,7 @@ use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\TicketAssignmentService;
+use App\Services\TicketCacheInvalidator;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
 use App\Support\ProfanityFilter;
@@ -463,8 +464,7 @@ class InputDataController extends Controller
             ]);
         }
 
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
+        app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
         return response()->json([
             'success' => true,
@@ -497,9 +497,7 @@ class InputDataController extends Controller
             'content' => $request->validated('content'),
         ]);
 
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
+        app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
         return back()->with('success', 'Data tiket berhasil diperbarui.');
     }
@@ -533,9 +531,7 @@ class InputDataController extends Controller
             $ticket->delete();
         });
 
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
+        app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
         $routePrefix = $request->user()->isAdmin() ? 'dashboard.admin' : 'dashboard.operator';
 

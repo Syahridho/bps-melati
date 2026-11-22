@@ -9,13 +9,13 @@ use App\Http\Requests\UpdateTicketRequest;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\AssignmentModeService;
+use App\Services\TicketCacheInvalidator;
 use App\Support\LaporanCache;
 use App\Support\LaporanFilter;
 use App\Support\LaporanTicketQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Response;
@@ -200,7 +200,7 @@ class IncomingReportsController extends Controller
             'content' => $request->validated('content'),
         ]);
 
-        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
+        app(TicketCacheInvalidator::class)->invalidateDashboard();
 
         return back()->with('success', 'Laporan berhasil diperbarui.');
     }
@@ -236,7 +236,7 @@ class IncomingReportsController extends Controller
             $ticket->delete();
         });
 
-        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
+        app(TicketCacheInvalidator::class)->invalidateDashboard();
 
         $routePrefix = $request->user()->role->value === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 

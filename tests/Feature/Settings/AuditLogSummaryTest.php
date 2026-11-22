@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AuditFlag;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -35,7 +36,7 @@ test('admin receives audit log flags summary json', function () {
 test('audit log flags summary counts new flags correctly', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
-    $auditLog = \App\Models\AuditLog::create([
+    $auditLog = AuditLog::create([
         'event_type' => 'test',
         'category' => 'test',
         'severity' => 'info',

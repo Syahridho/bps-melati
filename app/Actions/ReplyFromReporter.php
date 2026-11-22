@@ -76,10 +76,6 @@ class ReplyFromReporter
         DB::afterCommit(function () use ($ticket, $response): void {
             $ticket = $ticket->fresh() ?? $ticket;
 
-            Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-            Cache::forget("ticket:{$ticket->ticket_number}");
-            Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
-
             $context = [
                 'ticket_id' => $ticket->id,
                 'ticket_number' => $ticket->ticket_number,

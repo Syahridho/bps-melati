@@ -19,6 +19,7 @@ class LargeTicketTestSeeder extends Seeder
 
         if (empty($channelIds)) {
             $this->command->error('Tabel channels masih kosong! Jalankan ChannelSeeder terlebih dahulu.');
+
             return;
         }
 
@@ -58,7 +59,7 @@ class LargeTicketTestSeeder extends Seeder
                 $createdAt = Carbon::createFromTimestamp($randomTs);
                 $period = $createdAt->format('Y-m');
 
-                if (!isset($periodsSequence[$period])) {
+                if (! isset($periodsSequence[$period])) {
                     $periodsSequence[$period] = 0;
                 }
                 $periodsSequence[$period]++;
@@ -99,14 +100,14 @@ class LargeTicketTestSeeder extends Seeder
                     'period' => $period,
                     'sequence' => $seq,
                     'classification' => $classification,
-                    'title' => 'Laporan uji coba nomor ' . $seq . ' (' . $classification . ')',
+                    'title' => 'Laporan uji coba nomor '.$seq.' ('.$classification.')',
                     'service_type' => $serviceType,
                     'satuan_tugas' => $satuanTugas,
                     'channel_id' => $channelIds[array_rand($channelIds)],
-                    'reporter_name' => 'Pelapor ' . mt_rand(100, 9999),
-                    'reporter_email' => 'pelapor' . mt_rand(1, 5000) . '@example.com',
-                    'reporter_wa' => '08' . mt_rand(1000000000, 9999999999),
-                    'content' => 'Ini adalah konten pengaduan uji coba untuk beban data besar. Tiket nomor ' . $ticketNumber . ' dengan isu acak simulasi.',
+                    'reporter_name' => 'Pelapor '.mt_rand(100, 9999),
+                    'reporter_email' => 'pelapor'.mt_rand(1, 5000).'@example.com',
+                    'reporter_wa' => '08'.mt_rand(1000000000, 9999999999),
+                    'content' => 'Ini adalah konten pengaduan uji coba untuk beban data besar. Tiket nomor '.$ticketNumber.' dengan isu acak simulasi.',
                     'access_code' => strtoupper(Str::random(8)),
                     'status' => $status,
                     'version' => 1,

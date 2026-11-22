@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\AutoCloseTickets;
+use App\Actions\RecordReporterCompletionAudit;
 use App\Actions\ReplyFromReporter;
 use App\Enums\UserRole;
 use App\Events\InboxUpdated;
@@ -10,8 +11,6 @@ use App\Events\TicketClosedByReporter;
 use App\Events\TicketUpdated;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Services\AuditFlagDetector;
-use App\Services\AuditLogger;
 use App\Support\AppSettings;
 use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
@@ -254,9 +253,6 @@ class CheckTicketController extends Controller
                 $ticket->refresh();
                 $completedAt = $ticket->completed_at ?? $completedAt;
 
-                Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-                Cache::forget("ticket:{$ticket->ticket_number}");
-
                 $context = ['ticket_id' => $ticket->id, 'ticket_number' => $ticket->ticket_number];
 
                 SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);
@@ -319,19 +315,7 @@ class CheckTicketController extends Controller
                     ]);
                 }
 
-                $auditLog = AuditLogger::log(
-                    eventType: $ticket->rating !== null ? 'ticket.rated' : 'ticket.completed_by_reporter',
-                    category: 'ticket',
-                    ticket: $ticket,
-                    request: $request,
-                    meta: [
-                        'rating' => $ticket->rating,
-                        'has_comment' => filled($ticket->rating_comment),
-                    ],
-                    severity: 'notice',
-                );
-
-                app(AuditFlagDetector::class)->detectForTicketCompletion($ticket, $auditLog, $request);
+                app(RecordReporterCompletionAudit::class)->handle($ticket, $request, $ticket->rating !== null);
             }
         }
 

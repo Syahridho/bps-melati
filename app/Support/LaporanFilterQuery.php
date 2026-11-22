@@ -3,60 +3,12 @@
 namespace App\Support;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 
 class LaporanFilterQuery
 {
     public static function resolveDateRange(Request $request, string $defaultMode = 'bulan_ini'): array
     {
-        $fromInput = $request->query('from');
-        $toInput = $request->query('to');
-        $tz = 'Asia/Jakarta';
-
-        if ($fromInput === null && $toInput === null) {
-            if ($defaultMode === 'semua') {
-                return ['semua', 'semua', true];
-            }
-            $now = Carbon::now($tz);
-
-            return [
-                $now->copy()->startOfMonth()->toDateString(),
-                $now->copy()->endOfMonth()->toDateString(),
-                false,
-            ];
-        }
-
-        $isSemuaWaktu = ($fromInput === 'semua' || $toInput === 'semua');
-
-        if ($isSemuaWaktu) {
-            return ['semua', 'semua', true];
-        }
-
-        if ($fromInput && $toInput) {
-            try {
-                $fromDate = Carbon::parse($fromInput, $tz)->toDateString();
-                $toDate = Carbon::parse($toInput, $tz)->toDateString();
-                if ($toDate < $fromDate) {
-                    $toDate = $fromDate;
-                }
-
-                return [$fromDate, $toDate, false];
-            } catch (\Throwable) {
-                // Fallback
-            }
-        }
-
-        if ($defaultMode === 'semua') {
-            return ['semua', 'semua', true];
-        }
-
-        $now = Carbon::now($tz);
-
-        return [
-            $now->copy()->startOfMonth()->toDateString(),
-            $now->copy()->endOfMonth()->toDateString(),
-            false,
-        ];
+        return LaporanFilter::resolveDateRange($request, $defaultMode);
     }
 
     public static function searchClosure(string $search)

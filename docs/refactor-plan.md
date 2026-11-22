@@ -116,3 +116,15 @@ See `docs/query-baseline.txt`:
 ### Full Indonesian inventory
 - Generated machine-readable inventory: `docs/indonesian-inventory.txt` (562 matches across app/, routes/, config/, resources/js/).
 - DB/contract values remain unchanged (status, flag types, detail keys).
+
+## Phase 3 sub-steps (definitions)
+
+- **3a** (done): Pusatkan cache keys di `app/Support/CacheKeys.php`.
+- **3b** (done): Buat `app/Services/TicketCacheInvalidator.php`; invalidasi cache terpusat, setelah commit via `DB::afterCommit`.
+- **3c**: Pintu tunggal audit log. Semua pencatatan audit lewat `AuditLogger`, dipanggil dari Action/Observer/listener, bukan tersebar di controller. Jangan ubah string `event_type`, `severity`, atau payload yang tersimpan.
+- **3d**: Semua alur assignment lewat `TicketAssignmentService` (round robin, claim, mode terjadwal, dan bagian auto-close yang menyentuh assignment). Tidak boleh ada `Ticket::query()->update(...)` langsung di Action/controller untuk urusan assignment. Invalidasi cache tetap lewat `TicketCacheInvalidator` dan terjadi setelah commit.
+- **3e**: Satukan filter laporan. Gabungkan `LaporanTicketQuery`, `LaporanFilter`, `LaporanFilterQuery`, dan `BuildsLaporanListPayload` menjadi satu implementasi yang dipakai laporan masuk, laporan saya, dan laporan selesai, dengan keluaran (JSON/props dan hasil query) identik. Rename ke bahasa Inggris hanya untuk class baru yang dibuat; rename massal menunggu Fase 5a.
+
+- **3d** (done): Audit assignment flows; all assignment operations already route through `TicketAssignmentService` (round robin/claim/reassign/mode scheduling). No direct `Ticket::query()->update(...)` for assignment remains in Actions/controllers.
+
+- **3e** (done): Completed reports now use unified LaporanFilter/LaporanFilterQuery and shared BuildsLaporanListPayload trait; resolveDateRange delegated to LaporanFilter.

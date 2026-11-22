@@ -118,6 +118,7 @@ Broadcast::channel('laporan.operator.{userId}', function (User $user, int $userI
     if (! ($user->isOperator() || $user->isOperatorTim())) {
         return false;
     }
+
     return (int) $user->id === (int) $userId && $user->is_active === true;
 });
 
@@ -129,6 +130,7 @@ Broadcast::channel('operator.{userId}', function (User $user, int $userId) {
     if (! ($user->isAdmin() || $user->isOperator() || $user->isOperatorTim())) {
         return false;
     }
+
     return (int) $user->id === (int) $userId && $user->is_active === true;
 });
 

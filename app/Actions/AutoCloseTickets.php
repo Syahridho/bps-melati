@@ -4,11 +4,9 @@ namespace App\Actions;
 
 use App\Models\Setting;
 use App\Models\Ticket;
-use App\Support\InboxCounter;
-use App\Support\LaporanCache;
+use App\Services\TicketCacheInvalidator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -277,8 +275,8 @@ class AutoCloseTickets
             }, 3);
 
             if ($closed) {
-                $ticket = \App\Models\Ticket::query()->find($ticketId);
-                app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
+                $ticket = Ticket::query()->find($ticketId);
+                app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
             }
 
             return $closed;

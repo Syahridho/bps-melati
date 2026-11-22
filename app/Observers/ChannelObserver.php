@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Events\ChannelStatsUpdated;
 use App\Models\Channel;
 use App\Models\Setting;
+use App\Support\CacheKeys;
 use Illuminate\Support\Facades\Cache;
 
 class ChannelObserver
@@ -28,8 +29,8 @@ class ChannelObserver
     private function bump(Channel $channel, string $action): void
     {
         Cache::forget('channels:tree');
-        Cache::add(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION, 0);
-        Cache::increment(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
+        Cache::add(CacheKeys::DASHBOARD_ADMIN_VERSION, 0);
+        Cache::increment(CacheKeys::DASHBOARD_ADMIN_VERSION);
 
         if (config('app.disable_dashboard_broadcast', false)) {
             return;

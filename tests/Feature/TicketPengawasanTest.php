@@ -1,15 +1,15 @@
 <?php
 
 use App\Actions\AutoCloseTickets;
+use App\Enums\UserRole;
 use App\Models\Channel;
 use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Enums\UserRole;
 
 test('admin and operator can toggle ticket pengawasan', function () {
     $channel = Channel::first() ?? Channel::create(['name' => 'Default']);
-    
+
     // Test Admin
     $admin = User::factory()->create(['role' => UserRole::Admin]);
     $ticketAdmin = Ticket::create([

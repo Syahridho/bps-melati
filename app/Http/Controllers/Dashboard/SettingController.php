@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Actions\RecordSettingUpdateAudit;
 use App\Enums\AssignmentMode;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\SettingChangeLog;
 use App\Services\AssignmentModeService;
-use App\Services\AuditLogger;
 use App\Services\RatingSettingService;
 use App\Support\AppSettings;
 use App\Support\DashboardStats;
@@ -114,16 +114,7 @@ class SettingController extends Controller
 
         $changedKeys = array_values(array_diff(array_keys($validated), ['rating_enabled']));
 
-        if ($changedKeys !== []) {
-            AuditLogger::log(
-                eventType: 'setting.updated',
-                category: 'setting',
-                actor: $request->user(),
-                request: $request,
-                meta: ['keys' => $changedKeys],
-                severity: 'notice',
-            );
-        }
+        app(RecordSettingUpdateAudit::class)->handle($request->user(), $request, $changedKeys);
 
         // Bump versi cache dashboard agar saat setting diubah, payload langsung sinkron
         Cache::add(DashboardStats::VERSION_KEY, 0);

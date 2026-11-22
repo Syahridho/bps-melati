@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\AutoCloseTickets;
 use App\Models\AuditFlag;
 use App\Models\AuditLog;
 use App\Models\Channel;
@@ -36,7 +37,6 @@ test('badge: auto assign via round robin creates ticket', function () {
     ]);
 
     expect($ticket)->not->toBeNull();
-    InboxCounter::invalidate();
     expect(InboxCounter::getAssignedActiveCount($operator))->toBeGreaterThanOrEqual($before);
 });
 
@@ -63,7 +63,6 @@ test('badge: claim increments laporan saya', function () {
     expect(InboxCounter::getAssignedActiveCount($operator))->toBe(0);
 
     app(TicketAssignmentService::class)->claim($ticket, $operator);
-    InboxCounter::invalidate();
 
     expect(InboxCounter::getAssignedActiveCount($operator))->toBe(1);
 });
@@ -88,12 +87,10 @@ test('badge: penutupan oleh pelapor decrements laporan masuk dan laporan saya', 
         'updated_at' => now(),
     ]);
 
-    InboxCounter::invalidate();
     expect(InboxCounter::getCounts()['semua'])->toBe(1);
     expect(InboxCounter::getAssignedActiveCount($operator))->toBe(1);
 
     $ticket->update(['status' => 'selesai', 'completed_at' => now()]);
-    InboxCounter::invalidate();
 
     expect(InboxCounter::getCounts()['semua'])->toBe(0);
     expect(InboxCounter::getAssignedActiveCount($operator))->toBe(0);
@@ -119,4 +116,50 @@ test('badge: audit flag review decrements new count', function () {
 
     $flag->update(['status' => 'wajar', 'reviewed_by' => $admin->id, 'reviewed_at' => now()]);
     expect(AuditFlag::where('status', 'baru')->count())->toBe(0);
+});
+
+test('badge: auto close closeOne decrements laporan masuk', function () {
+    $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true, 'sort_order' => 1]);
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'T-8004',
+        'period' => now()->format('mY'),
+        'sequence' => 8004,
+        'classification' => 'pengaduan',
+        'title' => 'Ticket',
+        'content' => 'Content',
+        'channel_id' => $channel->id,
+        'reporter_name' => 'Reporter',
+        'status' => 'respon_awal',
+        'last_staff_response_at' => now()->subDays(10),
+        'source_app' => 'web',
+        'created_at' => now()->subDays(10),
+        'updated_at' => now()->subDays(10),
+    ]);
+
+    expect(InboxCounter::getCounts()['semua'])->toBe(1);
+
+    app(AutoCloseTickets::class)->closeOne($ticket->id, 3);
+
+    expect(InboxCounter::getCounts()['semua'])->toBe(0);
+});
+
+test('badge: audit flag creation increments new count', function () {
+    $auditLog = AuditLog::create([
+        'event_type' => 'test',
+        'category' => 'test',
+        'severity' => 'info',
+    ]);
+
+    expect(AuditFlag::where('status', 'baru')->count())->toBe(0);
+
+    AuditFlag::create([
+        'type' => 'jaringan_sama',
+        'severity' => 'warning',
+        'status' => 'baru',
+        'audit_log_id' => $auditLog->id,
+        'details' => ['tingkat' => 'tinggi'],
+    ]);
+
+    expect(AuditFlag::where('status', 'baru')->count())->toBe(1);
 });

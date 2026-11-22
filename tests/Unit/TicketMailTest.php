@@ -64,8 +64,8 @@ class TicketMailTest extends TestCase
                 'reportTypeNoun' => $ticket->classificationNoun(),
                 'reportTypeNounTitle' => $ticket->classificationNounTitle(),
             ]);
-            $this->assertStringContainsString('Terima kasih telah menyampaikan ' . $ticket->classificationNoun(), $text);
-            $this->assertStringContainsString($ticket->classificationNounTitle() . ' Anda telah kami terima', $text);
+            $this->assertStringContainsString('Terima kasih telah menyampaikan '.$ticket->classificationNoun(), $text);
+            $this->assertStringContainsString($ticket->classificationNounTitle().' Anda telah kami terima', $text);
         }
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Support\CacheKeys;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -58,7 +59,7 @@ class WelcomeController extends Controller
     private function publicStats(): array
     {
         return Cache::remember(
-            'welcome:stats:v'.Cache::get(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION, 0),
+            'welcome:stats:v'.Cache::get(CacheKeys::DASHBOARD_ADMIN_VERSION, 0),
             now()->addMinutes(10),
             function () {
                 $summary = Ticket::query()

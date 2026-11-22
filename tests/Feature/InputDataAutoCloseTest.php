@@ -1,11 +1,11 @@
 <?php
 
 use App\Actions\AutoCloseTickets;
+use App\Enums\UserRole;
 use App\Models\Channel;
 use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;

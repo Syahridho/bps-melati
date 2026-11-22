@@ -31,7 +31,6 @@ test('inbox counter tracks assigned active tickets and invalidates', function ()
     expect(InboxCounter::getAssignedActiveCount($operator))->toBe(1);
 
     $ticket->update(['status' => 'selesai']);
-    InboxCounter::invalidate();
 
     expect(InboxCounter::getAssignedActiveCount($operator))->toBe(0);
 });

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,7 +13,7 @@ uses(RefreshDatabase::class);
 function makePerfTicket(array $overrides = []): Ticket
 {
     static $seq = 1;
-    $channel = \App\Models\Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true]);
+    $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true]);
 
     return Ticket::create(array_merge([
         'ticket_number' => 'PERF-'.sprintf('%04d', $seq++),

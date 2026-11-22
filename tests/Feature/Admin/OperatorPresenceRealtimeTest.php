@@ -1,8 +1,8 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Events\UserLoggedIn;
 use App\Models\User;
-use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;
@@ -121,6 +121,7 @@ test('login dispatches UserLoggedIn event with correct payload', function () {
         $payload = $event->broadcastWith();
         expect($payload)->toHaveKeys(['id', 'last_login_at', 'last_login_device', 'last_login_ip', 'has_session']);
         expect($payload['id'])->toBe($operator->id);
+
         return true;
     });
 });

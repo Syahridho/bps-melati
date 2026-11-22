@@ -3,7 +3,6 @@
 use App\Events\DashboardUpdated;
 use App\Models\Channel;
 use App\Models\Ticket;
-use App\Models\User;
 use Illuminate\Support\Facades\Event;
 
 test('dashboard updated event is dispatched when ticket is created', function () {

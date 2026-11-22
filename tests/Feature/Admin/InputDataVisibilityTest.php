@@ -1,9 +1,9 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Enums\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 

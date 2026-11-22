@@ -3,15 +3,14 @@
 namespace App\Models;
 
 use App\Actions\AutoCloseTickets;
+use App\Services\TicketCacheInvalidator;
 use App\Services\TicketNumberGenerator;
-use App\Support\InboxCounter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Cache;
 
 class Ticket extends Model
 {
@@ -205,13 +204,7 @@ class Ticket extends Model
 
     protected static function booted(): void
     {
-        $bump = function () {
-            app(\App\Services\TicketCacheInvalidator::class)->invalidateDashboard();
-            InboxCounter::invalidate();
-        };
-
-        static::saved($bump);
-        static::deleted($bump);
+        // Cache invalidation is centralized in AppServiceProvider via TicketCacheInvalidator.
     }
 
     /**

@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use App\Enums\UserRole;
+use App\Models\User;
 
 test('operator and operator_tim can access settings password and appearance but not application settings', function () {
     foreach ([UserRole::Operator, UserRole::OperatorTim] as $role) {

@@ -13,6 +13,7 @@ uses(RefreshDatabase::class);
 function chatLimitChannel(): Channel
 {
     $parent = Channel::firstOrCreate(['slug' => 'sosial-media'], ['name' => 'Sosial Media', 'sort_order' => 1, 'is_active' => true]);
+
     return Channel::firstOrCreate(['slug' => 'sosial-media-instagram'], ['name' => 'Instagram', 'parent_id' => $parent->id, 'sort_order' => 1, 'is_active' => true]);
 }
 
@@ -24,7 +25,7 @@ function chatLimitTicket(string $period): Ticket
     $channel = chatLimitChannel();
 
     return Ticket::create([
-        'ticket_number' => 'T-' . $seq,
+        'ticket_number' => 'T-'.$seq,
         'period' => $period,
         'sequence' => $seq,
         'classification' => 'pengaduan',

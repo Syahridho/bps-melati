@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Observers\ChannelObserver;
 use App\Observers\TicketObserver;
 use App\Policies\TicketPolicy;
-use App\Support\LaporanCache;
+use App\Services\TicketCacheInvalidator;
 use App\Support\ProfanityFilter;
 use App\Support\RekapCache;
 use App\Support\RekapYears;
@@ -73,12 +73,12 @@ class AppServiceProvider extends ServiceProvider
         // supaya halaman rekap otomatis menghitung ulang pada request berikutnya.
         Ticket::saved(function (Ticket $ticket) {
             RekapYears::invalidate();
-            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
+            app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
         });
 
         Ticket::deleted(function (Ticket $ticket) {
             RekapYears::invalidate();
-            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
+            app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
         });
 
         Channel::saved(function () {

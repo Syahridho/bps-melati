@@ -180,11 +180,6 @@ class ReplyToTicket
             ],
         );
 
-        Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-        Cache::forget("ticket:{$ticket->ticket_number}");
-        Cache::forget('dashboard:admin:stats');
-        Cache::forget('dashboard:operator:stats');
-
         Cache::put("response:{$response->id}", [
             'id' => $response->id,
             'ticket_id' => $ticket->id,

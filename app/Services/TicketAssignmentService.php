@@ -9,8 +9,6 @@ use App\Models\Ticket;
 use App\Models\TicketAssignmentLog;
 use App\Models\User;
 use App\Notifications\LaporanNotification;
-use App\Support\InboxCounter;
-use App\Support\LaporanCache;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -47,8 +45,6 @@ class TicketAssignmentService
                 'assignment_mode' => $mode->value,
             ])));
 
-            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
-
             $this->dispatchAssignedLaporanChanged($ticket);
 
             return $ticket;
@@ -72,8 +68,6 @@ class TicketAssignmentService
             if ($assignedUserId === null) {
                 $this->notifyNoEligibleOperator($ticket);
             }
-
-            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
             $this->dispatchAssignedLaporanChanged($ticket);
 
@@ -108,7 +102,7 @@ class TicketAssignmentService
         });
 
         if ($claimed) {
-            app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket);
+            app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
             $ticket->refresh();
             $this->dispatchAssignedLaporanChanged($ticket, $actor->id);
@@ -147,7 +141,6 @@ class TicketAssignmentService
             );
         });
 
-        app(\App\Services\TicketCacheInvalidator::class)->invalidateTicket($ticket->fresh() ?? $ticket);
     }
 
     /**
@@ -353,6 +346,4 @@ class TicketAssignmentService
             'admin_count' => count($adminIds),
         ]);
     }
-
-
 }

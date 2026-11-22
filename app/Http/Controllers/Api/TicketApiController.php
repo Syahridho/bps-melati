@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\RecordReporterCompletionAudit;
 use App\Actions\ReplyFromReporter;
 use App\Events\InboxUpdated;
 use App\Events\TicketClosedByReporter;
@@ -13,10 +14,9 @@ use App\Mail\TicketCreatedMail;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Services\AuditFlagDetector;
-use App\Services\AuditLogger;
 use App\Services\TicketAssignmentService;
 use App\Support\AppSettings;
+use App\Support\CacheKeys;
 use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
 use Illuminate\Http\JsonResponse;
@@ -132,7 +132,7 @@ class TicketApiController extends Controller
             'created_at' => $ticket->created_at->toIso8601String(),
         ], now()->addHours(24));
 
-        Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
+        Cache::forget(CacheKeys::DASHBOARD_ADMIN_VERSION);
         TicketCreated::dispatch($ticket);
 
         $filter = app(ProfanityFilter::class);
@@ -405,10 +405,6 @@ class TicketApiController extends Controller
             if ($didComplete) {
                 $ticket->refresh();
 
-                Cache::forget('ticket_check:'.md5($ticket->ticket_number));
-                Cache::forget("ticket:{$ticket->ticket_number}");
-                Cache::forget(\App\Support\CacheKeys::DASHBOARD_ADMIN_VERSION);
-
                 $context = ['ticket_id' => $ticket->id, 'ticket_number' => $ticket->ticket_number];
 
                 SafeBroadcast::send('InboxUpdated', fn () => InboxUpdated::dispatch($ticket, 'Pelapor'), $context);
@@ -439,19 +435,7 @@ class TicketApiController extends Controller
 
                 $hasRating = $ticket->rating !== null || filled($ticket->rating_comment);
 
-                $auditLog = AuditLogger::log(
-                    eventType: $hasRating ? 'ticket.rated' : 'ticket.completed_by_reporter',
-                    category: 'ticket',
-                    ticket: $ticket,
-                    request: $request,
-                    meta: [
-                        'rating' => $ticket->rating,
-                        'has_comment' => filled($ticket->rating_comment),
-                    ],
-                    severity: 'notice',
-                );
-
-                app(AuditFlagDetector::class)->detectForTicketCompletion($ticket, $auditLog, $request);
+                app(RecordReporterCompletionAudit::class)->handle($ticket, $request, $hasRating);
             }
         }
 
