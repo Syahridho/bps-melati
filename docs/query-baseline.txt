@@ -1,0 +1,9 @@
+admin | dashboard.admin.incoming-reports.index | queries=6 | 64.44ms | status=200
+admin | dashboard.admin.completed-reports.index | queries=4 | 5.18ms | status=200
+admin | dashboard.admin.input-data.index | queries=12 | 6.01ms | status=200
+admin | dashboard.admin.periodic-recap.index | queries=28 | 9.39ms | status=200
+admin | audit-log.index | queries=10 | 5.69ms | status=200
+admin | audit-flag.index | queries=6 | 4.37ms | status=200
+admin | audit-log.flags-summary | queries=35 | 4.43ms | status=200
+admin | audit-log.summary-weekly | queries=64 | 7.2ms | status=200
+operator | dashboard.operator.incoming-reports.index | queries=18 | 4.12ms | status=200
