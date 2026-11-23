@@ -25,11 +25,11 @@ export function TicketAssignmentBadges({ assignedToName, assignmentMode, activeA
             {assignmentMode && assignmentMode !== activeAssignmentMode && (
                 <Badge variant="secondary">Mode: {assignmentModeLabel(assignmentMode)}</Badge>
             )}
-            {isOrphaned && (
+            {/* {isOrphaned && (
                 <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
                     Tanpa PIC aktif
                 </Badge>
-            )}
+            )} */}
         </>
     );
 }

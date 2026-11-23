@@ -4,6 +4,7 @@ use App\Events\InboxUpdated;
 use App\Events\TicketUpdated;
 use App\Models\Channel;
 use App\Models\Ticket;
+use App\Models\TicketResponse;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
@@ -661,4 +662,49 @@ test('tiket bergaris miring seperti A-1400/112026/PK2119 dapat dibalas dan disel
     expect($ticket->status)->toBe('selesai');
     Event::assertDispatched(InboxUpdated::class);
     Event::assertDispatched(TicketUpdated::class);
+});
+
+test('halaman check tidak memuat response sistem, tetapi response petugas tetap ada', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $ticket = Ticket::create([
+        'ticket_number' => 'L-1400/092026/0999',
+        'period' => '2026-09',
+        'sequence' => 999,
+        'classification' => 'pengaduan',
+        'channel_id' => $this->channel->id,
+        'reporter_name' => 'Fulan',
+        'content' => 'Laporan dengan pesan sistem dan petugas.',
+        'status' => 'respon_substantif',
+        'is_read' => true,
+        'source_app' => 'web',
+    ]);
+
+    $ticket->responses()->create([
+        'user_id' => $admin->id,
+        'type' => 'respon_substantif',
+        'is_system' => true,
+        'message' => 'Laporan ditandai oleh Administrator. Catatan: asdasdasd',
+        'sent_at' => now()->subMinute(),
+        'created_at' => now()->subMinute(),
+    ]);
+
+    $ticket->responses()->create([
+        'user_id' => $admin->id,
+        'type' => 'respon_substantif',
+        'is_system' => false,
+        'message' => 'asdasdasdasdasdasdsad',
+        'sent_at' => now(),
+        'created_at' => now(),
+    ]);
+
+    Cache::forget('ticket_check:'.md5($ticket->ticket_number));
+
+    $res = $this->get('/check?ticket_number='.$ticket->ticket_number);
+    $res->assertOk()
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('check/index')
+            ->where('ticket.responses', fn ($responses) => count($responses) === 1)
+            ->where('ticket.responses.0.message', 'asdasdasdasdasdasdsad')
+        );
 });

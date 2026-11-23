@@ -24,7 +24,7 @@ function writeStoredAccessCode(ticketNumber: string, code: string) {
     }
 }
 
-export function useCheckReplyForm(ticket: TicketDetail | null) {
+export function useCheckReplyForm(ticket: TicketDetail | null, accessCodeRequired = true) {
     const [showReplyForm, setShowReplyForm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,7 +45,7 @@ export function useCheckReplyForm(ticket: TicketDetail | null) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ticket?.ticket_number, ticket?.access_code]);
 
-    const needsAccessCode = !data.access_code.trim();
+    const needsAccessCode = accessCodeRequired && !data.access_code.trim();
 
     function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
         if (!e.target.files) return;
@@ -82,7 +82,7 @@ export function useCheckReplyForm(ticket: TicketDetail | null) {
         if (!ticket) return;
 
         const accessCode = data.access_code.trim();
-        if (!accessCode) {
+        if (accessCodeRequired && !accessCode) {
             toast.error('Masukkan access code tiket terlebih dahulu.', {
                 position: 'bottom-right',
             });

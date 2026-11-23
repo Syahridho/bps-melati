@@ -316,4 +316,19 @@ class Ticket extends Model
             default => $query,
         };
     }
+
+    public static function accessCodeRequired(): bool
+    {
+        return (bool) config('ticket.require_access_code', true);
+    }
+
+    public function accessCodeMatches(?string $code): bool
+    {
+        if (! static::accessCodeRequired()) {
+            return true;
+        }
+
+        return filled($this->access_code)
+            && hash_equals((string) $this->access_code, (string) $code);
+    }
 }

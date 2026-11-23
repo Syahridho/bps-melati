@@ -5,7 +5,7 @@ import { useEchoPublic } from '@laravel/echo-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
-export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail | null, flashSuccess?: string) {
+export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail | null, flashSuccess?: string, accessCodeRequired: boolean = true) {
     const [inputQuery, setInputQuery] = useState(initialTicketNumber || '');
     const [copied, setCopied] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail
         router.post(
             route('tickets.check.complete', { ticketNumber: ticket.ticket_number }),
             {
-                access_code: code,
+                access_code: accessCodeRequired ? code : code || null,
                 rating: rating ?? null,
                 comment: comment ?? null,
             },
@@ -76,7 +76,11 @@ export function useCheckTicket(initialTicketNumber: string, ticket: TicketDetail
                     toast.success('Laporan telah ditandai selesai. Terima kasih!');
                 },
                 onError: () => {
-                    toast.error('Gagal menyelesaikan laporan. Silakan periksa kembali kode akses.');
+                    toast.error(
+                        accessCodeRequired
+                            ? 'Gagal menyelesaikan laporan. Silakan periksa kembali kode akses.'
+                            : 'Gagal menyelesaikan laporan. Silakan coba lagi.',
+                    );
                 },
             },
         );

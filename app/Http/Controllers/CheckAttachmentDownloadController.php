@@ -44,8 +44,7 @@ class CheckAttachmentDownloadController extends Controller
 
         // Validasi kode akses tiket agar URL lampiran tidak dapat ditransfer
         // ke pihak lain tanpa akses ke tiket tersebut.
-        $providedAccessCode = $request->query('access_code');
-        if (! hash_equals((string) $ticket->access_code, (string) $providedAccessCode)) {
+        if (! $ticket->accessCodeMatches($request->query('access_code'))) {
             abort(403, 'Kode akses tiket tidak valid.');
         }
 

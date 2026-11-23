@@ -18,6 +18,7 @@ interface CheckCompleteDialogProps {
     error?: string;
     commentMaxLength?: number;
     ratingEnabled?: boolean;
+    accessCodeRequired?: boolean;
 }
 
 export function CheckCompleteDialog({
@@ -30,6 +31,7 @@ export function CheckCompleteDialog({
     error,
     commentMaxLength = 1000,
     ratingEnabled = true,
+    accessCodeRequired = true,
 }: CheckCompleteDialogProps) {
     const { accessCode, setAccessCode, rating, setRating, comment, setComment, persistAccessCode } = useCompleteForm(
         open,
@@ -53,7 +55,7 @@ export function CheckCompleteDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                {!defaultAccessCode && (
+                {accessCodeRequired && !defaultAccessCode && (
                     <div className="space-y-2 py-2">
                         <Label htmlFor="complete-access-code">
                             Kode Akses Tiket <span className="text-destructive">*</span>
@@ -104,7 +106,7 @@ export function CheckCompleteDialog({
                     <Button
                         type="button"
                         onClick={handleConfirm}
-                        disabled={completing || (!defaultAccessCode && !accessCode.trim())}
+                        disabled={completing || (accessCodeRequired && !defaultAccessCode && !accessCode.trim())}
                         className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700 sm:flex-none"
                     >
                         {completing ? (

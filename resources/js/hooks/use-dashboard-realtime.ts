@@ -1,7 +1,6 @@
 import { useAuthRole } from '@/hooks/use-auth-role';
 import { type SharedData } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { useEcho } from '@laravel/echo-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const RELOAD_DEBOUNCE_MS = 500;
@@ -44,29 +43,38 @@ export function useDashboardRealtime(enabled: boolean = true) {
     const { auth } = usePage<SharedData>().props;
     const { isAdmin } = useAuthRole();
     const canSubscribe = enabled && !!auth?.user && isAdmin;
-    const channelName = canSubscribe ? 'dashboard.admin' : '';
 
-    useEcho<DashboardUpdatedEvent>(
-        channelName,
-        '.dashboard.updated',
-        () => {
-            if (canSubscribe) {
-                scheduleReload();
-            }
-        },
-        [canSubscribe, scheduleReload],
-    );
+    useEffect(() => {
+        if (!canSubscribe) {
+            return;
+        }
 
-    useEcho<ChannelStatsUpdatedEvent>(
-        channelName,
-        '.channel.stats.updated',
-        () => {
-            if (canSubscribe) {
-                scheduleReload();
-            }
-        },
-        [canSubscribe, scheduleReload],
-    );
+        const echoInstance = (window as unknown as {
+            Echo?: {
+                private: (channel: string) => {
+                    listen: (event: string, callback: () => void) => void;
+                    stopListening: (event: string, callback?: () => void) => void;
+                };
+            };
+        }).Echo;
+
+        const channel = echoInstance?.private('dashboard.admin');
+        if (!channel) {
+            return;
+        }
+
+        const handler = () => {
+            scheduleReload();
+        };
+
+        channel.listen('.dashboard.updated', handler);
+        channel.listen('.channel.stats.updated', handler);
+
+        return () => {
+            channel.stopListening('.dashboard.updated', handler);
+            channel.stopListening('.channel.stats.updated', handler);
+        };
+    }, [canSubscribe, scheduleReload]);
 
     useEffect(() => {
         if (!enabled) {

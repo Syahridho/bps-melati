@@ -31,6 +31,7 @@ export interface SharedData {
     auth: Auth;
     inbox_open_count: number;
     my_reports_open_count?: number;
+    audit_log_badge?: number;
     notifications_unread_count?: number;
     vapid_public_key?: string;
     [key: string]: unknown;

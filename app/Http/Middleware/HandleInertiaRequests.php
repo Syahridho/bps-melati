@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AuditFlag;
 use App\Support\InboxCounter;
 use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -50,6 +52,17 @@ class HandleInertiaRequests extends Middleware
                 ? InboxCounter::getCounts($request->user())['semua']
                 : 0,
             'my_reports_open_count' => fn () => InboxCounter::getAssignedActiveCount($request->user()),
+            'audit_log_badge' => fn () => ($request->user()?->isAdmin())
+                ? (int) Cache::remember('auditflags:new_count:'.AuditFlag::cacheVersion(), 30, function (): int {
+                    try {
+                        return (int) AuditFlag::where('status', 'baru')
+                            ->selectRaw('COUNT(DISTINCT COALESCE(ticket_id, id)) as c')
+                            ->value('c');
+                    } catch (\Throwable $e) {
+                        return 0;
+                    }
+                })
+                : 0,
             'notifications_unread_count' => fn () => InboxCounter::getUnreadCount($request->user()),
             'vapid_public_key' => env('VAPID_PUBLIC_KEY'),
             'flash' => [

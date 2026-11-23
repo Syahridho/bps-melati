@@ -30,8 +30,8 @@ class LaporanTicketQuery
                 $query->where('assigned_to', $assignedTo);
             })
             ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function (Builder $query) use ($filter): void {
-                $query->whereDate('created_at', '>=', $filter->from)
-                    ->whereDate('created_at', '<=', $filter->to);
+                $query->where('created_at', '>=', $filter->from.' 00:00:00')
+                    ->where('created_at', '<=', $filter->to.' 23:59:59');
             })
             ->tap(LaporanFilterQuery::searchClosure($filter->search));
     }

@@ -198,3 +198,46 @@ test('laporan masuk detail lists responses oldest first', function () {
             ->where('ticket.responses.1.id', $newer->id)
         );
 });
+
+test('incoming reports detail still shows system and staff responses', function () {
+    $ticket = Ticket::create([
+        'ticket_number' => 'L-1400/092026/0998',
+        'period' => '2026-09',
+        'sequence' => 998,
+        'classification' => 'pengaduan',
+        'service_type' => 'pst',
+        'channel_id' => $this->channel->id,
+        'content' => 'Laporan pengujian riwayat tanggapan petugas.',
+        'status' => 'respon_substantif',
+    ]);
+
+    $staff = TicketResponse::create([
+        'ticket_id' => $ticket->id,
+        'user_id' => $this->admin->id,
+        'type' => 'respon_substantif',
+        'is_system' => false,
+        'message' => 'asdasdasdasdasdasdsad',
+        'sent_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $system = TicketResponse::create([
+        'ticket_id' => $ticket->id,
+        'user_id' => $this->admin->id,
+        'type' => 'respon_substantif',
+        'is_system' => true,
+        'message' => 'Laporan ditandai oleh Administrator. Catatan: asdasdasd',
+        'sent_at' => now()->subMinute(),
+        'created_at' => now()->subMinute(),
+        'updated_at' => now()->subMinute(),
+    ]);
+
+    actingAs($this->admin)
+        ->get(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/admin/incoming-reports/show/index')
+            ->where('ticket.responses', fn ($responses) => count($responses) === 2)
+        );
+});

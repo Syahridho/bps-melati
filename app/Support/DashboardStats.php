@@ -10,28 +10,13 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Sumber tunggal data dashboard untuk admin DAN operator.
- *
- * Kedua role melihat laporan yang sama, jadi angka, tren, dan daftar laporan
- * terbaru harus dihitung sekali agar tidak pernah berbeda antar halaman.
- * Versi admin yang menjadi acuan; jangan menambahkan cabang per role.
  */
 class DashboardStats
 {
-    /**
-     * Counter versi yang juga di-bump oleh Ticket::booted().
-     */
     public const VERSION_KEY = CacheKeys::DASHBOARD_ADMIN_VERSION;
 
-    /**
-     * Berapa lama payload dashboard disimpan (detik).
-     */
     public const TTL = 300;
 
-    /**
-     * Slug kanal induk legacy -> key stats lama (kompatibilitas komponen lama).
-     *
-     * @var array<string, string>
-     */
     private const CHANNEL_KEYS = [
         'sp4n-lapor' => 'span_lapor',
         'sosial-media' => 'sosial_media',
@@ -41,56 +26,70 @@ class DashboardStats
         'website' => 'website',
     ];
 
-    /** Warna fallback bila kanal induk belum punya color di DB. */
     private const FALLBACK_COLOR = '#6b7280';
 
-    /**
-     * Payload dashboard bulan berjalan, dari cache bila tersedia.
-     *
-     * @return array{stats: array<string, int>, trend: list<array{label: string, pengaduan: int, aspirasi: int, permintaan_informasi: int, total: int}>, recentTickets: list<array<string, mixed>>, periodLabel: string, sumberKanal: list<array{id: int, name: string, slug: string, color: string, total: int}>}
-     */
-    public static function cached(): array
+    public static function cached(?array $period = null): array
     {
-        return Cache::remember(self::cacheKey(), self::TTL, fn (): array => self::build());
+        if ($period === null) {
+            $period = DashboardPeriod::resolve('this_month', null, null);
+        }
+
+        return Cache::remember(self::cacheKey($period), self::ttl($period), fn (): array => self::build($period));
     }
 
-    /**
-     * Kunci cache mengikuti counter versi supaya seluruh role langsung dapat
-     * angka baru begitu ada tiket yang berubah.
-     */
-    public static function cacheKey(): string
+    public static function cacheKey(array $period): string
     {
-        return sprintf('dashboard:month:v%d', (int) Cache::get(self::VERSION_KEY, 0));
+        $version = (int) Cache::get(self::VERSION_KEY, 0);
+
+        if ($period['period'] === 'this_month') {
+            return sprintf('dashboard:month:v%d', $version);
+        }
+
+        if ($period['period'] === 'this_year') {
+            return sprintf('dashboard:this_year:%d:v%d', $period['year'], $version);
+        }
+
+        return sprintf('dashboard:%s:%d-%02d:v%d', $period['period'], $period['year'], $period['month'], $version);
     }
 
-    /**
-     * @return array{stats: array<string, int>, trend: list<array{label: string, pengaduan: int, aspirasi: int, permintaan_informasi: int, total: int}>, recentTickets: list<array<string, mixed>>, periodLabel: string, sumberKanal: list<array{id: int, name: string, slug: string, color: string, total: int}>}
-     */
-    public static function build(): array
+    public static function ttl(array $period): int
     {
-        $from = now()->startOfMonth();
+        if (in_array($period['period'], ['this_month', 'this_year'], true)) {
+            return self::TTL;
+        }
+
+        return 3600;
+    }
+
+    public static function build(?array $period = null): array
+    {
+        if ($period === null) {
+            $period = DashboardPeriod::resolve('this_month', null, null);
+        }
+        $from = $period['start'];
+        $to = $period['end'];
 
         return [
-            'stats' => self::stats($from),
-            'trend' => self::trend($from),
-            'recentTickets' => self::recentTickets($from),
-            'periodLabel' => 'Bulan Ini ('.now()->locale('id')->translatedFormat('F Y').')',
-            'sumberKanal' => self::sumberKanal($from),
+            'stats' => self::stats($from, $to),
+            'trend' => self::trend($from, $to, $period['trend']),
+            'recentTickets' => self::recentTickets($from, $to),
+            'periodLabel' => $period['label'],
+            'sumberKanal' => self::sumberKanal($from, $to),
         ];
     }
 
-    /**
-     * Daftar kanal induk aktif (dinamis dari DB) bersama jumlah tiket bulan
-     * berjalan yang sudah mengagregasi sub-kanal. Kanal 0 tiket tetap tampil.
-     *
-     * @return list<array{id: int, name: string, slug: string, color: string, total: int}>
-     */
-    public static function sumberKanal(Carbon $from): array
+    public static function sumberKanal(Carbon $from, ?Carbon $to = null): array
     {
-        $counts = Ticket::query()
+        $query = Ticket::query()
             ->join('channels as c', 'c.id', '=', 'tickets.channel_id')
             ->leftJoin('channels as p', 'p.id', '=', 'c.parent_id')
-            ->where('tickets.created_at', '>=', $from)
+            ->where('tickets.created_at', '>=', $from);
+
+        if ($to !== null) {
+            $query->where('tickets.created_at', '<=', $to);
+        }
+
+        $counts = $query
             ->selectRaw('COALESCE(p.id, c.id) as root_id, COUNT(*) as total')
             ->groupBy('root_id')
             ->pluck('total', 'root_id');
@@ -110,16 +109,14 @@ class DashboardStats
             ->all();
     }
 
-    /**
-     * Total, klasifikasi, status, dan jumlah per kanal induk bulan berjalan.
-     *
-     * @return array<string, int>
-     */
-    private static function stats(Carbon $from): array
+    private static function stats(Carbon $from, ?Carbon $to = null): array
     {
-        // Satu query untuk total, klasifikasi, dan status
-        $summary = Ticket::query()
-            ->where('created_at', '>=', $from)
+        $query = Ticket::query()->where('created_at', '>=', $from);
+        if ($to !== null) {
+            $query->where('created_at', '<=', $to);
+        }
+
+        $summary = $query
             ->selectRaw("
                 COUNT(*) as total,
                 SUM(classification = 'pengaduan') as pengaduan,
@@ -133,11 +130,16 @@ class DashboardStats
             ")
             ->first();
 
-        // Jumlah tiket per kanal induk (sub-kanal digabung ke induknya)
-        $channels = Ticket::query()
+        $channelQuery = Ticket::query()
             ->join('channels as c', 'c.id', '=', 'tickets.channel_id')
             ->leftJoin('channels as p', 'p.id', '=', 'c.parent_id')
-            ->where('tickets.created_at', '>=', $from)
+            ->where('tickets.created_at', '>=', $from);
+
+        if ($to !== null) {
+            $channelQuery->where('tickets.created_at', '<=', $to);
+        }
+
+        $channels = $channelQuery
             ->selectRaw('COALESCE(p.slug, c.slug) as root_slug, COUNT(*) as total')
             ->groupBy('root_slug')
             ->pluck('total', 'root_slug');
@@ -165,16 +167,47 @@ class DashboardStats
         ];
     }
 
-    /**
-     * Jumlah tiket per hari per jenis (pengaduan, aspirasi, permintaan_informasi)
-     * sejak awal bulan. Satu query group by DATE(created_at), classification.
-     *
-     * @return list<array{label: string, pengaduan: int, aspirasi: int, permintaan_informasi: int, total: int}>
-     */
-    private static function trend(Carbon $from): array
+    private static function trend(Carbon $from, ?Carbon $to = null, string $mode = 'daily'): array
     {
+        $end = $to ?? now();
+
+        if ($mode === 'monthly') {
+            $rows = Ticket::query()
+                ->where('created_at', '>=', $from)
+                ->where('created_at', '<=', $end)
+                ->selectRaw('MONTH(created_at) as bucket, classification, COUNT(*) as total')
+                ->groupBy('bucket', 'classification')
+                ->get()
+                ->groupBy('bucket');
+
+            $points = [];
+            $endMonth = (int) $end->month;
+            for ($m = 1; $m <= $endMonth; $m++) {
+                $byClass = [];
+                foreach ($rows->get($m, collect()) as $row) {
+                    $byClass[$row->classification] = (int) $row->total;
+                }
+                $pengaduan = $byClass['pengaduan'] ?? 0;
+                $aspirasi = $byClass['aspirasi'] ?? 0;
+                $permintaan = $byClass['permintaan_informasi'] ?? 0;
+
+                $monthCarbon = Carbon::create($from->year, $m, 1);
+
+                $points[] = [
+                    'label' => $monthCarbon->locale('id')->translatedFormat('M'),
+                    'pengaduan' => $pengaduan,
+                    'aspirasi' => $aspirasi,
+                    'permintaan_informasi' => $permintaan,
+                    'total' => $pengaduan + $aspirasi + $permintaan,
+                ];
+            }
+
+            return $points;
+        }
+
         $rows = Ticket::query()
             ->where('created_at', '>=', $from)
+            ->where('created_at', '<=', $end)
             ->selectRaw('DATE(created_at) as bucket, classification, COUNT(*) as total')
             ->groupBy('bucket', 'classification')
             ->get()
@@ -182,7 +215,7 @@ class DashboardStats
 
         $points = [];
 
-        foreach (CarbonPeriod::create($from->copy()->startOfDay(), now()->startOfDay()) as $day) {
+        foreach (CarbonPeriod::create($from->copy()->startOfDay(), $end->copy()->startOfDay()) as $day) {
             $date = $day->toDateString();
             $byClass = [];
             foreach ($rows->get($date, collect()) as $row) {
@@ -204,15 +237,16 @@ class DashboardStats
         return $points;
     }
 
-    /**
-     * 7 laporan terbaru bulan berjalan.
-     *
-     * @return list<array<string, mixed>>
-     */
-    private static function recentTickets(Carbon $from): array
+    private static function recentTickets(Carbon $from, ?Carbon $to = null): array
     {
-        return Ticket::with('channel')
-            ->where('created_at', '>=', $from)
+        $query = Ticket::with('channel')
+            ->where('created_at', '>=', $from);
+
+        if ($to !== null) {
+            $query->where('created_at', '<=', $to);
+        }
+
+        return $query
             ->orderByDesc('created_at')
             ->limit(7)
             ->get()

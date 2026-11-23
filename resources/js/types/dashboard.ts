@@ -51,6 +51,12 @@ export interface DashboardProps extends SharedData {
     periodLabel: string;
     isLiveEnabled?: boolean;
     sumberKanal: SumberKanalItem[];
+    period?: string;
+    canFilterPeriod?: boolean;
+    month?: number | string;
+    year?: number | string;
+    years?: Array<{ value: string; label: string }>;
+    months?: Array<{ value: string; label: string; disabled?: boolean }>;
 }
 
 export interface DashboardChannelCardConfig {

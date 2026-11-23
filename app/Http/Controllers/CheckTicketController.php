@@ -81,6 +81,7 @@ class CheckTicketController extends Controller
                         'size' => $attachment->size,
                     ])->values()->all(),
                     'responses' => $t->responses
+                        ->filter(fn ($response) => ! (bool) $response->is_system)
                         ->sortBy(fn ($response) => ($response->sent_at ?? $response->created_at)->getTimestamp())
                         ->values()
                         ->map(function ($response) use ($t, $filter) {
@@ -145,6 +146,7 @@ class CheckTicketController extends Controller
             'searched' => $searched,
             'ratingEnabled' => AppSettings::ratingEnabled(),
             'rating_enabled' => AppSettings::ratingEnabled(),
+            'accessCodeRequired' => Ticket::accessCodeRequired(),
         ]);
     }
 
@@ -162,7 +164,7 @@ class CheckTicketController extends Controller
         }
 
         $validated = $request->validate([
-            'access_code' => ['required', 'string'],
+            'access_code' => [Ticket::accessCodeRequired() ? 'required' : 'nullable', 'string'], 
             'message' => ['required', 'string', 'min:5'],
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
@@ -172,7 +174,7 @@ class CheckTicketController extends Controller
             $ticket->forceFill(['access_code' => Str::random(32)])->saveQuietly();
         }
 
-        if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
+        if (! $ticket->accessCodeMatches($validated['access_code'] ?? null)) {
             return redirect()->back()->withErrors([
                 'access_code' => 'Kode akses tiket tidak valid.',
                 'message' => 'Kode akses tiket tidak valid.',
@@ -196,7 +198,7 @@ class CheckTicketController extends Controller
         $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
 
         $validated = $request->validate([
-            'access_code' => ['required', 'string'],
+            'access_code' => [Ticket::accessCodeRequired() ? 'required' : 'nullable', 'string'], 
             'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:'.$this->ratingCommentMax()],
         ]);
@@ -205,7 +207,7 @@ class CheckTicketController extends Controller
             $ticket->forceFill(['access_code' => Str::random(32)])->saveQuietly();
         }
 
-        if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
+        if (! $ticket->accessCodeMatches($validated['access_code'] ?? null)) {
             return redirect()->back()->withErrors([
                 'access_code' => 'Kode akses tiket tidak valid.',
                 'message' => 'Kode akses tiket tidak valid.',

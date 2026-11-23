@@ -218,7 +218,7 @@ class TicketApiController extends Controller
                 'size' => $attachment->size,
                 'url' => Storage::url($attachment->path),
             ])->values()->all(),
-            'responses' => $ticket->responses->sortByDesc('created_at')->values()->map(function ($response) use ($ticket, $filter) {
+            'responses' => $ticket->responses->filter(fn ($response) => ! (bool) $response->is_system)->sortByDesc('created_at')->values()->map(function ($response) use ($ticket, $filter) {
                 $isReporter = $response->user_id === null || $response->type === 'balasan_pelapor';
                 $userName = $isReporter
                     ? ($ticket->reporter_name ? $ticket->reporter_name.' (Pelapor)' : 'Pelapor')
@@ -274,7 +274,7 @@ class TicketApiController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'access_code' => ['required', 'string'],
+            'access_code' => [Ticket::accessCodeRequired() ? 'required' : 'nullable', 'string'], 
             'message' => ['required', 'string', 'min:5'],
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
@@ -294,7 +294,7 @@ class TicketApiController extends Controller
             $ticket->forceFill(['access_code' => Str::random(32)])->saveQuietly();
         }
 
-        if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
+        if (! $ticket->accessCodeMatches($validated['access_code'] ?? null)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Kode akses tiket tidak valid.',
@@ -348,7 +348,7 @@ class TicketApiController extends Controller
         }
 
         $validated = $request->validate([
-            'access_code' => ['required', 'string'],
+        'access_code' => [Ticket::accessCodeRequired() ? 'required' : 'nullable', 'string'], 
             'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:'.$this->ratingCommentMax()],
         ]);
@@ -357,7 +357,7 @@ class TicketApiController extends Controller
             $ticket->forceFill(['access_code' => Str::random(32)])->saveQuietly();
         }
 
-        if (! hash_equals((string) $ticket->access_code, (string) $validated['access_code'])) {
+        if (! $ticket->accessCodeMatches($validated['access_code'] ?? null)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Kode akses tiket tidak valid.',

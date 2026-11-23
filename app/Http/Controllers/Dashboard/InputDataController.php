@@ -87,8 +87,8 @@ class InputDataController extends Controller
             ->when($isSelesaiTab, fn ($q) => $q->where('status', 'selesai'), fn ($q) => $q->where('status', '!=', 'selesai'))
             ->visibleTo($user)
             ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
-                $q->whereDate('created_at', '>=', $filter->from)
-                    ->whereDate('created_at', '<=', $filter->to);
+                $q->where('created_at', '>=', $filter->from.' 00:00:00')
+                    ->where('created_at', '<=', $filter->to.' 23:59:59');
             })
             ->tap($searchClosure)
             ->when(! $isSelesaiTab && $filter->tab !== 'semua', function ($query) use ($filter) {
@@ -132,8 +132,8 @@ class InputDataController extends Controller
                 ->visibleTo($user)
                 ->tap($searchClosure)
                 ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
-                    $q->whereDate('created_at', '>=', $filter->from)
-                        ->whereDate('created_at', '<=', $filter->to);
+                    $q->where('created_at', '>=', $filter->from.' 00:00:00')
+                        ->where('created_at', '<=', $filter->to.' 23:59:59');
                 });
 
             $countsData = $countBaseQuery
@@ -159,8 +159,8 @@ class InputDataController extends Controller
                     ->visibleTo($user)
                     ->tap($searchClosure)
                     ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
-                        $q->whereDate('created_at', '>=', $filter->from)
-                            ->whereDate('created_at', '<=', $filter->to);
+                        $q->where('created_at', '>=', $filter->from.' 00:00:00')
+                            ->where('created_at', '<=', $filter->to.' 23:59:59');
                     })
                     ->count();
             }

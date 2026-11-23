@@ -68,8 +68,8 @@ class IncomingReportsController extends Controller
                 ->where('source_app', '!=', 'admin')
                 ->where('status', '!=', 'selesai')
                 ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
-                    $q->whereDate('created_at', '>=', $filter->from)
-                        ->whereDate('created_at', '<=', $filter->to);
+                    $q->where('created_at', '>=', $filter->from.' 00:00:00')
+                        ->where('created_at', '<=', $filter->to.' 23:59:59');
                 });
 
             $countsData = (clone $countBaseQuery)

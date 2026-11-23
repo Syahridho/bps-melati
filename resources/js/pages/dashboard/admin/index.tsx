@@ -4,7 +4,7 @@ import { DASHBOARD_CHANNEL_CARDS } from '@/lib/dashboard-constants';
 import { type DashboardProps } from '@/types/dashboard';
 
 export default function DashboardAdminPage(props: DashboardProps) {
-    const isLiveEnabled = props.isLiveEnabled ?? true;
+    const isLiveEnabled = (props.isLiveEnabled ?? true) && (props.period ?? 'this_month') === 'this_month';
     const { isLive } = useDashboardRealtime(isLiveEnabled);
 
     return (

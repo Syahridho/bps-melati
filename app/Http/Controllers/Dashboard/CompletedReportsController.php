@@ -48,8 +48,8 @@ class CompletedReportsController extends Controller
         $ticketsQuery = Ticket::with(['channel', 'flaggedBy'])
             ->whereIn('status', self::COMPLETED_STATUSES)
             ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($query) use ($fromInput, $toInput) {
-                $query->whereDate('updated_at', '>=', $fromInput)
-                    ->whereDate('updated_at', '<=', $toInput);
+                $query->where('updated_at', '>=', $fromInput.' 00:00:00')
+                    ->where('updated_at', '<=', $toInput.' 23:59:59');
             })
             ->tap($searchQueryClosure)
             ->when($filterTab !== 'semua', function ($query) use ($filterTab) {
@@ -75,8 +75,8 @@ class CompletedReportsController extends Controller
         $countBaseQuery = Ticket::query()
             ->whereIn('status', self::COMPLETED_STATUSES)
             ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($q) use ($fromInput, $toInput) {
-                $q->whereDate('updated_at', '>=', $fromInput)
-                    ->whereDate('updated_at', '<=', $toInput);
+                $q->where('updated_at', '>=', $fromInput.' 00:00:00')
+                    ->where('updated_at', '<=', $toInput.' 23:59:59');
             })
             ->tap($searchQueryClosure);
 

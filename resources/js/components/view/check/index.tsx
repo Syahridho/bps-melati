@@ -19,7 +19,16 @@ import { Head, usePage } from '@inertiajs/react';
 import { CheckCompleteDialog } from './check-complate-dialog';
 
 export default function CheckView() {
-    const { ticketNumber, ticket, searched, flash, errors: pageErrors, ratingEnabled, rating_enabled } = usePage<CheckPageProps>().props;
+    const {
+        ticketNumber,
+        ticket,
+        searched,
+        flash,
+        errors: pageErrors,
+        ratingEnabled,
+        rating_enabled,
+        accessCodeRequired = true,
+    } = usePage<CheckPageProps>().props;
 
     const {
         inputQuery,
@@ -32,7 +41,7 @@ export default function CheckView() {
         isCompleteDialogOpen,
         setIsCompleteDialogOpen,
         handleComplete,
-    } = useCheckTicket(ticketNumber, ticket, flash?.success);
+    } = useCheckTicket(ticketNumber, ticket, flash?.success, accessCodeRequired);
 
     const {
         showReplyForm,
@@ -45,7 +54,7 @@ export default function CheckView() {
         handleFileChange,
         handleRemoveFile,
         handleSendReply,
-    } = useCheckReplyForm(ticket);
+    } = useCheckReplyForm(ticket, accessCodeRequired);
 
     const attachmentPreview = useAttachmentPreview();
 
@@ -112,6 +121,7 @@ export default function CheckView() {
                         completing={completing}
                         ticketNumber={ticket.ticket_number}
                         defaultAccessCode={ticket.access_code}
+                        accessCodeRequired={accessCodeRequired}
                         error={pageErrors?.access_code || pageErrors?.message}
                         ratingEnabled={ratingEnabled ?? rating_enabled ?? false}
                     />

@@ -58,4 +58,5 @@ export interface CheckPageProps extends SharedData {
         success?: string;
     };
     errors?: Record<string, string>;
+    accessCodeRequired?: boolean;
 }

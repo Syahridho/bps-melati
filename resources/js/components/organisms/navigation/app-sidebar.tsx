@@ -3,7 +3,6 @@ import { NavMain } from '@/components/organisms/navigation/nav-main';
 import { NavUser } from '@/components/organisms/navigation/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { useAuthRole } from '@/hooks/use-auth-role';
-import { type LaporanChangedEvent } from '@/hooks/use-reports-realtime';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEcho, useEchoPublic } from '@laravel/echo-react';
@@ -12,11 +11,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export function AppSidebar() {
-    const { inbox_open_count, my_reports_open_count } = usePage<SharedData>().props;
+    const { inbox_open_count, my_reports_open_count, audit_log_badge } = usePage<SharedData>().props;
     const { user, isAdmin, isOperator, isOperatorTim, canAccessInbox } = useAuthRole();
 
     const [openCount, setOpenCount] = useState(inbox_open_count ?? 0);
     const [myReportsCount, setMyReportsCount] = useState(my_reports_open_count ?? 0);
+    const [auditLogBadge, setAuditLogBadge] = useState(audit_log_badge ?? 0);
     const reloadTimerRef = useRef<number | null>(null);
 
     // Sinkronkan state lokal dengan prop Inertia saat navigasi
@@ -27,6 +27,10 @@ export function AppSidebar() {
     useEffect(() => {
         setMyReportsCount(my_reports_open_count ?? 0);
     }, [my_reports_open_count]);
+
+    useEffect(() => {
+        setAuditLogBadge(audit_log_badge ?? 0);
+    }, [audit_log_badge]);
 
     useEffect(() => {
         return () => {
@@ -49,53 +53,9 @@ export function AppSidebar() {
         }, 400);
     }, []);
 
-    useEchoPublic('admin.notifications', '.ticket.created', (event: { ticket_number?: string }) => {
-        if (canAccessInbox) {
-            const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
-
-            toast(`Laporan Masuk Baru${ticketNum}`, {
-                description: 'Ada laporan baru yang perlu ditindak lanjuti.',
-
-                actionButtonStyle: {
-                    background: '#ffffff',
-                    color: '#005fb6',
-                },
-                position: 'bottom-right',
-                className: '!bg-[#005fb6] !text-white !border-none !dark:bg-[#004a91] !dark:text-slate-100',
-            });
-
-            scheduleReload();
-        }
-    });
-
-    useEcho(
-        user && canAccessInbox ? 'inbox.incoming-reports' : '',
-        '.inbox.updated',
-        () => {
-            scheduleReload();
-        },
-        [user?.id, canAccessInbox],
-    );
-
-    useEcho(
-        user && canAccessInbox ? 'inbox.incoming-reports' : '',
-        '.inbox.changed',
-        () => {
-            scheduleReload();
-        },
-        [user?.id, canAccessInbox],
-    );
-
-    // Realtime untuk badge "Laporan Saya" (operator). Kanal khusus operator
-    // yang bersangkutan; event memicu reload parsial prop badge.
-    useEcho<LaporanChangedEvent>(
-        user && isOperator ? `laporan.operator.${user.id}` : '',
-        '.laporan.changed',
-        () => {
-            scheduleReload();
-        },
-        [user?.id, isOperator],
-    );
+    // Subscriptions dipasang lewat komponen anak agar hook Echo
+    // tidak dipanggil dengan channel kosong (menghindari error console).
+    // Komponen anak hanya di-mount saat kondisi terpenuhi.
 
     // Fallback polling ringan saat WebSocket terputus/tab aktif.
     useEffect(() => {
@@ -114,9 +74,6 @@ export function AppSidebar() {
         return () => window.clearInterval(intervalId);
     }, [isOperator, canAccessInbox]);
 
-    // Hitung badge audit log dari backend
-    const [auditLogBadge, setAuditLogBadge] = useState(0);
-
     const fetchAuditLogBadge = useCallback(async () => {
         if (!isAdmin) {
             return;
@@ -127,10 +84,10 @@ export function AppSidebar() {
             });
             if (response.ok) {
                 const data = await response.json();
-                setAuditLogBadge(data.new_count ?? 0);
+                setAuditLogBadge((prev) => (typeof data.new_count === 'number' ? data.new_count : prev));
             }
         } catch {
-            // Silent fail - badge tetap 0
+            // Silent fail - pertahankan nilai terakhir
         }
     }, [isAdmin]);
 
@@ -144,17 +101,7 @@ export function AppSidebar() {
         return () => clearInterval(intervalId);
     }, [isAdmin, fetchAuditLogBadge]);
 
-    // Realtime: perbarui badge audit log saat ada log/penanda baru (hanya admin).
-    useEcho(
-        user && isAdmin ? 'audit.log' : '',
-        '.audit.log.created',
-        () => {
-            if (isAdmin) {
-                fetchAuditLogBadge();
-            }
-        },
-        [user?.id, isAdmin, fetchAuditLogBadge],
-    );
+    // Realtime audit log dipasang lewat komponen anak (kondisional).
 
     const adminNavItems: NavItem[] = [
         {
@@ -234,14 +181,14 @@ export function AppSidebar() {
         {
             title: 'Laporan Saya',
             url: '/dashboard/operator/my-reports',
-            icon: ClipboardCheck,
+            icon: ClipboardList,
             badge: myReportsCount ?? 0,
         },
 
         {
             title: 'Laporan Selesai',
             url: '/dashboard/operator/completed-reports',
-            icon: ClipboardList,
+            icon: ClipboardCheck,
         },
 
         {
@@ -277,26 +224,107 @@ export function AppSidebar() {
     const mainNavItems = isAdmin ? adminNavItems : isOperatorTim ? operatorTimNavItems : isOperator ? operatorNavItems : [];
 
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={'/'}>
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarHeader>
+        <>
+            {canAccessInbox && <InboxRealtimeSubscriber user={user} canAccessInbox={canAccessInbox} scheduleReload={scheduleReload} />}
+            {isOperator && user && <OperatorReportsRealtimeSubscriber user={user} scheduleReload={scheduleReload} />}
+            {isAdmin && <AuditLogRealtimeSubscriber fetchAuditLogBadge={fetchAuditLogBadge} />}
+            <Sidebar collapsible="icon" variant="inset">
+                <SidebarHeader>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton size="lg" asChild>
+                                <Link href={'/'}>
+                                    <AppLogo />
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarHeader>
 
-            <SidebarContent>
-                <NavMain items={mainNavItems} />
-            </SidebarContent>
+                <SidebarContent>
+                    <NavMain items={mainNavItems} />
+                </SidebarContent>
 
-            <SidebarFooter>
-                <NavUser />
-            </SidebarFooter>
-        </Sidebar>
+                <SidebarFooter>
+                    <NavUser />
+                </SidebarFooter>
+            </Sidebar>
+        </>
     );
+}
+
+function InboxRealtimeSubscriber({
+    user,
+    canAccessInbox,
+    scheduleReload,
+}: {
+    user: { id?: number } | null;
+    canAccessInbox: boolean;
+    scheduleReload: () => void;
+}) {
+    useEchoPublic('admin.notifications', '.ticket.created', (event: { ticket_number?: string }) => {
+        if (!canAccessInbox) {
+            return;
+        }
+        const ticketNum = event?.ticket_number ? ` #${event.ticket_number}` : '';
+
+        toast(`Laporan Masuk Baru${ticketNum}`, {
+            description: 'Ada laporan baru yang perlu ditindak lanjuti.',
+
+            actionButtonStyle: {
+                background: '#ffffff',
+                color: '#005fb6',
+            },
+            position: 'bottom-right',
+            className: '!bg-[#005fb6] !text-white !border-none !dark:bg-[#004a91] !dark:text-slate-100',
+        });
+
+        scheduleReload();
+    });
+
+    useEcho(
+        'inbox.incoming-reports',
+        '.inbox.updated',
+        () => {
+            scheduleReload();
+        },
+        [user?.id, scheduleReload],
+    );
+
+    useEcho(
+        'inbox.incoming-reports',
+        '.inbox.changed',
+        () => {
+            scheduleReload();
+        },
+        [user?.id, scheduleReload],
+    );
+
+    return null;
+}
+
+function OperatorReportsRealtimeSubscriber({ user, scheduleReload }: { user: { id?: number }; scheduleReload: () => void }) {
+    useEcho(
+        `laporan.operator.${user.id}`,
+        '.laporan.changed',
+        () => {
+            scheduleReload();
+        },
+        [user?.id, scheduleReload],
+    );
+
+    return null;
+}
+
+function AuditLogRealtimeSubscriber({ fetchAuditLogBadge }: { fetchAuditLogBadge: () => void }) {
+    useEcho(
+        'audit.log',
+        '.audit.log.created',
+        () => {
+            fetchAuditLogBadge();
+        },
+        [fetchAuditLogBadge],
+    );
+
+    return null;
 }
