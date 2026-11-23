@@ -1,13 +1,16 @@
 import CompletedStamp from '@/components/atoms/completed-stamp';
+import { AttachmentPreviewDialog } from '@/components/molecules/attachment-preview-dialog';
+import { IncomingReportsPresenceBar } from '@/components/molecules/incoming-reports-presence-bar';
+import { TicketFlagButton } from '@/components/molecules/ticket-flag-button';
 import { IncomingReportsDeleteDialog } from '@/components/organisms/incoming-reports/incoming-reports-delete-dialog';
 import { IncomingReportsEditDialog } from '@/components/organisms/incoming-reports/incoming-reports-edit-dialog';
-import { IncomingReportsPresenceBar } from '@/components/molecules/incoming-reports-presence-bar';
 import { IncomingReportsReplyForm } from '@/components/organisms/incoming-reports/incoming-reports-reply-form';
+import { TicketAssignmentBadges } from '@/components/organisms/incoming-reports/ticket-assignment-badges';
 import { TicketAssignmentHistory } from '@/components/organisms/incoming-reports/ticket-assignment-history';
 import { TicketClaimButton } from '@/components/organisms/incoming-reports/ticket-claim-button';
 import { TicketReassignDialog } from '@/components/organisms/incoming-reports/ticket-reassign-dialog';
-import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/molecules/attachment-preview-dialog';
 import { mapIncomingReportsToDetailData } from '@/components/organisms/ticket-detail/adapters';
+import { buildTicketInfoFields } from '@/components/organisms/ticket-detail/info-fields';
 import SensorToggleButton from '@/components/organisms/ticket-detail/sensor-toggle-button';
 import { SupervisionToggle } from '@/components/organisms/ticket-detail/supervision-toggle';
 import { TicketAttachments } from '@/components/organisms/ticket-detail/ticket-attachments';
@@ -17,101 +20,59 @@ import { TicketDetailLayout } from '@/components/organisms/ticket-detail/ticket-
 import { TicketEditDeleteActions } from '@/components/organisms/ticket-detail/ticket-edit-delete-actions';
 import { TicketInfoGrid } from '@/components/organisms/ticket-detail/ticket-info-grid';
 import { TicketResponseHistory } from '@/components/organisms/ticket-detail/ticket-response-history';
-import { TicketFlagButton } from '@/components/molecules/ticket-flag-button';
-import { Separator } from '@/components/ui/separator';
-import { useTicketRealtime } from '@/hooks/use-ticket-realtime';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { assignmentModeLabel, formatFullDate } from '@/lib/incoming-reports-utils';
-import { type Attachment, type ReplyConflict, type ShowProps, type Status, type TicketResponseItem } from '@/types/incoming-reports';
-import { router, useForm, usePage } from '@inertiajs/react';
-import { Calendar, FileText, Globe, Layers, Mail, Phone, User, UserRoundCog } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { Separator } from '@/components/ui/separator';
+import { useAttachmentPreviewItem } from '@/hooks/use-attachment-preview-item';
+import { useFlashMessage } from '@/hooks/use-flash-message';
+import { useTicketEditDelete } from '@/hooks/use-ticket-edit-delete';
+import { useTicketLive } from '@/hooks/use-ticket-live';
+import { resolveBackTarget } from '@/lib/incoming-reports-nav';
+import { resolveTicketPermissions } from '@/lib/ticket-permissions';
+import { type ReplyConflict, type ShowProps } from '@/types/incoming-reports';
+import { usePage } from '@inertiajs/react';
+import { UserRoundCog } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function ShowIncomingReportsView() {
-    const { auth, ticket, can, flash, assignableOperators = [], assignmentLogs = [], activeAssignmentMode = 'free', from } =
-        usePage<ShowProps>().props;
+    const {
+        auth,
+        ticket,
+        can,
+        flash,
+        assignableOperators = [],
+        assignmentLogs = [],
+        activeAssignmentMode = 'free',
+        from,
+    } = usePage<ShowProps>().props;
     const { url } = usePage();
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
-    const openedFromMyReports = from === 'my-reports';
-    const backRouteName = openedFromMyReports ? `${routePrefix}.my-reports.index` : `${routePrefix}.incoming-reports.index`;
-    const backLabel = openedFromMyReports ? 'Laporan Saya' : 'Laporan Masuk';
-
-    // Kembali ke Laporan Saya dengan filter/pagination yang tadi dipakai.
-    const backHref = (() => {
-        if (!openedFromMyReports) {
-            return route(backRouteName);
-        }
-
-        const params = new URLSearchParams(url.split('?')[1] ?? '');
-        params.delete('origin');
-
-        return route(backRouteName, Object.fromEntries(params.entries()));
-    })();
-
-    const canEdit = can?.edit ?? auth.user.role === 'admin';
-    const canDelete = can?.delete ?? auth.user.role === 'admin';
-    const canReply = can?.reply ?? auth.user.role === 'admin';
-    const canClaim = can?.claim ?? false;
-    const canReassign = can?.reassign ?? auth.user.role === 'admin';
-    const canViewAssignmentHistory = can?.view_assignment_history ?? auth.user.role === 'admin';
+    const back = resolveBackTarget({ from, url, routePrefix });
+    const perms = resolveTicketPermissions(can, auth.user.role);
 
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [showOriginal, setShowOriginal] = useState(false);
-    const [previewItem, setPreviewItem] = useState<AttachmentPreviewSource | null>(null);
-    const [previewList, setPreviewList] = useState<AttachmentPreviewSource[]>([]);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const flashSuccessRef = useRef<string | null>(null);
-    const flashTimerRef = useRef<number | null>(null);
-    const [responses, setResponses] = useState<TicketResponseItem[]>(ticket.responses);
-    const [ticketStatus, setTicketStatus] = useState<Status>(ticket.status);
-    const [completedAt, setCompletedAt] = useState<string | null>(ticket.completed_at ?? null);
-    const [rating, setRating] = useState<number | null>(ticket.rating ?? null);
-    const [ticketVersion, setTicketVersion] = useState<number>(ticket.version ?? 0);
-    const [highlightLast, setHighlightLast] = useState(false);
-    const [conflict, setConflict] = useState<ReplyConflict | null>(flash?.conflict ?? null);
-    const [pendingNotice, setPendingNotice] = useState<string | null>(null);
-
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isReassignOpen, setIsReassignOpen] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [conflict, setConflict] = useState<ReplyConflict | null>(flash?.conflict ?? null);
+    const toggleOriginal = () => setShowOriginal((prev) => !prev);
 
-    const editForm = useForm({
-        reporter_name: ticket.reporter_name ?? '',
-        reporter_email: ticket.reporter_email ?? '',
-        reporter_wa: ticket.reporter_wa ?? '',
-        title: ticket.title ?? '',
-        content: ticket.content ?? '',
+    const preview = useAttachmentPreviewItem();
+    const flashMessage = useFlashMessage(flash?.success);
+    const editDelete = useTicketEditDelete(ticket, routePrefix, { routeSegment: 'incoming-reports', noun: 'Laporan' });
+
+    const live = useTicketLive({
+        ticket,
+        user: auth.user,
+        showReplyForm,
+        onCompleted: () => {
+            setShowReplyForm(false);
+            flashMessage.show('Pelapor menandai laporan ini selesai.');
+            toast.info('Pelapor menyelesaikan laporan ini', {
+                description: 'Status berubah menjadi Selesai. Balasan baru tidak dapat dikirim.',
+            });
+        },
     });
-
-    useEffect(() => {
-        const message = flash?.success ?? null;
-        if (!message || message === flashSuccessRef.current) {
-            return;
-        }
-
-        if (flashTimerRef.current !== null) {
-            window.clearTimeout(flashTimerRef.current);
-        }
-
-        flashSuccessRef.current = message;
-        setSuccessMessage(message);
-        flashTimerRef.current = window.setTimeout(() => {
-            setSuccessMessage(null);
-            flashSuccessRef.current = null;
-            flashTimerRef.current = null;
-        }, 5000);
-
-        return () => {
-            if (flashTimerRef.current !== null) {
-                window.clearTimeout(flashTimerRef.current);
-                flashTimerRef.current = null;
-            }
-        };
-    }, [flash?.success]);
 
     useEffect(() => {
         if (flash?.conflict) {
@@ -120,248 +81,27 @@ export default function ShowIncomingReportsView() {
         }
     }, [flash?.conflict]);
 
-    useEffect(() => {
-        setResponses(ticket.responses);
-        setTicketStatus(ticket.status);
-        setCompletedAt(ticket.completed_at ?? null);
-        setRating(ticket.rating ?? null);
-        setTicketVersion(ticket.version ?? 0);
-    }, [ticket]);
-
-    // Auto-refresh polling when there are responses with email_status === 'pending'
-    useEffect(() => {
-        const hasPendingEmail = responses.some((r) => r.email_status === 'pending');
-        if (!hasPendingEmail) {
-            return;
-        }
-
-        const startTime = Date.now();
-        const maxDuration = 2 * 60 * 1000; // 2 minutes
-
-        const interval = setInterval(() => {
-            if (Date.now() - startTime >= maxDuration) {
-                clearInterval(interval);
-                return;
-            }
-
-            const stillPending = responses.some((r) => r.email_status === 'pending');
-            if (!stillPending) {
-                clearInterval(interval);
-                return;
-            }
-
-            router.reload({
-                only: ['ticket'],
-            });
-        }, 4000);
-
-        return () => {
-            clearInterval(interval);
-        };
-    }, [responses]);
-
-    const responseCountRef = useRef(responses.length);
-    responseCountRef.current = responses.length;
-
-    const responsesAtFormOpen = useRef(responses.length);
-    useEffect(() => {
-        if (showReplyForm) {
-            responsesAtFormOpen.current = responseCountRef.current;
-            setPendingNotice(null);
-        }
-    }, [showReplyForm]);
-
-    const lastItemRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        if (!highlightLast || !lastItemRef.current) {
-            return;
-        }
-
-        lastItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, [highlightLast, responses.length]);
-
-    const handleIncomingResponse = useCallback((response: TicketResponseItem) => {
-        setResponses((prev) => {
-            if (prev.some((r) => r.id === response.id)) {
-                return prev;
-            }
-            return [...prev, response];
-        });
-
-        setHighlightLast(true);
-        window.setTimeout(() => setHighlightLast(false), 2000);
-
-        setPendingNotice((current) => {
-            if (responsesAtFormOpen.current >= responseCountRef.current) {
-                return current;
-            }
-            return `Ada balasan baru dari ${response.user_name}.`;
-        });
-    }, []);
-
-    const {
-        viewers,
-        typingNames,
-        broadcastTyping,
-        version: liveVersion,
-    } = useTicketRealtime({
-        ticketId: ticket.id,
-        currentUserId: auth.user.id,
-        initialVersion: ticketVersion,
-        currentUserName: auth.user.name,
-        onResponse: handleIncomingResponse,
-        onEmailStatusUpdate: (event) => {
-            setResponses((prev) =>
-                prev.map((r) =>
-                    r.id === event.response_id
-                        ? {
-                              ...r,
-                              email_status: event.email_status as TicketResponseItem['email_status'],
-                              email_sent_at: event.email_sent_at ?? null,
-                              email_failed_at: event.email_failed_at ?? null,
-                              email_error: event.email_error ?? null,
-                          }
-                        : r,
-                ),
-            );
-        },
-        onStatusChange: (status, version) => {
-            setTicketStatus(status);
-            setTicketVersion((prev) => Math.max(prev, version));
-        },
-        onCompleted: (eventCompletedAt, eventRating) => {
-            setCompletedAt(eventCompletedAt ?? new Date().toISOString());
-            setRating(eventRating ?? null);
-            setShowReplyForm(false);
-            setPendingNotice(null);
-            setSuccessMessage('Pelapor menandai laporan ini selesai.');
-            toast.info('Pelapor menyelesaikan laporan ini', {
-                description: 'Status berubah menjadi Selesai. Balasan baru tidak dapat dikirim.',
-            });
-        },
-    });
-
-    const handleEditSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        editForm.put(route(`${routePrefix}.incoming-reports.update`, { ticketNumber: ticket.ticket_number }), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setIsEditOpen(false);
-                toast.success('Laporan berhasil diperbarui', {
-                    position: 'bottom-right',
-                });
-            },
-            onError: (errs) => {
-                const firstError = Object.values(errs)[0];
-                toast.error('Gagal memperbarui laporan', {
-                    description: typeof firstError === 'string' ? firstError : 'Periksa kembali isian Anda.',
-                    position: 'bottom-right',
-                });
-            },
-        });
-    };
-
-    const handleDeleteSubmit = () => {
-        setIsDeleting(true);
-        router.delete(route(`${routePrefix}.incoming-reports.destroy`, { ticketNumber: ticket.ticket_number }), {
-            onFinish: () => setIsDeleting(false),
-            onSuccess: () => {
-                setIsDeleteOpen(false);
-                toast.success('Laporan berhasil dihapus');
-            },
-            onError: () => {
-                toast.error('Gagal menghapus laporan');
-            },
-        });
-    };
-
-    const handlePreviewAttachment = (attachment: Attachment, list: Attachment[] = []) => {
-        setPreviewItem(attachment);
-        setPreviewList(list);
-    };
-
-    const handlePreviewFile = (file: File, files: File[] = []) => {
-        setPreviewItem(file);
-        setPreviewList(files);
-    };
-
     const detailData = mapIncomingReportsToDetailData({
         ...ticket,
-        status: ticketStatus,
-        completed_at: completedAt,
-        responses,
+        status: live.status,
+        completed_at: live.completedAt,
+        responses: live.responses,
     });
 
     const hasResponAwal =
-        responses.some((response) => response.type === 'respon_awal') ||
-        ticketStatus === 'respon_awal' ||
-        ticketStatus === 'respon_substantif' ||
-        ticketStatus === 'selesai';
+        live.responses.some((r) => r.type === 'respon_awal') ||
+        live.status === 'respon_awal' ||
+        live.status === 'respon_substantif' ||
+        live.status === 'selesai';
 
-    const infoFields = [
-        {
-            id: 'reporter',
-            label: 'Pelapor',
-            value: detailData.reporter_name ?? 'Anonim',
-            icon: User,
-        },
-        detailData.reporter_email
-            ? {
-                  id: 'email',
-                  label: 'Email',
-                  value: detailData.reporter_email,
-                  icon: Mail,
-                  className: 'min-[1280px]:max-[1399px]:col-span-2',
-              }
-            : null,
-        detailData.reporter_wa
-            ? {
-                  id: 'wa',
-                  label: 'WhatsApp',
-                  value: detailData.reporter_wa,
-                  icon: Phone,
-              }
-            : null,
-        {
-            id: 'source',
-            label: 'Sumber / Aplikasi',
-            value: <span className="capitalize">{detailData.source_app}</span>,
-            icon: Globe,
-        },
-        {
-            id: 'channel',
-            label: 'Sumber Kanal',
-            value: detailData.channel,
-            icon: Layers,
-        },
-        {
-            id: 'created_at',
-            label: 'Tanggal Dibuat',
-            value: formatFullDate(detailData.created_at),
-            icon: Calendar,
-        },
-        {
-            id: 'sequence',
-            label: 'Nomor Urut',
-            value: detailData.sequence,
-            icon: FileText,
-        },
-        detailData.created_by_name
-            ? {
-                  id: 'created_by',
-                  label: 'Dibuat Oleh',
-                  value: detailData.created_by_name,
-                  icon: User,
-              }
-            : null,
-    ];
+    const previewAttachment = (att: Parameters<typeof preview.preview>[0]) => preview.preview(att, detailData.attachments);
 
     return (
         <TicketDetailLayout
             ticketNumber={ticket.ticket_number}
-            backHref={backHref}
-            backLabel={backLabel}
-            successMessage={successMessage}
+            backHref={back.href}
+            backLabel={back.label}
+            successMessage={flashMessage.message}
             headerActions={
                 <TicketFlagButton
                     ticket={ticket}
@@ -371,30 +111,30 @@ export default function ShowIncomingReportsView() {
             }
             dialogs={
                 <>
-                    {canEdit && (
+                    {perms.edit && (
                         <IncomingReportsEditDialog
-                            open={isEditOpen}
-                            onOpenChange={setIsEditOpen}
+                            open={editDelete.editOpen}
+                            onOpenChange={editDelete.setEditOpen}
                             ticket={ticket}
-                            data={editForm.data}
-                            setData={editForm.setData}
-                            errors={editForm.errors}
-                            processing={editForm.processing}
-                            onSubmit={handleEditSubmit}
+                            data={editDelete.form.data}
+                            setData={editDelete.form.setData}
+                            errors={editDelete.form.errors}
+                            processing={editDelete.form.processing}
+                            onSubmit={editDelete.submitEdit}
                         />
                     )}
 
-                    {canDelete && (
+                    {perms.delete && (
                         <IncomingReportsDeleteDialog
-                            open={isDeleteOpen}
-                            onOpenChange={setIsDeleteOpen}
+                            open={editDelete.deleteOpen}
+                            onOpenChange={editDelete.setDeleteOpen}
                             ticket={ticket}
-                            isDeleting={isDeleting}
-                            onConfirm={handleDeleteSubmit}
+                            isDeleting={editDelete.deleting}
+                            onConfirm={editDelete.confirmDelete}
                         />
                     )}
 
-                    {canReassign && (
+                    {perms.reassign && (
                         <TicketReassignDialog
                             open={isReassignOpen}
                             onOpenChange={setIsReassignOpen}
@@ -404,14 +144,7 @@ export default function ShowIncomingReportsView() {
                         />
                     )}
 
-                    <AttachmentPreviewDialog
-                        item={previewItem}
-                        items={previewList}
-                        onClose={() => {
-                            setPreviewItem(null);
-                            setPreviewList([]);
-                        }}
-                    />
+                    <AttachmentPreviewDialog item={preview.item} items={preview.items} onClose={preview.close} />
                 </>
             }
         >
@@ -427,37 +160,27 @@ export default function ShowIncomingReportsView() {
                     pengawasanByName={detailData.pengawasan_by_name}
                     kadarPengawasanDays={detailData.kadar_pengawasan_days}
                     badges={
-                        <>
-                            {detailData.assigned_to_name && (
-                                <Badge variant="outline" className="gap-1">
-                                    <UserRoundCog className="size-3" />
-                                    PIC: {detailData.assigned_to_name}
-                                </Badge>
-                            )}
-                            {detailData.assignment_mode && detailData.assignment_mode !== activeAssignmentMode && (
-                                <Badge variant="secondary">Mode: {assignmentModeLabel(detailData.assignment_mode)}</Badge>
-                            )}
-                            {detailData.is_orphaned && (
-                                <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400">
-                                    Tanpa PIC aktif
-                                </Badge>
-                            )}
-                        </>
+                        <TicketAssignmentBadges
+                            assignedToName={detailData.assigned_to_name}
+                            assignmentMode={detailData.assignment_mode}
+                            activeAssignmentMode={activeAssignmentMode}
+                            isOrphaned={detailData.is_orphaned}
+                        />
                     }
                     actions={
                         <>
-                            {canClaim && <TicketClaimButton ticketId={ticket.id} />}
-                            {canReassign && (
+                            {perms.claim && <TicketClaimButton ticketId={ticket.id} />}
+                            {perms.reassign && (
                                 <Button type="button" variant="outline" onClick={() => setIsReassignOpen(true)} className="gap-2">
                                     <UserRoundCog className="size-4" />
                                     Ubah PIC
                                 </Button>
                             )}
-                            <SensorToggleButton showOriginal={showOriginal} onToggle={() => setShowOriginal((prev) => !prev)} />
+                            <SensorToggleButton showOriginal={showOriginal} onToggle={toggleOriginal} />
                             <SupervisionToggle
                                 ticketNumber={detailData.ticket_number}
                                 isPengawasan={detailData.is_pengawasan}
-                                disabled={ticketStatus === 'selesai'}
+                                disabled={live.status === 'selesai'}
                                 kadarPengawasanDays={detailData.kadar_pengawasan_days}
                                 classificationDefaultDays={detailData.classification_default_days}
                                 updateRoute={route(`${routePrefix}.incoming-reports.pengawasan`, {
@@ -465,10 +188,10 @@ export default function ShowIncomingReportsView() {
                                 })}
                             />
                             <TicketEditDeleteActions
-                                canEdit={canEdit}
-                                canDelete={canDelete}
-                                onEdit={() => setIsEditOpen(true)}
-                                onDelete={() => setIsDeleteOpen(true)}
+                                canEdit={perms.edit}
+                                canDelete={perms.delete}
+                                onEdit={() => editDelete.setEditOpen(true)}
+                                onDelete={() => editDelete.setDeleteOpen(true)}
                             />
                         </>
                     }
@@ -476,9 +199,9 @@ export default function ShowIncomingReportsView() {
 
                 <Separator />
 
-                <TicketInfoGrid fields={infoFields} />
+                <TicketInfoGrid fields={buildTicketInfoFields(detailData)} />
 
-                {ticketStatus === 'selesai' && completedAt && <CompletedStamp completedAt={completedAt} rating={rating} />}
+                {live.status === 'selesai' && live.completedAt && <CompletedStamp completedAt={live.completedAt} rating={live.rating} />}
 
                 <TicketContentCard
                     title={detailData.title}
@@ -487,54 +210,54 @@ export default function ShowIncomingReportsView() {
                     titleOriginal={detailData.title_original}
                     contentOriginal={detailData.content_original}
                     showOriginal={showOriginal}
-                    onToggle={() => setShowOriginal((prev) => !prev)}
+                    onToggle={toggleOriginal}
                 />
 
-                <TicketAttachments attachments={detailData.attachments} onPreview={(att) => handlePreviewAttachment(att, detailData.attachments)} />
+                <TicketAttachments attachments={detailData.attachments} onPreview={previewAttachment} />
             </div>
 
-            {canViewAssignmentHistory && <TicketAssignmentHistory logs={assignmentLogs} />}
+            {perms.viewAssignmentHistory && <TicketAssignmentHistory logs={assignmentLogs} />}
 
             <TicketResponseHistory
                 responses={detailData.responses}
-                ticketStatus={ticketStatus}
+                ticketStatus={live.status}
                 readOnly={false}
                 showReplyForm={showReplyForm}
                 canResend={auth.user.role === 'admin'}
                 reporterEmail={ticket.reporter_email ?? ''}
-                onToggleReply={canReply ? () => setShowReplyForm((prev) => !prev) : undefined}
-                onPreviewAttachment={(att) => handlePreviewAttachment(att, detailData.attachments)}
-                lastItemRef={lastItemRef}
+                onToggleReply={perms.reply ? () => setShowReplyForm((prev) => !prev) : undefined}
+                onPreviewAttachment={previewAttachment}
+                lastItemRef={live.lastItemRef}
                 headerExtra={
-                    <IncomingReportsPresenceBar viewers={viewers} currentUserId={auth.user.id} typingNames={typingNames} className="min-w-0" />
+                    <IncomingReportsPresenceBar
+                        viewers={live.viewers}
+                        currentUserId={auth.user.id}
+                        typingNames={live.typingNames}
+                        className="min-w-0"
+                    />
                 }
-                getResendUrl={(response) =>
-                    route('dashboard.admin.incoming-reports.responses.resend', {
-                        ticket: ticket.id,
-                        response: response.id,
-                    })
-                }
+                getResendUrl={(response) => route('dashboard.admin.incoming-reports.responses.resend', { ticket: ticket.id, response: response.id })}
                 showOriginal={showOriginal}
-                onToggle={() => setShowOriginal((prev) => !prev)}
+                onToggle={toggleOriginal}
                 footerExtra={
-                    canReply ? (
+                    perms.reply ? (
                         <IncomingReportsReplyForm
                             ticketId={ticket.id}
-                            ticketStatus={ticketStatus}
-                            expectedVersion={liveVersion}
+                            ticketStatus={live.status}
+                            expectedVersion={live.liveVersion}
                             hasResponAwal={hasResponAwal}
                             routePrefix={routePrefix}
-                            open={showReplyForm && ticketStatus !== 'selesai'}
-                            pendingNotice={pendingNotice}
+                            open={showReplyForm && live.status !== 'selesai'}
+                            pendingNotice={live.pendingNotice}
                             conflict={conflict}
                             onDismissConflict={() => setConflict(null)}
                             onCancel={() => setShowReplyForm(false)}
                             onSuccess={() => setShowReplyForm(false)}
-                            onPreviewFile={handlePreviewFile}
-                            onTyping={broadcastTyping}
+                            onPreviewFile={preview.preview}
+                            onTyping={live.broadcastTyping}
                             currentUserId={auth.user.id}
-                            viewers={viewers}
-                            typingNames={typingNames}
+                            viewers={live.viewers}
+                            typingNames={live.typingNames}
                         />
                     ) : undefined
                 }

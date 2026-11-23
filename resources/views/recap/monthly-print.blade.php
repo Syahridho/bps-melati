@@ -5,7 +5,12 @@
 ])
     @php
         $judulDokumen = 'REKAP LAPORAN BULANAN BPS PROVINSI RIAU';
-        $subjudulDokumen = 'Bulan : ' . $periodLabel;
+        $statusLabel = match ($status ?? 'all') {
+            'proses' => 'Proses',
+            'selesai' => 'Selesai',
+            default => 'Semua',
+        };
+        $subjudulDokumen = 'Bulan : ' . $periodLabel . ' (Status: ' . $statusLabel . ')';
     @endphp
     <style>
         col.kolom-kanal { width: 40%; }

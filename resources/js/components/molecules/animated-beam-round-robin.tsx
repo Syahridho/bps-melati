@@ -96,7 +96,7 @@ export function AnimatedBeamRoundRobin() {
                     </span>
                 </Step>
 
-                <Step ref={serverRef} label="Server">
+                <Step ref={serverRef} label="Web/Server">
                     <Server className="size-6" />
                 </Step>
 

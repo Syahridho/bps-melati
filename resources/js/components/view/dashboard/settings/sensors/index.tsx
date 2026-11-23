@@ -13,9 +13,9 @@ import { Head, usePage } from '@inertiajs/react';
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 
-import SensorBulkFormDialog from '@/components/view/dashboard/settings/sensors/modal-bulk-form';
-import SensorDeleteDialog from '@/components/view/dashboard/settings/sensors/modal-delete-word';
-import SensorFormDialog from '@/components/view/dashboard/settings/sensors/modal-word-form';
+import SensorBulkFormDialog from '@/components/view/dashboard/settings/sensors/bulk-form-dialog';
+import SensorDeleteDialog from '@/components/view/dashboard/settings/sensors/delete-word-dialog';
+import SensorFormDialog from '@/components/view/dashboard/settings/sensors/word-form-dialog';
 
 export default function SensorsSettingsView() {
     const { words, flash } = usePage<{

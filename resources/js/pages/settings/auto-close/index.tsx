@@ -1,4 +1,4 @@
-import AutoCloseSettingsView from '@/components/view/dashboard/settings/application/auto-close';
+import AutoCloseSettingsView from '@/components/view/dashboard/settings/auto-close';
 
 export default function AutoCloseSettingsPage() {
     return <AutoCloseSettingsView />;

@@ -113,6 +113,11 @@
         },
         "jsx": "react-jsx"
     },
-    "include": ["resources/js/**/*.ts", "resources/js/**/*.tsx"],
+    "include": [
+        "resources/js/**/*.ts",
+        "resources/js/**/*.tsx",
+        "resources/js/components/view/audit-log/review-flag-dialog",
+        "resources/js/components/view/dashboard/input-data/add-ticket-dialog"
+    ],
     "exclude": ["resources/js/components/shared/rich-text-editor.tsx"]
 }

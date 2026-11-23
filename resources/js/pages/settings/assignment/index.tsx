@@ -1,5 +1,5 @@
-import PenugasanSettingsView from '@/components/view/dashboard/settings/application/penugasan';
+import AssignmentSettingsView from '@/components/view/dashboard/settings/assignment';
 
 export default function PenugasanSettingsPage() {
-    return <PenugasanSettingsView />;
+    return <AssignmentSettingsView />;
 }

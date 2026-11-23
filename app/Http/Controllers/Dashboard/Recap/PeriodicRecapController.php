@@ -33,10 +33,11 @@ class PeriodicRecapController extends Controller
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
         $chat = $this->resolveChatParam($request->query('chat'));
         $chatLimit = $this->resolveChatLimit($request->query('chat_limit'));
+        $status = $this->resolveStatusParam($request->query('status'));
 
         return Inertia::render('dashboard/admin/recap/periodic-recap/index', array_merge(
-            $this->payloadWithMode($year, $months, $tampilan),
-            $this->filterPayload($year, $months, $tampilan, $chat, $chatLimit)
+            $this->payloadWithMode($year, $months, $tampilan, $status),
+            $this->filterPayload($year, $months, $tampilan, $chat, $chatLimit, $status)
         ));
     }
 
@@ -46,6 +47,7 @@ class PeriodicRecapController extends Controller
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
         $chat = $this->resolveChatParam($request->query('chat'));
         $chatLimit = $this->resolveChatLimit($request->query('chat_limit'));
+        $status = $this->resolveStatusParam($request->query('status'));
         $withChat = ($chat !== '0');
 
         $chatMonths = [];
@@ -54,14 +56,15 @@ class PeriodicRecapController extends Controller
         }
 
         $data = array_merge(
-            $this->payloadWithMode($year, $months, $tampilan),
-            $this->filterPayload($year, $months, $tampilan, $chat, $chatLimit),
+            $this->payloadWithMode($year, $months, $tampilan, $status),
+            $this->filterPayload($year, $months, $tampilan, $chat, $chatLimit, $status),
             [
                 'withChat' => $withChat,
-                'chatTickets' => $withChat ? $this->getChatTickets($year, $chatMonths, $chatLimit) : collect(),
-                'chatTotalCount' => $withChat ? $this->getChatTotalCount($year, $chatMonths) : 0,
-                'chatLimitReached' => $withChat ? $this->isChatLimitReached($year, $chatMonths, $chatLimit) : false,
+                'chatTickets' => $withChat ? $this->getChatTickets($year, $chatMonths, $chatLimit, $status) : collect(),
+                'chatTotalCount' => $withChat ? $this->getChatTotalCount($year, $chatMonths, $status) : 0,
+                'chatLimitReached' => $withChat ? $this->isChatLimitReached($year, $chatMonths, $chatLimit, $status) : false,
                 'chatLimit' => $chatLimit,
+                'status' => $status,
             ]
         );
 
@@ -72,6 +75,7 @@ class PeriodicRecapController extends Controller
     {
         [$year, $months] = $this->resolveParams($request->query('year'), $request->query('months'));
         $tampilan = RekapReport::normalizeViewMode($request->query('tampilan'));
+        $status = $this->resolveStatusParam($request->query('status'));
 
         $monthsStr = count($months) === 12 ? 'Full' : implode('-', $months);
         $periodeStr = $year.'-M'.$monthsStr.($tampilan === RekapReport::VIEW_MODE_RINGKAS ? '-ringkas' : '');
@@ -79,8 +83,8 @@ class PeriodicRecapController extends Controller
 
         return response()
             ->view('recap.periodik-excel', array_merge(
-                $this->payloadWithMode($year, $months, $tampilan),
-                $this->filterPayload($year, $months, $tampilan, '0')
+                $this->payloadWithMode($year, $months, $tampilan, $status),
+                $this->filterPayload($year, $months, $tampilan, '0', 500, $status)
             ))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
@@ -89,9 +93,9 @@ class PeriodicRecapController extends Controller
     /**
      * @param  list<int>  $months
      */
-    private function payloadWithMode(int $year, array $months, string $tampilan): array
+    private function payloadWithMode(int $year, array $months, string $tampilan, string $status = 'all'): array
     {
-        $payload = $this->payload($year, $months);
+        $payload = $this->payload($year, $months, $status);
         $extra = [
             'tampilan' => $tampilan,
             'penandaTangan' => RekapReport::signatory(),
@@ -110,16 +114,16 @@ class PeriodicRecapController extends Controller
     /**
      * @param  list<int>  $months
      */
-    private function payload(int $year, array $months): array
+    private function payload(int $year, array $months, string $status = 'all'): array
     {
         $currentYear = (int) now()->year;
         $ttl = ($year < $currentYear) ? RekapCache::TTL : 60;
-        $cacheKey = $year.':'.implode(',', $months);
+        $cacheKey = $year.':'.implode(',', $months).':'.$status;
 
         return Cache::remember(
             RekapCache::key('periodik', $cacheKey),
             $ttl,
-            fn (): array => $this->buildReport($year, $months),
+            fn (): array => $this->buildReport($year, $months, $status),
         );
     }
 
@@ -167,7 +171,7 @@ class PeriodicRecapController extends Controller
     /**
      * @param  list<int>  $months
      */
-    private function filterPayload(int $selectedYear, array $selectedMonths, string $tampilan, string $chat = '0', int $chatLimit = 500): array
+    private function filterPayload(int $selectedYear, array $selectedMonths, string $tampilan, string $chat = '0', int $chatLimit = 500, string $status = 'all'): array
     {
         $years = RekapYears::get();
         $yearOptions = array_map(fn (string $y): array => [
@@ -192,9 +196,17 @@ class PeriodicRecapController extends Controller
             'tampilan' => $tampilan,
             'chat' => $chat,
             'chat_limit' => (string) $chatLimit,
+            'status' => $status,
             'chat_limit_max' => (int) config('recap.chat_max', 2000),
             'chat_warning_threshold' => (int) config('recap.chat_warning_threshold', 500),
         ];
+    }
+
+    private function resolveStatusParam(mixed $statusInput): string
+    {
+        $allowed = ['all', 'proses', 'selesai'];
+
+        return is_string($statusInput) && in_array($statusInput, $allowed, true) ? $statusInput : 'all';
     }
 
     private function resolveChatParam(mixed $chatInput): string
@@ -241,16 +253,20 @@ class PeriodicRecapController extends Controller
      * @param  list<int>  $months
      * @return Collection<int, Ticket>
      */
-    private function getChatTickets(int $year, array $months, int $limit = 500)
+    private function getChatTickets(int $year, array $months, int $limit = 500, string $status = 'all')
     {
         $periods = array_map(fn (int $m): string => sprintf('%04d-%02d', $year, $m), $months);
 
-        return Ticket::with([
+        $query = Ticket::with([
             'channel',
             'attachments',
             'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
         ])
-            ->whereIn('period', $periods)
+            ->whereIn('period', $periods);
+
+        RekapReport::applyStatusFilter($query, $status);
+
+        return $query
             ->orderBy('created_at', 'asc')
             ->orderBy('id', 'asc')
             ->limit($limit)
@@ -260,28 +276,31 @@ class PeriodicRecapController extends Controller
     /**
      * @param  list<int>  $months
      */
-    private function getChatTotalCount(int $year, array $months): int
+    private function getChatTotalCount(int $year, array $months, string $status = 'all'): int
     {
         $periods = array_map(fn (int $m): string => sprintf('%04d-%02d', $year, $m), $months);
 
-        return Ticket::whereIn('period', $periods)->count();
+        $query = Ticket::whereIn('period', $periods);
+        RekapReport::applyStatusFilter($query, $status);
+
+        return $query->count();
     }
 
     /**
      * @param  list<int>  $months
      */
-    private function isChatLimitReached(int $year, array $months, int $limit = 500): bool
+    private function isChatLimitReached(int $year, array $months, int $limit = 500, string $status = 'all'): bool
     {
-        return $this->getChatTotalCount($year, $months) > $limit;
+        return $this->getChatTotalCount($year, $months, $status) > $limit;
     }
 
     /**
      * @param  list<int>  $months
      */
-    private function buildReport(int $year, array $months): array
+    private function buildReport(int $year, array $months, string $status = 'all'): array
     {
         $periods = array_map(fn (int $m): string => sprintf('%04d-%02d', $year, $m), $months);
-        $counts = RekapReport::countsByChannelPerPeriod($periods);
+        $counts = RekapReport::countsByChannelPerPeriod($periods, $status);
 
         $rows = Channel::with('children')
             ->whereNull('parent_id')

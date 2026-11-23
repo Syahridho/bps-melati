@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
     Route::get('settings', function (Request $request) {
-        return redirect()->to($request->user()->isAdmin() ? '/settings/application' : '/settings/password');
+        return redirect()->to($request->user()->isAdmin() ? '/settings/assignment' : '/settings/password');
     });
 
     Route::get('settings/password', [PasswordController::class, 'edit'])->name('password.edit');
@@ -30,32 +30,27 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    // Redirect route lama ke Penugasan
-    Route::get('settings/application', [SettingController::class, 'index'])->name('settings.application.edit');
 
     // Pengaturan Penugasan
-    Route::get('settings/application/penugasan', [SettingController::class, 'penugasan'])->name('settings.application.penugasan');
-    Route::post('settings/application/assignment-mode', [AssignmentModeController::class, 'update'])
-        ->name('settings.application.assignment-mode');
+    Route::get('settings/assignment', [SettingController::class, 'assignment'])->name('settings.assignment');
+    Route::post('settings/assignment-mode', [AssignmentModeController::class, 'update'])
+        ->name('settings.assignment-mode');
 
     // Pengaturan Auto Close & Kadar Pengawasan
-    Route::get('settings/application/auto-close', [SettingController::class, 'autoClose'])->name('settings.application.auto-close');
-    Route::post('settings/application/auto-close', [SettingController::class, 'updateAutoClose'])->name('settings.application.auto-close.update');
+    Route::get('settings/auto-close', [SettingController::class, 'autoClose'])->name('settings.auto-close');
+    Route::post('settings/auto-close', [SettingController::class, 'updateAutoClose'])->name('settings.auto-close.update');
 
     // Pengaturan Laporan & Tanda Tangan
-    Route::get('settings/application/laporan', [SettingController::class, 'laporan'])->name('settings.application.laporan');
-    Route::post('settings/application/laporan', [SettingController::class, 'updateLaporan'])->name('settings.application.laporan.update');
+    Route::get('settings/recap', [SettingController::class, 'recap'])->name('settings.recap');
+    Route::post('settings/recap', [SettingController::class, 'updateRecap'])->name('settings.recap.update');
 
     // Pengaturan Penilaian Pelapor
-    Route::get('settings/application/penilaian', [SettingController::class, 'penilaian'])->name('settings.application.penilaian');
-    Route::match(['patch', 'post'], 'settings/application/rating', [SettingController::class, 'updateRating'])
-        ->name('settings.application.rating')
-        ->middleware('throttle:30,1');
-    Route::match(['patch', 'post'], 'settings/application/rating-enabled', [SettingController::class, 'updateRating'])
-        ->name('settings.application.rating-enabled')
-        ->middleware('throttle:30,1');
+    Route::get('settings/rating', [SettingController::class, 'rating'])->name('settings.rating');
     Route::match(['patch', 'post'], 'settings/rating', [SettingController::class, 'updateRating'])
         ->name('settings.rating')
+        ->middleware('throttle:30,1');
+    Route::match(['patch', 'post'], 'settings/rating-enabled', [SettingController::class, 'updateRating'])
+        ->name('settings.rating-enabled')
         ->middleware('throttle:30,1');
     Route::match(['patch', 'post'], 'settings/rating/toggle', [SettingController::class, 'updateRating'])
         ->name('settings.rating.toggle')

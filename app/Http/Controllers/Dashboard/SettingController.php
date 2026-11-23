@@ -29,13 +29,13 @@ class SettingController extends Controller
      */
     public function index(): RedirectResponse
     {
-        return redirect()->route('settings.application.penugasan');
+        return redirect()->route('settings.assignment');
     }
 
     /**
      * Tampilkan halaman pengaturan penugasan.
      */
-    public function penugasan(AssignmentModeService $modeService): Response
+    public function assignment(AssignmentModeService $modeService): Response
     {
         $pendingChange = $modeService->pending();
 
@@ -113,7 +113,7 @@ class SettingController extends Controller
     /**
      * Tampilkan halaman pengaturan laporan & tanda tangan.
      */
-    public function laporan(): Response
+    public function recap(): Response
     {
         return Inertia::render('settings/recap/index', [
             'settings' => [
@@ -127,7 +127,7 @@ class SettingController extends Controller
     /**
      * Perbarui pengaturan laporan & tanda tangan.
      */
-    public function updateLaporan(UpdateReportSignatureSettingsRequest $request): RedirectResponse
+    public function updateRecap(UpdateReportSignatureSettingsRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
@@ -151,7 +151,7 @@ class SettingController extends Controller
     /**
      * Tampilkan halaman pengaturan penilaian pelapor.
      */
-    public function penilaian(): Response
+    public function rating(): Response
     {
         return Inertia::render('settings/rating/index', [
             'ratingEnabled' => AppSettings::ratingEnabled(),

@@ -4,6 +4,7 @@ import { RekapPeriodMatrixTable } from '@/components/organisms/recap/recap-perio
 import { RekapPeriodikFilter } from '@/components/molecules/recap-periodic-filter';
 import { RekapPrintActions } from '@/components/organisms/recap/recap-print-actions';
 import { RekapSummaryTable } from '@/components/organisms/recap/recap-summary-table';
+import { RekapStatusSelect } from '@/components/molecules/recap-status-select';
 import { RekapViewModeSelect } from '@/components/molecules/recap-view-mode-select';
 import { useRekapFilters } from '@/hooks/use-rekap-filters';
 import AdminPage from '@/layouts/dashboard/page';
@@ -24,6 +25,7 @@ export default function PeriodicRecapView({
     monthOptions,
     periodeLabel,
     tampilan,
+    status = 'all',
     chat = '0',
     chat_limit = '500',
     chat_limit_max = 2000,
@@ -33,7 +35,7 @@ export default function PeriodicRecapView({
 
     const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleParamChange, handleViewModeChange, handlePrint } = useRekapFilters({
         routeKey: 'periodic-recap',
-        queryParams: { year, months: monthsParam, chat, chat_limit },
+        queryParams: { year, months: monthsParam, chat, chat_limit, status },
         frameId: PRINT_FRAME_ID,
         viewMode: tampilan,
         exportPrefix: 'Rekap-Periodik',
@@ -50,7 +52,7 @@ export default function PeriodicRecapView({
     return (
         <AdminPage
             title="Rekap Periodik"
-            description={`Rekapitulasi laporan berdasarkan periode yang dipilih : ${periodeLabel}`}
+            description={`Rekapitulasi laporan berdasarkan periode yang dipilih : ${periodeLabel} (Status: ${status === 'proses' ? 'Proses' : status === 'selesai' ? 'Selesai' : 'Semua'})`}
             breadcrumbs={[
                 { title: 'Rekap', href: route(`${rolePrefix}periodic-recap.index`) },
                 { title: 'Periodik', href: route(`${rolePrefix}periodic-recap.index`) },
@@ -60,6 +62,8 @@ export default function PeriodicRecapView({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                         <RekapViewModeSelect value={tampilan} onValueChange={handleViewModeChange} />
+
+                        <RekapStatusSelect value={status} onValueChange={(val) => handleParamChange('status', val)} />
 
                         <RekapPeriodikFilter
                             year={year}

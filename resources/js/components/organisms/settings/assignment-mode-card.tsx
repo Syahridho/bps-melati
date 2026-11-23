@@ -3,11 +3,11 @@ import { AnimatedBeamFree } from '@/components/molecules/animated-beam-free';
 import { AnimatedBeamRoundRobin } from '@/components/molecules/animated-beam-round-robin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import ConfirmationAssignment from '@/components/view/dashboard/settings/assignment/confirmation-modal';
 import { formatFullDate } from '@/lib/incoming-reports-utils';
 import { type AssignmentModeSettings, type AssignmentModeValue } from '@/types/settings';
 import { useForm } from '@inertiajs/react';
@@ -37,7 +37,7 @@ export function AssignmentModeCard({ assignmentMode }: AssignmentModeCardProps) 
     const selectedOption = assignmentMode.options.find((option) => option.value === form.data.mode);
 
     const handleSubmit = () => {
-        form.post(route('settings.application.assignment-mode'), {
+        form.post(route('settings.assignment-mode'), {
             preserveScroll: true,
             onSuccess: () => {
                 setConfirmOpen(false);
@@ -158,31 +158,13 @@ export function AssignmentModeCard({ assignmentMode }: AssignmentModeCardProps) 
                 Simpan Mode
             </Button>
 
-            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Ubah Mode Penanganan Laporan?</DialogTitle>
-                        <DialogDescription asChild>
-                            <div className="space-y-2 text-sm">
-                                <p>
-                                    Mode akan diubah menjadi <strong>{selectedOption?.label ?? form.data.mode}</strong>.
-                                </p>
-                                <p>Hanya berlaku untuk laporan baru. Laporan lama tidak berubah, termasuk PIC yang sudah ada.</p>
-                                {form.data.apply === 'scheduled' && <p>Perubahan akan diterapkan otomatis sesuai jadwal yang dipilih.</p>}
-                            </div>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)} disabled={form.processing}>
-                            Batal
-                        </Button>
-                        <Button type="button" onClick={handleSubmit} disabled={form.processing}>
-                            {form.processing && <LoaderCircle className="mr-2 size-4 animate-spin" />}
-                            Ya, Simpan
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmationAssignment
+                confirmOpen={confirmOpen}
+                setConfirmOpen={setConfirmOpen}
+                selectedOption={selectedOption}
+                form={form}
+                handleSubmit={handleSubmit}
+            />
 
             <div className="space-y-2 pt-2">
                 <h4 className="flex items-center gap-2 text-sm font-semibold">

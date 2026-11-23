@@ -7,13 +7,13 @@ import { type ReportSignatureSettingPageProps, type ReportSignatureSettingValues
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEvent } from 'react';
 
-export default function LaporanSettingsView() {
+export default function RecapSettingsView() {
     const { settings, flash } = usePage<ReportSignatureSettingPageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Laporan & Tanda Tangan',
-            href: route('settings.application.laporan'),
+            href: route('settings.rating'),
         },
     ];
 
@@ -25,7 +25,7 @@ export default function LaporanSettingsView() {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        post(route('settings.application.laporan.update'), {
+        post(route('settings.recap.update'), {
             preserveScroll: true,
         });
     };
@@ -41,11 +41,7 @@ export default function LaporanSettingsView() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <PengaturanSignatureFields data={data} setData={setData} errors={errors} />
 
-                    <SettingsSubmitButton
-                        processing={processing}
-                        recentlySuccessful={recentlySuccessful}
-                        successMessage={flash?.success}
-                    />
+                    <SettingsSubmitButton processing={processing} recentlySuccessful={recentlySuccessful} successMessage={flash?.success} />
                 </form>
             </SettingsLayout>
         </AppLayout>

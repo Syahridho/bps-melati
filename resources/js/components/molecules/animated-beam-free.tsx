@@ -52,7 +52,7 @@ export function AnimatedBeamFree() {
                     <User className="size-6" />
                 </Step>
 
-                <Step ref={serverRef} label="Server">
+                <Step ref={serverRef} label="Web/Server">
                     <Server className="size-6" />
                 </Step>
 

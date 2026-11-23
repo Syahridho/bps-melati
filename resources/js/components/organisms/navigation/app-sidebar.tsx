@@ -202,7 +202,7 @@ export function AppSidebar() {
         },
         {
             title: 'Pengaturan',
-            url: '/settings/application/penugasan',
+            url: '/settings/assignment',
             activePrefix: '/settings',
             icon: SettingsIcon,
         },

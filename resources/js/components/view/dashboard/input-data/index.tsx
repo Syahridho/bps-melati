@@ -1,28 +1,30 @@
+import { ActiveFilterBar } from '@/components/molecules/active-filter-bar';
+import { AlertBanner } from '@/components/molecules/alert-banner';
 import { InputDataFilterTabs } from '@/components/molecules/input-data-filter-tabs';
-import { DateRangeFilter } from '@/components/molecules/date-range-filter';
 import { Pagination } from '@/components/molecules/pagination';
+import { ReportListToolbar } from '@/components/molecules/report-list-toolbar';
 import { toTicketListEntry } from '@/components/organisms/ticket-list/adapter';
 import { TicketList } from '@/components/organisms/ticket-list/ticket-list';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import InputDataAddTicketDialog from '@/components/view/dashboard/input-data/modal-add-ticket';
+import { useFlashMessage } from '@/hooks/use-flash-message';
 import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
 import { useInputDataFilters } from '@/hooks/use-input-data-filters';
 import { useLaporanRealtime } from '@/hooks/use-reports-realtime';
 import AdminPage from '@/layouts/dashboard/page';
+import { buildActiveFilters } from '@/lib/report-list';
 import { InputDataPageProps } from '@/types/input-data';
 import { Head, usePage } from '@inertiajs/react';
-import { CheckCircle2, Plus, RotateCcw, Search, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
+import InputDataAddTicketDialog from './add-ticket-dialog';
 
 export default function InputDataView() {
     const { auth, tickets, channels, filters, counts, flash } = usePage<InputDataPageProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [flagPopoverOpen, setFlagPopoverOpen] = useState(false);
+    const flashMessage = useFlashMessage(flash?.success);
 
     const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
         useInputDataFilters(routePrefix, filters);
@@ -30,43 +32,13 @@ export default function InputDataView() {
     const searching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
 
     useInboxRealtime({ searching });
+    useLaporanRealtime({ isBusy: flagPopoverOpen, searching, only: ['tickets', 'counts'] });
 
-    useLaporanRealtime({
-        isBusy: flagPopoverOpen,
-        searching,
-        only: ['tickets', 'counts'],
+    const activeFilters = buildActiveFilters(filters, {
+        clearTab: () => handleFilterChange('semua'),
+        clearSearch: () => setSearchQuery(''),
+        clearDate: () => handleRangeChange('semua', 'semua'),
     });
-
-    const flashSuccessRef = useRef<string | null>(null);
-    const flashTimerRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        const message = flash?.success ?? null;
-        if (!message || message === flashSuccessRef.current) {
-            return;
-        }
-
-        if (flashTimerRef.current !== null) {
-            window.clearTimeout(flashTimerRef.current);
-        }
-
-        flashSuccessRef.current = message;
-        setSuccessMessage(message);
-        flashTimerRef.current = window.setTimeout(() => {
-            setSuccessMessage(null);
-            flashSuccessRef.current = null;
-            flashTimerRef.current = null;
-        }, 5000);
-
-        return () => {
-            if (flashTimerRef.current !== null) {
-                window.clearTimeout(flashTimerRef.current);
-                flashTimerRef.current = null;
-            }
-        };
-    }, [flash?.success]);
-
-    const hasActiveFilters = filters.filter !== 'semua' || filters.search !== '' || (filters.from && filters.from !== 'semua');
 
     const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix));
 
@@ -74,13 +46,7 @@ export default function InputDataView() {
         <AdminPage breadcrumbs={[{ title: 'Input Data', href: route(`${routePrefix}.input-data.index`) }]}>
             <Head title="Input Data" />
             <div className="space-y-6">
-                {/* Header & Success Alert */}
-                {successMessage && (
-                    <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
-                        <CheckCircle2 className="h-5 w-5 shrink-0" />
-                        <span>{successMessage}</span>
-                    </div>
-                )}
+                {flashMessage.message && <AlertBanner variant="success" message={flashMessage.message} />}
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -93,62 +59,20 @@ export default function InputDataView() {
                     </Button>
                 </div>
 
-                {/* Inbox Card Layout */}
                 <div className="bg-card overflow-hidden rounded-lg border">
-                    {/* Toolbar */}
-                    <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
-                        <div className="relative min-w-[12rem] flex-1">
-                            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                            <Input
-                                placeholder="Cari laporan..."
-                                className="pl-9"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
-                        <DateRangeFilter from={filters.from} to={filters.to} onRangeChange={handleRangeChange} />
-                    </div>
+                    <ReportListToolbar
+                        search={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        from={filters.from}
+                        to={filters.to}
+                        onRangeChange={handleRangeChange}
+                    />
 
-                    {/* Active filter summary */}
-                    {hasActiveFilters && (
-                        <div className="bg-muted/30 flex flex-wrap items-center gap-2 border-b px-4 py-2 text-xs">
-                            <span className="text-muted-foreground font-medium">Filter aktif:</span>
-                            {filters.filter !== 'semua' && (
-                                <Badge variant="secondary" className="gap-1">
-                                    Tab: {filters.filter}
-                                    <button onClick={() => handleFilterChange('semua')} className="hover:text-foreground">
-                                        <X className="size-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {filters.search && (
-                                <Badge variant="secondary" className="gap-1">
-                                    Pencarian: &quot;{filters.search}&quot;
-                                    <button onClick={() => setSearchQuery('')} className="hover:text-foreground">
-                                        <X className="size-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            {filters.from && filters.from !== 'semua' && (
-                                <Badge variant="secondary" className="gap-1">
-                                    Tanggal: {filters.from} s.d. {filters.to}
-                                    <button onClick={() => handleRangeChange('semua', 'semua')} className="hover:text-foreground">
-                                        <X className="size-3" />
-                                    </button>
-                                </Badge>
-                            )}
-                            <Button variant="ghost" size="sm" onClick={handleResetFilters} className="h-6 px-2 text-xs">
-                                <RotateCcw className="mr-1 size-3" />
-                                Reset semua
-                            </Button>
-                        </div>
-                    )}
+                    <ActiveFilterBar items={activeFilters} onReset={handleResetFilters} />
 
-                    {/* Filter tabs */}
                     <InputDataFilterTabs currentFilter={filters.filter} counts={counts} onFilterChange={handleFilterChange} />
 
-                    {/* Ticket list */}
-                    {tickets.data.length === 0 ? (
+                    {entries.length === 0 ? (
                         <div className="text-muted-foreground flex flex-col items-center justify-center py-16">
                             <p className="text-sm">Tidak ada laporan pada rentang ini</p>
                         </div>
@@ -161,7 +85,6 @@ export default function InputDataView() {
                         />
                     )}
 
-                    {/* Pagination Footer */}
                     <Pagination
                         links={tickets.links}
                         from={tickets.from}

@@ -17,33 +17,33 @@ test('old settings application route redirects to penugasan', function () {
 
     actingAs($admin)
         ->get('/settings/application')
-        ->assertRedirect(route('settings.application.penugasan'));
+        ->assertRedirect(route('settings.assignment'));
 });
 
 test('guest cannot access settings routes', function () {
-    get(route('settings.application.penugasan'))->assertRedirect(route('login'));
-    get(route('settings.application.auto-close'))->assertRedirect(route('login'));
-    get(route('settings.application.laporan'))->assertRedirect(route('login'));
-    get(route('settings.application.penilaian'))->assertRedirect(route('login'));
+    get(route('settings.assignment'))->assertRedirect(route('login'));
+    get(route('settings.auto-close'))->assertRedirect(route('login'));
+    get(route('settings.rating'))->assertRedirect(route('login'));
+    get(route('settings.rating'))->assertRedirect(route('login'));
 });
 
 test('operator cannot access application settings pages', function () {
     $operator = User::factory()->create(['role' => 'operator']);
 
     actingAs($operator)
-        ->get(route('settings.application.penugasan'))
+        ->get(route('settings.assignment'))
         ->assertForbidden();
 
     actingAs($operator)
-        ->get(route('settings.application.auto-close'))
+        ->get(route('settings.auto-close'))
         ->assertForbidden();
 
     actingAs($operator)
-        ->get(route('settings.application.laporan'))
+        ->get(route('settings.rating'))
         ->assertForbidden();
 
     actingAs($operator)
-        ->get(route('settings.application.penilaian'))
+        ->get(route('settings.rating'))
         ->assertForbidden();
 });
 
@@ -51,7 +51,7 @@ test('admin can access penugasan page', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->get(route('settings.application.penugasan'))
+        ->get(route('settings.assignment'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/assignment/index')
@@ -63,7 +63,7 @@ test('admin can access auto-close page', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->get(route('settings.application.auto-close'))
+        ->get(route('settings.auto-close'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/auto-close/index')
@@ -79,7 +79,7 @@ test('admin can update auto-close settings and record audit log', function () {
     Setting::set('nama_penanda_tangan', 'Pejabat Tetap');
 
     actingAs($admin)
-        ->post(route('settings.application.auto-close.update'), [
+        ->post(route('settings.auto-close.update'), [
             'auto_close_pengaduan_days' => 4,
             'auto_close_aspirasi_days' => 2,
             'auto_close_permintaan_informasi_days' => 7,
@@ -104,7 +104,7 @@ test('admin cannot update auto-close with invalid data', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->postJson(route('settings.application.auto-close.update'), [
+        ->postJson(route('settings.auto-close.update'), [
             'auto_close_pengaduan_days' => -1,
             'auto_close_aspirasi_days' => 400,
             // auto_close_permintaan_informasi_days missing
@@ -123,7 +123,7 @@ test('admin can access laporan page', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->get(route('settings.application.laporan'))
+        ->get(route('settings.rating'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/recap/index')
@@ -138,7 +138,7 @@ test('admin can update laporan settings and record audit log', function () {
     Setting::set('auto_close_pengaduan_days', '10');
 
     actingAs($admin)
-        ->post(route('settings.application.laporan.update'), [
+        ->post(route('settings.rating.update'), [
             'nama_penanda_tangan' => 'Dr. Budi Santoso, M.Si',
             'jabatan_penanda_tangan' => 'KEPALA BPS PROVINSI',
             'kota_penanda_tangan' => 'Pekanbaru',
@@ -161,7 +161,7 @@ test('admin cannot update laporan with string exceeding 255 chars', function () 
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->postJson(route('settings.application.laporan.update'), [
+        ->postJson(route('settings.rating.update'), [
             'nama_penanda_tangan' => str_repeat('a', 256),
         ])
         ->assertStatus(422)
@@ -172,7 +172,7 @@ test('admin can access penilaian page', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->get(route('settings.application.penilaian'))
+        ->get(route('settings.rating'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/rating/index')

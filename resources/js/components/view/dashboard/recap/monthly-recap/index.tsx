@@ -1,14 +1,15 @@
 import { RekapPeriodFilter } from '@/components/molecules/recap-period-filter';
+import { RekapStatusSelect } from '@/components/molecules/recap-status-select';
 import { RekapPrintActions } from '@/components/organisms/recap/recap-print-actions';
 import { RekapTable } from '@/components/organisms/recap/recap-table';
 import { useRekapFilters } from '@/hooks/use-rekap-filters';
 import AdminPage from '@/layouts/dashboard/page';
 import { MonthlyRecapProps } from '@/types/recap';
 
-export default function MonthlyRecapView({ rows, totals, year, month, years, months, periodLabel }: MonthlyRecapProps) {
+export default function MonthlyRecapView({ rows, totals, year, month, status = 'all', years, months, periodLabel }: MonthlyRecapProps) {
     const { rolePrefix, printUrl, excelUrl, exportOpen, setExportOpen, handleParamChange, handlePrint } = useRekapFilters({
         routeKey: 'monthly-recap',
-        queryParams: { year, month },
+        queryParams: { year, month, status },
         exportPrefix: 'Rekap-Bulanan',
         exportPeriode: periodLabel.replace(/\s+/g, '-'),
     });
@@ -16,7 +17,7 @@ export default function MonthlyRecapView({ rows, totals, year, month, years, mon
     return (
         <AdminPage
             title="Rekap Bulanan"
-            description={`Rekapitulasi laporan bulan ${periodLabel}`}
+            description={`Rekapitulasi laporan bulan ${periodLabel} (Status: ${status === 'proses' ? 'Proses' : status === 'selesai' ? 'Selesai' : 'Semua'})`}
             breadcrumbs={[
                 { title: 'Rekap', href: route(`${rolePrefix}monthly-recap.index`) },
                 { title: 'Bulanan', href: route(`${rolePrefix}monthly-recap.index`) },
@@ -36,6 +37,8 @@ export default function MonthlyRecapView({ rows, totals, year, month, years, mon
                             yearTriggerClassName="w-36"
                             secondaryTriggerClassName="w-48"
                         />
+
+                        <RekapStatusSelect value={status} onValueChange={(val) => handleParamChange('status', val)} />
 
                         <RekapPrintActions
                             excelUrl={excelUrl}

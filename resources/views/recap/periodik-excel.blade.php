@@ -47,6 +47,9 @@
             <td colspan="{{ $totalCols }}" class="subtitle">{{ mb_strtoupper($periodeLabel) }}</td>
         </tr>
         <tr>
+            <td colspan="{{ $totalCols }}" class="subtitle">STATUS: {{ mb_strtoupper(match ($status ?? 'all') { 'proses' => 'Proses', 'selesai' => 'Selesai', default => 'Semua' }) }}</td>
+        </tr>
+        <tr>
             <td colspan="{{ $totalCols }}"></td>
         </tr>
         <tr>

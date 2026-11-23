@@ -1,25 +1,22 @@
 import { OperatorTable } from '@/components/organisms/operator/operator-table';
-import OperatorPerformanceTab from '@/components/view/dashboard/operator-management/performance-tab';
+import OperatorPerformanceTab from '@/components/organisms/operator/performance-tab';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import OperatorFormDialog from '@/components/view/dashboard/operator-management/modal-add-operator';
-import OperatorDeleteDialog from '@/components/view/dashboard/operator-management/modal-delete-operator';
-import OperatorFormDialogUpdate from '@/components/view/dashboard/operator-management/modal-update-operator';
+import OperatorFormDialog from '@/components/view/dashboard/operator-management/add-operator-dialog';
+import OperatorDeleteDialog from '@/components/view/dashboard/operator-management/delete-operator-dialog';
+import OperatorFormDialogUpdate from '@/components/view/dashboard/operator-management/update-operator-dialog';
 import { useOperatorManagement } from '@/hooks/use-operator-management';
 import { useOperatorPresence } from '@/hooks/use-operator-presence';
 import AdminPage from '@/layouts/dashboard/page';
 import { type OperatorPageProps } from '@/types/operator';
 import { Head, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 import { CheckCircle2, UserPlus } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function OperatorManagementView() {
     const { auth, operators, filters, flash } = usePage<OperatorPageProps>().props;
 
-    const initialTab = typeof window !== 'undefined'
-        ? (new URLSearchParams(window.location.search).get('tab') ?? 'daftar')
-        : 'daftar';
+    const initialTab = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('tab') ?? 'daftar') : 'daftar';
     const [activeTab, setActiveTab] = useState<string>(initialTab === 'kinerja' ? 'kinerja' : 'daftar');
 
     const {
@@ -94,17 +91,18 @@ export default function OperatorManagementView() {
                     </div>
                 )}
 
-                <Tabs value={activeTab} onValueChange={(v) => {
-                    setActiveTab(v);
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('tab', v);
-                    window.history.replaceState({}, '', url.toString());
-                }}>
+                <Tabs
+                    value={activeTab}
+                    onValueChange={(v) => {
+                        setActiveTab(v);
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('tab', v);
+                        window.history.replaceState({}, '', url.toString());
+                    }}
+                >
                     <TabsList>
                         <TabsTrigger value="daftar">Daftar Operator</TabsTrigger>
-                        {auth.user.role === 'admin' && (
-                            <TabsTrigger value="kinerja">Kinerja</TabsTrigger>
-                        )}
+                        {auth.user.role === 'admin' && <TabsTrigger value="kinerja">Kinerja</TabsTrigger>}
                     </TabsList>
                     <TabsContent value="daftar" className="mt-4">
                         <OperatorTable

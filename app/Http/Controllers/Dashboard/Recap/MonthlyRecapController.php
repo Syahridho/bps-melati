@@ -25,10 +25,11 @@ class MonthlyRecapController extends Controller
     {
         [$year, $month] = $this->resolveParams($request->query('year'), $request->query('month'));
         $period = sprintf('%04d-%02d', $year, $month);
+        $status = $this->resolveStatusParam($request->query('status'));
 
         return Inertia::render('dashboard/admin/recap/monthly-recap/index', array_merge(
-            $this->render($period),
-            $this->filterPayload($year, $month)
+            $this->render($period, $status),
+            $this->filterPayload($year, $month, $status)
         ));
     }
 
@@ -36,10 +37,11 @@ class MonthlyRecapController extends Controller
     {
         [$year, $month] = $this->resolveParams($request->query('year'), $request->query('month'));
         $period = sprintf('%04d-%02d', $year, $month);
+        $status = $this->resolveStatusParam($request->query('status'));
 
         return view('recap.monthly-print', array_merge(
-            $this->render($period),
-            $this->filterPayload($year, $month)
+            $this->render($period, $status),
+            $this->filterPayload($year, $month, $status)
         ));
     }
 
@@ -47,24 +49,25 @@ class MonthlyRecapController extends Controller
     {
         [$year, $month] = $this->resolveParams($request->query('year'), $request->query('month'));
         $period = sprintf('%04d-%02d', $year, $month);
+        $status = $this->resolveStatusParam($request->query('status'));
         $periodeStr = str_replace(' ', '-', RekapReport::formatPeriod($period, 'F Y'));
         $filename = ExportFilename::make('Rekap-Bulanan', $periodeStr, 'xls');
 
         return response()
             ->view('recap.monthly-excel', array_merge(
-                $this->render($period),
-                $this->filterPayload($year, $month)
+                $this->render($period, $status),
+                $this->filterPayload($year, $month, $status)
             ))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 
-    private function render(string $period): array
+    private function render(string $period, string $status = 'all'): array
     {
-        return array_merge($this->payload($period), ['penandaTangan' => RekapReport::signatory()]);
+        return array_merge($this->payload($period, $status), ['penandaTangan' => RekapReport::signatory()]);
     }
 
-    private function payload(string $period): array
+    private function payload(string $period, string $status = 'all'): array
     {
         $currentYear = (string) now()->year;
         $periodYear = substr($period, 0, 4);
@@ -73,10 +76,17 @@ class MonthlyRecapController extends Controller
         $ttl = ($periodYear < $currentYear) ? RekapCache::TTL : 60;
 
         return Cache::remember(
-            RekapCache::key('bulanan', $period),
+            RekapCache::key('bulanan', $period.':'.$status),
             $ttl,
-            fn (): array => $this->buildReport($period),
+            fn (): array => $this->buildReport($period, $status),
         );
+    }
+
+    private function resolveStatusParam(mixed $statusInput): string
+    {
+        $allowed = ['all', 'proses', 'selesai'];
+
+        return is_string($statusInput) && in_array($statusInput, $allowed, true) ? $statusInput : 'all';
     }
 
     /**
@@ -109,7 +119,7 @@ class MonthlyRecapController extends Controller
         return [$year, $month];
     }
 
-    private function filterPayload(int $selectedYear, int $selectedMonth): array
+    private function filterPayload(int $selectedYear, int $selectedMonth, string $status = 'all'): array
     {
         $years = RekapYears::get();
         $yearOptions = array_map(fn (string $y): array => [
@@ -133,14 +143,15 @@ class MonthlyRecapController extends Controller
         return [
             'year' => (string) $selectedYear,
             'month' => (string) $selectedMonth,
+            'status' => $status,
             'years' => $yearOptions,
             'months' => $months,
         ];
     }
 
-    private function buildReport(string $period): array
+    private function buildReport(string $period, string $status = 'all'): array
     {
-        $counts = RekapReport::countsByChannel($period);
+        $counts = RekapReport::countsByChannel($period, $status);
         $rows = RekapReport::rowsFor($counts);
 
         return [

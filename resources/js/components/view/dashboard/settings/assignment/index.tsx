@@ -5,13 +5,13 @@ import { type BreadcrumbItem } from '@/types';
 import { type AssignmentSettingPageProps } from '@/types/settings';
 import { Head, usePage } from '@inertiajs/react';
 
-export default function PenugasanSettingsView() {
+export default function AssignmentSettingsView() {
     const { assignmentMode } = usePage<AssignmentSettingPageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Penugasan',
-            href: route('settings.application.penugasan'),
+            href: route('settings.assignment'),
         },
     ];
 

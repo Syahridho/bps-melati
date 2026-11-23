@@ -94,6 +94,21 @@ class RekapReport
     }
 
     /**
+     * Terapkan filter status pada query tiket rekap.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     */
+    public static function applyStatusFilter($query, string $status): void
+    {
+        if ($status === 'selesai') {
+            $query->where('status', 'selesai');
+        } elseif ($status === 'proses') {
+            $query->where('status', '!=', 'selesai');
+        }
+        // 'all' (default) tidak menambah filter.
+    }
+
+    /**
      * Pemetaan klasifikasi + service_type ke kolom tabel.
      */
     public static function columnFor(string $classification, ?string $serviceType): ?string
@@ -109,13 +124,18 @@ class RekapReport
     /**
      * Agregasi tiket per kanal, per kolom klasifikasi, untuk satu periode.
      *
+     * @param  string  $status  all|proses|selesai
      * @return array<int, array<string, int>>
      */
-    public static function countsByChannel(string $period): array
+    public static function countsByChannel(string $period, string $status = 'all'): array
     {
-        $aggregates = Ticket::query()
+        $query = Ticket::query()
             ->selectRaw('channel_id, classification, service_type, COUNT(*) as total')
-            ->where('period', $period)
+            ->where('period', $period);
+
+        self::applyStatusFilter($query, $status);
+
+        $aggregates = $query
             ->groupBy('channel_id', 'classification', 'service_type')
             ->get();
 
@@ -141,13 +161,18 @@ class RekapReport
      * Dipakai rekap lintas bulan (semesteran) yang butuh sebaran tiap bulan.
      *
      * @param  list<string>  $periods
+     * @param  string  $status  all|proses|selesai
      * @return array<int, array<string, array<string, int>>>
      */
-    public static function countsByChannelPerPeriod(array $periods): array
+    public static function countsByChannelPerPeriod(array $periods, string $status = 'all'): array
     {
-        $aggregates = Ticket::query()
+        $query = Ticket::query()
             ->selectRaw('channel_id, period, classification, service_type, COUNT(*) as total')
-            ->whereIn('period', $periods)
+            ->whereIn('period', $periods);
+
+        self::applyStatusFilter($query, $status);
+
+        $aggregates = $query
             ->groupBy('channel_id', 'period', 'classification', 'service_type')
             ->get();
 

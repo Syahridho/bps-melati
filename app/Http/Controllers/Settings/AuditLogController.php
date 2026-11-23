@@ -82,7 +82,7 @@ class AuditLogController extends Controller
             ]);
         }
 
-        return inertia('settings/audit-log/index', [
+        return inertia('dashboard/admin/audit-log/index', [
             'logs' => $logs,
             'filters' => $request->only(['event_type', 'category', 'severity', 'actor', 'ticket_id', 'ip', 'start_date', 'end_date', 'per_page']),
             'total' => AuditLog::count(),

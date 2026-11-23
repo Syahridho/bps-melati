@@ -1,5 +1,5 @@
-import PenilaianSettingsView from '@/components/view/dashboard/settings/application/penilaian';
+import RatingSettingsView from '@/components/view/dashboard/settings/rating';
 
-export default function PenilaianSettingsPage() {
-    return <PenilaianSettingsView />;
+export default function RatingSettingsPage() {
+    return <RatingSettingsView />;
 }

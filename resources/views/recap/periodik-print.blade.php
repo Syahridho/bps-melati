@@ -15,7 +15,12 @@
 
         $columnsPerMonth = $ringkas ? 1 : 4;
         $judulDokumen = 'REKAP LAPORAN PERIODIK BPS PROVINSI RIAU';
-        $subjudulDokumen = $periodeLabel;
+        $statusLabel = match ($status ?? 'all') {
+            'proses' => 'Proses',
+            'selesai' => 'Selesai',
+            default => 'Semua',
+        };
+        $subjudulDokumen = $periodeLabel.' (Status: '.$statusLabel.')';
     @endphp
 
     <style>

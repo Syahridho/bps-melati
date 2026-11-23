@@ -9,8 +9,8 @@ import { type BreadcrumbItem } from '@/types';
 import { type SumberKanalPageProps } from '@/types/settings';
 import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, Edit, Plus, Trash2 } from 'lucide-react';
-import ChannelFormDialog from './modal-channel-form';
-import ChannelDeleteDialog from './modal-delete-channel';
+import ChannelFormDialog from './channel-form-dialog';
+import ChannelDeleteDialog from './delete-channel-dialog';
 
 export default function SumberKanalSettingsView() {
     const { channels, parents, flash } = usePage<SumberKanalPageProps>().props;

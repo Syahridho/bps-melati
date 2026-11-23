@@ -39,6 +39,9 @@
             <td colspan="6" class="subtitle">BULAN : {{ mb_strtoupper($periodLabel) }}</td>
         </tr>
         <tr>
+            <td colspan="6" class="subtitle">STATUS : {{ mb_strtoupper(match ($status ?? 'all') { 'proses' => 'Proses', 'selesai' => 'Selesai', default => 'Semua' }) }}</td>
+        </tr>
+        <tr>
             <td colspan="6"></td>
         </tr>
         <thead>

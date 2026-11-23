@@ -1,19 +1,22 @@
-import { AttachmentPreviewDialog, type AttachmentPreviewSource } from '@/components/molecules/attachment-preview-dialog';
+import { AlertBanner } from '@/components/molecules/alert-banner';
+import { AttachmentPreviewDialog } from '@/components/molecules/attachment-preview-dialog';
 import { CheckConversationCard } from '@/components/organisms/check/check-conversation-card';
 import { CheckGuideSection } from '@/components/organisms/check/check-guide';
 import { CheckHeader } from '@/components/organisms/check/check-header';
+import { CheckNotFound } from '@/components/organisms/check/check-not-found';
+
+import { CheckRatingSummary } from '@/components/organisms/check/check-rating-summary';
 import { CheckSearchCard } from '@/components/organisms/check/check-search-card';
 import { CheckTicketSummary } from '@/components/organisms/check/check-ticket-summary';
 import { FooterSection } from '@/components/templates/layout/footer';
-import { Card, CardContent } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/toaster';
-import { CheckCompleteDialog } from '@/components/view/check/check-complate-dialog';
+import { useAttachmentPreview } from '@/hooks/use-attachment-preview';
 import { useCheckReplyForm } from '@/hooks/use-check-reply-form';
 import { useCheckTicket } from '@/hooks/use-check-ticket';
-import { type Attachment, type CheckPageProps } from '@/types/check';
+import { hasRatingFeedback } from '@/lib/rating';
+import { type CheckPageProps } from '@/types/check';
 import { Head, usePage } from '@inertiajs/react';
-import { AlertCircle, CheckCircle2, Star } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCompleteDialog } from './check-complate-dialog';
 
 export default function CheckView() {
     const { ticketNumber, ticket, searched, flash, errors: pageErrors, ratingEnabled, rating_enabled } = usePage<CheckPageProps>().props;
@@ -44,15 +47,7 @@ export default function CheckView() {
         handleSendReply,
     } = useCheckReplyForm(ticket);
 
-    const [previewAttachments, setPreviewAttachments] = useState<AttachmentPreviewSource[]>([]);
-    const [previewIndex, setPreviewIndex] = useState(0);
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
-    const handlePreviewAttachment = (attachment: Attachment, list: Attachment[] = []) => {
-        setPreviewAttachments(list.length > 0 ? list : [attachment]);
-        setPreviewIndex(0);
-        setIsPreviewOpen(true);
-    };
+    const attachmentPreview = useAttachmentPreview();
 
     return (
         <>
@@ -63,68 +58,18 @@ export default function CheckView() {
                 <main className="mx-auto w-full max-w-4xl min-w-0 flex-1 space-y-12 px-4 py-10 pb-16 sm:px-6 md:space-y-16 md:py-12 md:pb-24 lg:px-8">
                     <CheckSearchCard inputQuery={inputQuery} onInputChange={setInputQuery} onSubmit={handleSearch} />
 
-                    {/* Global Flash / Notification */}
-                    {successMessage && (
-                        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
-                            <CheckCircle2 className="h-5 w-5 shrink-0" />
-                            <span>{successMessage}</span>
-                        </div>
-                    )}
+                    {successMessage && <AlertBanner variant="success" message={successMessage} />}
+                    {pageErrors?.message && <AlertBanner variant="error" message={pageErrors.message} />}
 
-                    {pageErrors?.message && (
-                        <div className="border-destructive/30 bg-destructive/10 text-destructive flex items-center gap-2 rounded-lg border px-4 py-3 text-sm">
-                            <AlertCircle className="h-5 w-5 shrink-0" />
-                            <span>{pageErrors.message}</span>
-                        </div>
-                    )}
-
-                    {/* Result Section */}
-                    {searched && !ticket && (
-                        <Card className="border-destructive/30 bg-destructive/5 text-destructive border">
-                            <CardContent className="flex items-start gap-4 p-6">
-                                <AlertCircle className="mt-0.5 h-6 w-6 shrink-0" />
-                                <div className="space-y-1">
-                                    <h3 className="text-base font-semibold">Tiket Tidak Ditemukan</h3>
-                                    <p className="text-sm opacity-90">
-                                        Nomor tiket <strong className="font-mono">{ticketNumber}</strong> tidak ditemukan di sistem. Harap periksa
-                                        kembali penulisan nomor tiket Anda.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                    {searched && !ticket && <CheckNotFound ticketNumber={ticketNumber} />}
 
                     {searched && ticket && (
                         <div className="space-y-6">
-                            <CheckTicketSummary ticket={ticket} copied={copied} onCopy={handleCopy} onPreviewAttachment={handlePreviewAttachment} />
+                            <CheckTicketSummary ticket={ticket} copied={copied} onCopy={handleCopy} onPreviewAttachment={attachmentPreview.preview} />
 
-                            {ticket.status === 'selesai' &&
-                                (ticket.rating != null || (ticket.rating_comment && ticket.rating_comment.trim() !== '')) && (
-                                    <Card className="border-emerald-500/30 bg-emerald-500/5">
-                                        <CardContent className="space-y-2 p-6">
-                                            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                                                Terima kasih atas penilaian Anda.
-                                            </p>
-                                            {ticket.rating != null && (
-                                                <div className="flex items-center gap-1" aria-label={`Rating ${ticket.rating} dari 5`}>
-                                                    {[1, 2, 3, 4, 5].map((value) => (
-                                                        <Star
-                                                            key={value}
-                                                            className={
-                                                                value <= (ticket.rating ?? 0)
-                                                                    ? 'h-5 w-5 fill-amber-400 text-amber-400'
-                                                                    : 'text-muted-foreground h-5 w-5'
-                                                            }
-                                                        />
-                                                    ))}
-                                                </div>
-                                            )}
-                                            {ticket.rating_comment && ticket.rating_comment.trim() !== '' && (
-                                                <p className="text-muted-foreground text-sm whitespace-pre-wrap">{ticket.rating_comment}</p>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                )}
+                            {ticket.status === 'selesai' && hasRatingFeedback(ticket) && (
+                                <CheckRatingSummary rating={ticket.rating} comment={ticket.rating_comment} />
+                            )}
 
                             <CheckConversationCard
                                 ticket={ticket}
@@ -141,7 +86,7 @@ export default function CheckView() {
                                 onFileChange={handleFileChange}
                                 onRemoveFile={handleRemoveFile}
                                 onSubmitReply={handleSendReply}
-                                onPreviewAttachment={handlePreviewAttachment}
+                                onPreviewAttachment={attachmentPreview.preview}
                             />
                         </div>
                     )}
@@ -152,10 +97,10 @@ export default function CheckView() {
                 <FooterSection />
 
                 <AttachmentPreviewDialog
-                    items={previewAttachments}
-                    initialIndex={previewIndex}
-                    open={isPreviewOpen}
-                    onClose={() => setIsPreviewOpen(false)}
+                    items={attachmentPreview.items}
+                    initialIndex={attachmentPreview.index}
+                    open={attachmentPreview.open}
+                    onClose={attachmentPreview.close}
                     allowOpenInNewTab={false}
                 />
 

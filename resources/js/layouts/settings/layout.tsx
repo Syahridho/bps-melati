@@ -24,17 +24,17 @@ export default function SettingsLayout({
             ? [
                   {
                       title: 'Penugasan',
-                      url: '/settings/application/penugasan',
+                      url: '/settings/assignment',
                       icon: null,
                   },
                   {
                       title: 'Auto Close',
-                      url: '/settings/application/auto-close',
+                      url: '/settings/auto-close',
                       icon: null,
                   },
                   {
                       title: 'Penilaian Pelapor',
-                      url: '/settings/application/penilaian',
+                      url: '/settings/rating',
                       icon: null,
                   },
                   {
@@ -49,7 +49,7 @@ export default function SettingsLayout({
                   },
                   {
                       title: 'Laporan & Tanda Tangan',
-                      url: '/settings/application/laporan',
+                      url: '/settings/recap',
                       icon: null,
                   },
                   {

@@ -24,7 +24,7 @@ test('operator cannot access or change assignment mode', function () {
     $operator = User::factory()->create(['role' => 'operator']);
 
     $this->actingAs($operator)
-        ->get(route('settings.application.penugasan'))
+        ->get(route('settings.assignment'))
         ->assertForbidden();
 
     $this->actingAs($operator)
@@ -39,7 +39,7 @@ test('admin sees current mode on the application settings page', function () {
     Setting::set('assignment_mode', 'claim');
 
     $this->actingAs($admin)
-        ->get(route('settings.application.penugasan'))
+        ->get(route('settings.assignment'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/assignment/index')

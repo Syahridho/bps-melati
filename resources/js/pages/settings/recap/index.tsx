@@ -1,5 +1,5 @@
-import LaporanSettingsView from '@/components/view/dashboard/settings/application/laporan';
+import RecapSettingsView from '@/components/view/dashboard/settings/recap';
 
-export default function LaporanSettingsPage() {
-    return <LaporanSettingsView />;
+export default function RecapSettingsPage() {
+    return <RecapSettingsView />;
 }

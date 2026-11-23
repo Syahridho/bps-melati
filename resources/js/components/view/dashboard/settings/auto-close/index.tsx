@@ -13,7 +13,7 @@ export default function AutoCloseSettingsView() {
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Auto Close',
-            href: route('settings.application.auto-close'),
+            href: route('settings.auto-close'),
         },
     ];
 
@@ -26,7 +26,7 @@ export default function AutoCloseSettingsView() {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        post(route('settings.application.auto-close.update'), {
+        post(route('settings.auto-close.update'), {
             preserveScroll: true,
         });
     };
@@ -42,11 +42,7 @@ export default function AutoCloseSettingsView() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <PengaturanAutoCloseFields data={data} setData={setData} errors={errors} />
 
-                    <SettingsSubmitButton
-                        processing={processing}
-                        recentlySuccessful={recentlySuccessful}
-                        successMessage={flash?.success}
-                    />
+                    <SettingsSubmitButton processing={processing} recentlySuccessful={recentlySuccessful} successMessage={flash?.success} />
                 </form>
             </SettingsLayout>
         </AppLayout>

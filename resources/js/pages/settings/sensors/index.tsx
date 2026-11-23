@@ -1,5 +1,5 @@
 import SensorsSettingsView from '@/components/view/dashboard/settings/sensors';
 
-export default function SensorsPage() {
+export default function SensorsSettingsPage() {
     return <SensorsSettingsView />;
 }

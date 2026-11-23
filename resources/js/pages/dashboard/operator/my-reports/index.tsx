@@ -1,5 +1,5 @@
-import IncomingReportsView from '@/components/view/dashboard/incoming-reports';
+import MyReportView from '@/components/view/dashboard/my-reports';
 
 export default function MyReportsOperatorPage() {
-    return <IncomingReportsView mode="my-reports" />;
+    return <MyReportView mode="my-reports" />;
 }

@@ -60,6 +60,7 @@ export interface MonthlyRecapProps {
     totals: RekapTotals;
     year: string;
     month: string;
+    status?: string;
     years: PeriodOption[];
     months: PeriodOption[];
     periodLabel: string;
@@ -75,6 +76,7 @@ export interface PeriodicRecapProps {
     monthOptions: PeriodOption[];
     periodeLabel: string;
     tampilan: RekapViewMode;
+    status?: string;
     chat?: string;
     chat_limit?: string;
     chat_limit_max?: number;

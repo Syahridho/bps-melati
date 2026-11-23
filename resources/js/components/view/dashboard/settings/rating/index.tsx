@@ -14,13 +14,13 @@ interface RatingSettingChangedEvent {
     changed_at?: string | null;
 }
 
-export default function PenilaianSettingsView() {
+export default function RatingSettingsView() {
     const { ratingEnabled: initialRatingEnabled, auth } = usePage<RatingSettingPageProps>().props;
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Penilaian Pelapor',
-            href: route('settings.application.penilaian'),
+            href: route('settings.rating'),
         },
     ];
 

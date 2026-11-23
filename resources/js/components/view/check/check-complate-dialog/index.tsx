@@ -1,10 +1,12 @@
+import { LoaderCircle } from 'lucide-react';
+
+import { StarRatingInput } from '@/components/molecules/star-rating';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { LoaderCircle, Star } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCompleteForm } from '@/hooks/use-complete-form';
 
 interface CheckCompleteDialogProps {
     open: boolean;
@@ -18,14 +20,6 @@ interface CheckCompleteDialogProps {
     ratingEnabled?: boolean;
 }
 
-const RATING_LABELS: Record<number, string> = {
-    1: 'Sangat kurang',
-    2: 'Kurang',
-    3: 'Cukup',
-    4: 'Baik',
-    5: 'Sangat baik',
-};
-
 export function CheckCompleteDialog({
     open,
     onOpenChange,
@@ -37,46 +31,16 @@ export function CheckCompleteDialog({
     commentMaxLength = 1000,
     ratingEnabled = true,
 }: CheckCompleteDialogProps) {
-    const [accessCode, setAccessCode] = useState(defaultAccessCode);
-    const [rating, setRating] = useState<number | null>(null);
-    const [hoverRating, setHoverRating] = useState<number | null>(null);
-    const [comment, setComment] = useState('');
-
-    useEffect(() => {
-        if (defaultAccessCode) {
-            setAccessCode(defaultAccessCode);
-        } else if (ticketNumber && typeof window !== 'undefined') {
-            try {
-                const stored = sessionStorage.getItem(`ticket_access_code_${ticketNumber}`) || '';
-                if (stored) {
-                    setAccessCode(stored);
-                }
-            } catch {
-                //
-            }
-        }
-    }, [defaultAccessCode, ticketNumber, open]);
-
-    useEffect(() => {
-        if (!open) {
-            setRating(null);
-            setHoverRating(null);
-            setComment('');
-        }
-    }, [open]);
+    const { accessCode, setAccessCode, rating, setRating, comment, setComment, persistAccessCode } = useCompleteForm(
+        open,
+        ticketNumber,
+        defaultAccessCode,
+    );
 
     const handleConfirm = () => {
-        if (ticketNumber && accessCode && typeof window !== 'undefined') {
-            try {
-                sessionStorage.setItem(`ticket_access_code_${ticketNumber}`, accessCode);
-            } catch {
-                //
-            }
-        }
+        persistAccessCode();
         onConfirm(accessCode, rating, comment.trim() === '' ? null : comment.trim());
     };
-
-    const activeRating = hoverRating ?? rating;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -104,45 +68,16 @@ export function CheckCompleteDialog({
                         <p className="text-muted-foreground text-xs">
                             Masukkan kode akses yang diberikan saat laporan dibuat untuk memverifikasi hak penyelesaian laporan.
                         </p>
-                        {error && <p className="text-destructive text-xs">{error}</p>}
                     </div>
                 )}
+
+                {error && <p className="text-destructive text-xs">{error}</p>}
 
                 {ratingEnabled && (
                     <>
                         <div className="space-y-2 py-2">
                             <Label>Rating (opsional)</Label>
-                            <div
-                                role="radiogroup"
-                                aria-label="Rating 1 sampai 5"
-                                className="flex items-center gap-1"
-                                onMouseLeave={() => setHoverRating(null)}
-                            >
-                                {[1, 2, 3, 4, 5].map((value) => {
-                                    const filled = activeRating !== null && value <= activeRating;
-                                    return (
-                                        <button
-                                            key={value}
-                                            type="button"
-                                            role="radio"
-                                            aria-checked={rating === value}
-                                            aria-label={`${value} bintang${rating === value ? ', terpilih' : ''}`}
-                                            className="focus-visible:ring-ring rounded-sm p-1 focus:outline-none focus-visible:ring-2"
-                                            onClick={() => setRating((prev) => (prev === value ? null : value))}
-                                            onMouseEnter={() => setHoverRating(value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === ' ') {
-                                                    e.preventDefault();
-                                                    setRating((prev) => (prev === value ? null : value));
-                                                }
-                                            }}
-                                        >
-                                            <Star className={filled ? 'h-6 w-6 fill-amber-400 text-amber-400' : 'text-muted-foreground h-6 w-6'} />
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <p className="text-muted-foreground h-4 text-xs">{activeRating !== null ? RATING_LABELS[activeRating] : '\u00A0'}</p>
+                            <StarRatingInput value={rating} onChange={setRating} />
                             <p className="text-muted-foreground text-xs">Klik bintang yang sama untuk mengosongkan rating.</p>
                         </div>
 

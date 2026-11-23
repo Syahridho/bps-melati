@@ -1,149 +1,27 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ApiBasicInfoCard } from '@/components/organisms/settings/api-docs/api-basic-info-card';
+import { ApiEndpointItem } from '@/components/organisms/settings/api-docs/api-endpoint-item';
+
+import { ApiErrorCodesTable } from '@/components/organisms/settings/api-docs/api-error-codes-table';
+import { ApiStepsList } from '@/components/organisms/settings/api-docs/api-steps-list';
+import { CodeBlock } from '@/components/organisms/settings/code-block';
+import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { API_ENDPOINTS, API_ERROR_CODES, MOBILE_AUTH_GUIDE, QUICK_START_STEPS, TICKET_NUMBER_NOTE } from '@/lib/api-docs';
+import { API_ENDPOINTS, MOBILE_AUTH_GUIDE, QUICK_START_STEPS, TICKET_NUMBER_NOTE } from '@/lib/api-docs';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { Copy, Headphones, Link as LinkIcon, Lock, Play, ShieldAlert, Terminal } from 'lucide-react';
+import { Headphones, Link as LinkIcon, Lock, Play, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
-import { CodeBlock } from './CodeBlock';
+
+const INTRO = 'text-muted-foreground text-sm';
 
 export default function ApiSettingsView() {
     const { baseUrl, apiKeyHeaderName } = usePage<{ baseUrl: string; apiKeyHeaderName: string }>().props;
     const [activeTab, setActiveTab] = useState('quick-start');
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'API Dokumentasi',
-            href: route('settings.api'),
-        },
-    ];
-
-    const methodBadge = (method: string) => {
-        const variants: Record<string, string> = {
-            GET: 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
-            POST: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800',
-            DELETE: 'bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800',
-        };
-        return (
-            <Badge variant="outline" className={variants[method] ?? 'bg-muted text-muted-foreground'}>
-                {method}
-            </Badge>
-        );
-    };
-
-    const renderParams = (params: (typeof API_ENDPOINTS)[number]['params']) => {
-        if (params.length === 0) {
-            return <p className="text-muted-foreground text-xs">Tidak ada parameter.</p>;
-        }
-
-        return (
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-muted/50 border-b">
-                            <th className="text-muted-foreground w-24 pb-2 text-left font-medium">Nama</th>
-                            <th className="text-muted-foreground w-20 pb-2 text-left font-medium">Lokasi</th>
-                            <th className="text-muted-foreground w-20 pb-2 text-left font-medium">Tipe</th>
-                            <th className="text-muted-foreground w-16 pb-2 text-left font-medium">Wajib</th>
-                            <th className="text-muted-foreground pb-2 text-left font-medium">Deskripsi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {params.map((param) => (
-                            <tr key={param.name} className="border-muted/50 border-b last:border-0">
-                                <td className="pb-3 font-mono text-xs">{param.name}</td>
-                                <td className="pb-3 text-xs">
-                                    <Badge variant="outline" className="h-5 w-fit px-1.5">
-                                        {param.location}
-                                    </Badge>
-                                </td>
-                                <td className="pb-3 font-mono text-xs">{param.type}</td>
-                                <td className="pb-3 text-xs">
-                                    {param.required ? (
-                                        <span className="font-medium text-emerald-600 dark:text-emerald-400">Ya</span>
-                                    ) : (
-                                        <span className="text-muted-foreground">Tidak</span>
-                                    )}
-                                </td>
-                                <td className="pb-3 text-xs">{param.description}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        );
-    };
-
-    const renderEndpointItem = (endpoint: (typeof API_ENDPOINTS)[number]) => {
-        return (
-            <AccordionItem key={endpoint.id} value={endpoint.id}>
-                <AccordionTrigger className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold">{endpoint.title}</span>
-                        <span className="text-muted-foreground text-xs font-medium">{endpoint.path}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {methodBadge(endpoint.method)}
-                        <Badge variant="outline" className="text-xs">
-                            {endpoint.auth === 'api-key' ? 'API Key' : endpoint.auth === 'bearer' ? 'Bearer' : 'Tidak perlu'}
-                        </Badge>
-                        {endpoint.rateLimit && (
-                            <Badge variant="secondary" className="text-xs">
-                                {endpoint.rateLimit}
-                            </Badge>
-                        )}
-                    </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                    <p className="text-muted-foreground mb-4 text-sm">{endpoint.description}</p>
-
-                    <div className="space-y-4">
-                        <div className="border-muted/50 rounded-lg border p-4">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-semibold">Parameter</CardTitle>
-                            </CardHeader>
-                            <CardContent>{renderParams(endpoint.params)}</CardContent>
-                        </div>
-
-                        <div className="space-y-2">
-                            <h4 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Contoh Respons Sukses</h4>
-                            <CodeBlock code={endpoint.success.body} label="200/201" language="json" />
-                        </div>
-
-                        {endpoint.errors.length > 0 && (
-                            <div className="space-y-2">
-                                <h4 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Contoh Respons Error</h4>
-                                {endpoint.errors.map((err: (typeof API_ENDPOINTS)[number]['errors'][number], i: number) => (
-                                    <div key={i} className="border-muted/50 bg-muted/50 dark:bg-muted/30 rounded-lg border p-3">
-                                        <p className="text-destructive mb-1 text-xs font-medium dark:text-rose-400">
-                                            {err.statusCode} – {err.description}
-                                        </p>
-                                        <CodeBlock code={err.body} label="Error" language="json" />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="space-y-2">
-                            <h4 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">Contoh Kode</h4>
-                            {endpoint.codeExamples.map((ex: (typeof API_ENDPOINTS)[number]['codeExamples'][number], i: number) => (
-                                <div key={i} className="border-muted/50 bg-muted/50 dark:bg-muted/30 rounded-lg border p-3">
-                                    <p className="text-muted-foreground mb-2 text-xs font-medium">{ex.label}</p>
-                                    <CodeBlock code={ex.code} label={ex.label} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        );
-    };
+    const breadcrumbs: BreadcrumbItem[] = [{ title: 'API Dokumentasi', href: route('settings.api') }];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -153,51 +31,8 @@ export default function ApiSettingsView() {
                 description="Referensi lengkap untuk integrasi aplikasi klien (Flutter, sistem eksternal, dll) dengan API Melati."
             >
                 <div className="space-y-6">
-                    {/* Card Informasi Dasar */}
-                    <Card className="overflow-hidden">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Terminal className="h-5 w-5 shrink-0" />
-                                Informasi Dasar
-                            </CardTitle>
-                            <CardDescription>
-                                Konfigurasi dasar untuk mengakses API. Semua request harus menyertakan header
-                                {apiKeyHeaderName} dengan nilai API key yang valid.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div className="border-muted/50 rounded-lg border p-4">
-                                    <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">Base URL</p>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-mono text-sm break-all">{baseUrl}</span>
-                                        <Button variant="outline" size="icon" className="h-8 w-8">
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div className="border-muted/50 rounded-lg border p-4">
-                                    <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">Header API Key</p>
-                                    <span className="font-mono text-sm">{apiKeyHeaderName}</span>
-                                </div>
-                                <div className="border-muted/50 rounded-lg border p-4">
-                                    <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">Content-Type</p>
-                                    <span className="font-mono text-sm">application/json</span>
-                                </div>
-                                <div className="border-muted/50 rounded-lg border p-4">
-                                    <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">Rate Limit</p>
-                                    <ul className="text-muted-foreground space-y-1 text-sm">
-                                        <li>Tiket baru: 5/menit</li>
-                                        <li>Cek tiket: 20/menit</li>
-                                        <li>Balas/Selesaikan: 10/menit</li>
-                                        <li>Login token: 10/menit</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <ApiBasicInfoCard baseUrl={baseUrl} apiKeyHeaderName={apiKeyHeaderName} />
 
-                    {/* Alert Keamanan */}
                     <Alert variant="destructive">
                         <ShieldAlert className="h-4 w-4 shrink-0" />
                         <AlertTitle>Peringatan Keamanan</AlertTitle>
@@ -208,7 +43,6 @@ export default function ApiSettingsView() {
                         </AlertDescription>
                     </Alert>
 
-                    {/* Tabs Besar */}
                     <div className="space-y-4">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <TabsList className="w-full justify-start">
@@ -226,38 +60,19 @@ export default function ApiSettingsView() {
                                 </TabsTrigger>
                             </TabsList>
 
-                            {/* Tab: Panduan Cepat */}
                             <TabsContent value="quick-start" className="space-y-4">
-                                <p className="text-muted-foreground text-sm">
-                                    Ikuti langkah-langkah berikut untuk mulai mengintegrasikan aplikasi Anda dengan API Melati.
-                                </p>
-                                {QUICK_START_STEPS.map((step) => (
-                                    <div key={step.step} className="flex gap-3">
-                                        <div className="flex-shrink-0">
-                                            <Badge variant="secondary" className="flex h-8 w-8 items-center justify-center">
-                                                {step.step}
-                                            </Badge>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-semibold">{step.title}</h4>
-                                            <p className="text-muted-foreground text-sm">{step.description}</p>
-                                            {step.endpoint && (
-                                                <p className="text-muted-foreground mt-1 font-mono text-xs">
-                                                    Endpoint: {API_ENDPOINTS.find((e) => e.id === step.endpoint)?.path}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                <p className={INTRO}>Ikuti langkah-langkah berikut untuk mulai mengintegrasikan aplikasi Anda dengan API Melati.</p>
+                                <ApiStepsList steps={QUICK_START_STEPS} />
                             </TabsContent>
 
-                            {/* Tab: Referensi Endpoint */}
                             <TabsContent value="endpoints" className="space-y-4">
-                                <p className="text-muted-foreground text-sm">
+                                <p className={INTRO}>
                                     Setiap endpoint dijelaskan lengkap dengan parameter, contoh respons, dan kode dalam berbagai bahasa.
                                 </p>
                                 <Accordion type="multiple" className="w-full space-y-1">
-                                    {API_ENDPOINTS.map(renderEndpointItem)}
+                                    {API_ENDPOINTS.map((endpoint) => (
+                                        <ApiEndpointItem key={endpoint.id} endpoint={endpoint} />
+                                    ))}
                                 </Accordion>
                                 <div className="border-muted/50 bg-muted/50 dark:bg-muted/30 rounded-lg border p-4">
                                     <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">Catatan Nomor Tiket</h4>
@@ -268,62 +83,16 @@ export default function ApiSettingsView() {
                                 </div>
                             </TabsContent>
 
-                            {/* Tab: Autentikasi Mobile */}
                             <TabsContent value="mobile-auth" className="space-y-4">
-                                <p className="text-muted-foreground text-sm">
+                                <p className={INTRO}>
                                     Panduan untuk klien mobile (Flutter/Android) menggunakan autentikasi Bearer token via Sanctum.
                                 </p>
-                                {MOBILE_AUTH_GUIDE.map((step) => (
-                                    <div key={step.step} className="flex gap-3">
-                                        <div className="flex-shrink-0">
-                                            <Badge variant="secondary" className="flex h-8 w-8 items-center justify-center">
-                                                {step.step}
-                                            </Badge>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-semibold">{step.title}</h4>
-                                            <p className="text-muted-foreground text-sm">{step.description}</p>
-                                            {step.endpoint && (
-                                                <p className="text-muted-foreground mt-1 font-mono text-xs">
-                                                    Endpoint: {API_ENDPOINTS.find((e) => e.id === step.endpoint)?.path}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                <ApiStepsList steps={MOBILE_AUTH_GUIDE} />
                             </TabsContent>
 
-                            {/* Tab: Kode Error */}
                             <TabsContent value="errors" className="space-y-4">
-                                <p className="text-muted-foreground text-sm">
-                                    Daftar kode respons error yang dapat dikembalikan API dan cara menangani masing-masing.
-                                </p>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-muted/50 border-b">
-                                                <th className="text-muted-foreground w-16 pb-2 text-left font-medium">Kode</th>
-                                                <th className="text-muted-foreground w-24 pb-2 text-left font-medium">Nama</th>
-                                                <th className="text-muted-foreground pb-2 text-left font-medium">Deskripsi</th>
-                                                <th className="text-muted-foreground w-32 pb-2 text-left font-medium">Contoh Body</th>
-                                                <th className="text-muted-foreground pb-2 text-left font-medium">Catatan</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {API_ERROR_CODES.map((err) => (
-                                                <tr key={err.code} className="border-muted/50 border-b last:border-0">
-                                                    <td className="pb-3 font-mono text-xs">{err.code}</td>
-                                                    <td className="pb-3 text-xs font-medium">{err.name}</td>
-                                                    <td className="pb-3 text-xs">{err.description}</td>
-                                                    <td className="text-muted-foreground max-w-40 truncate pb-3 font-mono text-xs">
-                                                        {err.exampleBody}
-                                                    </td>
-                                                    <td className="pb-3 text-xs">{err.note ?? '-'}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <p className={INTRO}>Daftar kode respons error yang dapat dikembalikan API dan cara menangani masing-masing.</p>
+                                <ApiErrorCodesTable />
                             </TabsContent>
                         </Tabs>
                     </div>
