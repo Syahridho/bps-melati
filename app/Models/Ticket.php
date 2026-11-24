@@ -330,7 +330,9 @@ class Ticket extends Model
 
     public function accessCodeMatches(?string $code): bool
     {
-        if (! static::accessCodeRequired()) {
+        // Kode akses bersifat opsional: bila tidak dikirim, aksi tetap diizinkan.
+        // Bila dikirim, harus cocok dengan kode yang tersimpan.
+        if (blank($code)) {
             return true;
         }
 

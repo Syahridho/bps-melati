@@ -174,3 +174,42 @@ test('can reply and complete ticket via api', function () {
     $ticket->refresh();
     expect($ticket->status)->toBe('selesai');
 });
+
+test('can reply and complete ticket via api without access_code', function () {
+    $ticket = Ticket::create([
+        'ticket_number' => 'P-1400/102026/FL03',
+        'period' => '102026',
+        'sequence' => 3,
+        'classification' => 'pengaduan',
+        'title' => 'Balas Tanpa Kode',
+        'content' => 'Isi laporan tiket tanpa kode akses',
+        'channel_id' => $this->channel->id,
+        'status' => 'respon_awal',
+    ]);
+
+    $replyResponse = $this->withHeader('X-API-KEY', $this->apiKey)
+        ->postJson("/api/check/{$ticket->ticket_number}/reply", [
+            'message' => 'Balasan tanpa kode akses.',
+        ]);
+
+    $replyResponse->assertStatus(201)
+        ->assertJsonPath('success', true);
+
+    $completeResponse = $this->withHeader('X-API-KEY', $this->apiKey)
+        ->postJson("/api/check/{$ticket->ticket_number}/complete", []);
+
+    $completeResponse->assertStatus(200)
+        ->assertJsonPath('success', true);
+
+    $ticket->refresh();
+    expect($ticket->status)->toBe('selesai');
+});
+
+test('reply on missing ticket returns 404', function () {
+    $response = $this->withHeader('X-API-KEY', $this->apiKey)
+        ->postJson('/api/check/TIDAK-ADA/reply', [
+            'message' => 'Pesan percobaan.',
+        ]);
+
+    $response->assertStatus(404);
+});

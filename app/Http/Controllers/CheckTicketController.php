@@ -164,7 +164,7 @@ class CheckTicketController extends Controller
         }
 
         $validated = $request->validate([
-            'access_code' => [Ticket::accessCodeRequired() ? 'required' : 'nullable', 'string'], 
+            'access_code' => ['nullable', 'string'],
             'message' => ['required', 'string', 'min:5'],
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
@@ -198,7 +198,7 @@ class CheckTicketController extends Controller
         $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
 
         $validated = $request->validate([
-            'access_code' => [Ticket::accessCodeRequired() ? 'required' : 'nullable', 'string'], 
+            'access_code' => ['nullable', 'string'],
             'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:'.$this->ratingCommentMax()],
         ]);

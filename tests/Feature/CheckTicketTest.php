@@ -118,7 +118,7 @@ test('reporter can reply on check page using existing ticket', function () {
     ]);
 });
 
-test('reproduksi payload frontend tanpa access_code gagal validasi dengan redirect 302', function () {
+test('balas tanpa access_code berhasil (opsional)', function () {
     $ticket = Ticket::create([
         'ticket_number' => 'A-1400/092026/0199',
         'period' => '2026-09',
@@ -133,14 +133,14 @@ test('reproduksi payload frontend tanpa access_code gagal validasi dengan redire
         'source_app' => 'web',
     ]);
 
-    // Request seperti payload di DevTools: hanya message dan attachments: []
+    // Request tanpa access_code: harus berhasil karena kode akses opsional.
     $response = $this->post(route('tickets.check.reply', ['ticketNumber' => $ticket->ticket_number]), [
         'message' => 'asdasdasdasdasdasd',
         'attachments' => [],
     ]);
 
-    $response->assertStatus(302);
-    $response->assertSessionHasErrors(['access_code']);
+    $response->assertRedirect();
+    $response->assertSessionHas('flash.success');
 });
 
 test('balasan ditolak pada tiket berstatus selesai', function () {
