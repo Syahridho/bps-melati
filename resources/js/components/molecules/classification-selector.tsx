@@ -10,7 +10,7 @@ interface ClassificationSelectorProps {
 
 export function ClassificationSelector({ value, onChange }: ClassificationSelectorProps) {
     return (
-        <div role="radiogroup" aria-labelledby="jenis-label" className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div role="radiogroup" aria-labelledby="jenis-label" className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-3">
             {CLASSIFICATIONS.map((option) => {
                 const selected = value === option.value;
                 return (
@@ -21,7 +21,7 @@ export function ClassificationSelector({ value, onChange }: ClassificationSelect
                         aria-checked={selected}
                         onClick={() => onChange(option.value)}
                         className={cn(
-                            'focus-visible:ring-ring/50 flex h-12 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px]',
+                            'focus-visible:ring-ring/50 flex h-11 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] sm:h-12',
                             selected ? 'border-primary bg-primary/5 text-primary ring-primary ring-1' : 'bg-card hover:bg-accent',
                         )}
                     >

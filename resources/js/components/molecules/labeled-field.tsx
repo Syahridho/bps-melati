@@ -14,7 +14,7 @@ interface LabeledFieldProps {
 
 export function LabeledField({ id, label, hint, error, description, children }: LabeledFieldProps) {
     return (
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
             <div className="flex items-center gap-1.5">
                 <Label htmlFor={id}>{label}</Label>
                 {hint && <InfoHint side="right">{hint}</InfoHint>}

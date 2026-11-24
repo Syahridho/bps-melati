@@ -3,7 +3,7 @@ import { ALUR_STEPS } from '@/lib/welcome-constants';
 
 export function ReportingFlow() {
     return (
-        <section aria-labelledby="alur-title" className="mx-auto w-full max-w-5xl rounded-lg px-4 py-10 md:py-14">
+        <section aria-labelledby="alur-title" className="mx-auto mt-12 w-full max-w-5xl rounded-lg px-4 py-10 md:py-24">
             <div className="mx-auto mb-8 max-w-2xl space-y-2 text-center md:mb-12">
                 <h3 id="alur-title" className="text-xl font-bold tracking-tight sm:text-2xl">
                     Bagaimana Alur Pelaporan?

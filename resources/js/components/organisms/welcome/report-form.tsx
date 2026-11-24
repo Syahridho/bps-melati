@@ -38,16 +38,16 @@ export function WelcomeReportForm({ data, setData, processing, errors, onSubmit,
             {/* soft glow pooled beneath the card so it reads as floating on the band; dissolves gradually below (decorative) */}
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -inset-x-8 top-10 -bottom-32 -z-10 [background-image:radial-gradient(52%_55%_at_50%_62%,rgba(0,95,182,0.11),transparent_100%)] [mask-image:linear-gradient(to_bottom,black_30%,black_70%,transparent_98%)] dark:[background-image:radial-gradient(52%_55%_at_50%_62%,rgba(28,118,225,0.18),transparent_100%)]"
+                className="pointer-events-none absolute -inset-x-4 top-10 -bottom-32 -z-10 sm:-inset-x-8 [background-image:radial-gradient(52%_55%_at_50%_62%,rgba(0,95,182,0.11),transparent_100%)] [mask-image:linear-gradient(to_bottom,black_30%,black_70%,transparent_98%)] dark:[background-image:radial-gradient(52%_55%_at_50%_62%,rgba(28,118,225,0.18),transparent_100%)]"
             />
-            <div className="shadow-primary/10 dark:shadow-primary/20 rounded-lg [background-image:linear-gradient(160deg,rgba(0,95,182,0.5),rgba(0,95,182,0.12)_30%,rgba(0,95,182,0.05)_55%,rgba(0,95,182,0.02)_100%)] p-px shadow-lg dark:[background-image:linear-gradient(160deg,rgba(64,150,255,0.55),rgba(64,150,255,0.12)_30%,rgba(64,150,255,0.05)_55%,rgba(64,150,255,0.03)_100%)]">
+            <div className="shadow-none rounded-lg [background-image:linear-gradient(160deg,rgba(0,95,182,0.5),rgba(0,95,182,0.12)_30%,rgba(0,95,182,0.05)_55%,rgba(0,95,182,0.02)_100%)] p-px sm:shadow-lg dark:[background-image:linear-gradient(160deg,rgba(64,150,255,0.55),rgba(64,150,255,0.12)_30%,rgba(64,150,255,0.05)_55%,rgba(64,150,255,0.03)_100%)]">
                 <Card className="bg-card/85 dark:bg-card/80 rounded-[7px] border-0 shadow-none backdrop-blur-sm">
-                    <CardHeader className="from-primary/5 dark:from-primary/[0.09] rounded-t-[6px] bg-gradient-to-b to-transparent">
+                    <CardHeader className="from-primary/5 dark:from-primary/[0.09] rounded-t-[6px] bg-gradient-to-b to-transparent p-4 sm:p-6">
                         <CardTitle>Formulir Laporan</CardTitle>
                         <CardDescription>Pilih jenis laporan, lalu lengkapi detailnya.</CardDescription>
                     </CardHeader>
 
-                    <CardContent className="space-y-8">
+                    <CardContent className="space-y-6 p-4 pt-0 sm:space-y-8 sm:p-6 sm:pt-0">
                         {/* Jenis laporan */}
                         <div ref={typeSectionRef}>
                             <ClassificationSelector value={data.classification} onChange={(v) => setData('classification', v)} />
@@ -60,7 +60,7 @@ export function WelcomeReportForm({ data, setData, processing, errors, onSubmit,
                             onClickCapture={() => {
                                 ensureTypeSelected();
                             }}
-                            className="space-y-8"
+                            className="space-y-6 sm:space-y-8"
                         >
                             {/* Identitas pelapor */}
                             <ReporterFields data={data} setData={setData} errors={errors} />
@@ -79,8 +79,8 @@ export function WelcomeReportForm({ data, setData, processing, errors, onSubmit,
                         </div>
                     </CardContent>
 
-                    <CardFooter className="flex justify-end gap-3 pt-6">
-                        <Button type="submit" disabled={processing} className={cn('w-full sm:w-auto', !data.classification && 'opacity-60')}>
+                    <CardFooter className="flex justify-end gap-3 pt-4 sm:pt-6">
+                        <Button type="submit" disabled={processing} className={cn('h-11 w-full sm:h-10 sm:w-auto', !data.classification && 'opacity-60')}>
                             {processing && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
                             Kirim Laporan
                         </Button>

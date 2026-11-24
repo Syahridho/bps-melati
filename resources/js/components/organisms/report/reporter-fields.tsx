@@ -10,9 +10,10 @@ interface ReporterFieldsProps {
 
 export function ReporterFields({ data, setData, errors }: ReporterFieldsProps) {
     return (
-        <div className="!mb-4 space-y-4">
+        <div className="!mb-3 space-y-3 sm:!mb-4 sm:space-y-4">
             <LabeledField id="nama" label="Nama" hint="Opsional" error={errors.reporter_name}>
                 <Input
+                    className="h-11 md:h-10"
                     id="nama"
                     placeholder="Masukkan nama"
                     autoComplete="off"
@@ -24,6 +25,7 @@ export function ReporterFields({ data, setData, errors }: ReporterFieldsProps) {
             </LabeledField>
             <LabeledField id="email" label="Email" hint="Opsional" error={errors.reporter_email}>
                 <Input
+                    className="h-11 md:h-10"
                     id="email"
                     type="email"
                     placeholder="nama@email.com"
@@ -36,6 +38,7 @@ export function ReporterFields({ data, setData, errors }: ReporterFieldsProps) {
             </LabeledField>
             <LabeledField id="wa" label="WhatsApp" hint="Opsional" error={errors.reporter_wa}>
                 <Input
+                    className="h-11 md:h-10"
                     id="wa"
                     type="tel"
                     inputMode="numeric"

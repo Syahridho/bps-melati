@@ -40,9 +40,9 @@ export function ReportDetailFields({ data, setData, errors }: ReportDetailFields
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
             {!data.classification ? (
-                <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
+                <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-sm sm:p-6">
                     Pilih jenis laporan terlebih dahulu untuk mengisi detailnya.
                 </div>
             ) : (
@@ -64,7 +64,7 @@ export function ReportDetailFields({ data, setData, errors }: ReportDetailFields
                                 id="tanggal"
                                 type="date"
                                 max={today}
-                                className="w-full cursor-pointer"
+                                className="h-11 w-full cursor-pointer md:h-10"
                                 value={data.tanggal_kejadian}
                                 onChange={(e) => handleTanggalKejadianChange(e.target.value)}
                                 onClick={openPicker}
@@ -78,6 +78,7 @@ export function ReportDetailFields({ data, setData, errors }: ReportDetailFields
                             Judul {selectedLabel?.toLowerCase()} <span className="text-destructive">*</span>
                         </Label>
                         <Input
+                            className="h-11 md:h-10"
                             id="judul"
                             placeholder={`Tuliskan judul ${selectedLabel?.toLowerCase()} Anda`}
                             autoComplete="off"
@@ -93,6 +94,7 @@ export function ReportDetailFields({ data, setData, errors }: ReportDetailFields
                             Isi {selectedLabel?.toLowerCase()} <span className="text-destructive">*</span>
                         </Label>
                         <Textarea
+                            className="min-h-[120px] sm:min-h-[160px]"
                             id="isi"
                             placeholder={`Tuliskan isi ${selectedLabel?.toLowerCase()} Anda`}
                             rows={6}

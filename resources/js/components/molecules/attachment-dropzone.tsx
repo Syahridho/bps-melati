@@ -199,7 +199,7 @@ export function AttachmentDropzone({
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 className={cn(
-                    'border rounded-lg flex flex-col items-center justify-center gap-2 px-4 py-4 text-sm transition-all duration-200',
+                    'border rounded-lg flex flex-col items-center justify-center gap-2 px-4 py-3 text-sm transition-all duration-200 sm:py-4',
                     disabled || isFull
                         ? 'border-dashed border-muted cursor-not-allowed opacity-60'
                         : isDragActive

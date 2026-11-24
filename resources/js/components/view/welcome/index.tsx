@@ -41,7 +41,7 @@ export default function WelcomeView() {
             <div className="bg-muted/30 text-foreground flex min-h-screen flex-col overflow-x-clip">
                 <WelcomeHeader user={auth.user} />
 
-                <main className="mx-auto max-w-5xl flex-1 px-4 pt-8 pb-12 sm:px-6 sm:pt-12">
+                <main className="mx-auto max-w-5xl flex-1 px-4 pt-6 pb-10 sm:px-6 sm:pt-12">
                     <div className="relative isolate">
                         <WelcomeBackdrop />
 

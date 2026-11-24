@@ -21,7 +21,7 @@ export function AttachmentField({
     const fieldErrors = errors as Record<string, string | undefined>;
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
             <div className="space-y-1">
                 <div className="flex items-center gap-1.5">
                     <h3 className="text-sm font-semibold">Lampiran</h3>
