@@ -17,12 +17,22 @@ export interface ChannelGroup {
     children: ChannelChild[];
 }
 
+export interface AndroidReleaseMeta {
+    available: boolean;
+    version: string;
+    size_bytes: number;
+    released_at: string | null;
+    release_notes: string | null;
+    checksum_sha256: string;
+}
+
 export interface WelcomePageProps extends SharedData {
     flash: {
         ticket_number?: string;
     };
     channels: ChannelGroup[];
     stats: PublicStats;
+    androidRelease?: AndroidReleaseMeta | null;
 }
 
 export type ClassificationType = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';

@@ -18,10 +18,12 @@ use App\Http\Controllers\Dashboard\TicketAssignmentController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\WelcomeController;
+use App\Http\Controllers\AndroidDownloadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', WelcomeController::class)->name('home');
+Route::get('/unduh/android', AndroidDownloadController::class)->middleware('throttle:30,1')->name('android.download');
 
 Route::post('/tickets', [TicketController::class, 'store'])->middleware('throttle:ticket-store')->name('tickets.store');
 Route::get('/check', CheckTicketController::class)->middleware('throttle:ticket-check')->name('tickets.check');

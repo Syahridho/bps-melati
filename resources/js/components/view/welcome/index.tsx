@@ -19,7 +19,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 
 export default function WelcomeView() {
-    const { auth, flash } = usePage<WelcomePageProps>().props;
+    const { auth, flash, androidRelease } = usePage<WelcomePageProps>().props;
 
     const { data, setData, processing, errors, reset, previewFile, setPreviewFile, previewUrl, handleSubmit, removeFile } = useWelcomeForm();
 
@@ -66,7 +66,7 @@ export default function WelcomeView() {
                     <RelatedServices />
                 </main>
 
-                <FooterSection />
+                <FooterSection androidRelease={androidRelease} />
             </div>
 
             <TicketSuccessDialog open={showDialog} ticketNumber={ticketNumber} copied={copied} onCopy={handleCopy} onClose={handleDialogClose} />

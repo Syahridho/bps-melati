@@ -1,6 +1,16 @@
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
-import { ReactNode } from 'react';
+import { ChevronDown, Download, Smartphone } from 'lucide-react';
+import { ReactNode, useState } from 'react';
 
 interface FooterLink {
     label: string;
@@ -71,12 +81,43 @@ function LinkColumn({ title, links }: LinkColumnProps) {
     );
 }
 
-interface BpsFooterProps {
-    className?: string;
+interface AndroidReleaseMeta {
+    available: boolean;
+    version: string;
+    size_bytes: number;
+    released_at: string | null;
+    release_notes: string | null;
+    checksum_sha256: string;
 }
 
-export function FooterSection({ className }: BpsFooterProps) {
+interface BpsFooterProps {
+    className?: string;
+    androidRelease?: AndroidReleaseMeta | null;
+}
+
+function formatBytes(bytes: number): string {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function formatDate(iso: string | null): string {
+    if (!iso) return '-';
+    try {
+        return new Date(iso).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        });
+    } catch {
+        return iso;
+    }
+}
+
+export function FooterSection({ className, androidRelease }: BpsFooterProps) {
+    const [open, setOpen] = useState(false);
+    const available = !!androidRelease?.available;
     return (
+        <>
         <footer className={cn('bg-footer dark:bg-muted text-footer-muted border-footer-border mt-auto w-full border-t py-10 lg:py-12', className)}>
             <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
                 <div className="flex flex-col gap-8 lg:flex-row lg:justify-between">
@@ -123,7 +164,55 @@ export function FooterSection({ className }: BpsFooterProps) {
                         </div>
 
                         <div className="w-full lg:w-auto">
-                            <LinkColumn title="Tentang Kami" links={TENTANG_KAMI_LINKS} />
+                            <nav aria-label="Tentang Kami" className="flex flex-col gap-3">
+                                <h3 className="text-footer-foreground text-sm font-semibold tracking-wide">Tentang Kami</h3>
+                                <ul className="flex flex-col gap-1">
+                                    {TENTANG_KAMI_LINKS.filter((l) => l.label !== 'Masuk').map((link) => {
+                                        const isInternal = link.href.startsWith('/');
+                                        return (
+                                            <li key={link.href}>
+                                                {isInternal ? (
+                                                    <Link
+                                                        href={link.href}
+                                                        className="text-footer-muted hover:text-footer-accent focus-visible:ring-ring/50 inline-block rounded-sm py-1 text-sm underline-offset-4 transition-colors outline-none hover:underline focus-visible:ring-[3px]"
+                                                    >
+                                                        {link.label}
+                                                    </Link>
+                                                ) : (
+                                                    <a
+                                                        href={link.href}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-footer-muted hover:text-footer-accent focus-visible:ring-ring/50 inline-block rounded-sm py-1 text-sm underline-offset-4 transition-colors outline-none hover:underline focus-visible:ring-[3px]"
+                                                    >
+                                                        {link.label}
+                                                    </a>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
+                                    <li className="flex flex-wrap items-center gap-2">
+                                        <Link
+                                            href="/login"
+                                            className="text-footer-muted hover:text-footer-accent focus-visible:ring-ring/50 inline-block rounded-sm py-1 text-sm underline-offset-4 transition-colors outline-none hover:underline focus-visible:ring-[3px]"
+                                        >
+                                            Masuk
+                                        </Link>
+                                        {available && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 gap-1 px-2 text-xs"
+                                                onClick={() => setOpen(true)}
+                                            >
+                                                <Smartphone className="h-3.5 w-3.5" />
+                                                Unduh Android
+                                            </Button>
+                                        )}
+                                    </li>
+                                </ul>
+                            </nav>
                         </div>
                     </div>
                 </div>
@@ -134,5 +223,64 @@ export function FooterSection({ className }: BpsFooterProps) {
                 </div>
             </div>
         </footer>
-    );
+
+        {available && androidRelease && (
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Unduh Aplikasi Melati untuk Android</DialogTitle>
+                        <DialogDescription>
+                            Layanan pengaduan, aspirasi, dan permintaan informasi dari ponsel Anda.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-3 text-sm">
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <span className="text-muted-foreground">Versi:</span>{' '}
+                                <span className="font-medium">{androidRelease.version}</span>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground">Ukuran:</span>{' '}
+                                <span className="font-medium">{formatBytes(androidRelease.size_bytes)}</span>
+                            </div>
+                            <div className="col-span-2">
+                                <span className="text-muted-foreground">Tanggal rilis:</span>{' '}
+                                <span className="font-medium">{formatDate(androidRelease.released_at)}</span>
+                            </div>
+                        </div>
+                        {androidRelease.release_notes && (
+                            <p className="text-muted-foreground">{androidRelease.release_notes}</p>
+                        )}
+                        <Button asChild className="w-full">
+                            <a href={route('android.download')} download>
+                                <Download className="mr-2 h-4 w-4" />
+                                Unduh APK
+                            </a>
+                        </Button>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                            <p className="font-medium">Cara pasang:</p>
+                            <ol className="list-decimal space-y-0.5 pl-4">
+                                <li>Unduh APK.</li>
+                                <li>Buka file.</li>
+                                <li>Izinkan “Pasang dari sumber tidak dikenal” bila diminta.</li>
+                                <li>Pasang.</li>
+                            </ol>
+                        </div>
+                        <Collapsible>
+                            <CollapsibleTrigger className="flex w-full items-center justify-between text-xs font-medium">
+                                <span>Checksum SHA-256</span>
+                                <ChevronDown className="h-3.5 w-3.5" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <code className="bg-muted mt-1 block break-all rounded px-2 py-1 text-xs">
+                                    {androidRelease.checksum_sha256}
+                                </code>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        )}
+    </>
+);
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Dashboard\NotificationController;
 use App\Http\Controllers\Dashboard\SettingController;
 use App\Http\Controllers\Settings\ApiController;
+use App\Http\Controllers\Settings\AndroidController;
 use App\Http\Controllers\Settings\AssignmentModeController;
 use App\Http\Controllers\Settings\AuditFlagController;
 use App\Http\Controllers\Settings\AuditLogController;
@@ -30,6 +31,10 @@ Route::middleware(['auth', 'role:admin,operator'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
+
+    Route::get('settings/application', function () {
+        return redirect()->route('settings.assignment');
+    });
 
     // Pengaturan Penugasan
     Route::get('settings/assignment', [SettingController::class, 'assignment'])->name('settings.assignment');
@@ -62,6 +67,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->names(['index' => 'settings.sumber-kanal.index', 'store' => 'settings.sumber-kanal.store', 'update' => 'settings.sumber-kanal.update', 'destroy' => 'settings.sumber-kanal.destroy']);
     Route::get('settings/sensors', [SensorController::class, 'index'])->name('settings.sensors.index');
     Route::post('settings/sensors', [SensorController::class, 'store'])->name('settings.sensors.store');
+
+    // Pengaturan Aplikasi Android
+    Route::get('settings/android', [AndroidController::class, 'index'])->name('settings.android');
+    Route::post('settings/android', [AndroidController::class, 'store'])->name('settings.android.store');
+    Route::delete('settings/android/{androidRelease}', [AndroidController::class, 'destroy'])->name('settings.android.destroy');
     Route::post('settings/sensors/bulk', [SensorController::class, 'bulkStore'])->name('settings.sensors.bulk');
     Route::put('settings/sensors/{censoredWord}', [SensorController::class, 'update'])->name('settings.sensors.update');
     Route::patch('settings/sensors/{censoredWord}/toggle', [SensorController::class, 'toggle'])->name('settings.sensors.toggle');
