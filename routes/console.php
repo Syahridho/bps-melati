@@ -38,3 +38,15 @@ Schedule::command('auth:prune-logs')->dailyAt('02:15');
 
 // Snapshot metrik Horizon setiap 5 menit untuk grafik di dashboard.
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
+
+// Impor komentar media sosial resmi BPS Riau menjadi tiket Input Data.
+foreach (['youtube', 'facebook', 'instagram'] as $platform) {
+    Schedule::command("social:import {$platform}")
+        ->everyFiveMinutes()
+        ->timezone('Asia/Jakarta')
+        ->onOneServer()
+        ->withoutOverlapping(5)
+        ->onFailure(function (string $message) use ($platform): void {
+            \Illuminate\Support\Facades\Log::error("Jadwal social:import {$platform} gagal dijalankan.", ['message' => $message]);
+        });
+}

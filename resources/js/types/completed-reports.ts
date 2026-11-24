@@ -88,6 +88,7 @@ export interface ShowProps extends SharedData {
         rating: number | null;
         rating_comment: string | null;
         rating_comment_original?: string | null;
+        has_any_profanity?: boolean;
         rated_at: string | null;
         attachments: Attachment[];
         responses: TicketResponseItem[];

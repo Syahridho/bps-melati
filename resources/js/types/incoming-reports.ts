@@ -227,6 +227,7 @@ export interface TicketDetail {
     title_original?: string | null;
     content_original?: string | null;
     has_profanity?: boolean;
+    has_any_profanity?: boolean;
     attachments: Attachment[];
     responses: TicketResponseItem[];
 }

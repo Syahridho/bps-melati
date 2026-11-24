@@ -94,3 +94,54 @@ test('halaman admin default tersensor, has_profanity true, dan teks asli hanya u
             ->where('ticket.content_original', 'Isi laporan yang mengandung kata anjing dan memek.')
         );
 });
+
+
+test('switch sensor tidak perlu muncul untuk laporan bersih', function () {
+    $ticket = Ticket::create([
+        'ticket_number' => 'L-1400/112026/AA002',
+        'period' => '2026-11',
+        'sequence' => 2,
+        'classification' => 'pengaduan',
+        'channel_id' => $this->channel->id,
+        'title' => 'Judul laporan bersih',
+        'content' => 'Isi laporan tanpa kata kasar.',
+        'status' => 'baru',
+        'source_app' => 'web',
+    ]);
+
+    $this->actingAs($this->admin)
+        ->get(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('ticket.has_any_profanity', false)
+        );
+});
+
+test('switch sensor muncul jika kata kasar hanya di balasan', function () {
+    $ticket = profaneTicket(['title' => 'Judul bersih', 'content' => 'Isi bersih.']);
+    $ticket->responses()->create([
+        'type' => 'respon_awal',
+        'message' => 'Balasan mengandung kata anjing.',
+        'sent_at' => now(),
+    ]);
+
+    $this->actingAs($this->admin)
+        ->get(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('ticket.has_profanity', false)
+            ->where('ticket.has_any_profanity', true)
+        );
+});
+
+test('switch sensor muncul jika kata kasar hanya di komentar rating', function () {
+    $ticket = profaneTicket(['title' => 'Judul bersih', 'content' => 'Isi bersih.', 'rating_comment' => 'Komentar anjing.']);
+    $ticket->update(['rating' => 3, 'rated_at' => now()]);
+
+    $this->actingAs($this->admin)
+        ->get(route('dashboard.admin.incoming-reports.show', ['ticketNumber' => $ticket->ticket_number]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('ticket.has_any_profanity', true)
+        );
+});

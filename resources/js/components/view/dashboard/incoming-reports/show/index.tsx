@@ -176,7 +176,7 @@ export default function ShowIncomingReportsView() {
                                     Ubah PIC
                                 </Button>
                             )}
-                            <SensorToggleButton showOriginal={showOriginal} onToggle={toggleOriginal} />
+                            {detailData.has_any_profanity && <SensorToggleButton showOriginal={showOriginal} onToggle={toggleOriginal} />}
                             <SupervisionToggle
                                 ticketNumber={detailData.ticket_number}
                                 isPengawasan={detailData.is_pengawasan}

@@ -35,4 +35,21 @@ return [
         ],
     ],
 
+    'youtube' => [
+        'api_key' => env('YOUTUBE_API_KEY'),
+        'channel_id' => env('YOUTUBE_CHANNEL_ID'),
+    ],
+
+    'meta' => [
+        'page_id' => env('META_PAGE_ID'),
+        'ig_user_id' => env('META_IG_USER_ID'),
+        'page_token' => env('META_PAGE_TOKEN'),
+        'ig_username' => env('META_IG_USERNAME'),
+    ],
+
+    'social_import' => [
+        'enabled' => env('SOCIAL_IMPORT_ENABLED', true),
+        'default_classification' => env('SOCIAL_IMPORT_DEFAULT_CLASSIFICATION', 'pengaduan'),
+    ],
+
 ];

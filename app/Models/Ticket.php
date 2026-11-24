@@ -25,6 +25,11 @@ class Ticket extends Model
         'service_type',
         'satuan_tugas',
         'channel_id',
+        'external_id',
+        'external_parent_id',
+        'external_permalink',
+        'external_occurred_at',
+        'external_author_handle',
         'reporter_name',
         'reporter_email',
         'reporter_wa',
@@ -56,6 +61,7 @@ class Ticket extends Model
     protected function casts(): array
     {
         return [
+            'external_occurred_at' => 'datetime',
             'is_read' => 'boolean',
             'is_pengawasan' => 'boolean',
             'completed_at' => 'datetime',

@@ -57,7 +57,7 @@ export default function ShowCompletedReportsView() {
                     kadarPengawasanDays={detailData.kadar_pengawasan_days}
                     actions={
                         <>
-                            <SensorToggleButton showOriginal={showOriginal} onToggle={toggleOriginal} />
+                            {detailData.has_any_profanity && <SensorToggleButton showOriginal={showOriginal} onToggle={toggleOriginal} />}
                             <SupervisionToggle
                                 ticketNumber={detailData.ticket_number}
                                 isPengawasan={detailData.is_pengawasan}

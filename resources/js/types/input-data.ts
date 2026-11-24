@@ -116,6 +116,7 @@ export interface InputDataTicketDetail {
     is_read: boolean;
     source_app: string;
     channel: string;
+    external_permalink?: string | null;
     created_by_name: string | null;
     completed_at: string | null;
     closed_reason: 'reporter' | 'staff' | 'auto_close' | null;
@@ -139,6 +140,7 @@ export interface InputDataTicketDetail {
     title_original?: string | null;
     content_original?: string | null;
     has_profanity?: boolean;
+    has_any_profanity?: boolean;
     attachments: InputDataAttachment[];
     responses: InputDataResponseItem[];
 }

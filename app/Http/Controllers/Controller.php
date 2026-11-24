@@ -72,6 +72,19 @@ abstract class Controller
         $isStaff = $user instanceof User
             && ($user->isAdmin() || $user->isOperator() || $user->isOperatorTim());
 
+        $title = $ticket->title ?? '';
+        $content = $ticket->content ?? '';
+        $ratingComment = $ticket->rating_comment ?? '';
+
+        $responsesPayload = $ticket->responses->map(
+            fn ($response) => TicketResponsePayload::from($response, $ticket, $filter, $isStaff)
+        )->values()->all();
+
+        $hasAnyProfanity = $filter->contains($title)
+            || $filter->contains($content)
+            || $filter->contains($ratingComment)
+            || collect($responsesPayload)->contains('has_profanity', true);
+
         return array_merge([
             'id' => $ticket->id,
             'ticket_number' => $ticket->ticket_number,
@@ -88,6 +101,7 @@ abstract class Controller
             'is_read' => $ticket->is_read,
             'source_app' => $ticket->source_app,
             'channel' => $ticket->channel?->name ?? '-',
+            'external_permalink' => $ticket->external_permalink,
             'created_by_name' => $ticket->creator?->name,
             'assigned_to' => $ticket->assigned_to,
             'assigned_to_name' => $ticket->assignedTo?->name,
@@ -118,9 +132,8 @@ abstract class Controller
                 'size' => $attachment->size,
                 'url' => Storage::url($attachment->path),
             ]),
-            'responses' => $ticket->responses->map(
-                fn ($response) => TicketResponsePayload::from($response, $ticket, $filter, $isStaff)
-            )->values()->all(),
+            'responses' => $responsesPayload,
+            'has_any_profanity' => $hasAnyProfanity,
         ], $profanity);
     }
 }

@@ -45,6 +45,7 @@ export interface TicketDetailData {
     is_read?: boolean;
     source_app?: string;
     channel?: string;
+    external_permalink?: string | null;
     created_by_name?: string | null;
     assigned_to?: number | null;
     assigned_to_name?: string | null;
@@ -73,6 +74,7 @@ export interface TicketDetailData {
     title_original?: string | null;
     content_original?: string | null;
     has_profanity?: boolean;
+    has_any_profanity?: boolean;
     attachments: TicketAttachmentItem[];
     responses: TicketResponseEntry[];
 }

@@ -51,6 +51,7 @@ export function mapIncomingReportsToDetailData(ticket: TicketDetail): TicketDeta
         title_original: ticket.title_original,
         content_original: ticket.content_original,
         has_profanity: ticket.has_profanity,
+        has_any_profanity: ticket.has_any_profanity,
         attachments: (ticket.attachments ?? []).map((att) => ({
             id: att.id,
             original_name: att.original_name,
@@ -122,6 +123,7 @@ export function mapCompletedReportsToDetailData(ticket: CompletedReportsShowProp
         title_original: ticket.title_original,
         content_original: ticket.content_original,
         has_profanity: ticket.has_profanity,
+        has_any_profanity: ticket.has_any_profanity,
         attachments: (ticket.attachments ?? []).map((att) => ({
             id: att.id,
             original_name: att.original_name,
@@ -191,6 +193,7 @@ export function mapInputDataToDetailData(ticket: InputDataTicketDetail): TicketD
         title_original: ticket.title_original,
         content_original: ticket.content_original,
         has_profanity: ticket.has_profanity,
+        has_any_profanity: ticket.has_any_profanity,
         attachments: (ticket.attachments ?? []).map((att) => ({
             id: att.id,
             original_name: att.original_name,
