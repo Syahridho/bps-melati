@@ -98,13 +98,13 @@ export default function LoginForm({ noticeReason, throttleSeconds, sessionConfli
     };
 
     return (
-        <div className="flex flex-col items-center justify-center p-6 md:p-10">
+        <div className="flex flex-col items-center justify-center">
             <div className="w-full max-w-sm md:max-w-3xl">
-                <Card className="overflow-hidden p-0">
+                <Card className="overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-lg sm:border sm:bg-card sm:shadow-xs">
                     <CardContent className="grid p-0 md:grid-cols-2">
                         <LoginBrandPanel />
 
-                        <form className="p-6 md:p-8" onSubmit={handleSubmit}>
+                        <form className="p-4 sm:p-6 md:p-8" onSubmit={handleSubmit}>
                             <div className="flex min-h-[350px] flex-col justify-center gap-6">
                                 <div className="flex flex-col items-center text-center">
                                     <h1 className="text-2xl font-bold">Selamat Datang</h1>

@@ -64,7 +64,7 @@ export default function CheckView() {
             <div className="bg-background text-foreground flex min-h-screen flex-col">
                 <CheckHeader />
 
-                <main className="mx-auto w-full max-w-4xl min-w-0 flex-1 space-y-12 px-4 py-10 pb-16 sm:px-6 md:space-y-16 md:py-12 md:pb-24 lg:px-8">
+                <main className="mx-auto w-full max-w-4xl min-w-0 flex-1 space-y-12 overflow-x-hidden px-4 py-10 pb-16 sm:px-6 md:space-y-16 md:py-12 md:pb-24 lg:px-8">
                     <CheckSearchCard inputQuery={inputQuery} onInputChange={setInputQuery} onSubmit={handleSearch} />
 
                     {successMessage && <AlertBanner variant="success" message={successMessage} />}

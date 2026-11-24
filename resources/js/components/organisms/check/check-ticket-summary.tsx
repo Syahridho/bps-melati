@@ -28,8 +28,8 @@ export function CheckTicketSummary({ ticket, copied, onCopy, onPreviewAttachment
                             <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">Kode Tiket</span>
                             <Badge variant={classificationBadgeVariant(ticket.classification)}>{classificationLabel(ticket.classification)}</Badge>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="font-mono text-xl font-bold sm:text-2xl">{ticket.ticket_number}</span>
+                        <div className="flex min-w-0 items-center gap-2">
+                            <span className="font-mono text-xl font-bold break-words [overflow-wrap:anywhere] sm:text-2xl">{ticket.ticket_number}</span>
                             <Button
                                 type="button"
                                 variant="ghost"
@@ -120,7 +120,7 @@ export function CheckTicketSummary({ ticket, copied, onCopy, onPreviewAttachment
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="bg-card hover:bg-accent text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors"
+                                    className="bg-card hover:bg-accent text-foreground inline-flex min-w-0 max-w-full items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium transition-colors"
                                     onClick={() => onPreviewAttachment(att, ticket.attachments)}
                                     title={att.original_name}
                                 >
@@ -131,9 +131,11 @@ export function CheckTicketSummary({ ticket, copied, onCopy, onPreviewAttachment
                                     ) : (
                                         <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                                     )}
-                                    <span className="text-foreground max-w-[220px] truncate font-medium sm:max-w-xs">{att.original_name}</span>
-                                    <span className="text-muted-foreground text-[10px]">({formatFileSize(att.size)})</span>
-                                    <Download className="text-muted-foreground ml-1 h-3.5 w-3.5 shrink-0" />
+                                    <span className="text-foreground min-w-0 max-w-[220px] flex-1 truncate font-medium sm:max-w-xs" title={att.original_name}>
+                                        {att.original_name}
+                                    </span>
+                                    <span className="text-muted-foreground shrink-0 whitespace-nowrap text-[10px]">({formatFileSize(att.size)})</span>
+                                    <Download className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                                 </Button>
                             ))}
                         </div>

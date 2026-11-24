@@ -153,7 +153,7 @@ export function CheckConversationCard({
                                         </div>
 
                                         {res.attachments.length > 0 && (
-                                            <div className="space-y-1.5 border-t pt-2">
+                                            <div className="min-w-0 space-y-1.5 border-t pt-2">
                                                 <span className="text-muted-foreground text-xs font-medium">Lampiran:</span>
                                                 <div className="flex flex-wrap gap-2">
                                                     {res.attachments.map((att) => (
@@ -162,7 +162,7 @@ export function CheckConversationCard({
                                                             type="button"
                                                             variant="outline"
                                                             size="sm"
-                                                            className="bg-card hover:bg-accent text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+                                                            className="bg-card hover:bg-accent text-foreground inline-flex min-w-0 max-w-full items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
                                                             onClick={() => onPreviewAttachment(att, res.attachments)}
                                                             title={att.original_name}
                                                         >
@@ -173,11 +173,14 @@ export function CheckConversationCard({
                                                             ) : (
                                                                 <Paperclip className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                                                             )}
-                                                            <span className="text-foreground max-w-[220px] truncate font-medium sm:max-w-xs">
+                                                            <span
+                                                                className="text-foreground min-w-0 max-w-[220px] flex-1 truncate font-medium sm:max-w-xs"
+                                                                title={att.original_name}
+                                                            >
                                                                 {att.original_name}
                                                             </span>
                                                             {att.size ? (
-                                                                <span className="text-muted-foreground text-[10px]">
+                                                                <span className="text-muted-foreground shrink-0 whitespace-nowrap text-[10px]">
                                                                     ({formatFileSize(att.size)})
                                                                 </span>
                                                             ) : null}
@@ -339,14 +342,14 @@ export function CheckConversationCard({
                                         <div className="space-y-2 pt-2">
                                             {replyData.attachments.map((file, index) => (
                                                 <div key={index} className="flex items-center justify-between rounded-md border px-3 py-2 text-xs">
-                                                    <div className="flex items-center gap-2 truncate">
+                                                    <div className="flex min-w-0 flex-1 items-center gap-2 truncate">
                                                         {isImageFile(file) ? (
                                                             <ImageIcon className="h-4 w-4 shrink-0 text-blue-500" />
                                                         ) : (
                                                             <FileText className="h-4 w-4 shrink-0 text-red-500" />
                                                         )}
-                                                        <span className="truncate font-medium">{file.name}</span>
-                                                        <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                                                        <span className="min-w-0 truncate font-medium" title={file.name}>{file.name}</span>
+                                                        <span className="text-muted-foreground shrink-0 whitespace-nowrap">({formatFileSize(file.size)})</span>
                                                     </div>
                                                     <Button
                                                         type="button"
