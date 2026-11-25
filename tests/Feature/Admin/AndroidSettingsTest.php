@@ -185,3 +185,9 @@ test('admin can delete APK', function () {
     expect(AndroidRelease::count())->toBe(0);
     expect(Storage::disk('local')->exists($release->stored_path))->toBeFalse();
 });
+
+test('upload handles missing PHP zip extension without HTTP 500', function () {
+    // Skenario ini tidak dapat disimulasikan di lingkungan uji tanpa
+    // menonaktifkan ekstensi zip pada php.ini. Guard-nya diverifikasi lewat
+    // kode (class_exists/extension_loaded) dan Log::warning.
+})->skip('Ekstensi zip aktif di lingkungan uji; tidak dapat dinonaktifkan dari kode.');

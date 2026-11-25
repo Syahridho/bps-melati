@@ -68,7 +68,7 @@ Figma : https://www.figma.com/design/40kOLZMeDyXIDFW3mLUveK/melati?node-id=0-1&p
 | Kebutuhan    | Versi atau catatan                                                                                         |
 | ------------ | ---------------------------------------------------------------------------------------------------------- |
 | PHP          | 8.2 atau lebih baru                                                                                        |
-| Ekstensi PHP | ctype, curl, dom, fileinfo, filter, hash, mbstring, openssl, pcre, pdo, pdo_mysql, session, tokenizer, xml |
+| Ekstensi PHP | ctype, curl, dom, fileinfo, filter, hash, mbstring, openssl, pcre, pdo, pdo_mysql, session, tokenizer, xml, zip |
 | Composer     | 2.x                                                                                                        |
 | Node.js      | 20 atau lebih baru                                                                                         |
 | npm          | 10 atau lebih baru                                                                                         |
@@ -368,7 +368,7 @@ worker.
 
     ```ini
     memory_limit = 256M
-    upload_max_filesize = 8M
+    upload_max_filesize = 12M
     post_max_size = 20M
     ```
 

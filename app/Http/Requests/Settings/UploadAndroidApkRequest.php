@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Log;
 use ZipArchive;
 
 class UploadAndroidApkRequest extends FormRequest
@@ -50,6 +51,13 @@ class UploadAndroidApkRequest extends FormRequest
                 return;
             }
 
+            // Guard: pastikan ekstensi PHP zip tersedia agar tidak terjadi 500.
+            if (! class_exists(ZipArchive::class) || ! extension_loaded('zip')) {
+                Log::warning('Ekstensi PHP zip tidak tersedia; pemeriksaan APK tidak dapat dilakukan.');
+                $validator->errors()->add('apk', 'Server belum mendukung pemeriksaan APK (ekstensi PHP zip belum aktif). Hubungi administrator.');
+                return;
+            }
+
             // Verifikasi isi: buka sebagai ZIP dan pastikan berisi AndroidManifest.xml.
             $zip = new ZipArchive();
             $opened = $zip->open($file->getRealPath());
@@ -58,18 +66,18 @@ class UploadAndroidApkRequest extends FormRequest
                 return;
             }
 
-            $hasManifest = false;
-            for ($i = 0; $i < $zip->numFiles; $i++) {
-                $name = $zip->getNameIndex($i);
-                if ($name === 'AndroidManifest.xml' || str_ends_with($name, '/AndroidManifest.xml')) {
-                    // only root entry counts
+            try {
+                $hasManifest = false;
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $name = $zip->getNameIndex($i);
                     if ($name === 'AndroidManifest.xml') {
                         $hasManifest = true;
                         break;
                     }
                 }
+            } finally {
+                $zip->close();
             }
-            $zip->close();
 
             if (! $hasManifest) {
                 $validator->errors()->add('apk', 'File bukan APK yang valid.');
