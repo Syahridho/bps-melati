@@ -69,7 +69,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('settings/sensors', [SensorController::class, 'index'])->name('settings.sensors.index');
     Route::post('settings/sensors', [SensorController::class, 'store'])->name('settings.sensors.store');
 
-<<<<<<< HEAD
     // Klasifikasi Komentar
     Route::get('settings/comment-classifier', [CommentClassifierController::class, 'index'])->name('settings.comment-classifier.index');
     Route::post('settings/comment-classifier', [CommentClassifierController::class, 'update'])->name('settings.comment-classifier.update')
@@ -83,12 +82,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('settings/comment-classification', [CommentClassifierController::class, 'update'])->name('settings.comment-classification.update')->middleware('throttle:30,1');
     Route::post('settings/comment-classification/reset', [CommentClassifierController::class, 'reset'])->name('settings.comment-classification.reset')->middleware('throttle:30,1');
     Route::post('settings/comment-classification/test', [CommentClassifierController::class, 'test'])->name('settings.comment-classification.test')->middleware('throttle:30,1');
-=======
+
     // Pengaturan Aplikasi Android
     Route::get('settings/android', [AndroidController::class, 'index'])->name('settings.android');
     Route::post('settings/android', [AndroidController::class, 'store'])->name('settings.android.store');
     Route::delete('settings/android/{androidRelease}', [AndroidController::class, 'destroy'])->name('settings.android.destroy');
->>>>>>> download-androit
     Route::post('settings/sensors/bulk', [SensorController::class, 'bulkStore'])->name('settings.sensors.bulk');
     Route::put('settings/sensors/{censoredWord}', [SensorController::class, 'update'])->name('settings.sensors.update');
     Route::patch('settings/sensors/{censoredWord}/toggle', [SensorController::class, 'toggle'])->name('settings.sensors.toggle');
