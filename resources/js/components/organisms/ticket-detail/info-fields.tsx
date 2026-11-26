@@ -41,7 +41,7 @@ export function buildTicketInfoFields(d: InfoFieldsSource, options: InfoFieldsOp
         { id: 'source', label: 'Sumber / Aplikasi', value: <span className="capitalize">{d.source_app}</span>, icon: Globe },
         { id: 'channel', label: 'Sumber Kanal', value: d.channel, icon: Layers },
         { id: 'created_at', label: 'Tanggal Dibuat', value: formatFullDate(d.created_at), icon: Calendar },
-        options.showDuration &&
+        showDuration &&
             d.completed_at && {
                 id: 'duration',
                 label: 'Durasi Penyelesaian',

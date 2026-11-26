@@ -8,20 +8,36 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
+import type { FormDataConvertible } from '@inertiajs/core';
 import { useState } from 'react';
 
-const toList = (v: any): string[] => {
+interface CommentClassifierRules {
+    min_length?: number;
+    min_words?: number;
+    fallback_when_uncertain?: boolean;
+    keywords?: {
+        pengaduan?: unknown;
+        aspirasi?: unknown;
+        permintaan_informasi?: unknown;
+    };
+    ignore?: unknown;
+    abbreviations?: unknown;
+    priority?: unknown;
+}
+
+const toList = (v: unknown): string[] => {
     if (Array.isArray(v)) {
         return v.map((x) => String(x));
     }
     if (v && typeof v === 'object') {
-        return Object.values(v).map((x) => String(x));
+        return Object.values(v as Record<string, unknown>).map((x) => String(x));
     }
     return [];
 };
 
 export default function CommentClassifierSettingsView() {
-    const { rules, flash } = usePage<any>().props;
+    const { rules: rawRules, flash } = usePage<{ rules?: CommentClassifierRules; flash?: { success?: string } }>().props;
+    const rules = rawRules;
     const [minLength, setMinLength] = useState(rules?.min_length ?? 10);
     const [minWords, setMinWords] = useState(rules?.min_words ?? 3);
     const [fallback, setFallback] = useState(!!rules?.fallback_when_uncertain);
@@ -32,9 +48,9 @@ export default function CommentClassifierSettingsView() {
     const [abbreviations, setAbbreviations] = useState(JSON.stringify(rules?.abbreviations ?? {}, null, 2));
     const [priority, setPriority] = useState(toList(rules?.priority ?? ['pengaduan', 'aspirasi', 'permintaan_informasi']).join(', '));
     const [testText, setTestText] = useState('');
-    const [testResult, setTestResult] = useState<any>(null);
+    const [testResult, setTestResult] = useState<{ jenis: string; alasan: string; teks_normal: string } | null>(null);
     const [processing, setProcessing] = useState(false);
-    const [success, setSuccess] = useState(flash?.success);
+    const [success] = useState(flash?.success);
     const [abbrError, setAbbrError] = useState('');
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: 'Klasifikasi Komentar', href: route('settings.comment-classifier.index') }];
@@ -48,7 +64,7 @@ export default function CommentClassifierSettingsView() {
     const handleSave = () => {
         setProcessing(true);
         setAbbrError('');
-        let abbr: any = {};
+        let abbr: Record<string, FormDataConvertible> = {};
         try {
             abbr = abbreviations.trim() === '' ? {} : JSON.parse(abbreviations);
         } catch {
@@ -141,11 +157,11 @@ export default function CommentClassifierSettingsView() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label>Panjang minimum (karakter)</Label>
-                                    <Input type="number" value={minLength} onChange={(e) => setMinLength(e.target.value)} />
+                                    <Input type="number" value={minLength} onChange={(e) => setMinLength(Number(e.target.value))} />
                                 </div>
                                 <div>
                                     <Label>Jumlah kata minimum</Label>
-                                    <Input type="number" value={minWords} onChange={(e) => setMinWords(e.target.value)} />
+                                    <Input type="number" value={minWords} onChange={(e) => setMinWords(Number(e.target.value))} />
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">

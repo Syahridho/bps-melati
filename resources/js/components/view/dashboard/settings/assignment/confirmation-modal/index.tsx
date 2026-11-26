@@ -1,8 +1,18 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { InertiaFormProps } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
+import { type AssignmentModeOption, type AssignmentModeValue } from '@/types/settings';
 
-export default function ConfirmationAssignment({ confirmOpen, setConfirmOpen, selectedOption, form, handleSubmit }: any) {
+interface ConfirmationAssignmentProps {
+    confirmOpen: boolean;
+    setConfirmOpen: (open: boolean) => void;
+    selectedOption: AssignmentModeOption | undefined;
+    form: InertiaFormProps<{ mode: AssignmentModeValue; apply: 'now' | 'scheduled'; scheduled_at: string }>;
+    handleSubmit: () => void;
+}
+
+export default function ConfirmationAssignment({ confirmOpen, setConfirmOpen, selectedOption, form, handleSubmit }: ConfirmationAssignmentProps) {
     return (
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
             <DialogContent>

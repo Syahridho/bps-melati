@@ -13,7 +13,7 @@ interface TicketAssignmentBadgesProps {
     isOrphaned?: boolean;
 }
 
-export function TicketAssignmentBadges({ assignedToName, assignmentMode, activeAssignmentMode, isOrphaned }: TicketAssignmentBadgesProps) {
+export function TicketAssignmentBadges({ assignedToName, assignmentMode, activeAssignmentMode }: TicketAssignmentBadgesProps) {
     return (
         <>
             {assignedToName && (

@@ -5,7 +5,7 @@ import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { authLabel } from '@/lib/api-docs-view';
 import { type ApiEndpoint } from '@/types/api-docs';
 
-import { CodeBlock } from '../code-block';
+import { CodeBlock } from '@/components/organisms/settings/code-block';
 import { ApiParamsTable } from './api-params-table';
 
 const SECTION_TITLE = 'text-muted-foreground text-xs font-semibold tracking-wider uppercase';

@@ -24,8 +24,8 @@ import { usePage } from '@inertiajs/react';
 import { Reply } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import InputDataDeleteTicketDialog from '../delete-ticket-dialog';
-import InputDataUpdateTicketDialog from '../update-ticket-dialog';
+import InputDataDeleteTicketDialog from '@/components/view/dashboard/input-data/delete-ticket-dialog';
+import InputDataUpdateTicketDialog from '@/components/view/dashboard/input-data/update-ticket-dialog';
 
 export default function ShowInputDataView() {
     const { auth, ticket, can, flash } = usePage<InputDataShowProps>().props;

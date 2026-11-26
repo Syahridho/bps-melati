@@ -24,8 +24,6 @@ export default function CompletedReportsView() {
 
     useLaporanRealtime({ isBusy: flagPopoverOpen, searching, only: ['tickets', 'counts'] });
 
-    const hasDateFilter = Boolean(filters.from) && filters.from !== 'semua';
-
     const activeFilters = buildActiveFilters(filters, {
         clearTab: () => handleFilterChange('semua'),
         clearSearch: () => setSearchQuery(''),

@@ -61,14 +61,6 @@ interface PerformanceTabProps {
     active: boolean;
 }
 
-const SORT_LABELS: Record<string, string> = {
-    completed: 'Selesai',
-    in_progress: 'Sedang Diproses',
-    rating: 'Rating',
-    duration: 'Rata-rata Durasi',
-    name: 'Operator',
-};
-
 export default function OperatorPerformanceTab({ active }: PerformanceTabProps) {
     const [from, setFrom] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
     const [to, setTo] = useState<string>(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
