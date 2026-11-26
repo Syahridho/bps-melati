@@ -5,6 +5,8 @@ namespace App\Services\Social;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Social\CommentClassifier;
+use App\Services\Social\RuleRepository;
 use App\Services\TicketAssignmentService;
 use App\Support\ProfanityFilter;
 use Illuminate\Database\QueryException;
@@ -42,6 +44,18 @@ class SocialCommentImporter
                 continue;
             }
 
+            // Dedupe cepat via Redis (TTL 90 hari) dengan kunci sumber "platform:external_id".
+            $dedupeKey = 'social_import:dedupe:'.md5($platform.':'.$comment->externalId);
+            if (! Cache::add($dedupeKey, true, now()->addDays(90))) {
+                // Kunci sudah ada di cache: anggap duplikat, tapi tetap cek DB untuk keamanan.
+                if (Ticket::query()
+                    ->where('channel_id', $channel->id)
+                    ->where('external_id', $comment->externalId)
+                    ->exists()) {
+                    continue;
+                }
+            }
+
             if (Ticket::query()
                 ->where('channel_id', $channel->id)
                 ->where('external_id', $comment->externalId)
@@ -49,8 +63,31 @@ class SocialCommentImporter
                 continue;
             }
 
+            // Penanda komentar yang sudah dinilai (bukan laporan), berbasis version aturan.
+            $skipKey = 'social_import:skipped:'.md5($platform.':'.$comment->externalId);
+            $rules = app(RuleRepository::class)->rules();
+            $rulesVersion = (int) ($rules['version'] ?? 1);
+            $skipVersion = Cache::get($skipKey);
+            if ($skipVersion !== null && (int) $skipVersion >= $rulesVersion) {
+                // Sudah dinilai dengan aturan versi ini atau lebih baru: lewati.
+                continue;
+            }
+
+            // Klasifikasi berbasis aturan sebelum menyimpan.
+            $classifier = app(CommentClassifier::class);
+            $result = $classifier->classify((string) $comment->content, $rules);
+            if (($result['jenis'] ?? null) === null) {
+                \Illuminate\Support\Facades\Log::info('Komentar sosial dilewati (bukan laporan).', [
+                    'platform' => $platform,
+                    'external_id' => $comment->externalId,
+                    'alasan' => $result['alasan'] ?? '',
+                ]);
+                Cache::put($skipKey, $rulesVersion, now()->addDays(90));
+                continue;
+            }
+
             try {
-                $ticket = $this->createTicket($platform, $channel, $comment);
+                $ticket = $this->createTicket($platform, $channel, $comment, (string) $result['jenis']);
             } catch (QueryException $e) {
                 // Race condition: unique index (channel_id, external_id) menang.
                 if ($this->isUniqueViolation($e)) {
@@ -81,15 +118,14 @@ class SocialCommentImporter
         return $created;
     }
 
-    private function createTicket(string $platform, Channel $channel, NormalizedSocialComment $comment): Ticket
+    private function createTicket(string $platform, Channel $channel, NormalizedSocialComment $comment, ?string $classification = null): Ticket
     {
         $period = now()->format('Y-m');
+        $classification = $classification ?: (string) config('services.social_import.default_classification', 'pengaduan');
         $generated = Ticket::generateTicketNumber(
-            (string) config('services.social_import.default_classification', 'pengaduan'),
+            $classification,
             $period
         );
-
-        $classification = (string) config('services.social_import.default_classification', 'pengaduan');
 
         return $this->assignmentService->createTicket([
             'ticket_number' => $generated['ticket_number'],

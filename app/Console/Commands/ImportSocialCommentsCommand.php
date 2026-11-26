@@ -82,7 +82,7 @@ class ImportSocialCommentsCommand extends Command
                 continue;
             }
 
-            $this->info("Menjalankan impor {$platform}...");
+            $this->info("Mengambil impor {$platform}...");
             ImportSocialComments::dispatchSync($platform);
             $this->info("Impor {$platform} selesai.");
         }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
+use App\Jobs\SyncSocialToInputData;
 use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Mail\TicketCreatedMail;
@@ -537,5 +538,41 @@ class InputDataController extends Controller
 
         return redirect()->route("{$routePrefix}.input-data.index")
             ->with('success', 'Data tiket berhasil dihapus.');
+    }
+
+    /**
+     * Trigger sinkronisasi sosial (dispatch job).
+     */
+    public function sync(\Illuminate\Http\Request $request, string $platform): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+    {
+        if (! in_array($platform, ['youtube', 'facebook', 'instagram'], true)) {
+            abort(404);
+        }
+
+        SyncSocialToInputData::dispatch($platform);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'queued',
+                'platform' => $platform,
+            ]);
+        }
+
+        return back()->with('flash', [
+            'success' => "Sinkronisasi {$platform} dijadwalkan.",
+        ]);
+    }
+
+    /**
+     * Status sinkronisasi terakhir (JSON).
+     */
+    public function syncStatus(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $status = [];
+        foreach (['youtube', 'facebook', 'instagram'] as $platform) {
+            $status[$platform] = \App\Models\Setting::get("social_import_{$platform}_last_synced_at");
+        }
+
+        return response()->json($status);
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Settings\AssignmentModeController;
 use App\Http\Controllers\Settings\AuditFlagController;
 use App\Http\Controllers\Settings\AuditLogController;
 use App\Http\Controllers\Settings\ChannelController;
+use App\Http\Controllers\Settings\CommentClassifierController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ReviewController;
 use App\Http\Controllers\Settings\SensorController;
@@ -62,6 +63,20 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->names(['index' => 'settings.sumber-kanal.index', 'store' => 'settings.sumber-kanal.store', 'update' => 'settings.sumber-kanal.update', 'destroy' => 'settings.sumber-kanal.destroy']);
     Route::get('settings/sensors', [SensorController::class, 'index'])->name('settings.sensors.index');
     Route::post('settings/sensors', [SensorController::class, 'store'])->name('settings.sensors.store');
+
+    // Klasifikasi Komentar
+    Route::get('settings/comment-classifier', [CommentClassifierController::class, 'index'])->name('settings.comment-classifier.index');
+    Route::post('settings/comment-classifier', [CommentClassifierController::class, 'update'])->name('settings.comment-classifier.update')
+        ->middleware('throttle:30,1');
+    Route::post('settings/comment-classifier/reset', [CommentClassifierController::class, 'reset'])->name('settings.comment-classifier.reset')
+        ->middleware('throttle:30,1');
+    Route::post('settings/comment-classifier/test', [CommentClassifierController::class, 'test'])->name('settings.comment-classifier.test')
+        ->middleware('throttle:30,1');
+    // Alias nama rute
+    Route::get('settings/comment-classification', [CommentClassifierController::class, 'index'])->name('settings.comment-classification.index');
+    Route::post('settings/comment-classification', [CommentClassifierController::class, 'update'])->name('settings.comment-classification.update')->middleware('throttle:30,1');
+    Route::post('settings/comment-classification/reset', [CommentClassifierController::class, 'reset'])->name('settings.comment-classification.reset')->middleware('throttle:30,1');
+    Route::post('settings/comment-classification/test', [CommentClassifierController::class, 'test'])->name('settings.comment-classification.test')->middleware('throttle:30,1');
     Route::post('settings/sensors/bulk', [SensorController::class, 'bulkStore'])->name('settings.sensors.bulk');
     Route::put('settings/sensors/{censoredWord}', [SensorController::class, 'update'])->name('settings.sensors.update');
     Route::patch('settings/sensors/{censoredWord}/toggle', [SensorController::class, 'toggle'])->name('settings.sensors.toggle');

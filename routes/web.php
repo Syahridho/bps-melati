@@ -10,6 +10,7 @@ use App\Http\Controllers\Dashboard\CompletedReportsController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\IncomingReportsController;
 use App\Http\Controllers\Dashboard\InputDataController;
+use App\Http\Controllers\Dashboard\SocialSyncController;
 use App\Http\Controllers\Dashboard\MyReportsController;
 use App\Http\Controllers\Dashboard\OperatorController;
 use App\Http\Controllers\Dashboard\Recap\MonthlyRecapController;
@@ -30,6 +31,8 @@ Route::post('/check/{ticketNumber}/complete', [CheckTicketController::class, 'co
 Route::get('/check/lampiran/{type}/{id}', CheckAttachmentDownloadController::class)->middleware(['signed', 'throttle:30,1'])->whereIn('type', ['ticket', 'response'])->whereNumber('id')->name('check.attachments.download');
 
 Route::middleware(['auth'])->group(function () {
+    Route::post('social/sync/{platform}', [SocialSyncController::class, 'sync'])->name('social.sync');
+    Route::get('social/sync-status', [SocialSyncController::class, 'status'])->name('social.sync-status');
     Route::get('dashboard', function (Request $request) {
         return redirect()->to($request->user()->isAdmin() ? '/dashboard/admin' : '/dashboard/operator');
     })->name('dashboard');
@@ -79,6 +82,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', DashboardController::class)->name('index');
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
+        Route::post('input-data/sync/{platform}', [InputDataController::class, 'sync'])->name('input-data.sync');
+        Route::get('input-data/sync-status', [InputDataController::class, 'syncStatus'])->name('input-data.sync-status');
         Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');
         Route::put('input-data/{ticketNumber}', [InputDataController::class, 'update'])->name('input-data.update')->where('ticketNumber', '.*');
         Route::delete('input-data/{ticketNumber}', [InputDataController::class, 'destroy'])->name('input-data.destroy')->where('ticketNumber', '.*');
@@ -123,6 +128,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', DashboardController::class)->name('index');
         Route::get('input-data', [InputDataController::class, 'index'])->name('input-data.index');
         Route::post('input-data', [InputDataController::class, 'store'])->name('input-data.store');
+        Route::post('input-data/sync/{platform}', [InputDataController::class, 'sync'])->name('input-data.sync');
+        Route::get('input-data/sync-status', [InputDataController::class, 'syncStatus'])->name('input-data.sync-status');
         Route::get('input-data/{ticketNumber}', [InputDataController::class, 'show'])->name('input-data.show')->where('ticketNumber', '.*');
         Route::put('input-data/{ticketNumber}', [InputDataController::class, 'update'])->name('input-data.update')->where('ticketNumber', '.*');
         Route::delete('input-data/{ticketNumber}', [InputDataController::class, 'destroy'])->name('input-data.destroy')->where('ticketNumber', '.*');

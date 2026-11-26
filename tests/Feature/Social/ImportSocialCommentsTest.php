@@ -217,7 +217,7 @@ test('instagram comment baru menjadi tiket', function () {
             'data' => [
                 [
                     'id' => 'ig-comment-1',
-                    'text' => 'Mantap',
+                    'text' => 'Apa syarat mengajukan konsultasi statistik?',
                     'username' => 'warga_ig',
                     'timestamp' => now()->toIso8601String(),
                 ],

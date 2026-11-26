@@ -48,6 +48,11 @@ export default function SettingsLayout({
                       icon: null,
                   },
                   {
+                      title: 'Klasifikasi Komentar',
+                      url: '/settings/comment-classifier',
+                      icon: null,
+                  },
+                  {
                       title: 'Laporan & Tanda Tangan',
                       url: '/settings/recap',
                       icon: null,
