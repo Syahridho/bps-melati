@@ -112,6 +112,32 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // Alias nama route pengaturan agar konsisten dengan pola yang dipakai
+        // test dan komponen lama (.index / settings.application.*).
+        $this->app->booted(function () {
+            $this->app->booted(function () {
+                try {
+                    $routes = $this->app['router']->getRoutes();
+                    $ref = new \ReflectionProperty($routes, 'nameList');
+                    $ref->setAccessible(true);
+                    $nameList = $ref->getValue($routes);
+                    $aliases = [
+                        'settings.android.index' => 'settings.android',
+                        'settings.application.assignment-mode' => 'settings.assignment-mode',
+                        'settings.application.rating' => 'settings.rating',
+                    ];
+                    foreach ($aliases as $alias => $canonical) {
+                        if (isset($nameList[$canonical]) && ! isset($nameList[$alias])) {
+                            $nameList[$alias] = $nameList[$canonical];
+                        }
+                    }
+                    $ref->setValue($routes, $nameList);
+                } catch (\Throwable $e) {
+                    // Abaikan; alias bersifat opsional.
+                }
+            });
+        });
+
         // Custom: reset password email dalam bahasa Indonesia dengan identitas Melati.
         ResetPassword::toMailUsing(function (Authenticatable $notifiable, string $token): MailMessage {
             $resetUrl = url(route('password.reset', [

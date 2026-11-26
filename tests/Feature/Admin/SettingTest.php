@@ -123,7 +123,7 @@ test('admin can access laporan page', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->get(route('settings.rating'))
+        ->get(route('settings.recap'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/recap/index')
@@ -138,7 +138,7 @@ test('admin can update laporan settings and record audit log', function () {
     Setting::set('auto_close_pengaduan_days', '10');
 
     actingAs($admin)
-        ->post(route('settings.rating.update'), [
+        ->post(route('settings.recap.update'), [
             'nama_penanda_tangan' => 'Dr. Budi Santoso, M.Si',
             'jabatan_penanda_tangan' => 'KEPALA BPS PROVINSI',
             'kota_penanda_tangan' => 'Pekanbaru',
@@ -161,7 +161,7 @@ test('admin cannot update laporan with string exceeding 255 chars', function () 
     $admin = User::factory()->create(['role' => 'admin']);
 
     actingAs($admin)
-        ->postJson(route('settings.rating.update'), [
+        ->postJson(route('settings.recap.update'), [
             'nama_penanda_tangan' => str_repeat('a', 256),
         ])
         ->assertStatus(422)

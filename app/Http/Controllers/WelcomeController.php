@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AndroidRelease;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Support\CacheKeys;
@@ -19,6 +20,7 @@ class WelcomeController extends Controller
         return Inertia::render('welcome/index', [
             'channels' => $this->channelTree(),
             'stats' => $this->publicStats(),
+            'androidRelease' => $this->androidReleaseMeta(),
         ]);
     }
 
@@ -109,5 +111,30 @@ class WelcomeController extends Controller
                 ];
             },
         );
+    }
+
+    /**
+     * Metadata APK Android aktif (field aman) dengan cache 10 menit.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function androidReleaseMeta(): ?array
+    {
+        $release = Cache::remember('android:release:active', now()->addMinutes(10), function () {
+            return AndroidRelease::where('is_active', true)->latest('id')->first();
+        });
+
+        if (! $release) {
+            return null;
+        }
+
+        return [
+            'available' => true,
+            'version' => $release->version,
+            'size_bytes' => $release->size_bytes,
+            'released_at' => $release->created_at?->toIso8601String(),
+            'release_notes' => $release->release_notes,
+            'checksum_sha256' => $release->checksum_sha256,
+        ];
     }
 }

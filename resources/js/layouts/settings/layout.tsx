@@ -62,6 +62,11 @@ export default function SettingsLayout({
                       url: '/settings/api',
                       icon: null,
                   },
+                  {
+                      title: 'Android',
+                      url: '/settings/android',
+                      icon: null,
+                  },
               ]
             : []),
         ...(!isOperatorTim
