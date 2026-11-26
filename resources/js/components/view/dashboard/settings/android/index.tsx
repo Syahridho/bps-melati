@@ -1,20 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Head, router, usePage } from '@inertiajs/react';
-import { useForm } from '@inertiajs/react';
-import { Copy, Download, Smartphone, Trash2 } from 'lucide-react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Copy, Download, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -210,15 +201,8 @@ export default function AndroidSettingsView() {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="apk">File APK</Label>
-                                <Input
-                                    id="apk"
-                                    type="file"
-                                    accept=".apk,application/vnd.android.package-archive"
-                                    onChange={handleFileChange}
-                                />
-                                {selectedFile && (
-                                    <p className="text-muted-foreground text-xs">{selectedFile.name}</p>
-                                )}
+                                <Input id="apk" type="file" accept=".apk,application/vnd.android.package-archive" onChange={handleFileChange} />
+                                {selectedFile && <p className="text-muted-foreground text-xs">{selectedFile.name}</p>}
                                 {errors.apk && <p className="text-destructive text-xs">{errors.apk}</p>}
                             </div>
 
@@ -267,9 +251,7 @@ export default function AndroidSettingsView() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Ganti APK yang sudah ada?</DialogTitle>
-                            <DialogDescription>
-                                APK lama akan diganti dengan yang baru. Tindakan ini tidak dapat dibatalkan.
-                            </DialogDescription>
+                            <DialogDescription>APK lama akan diganti dengan yang baru. Tindakan ini tidak dapat dibatalkan.</DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setConfirmReplaceOpen(false)}>
@@ -292,9 +274,7 @@ export default function AndroidSettingsView() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Hapus APK?</DialogTitle>
-                            <DialogDescription>
-                                APK aktif akan dihapus dan tidak lagi tersedia untuk diunduh.
-                            </DialogDescription>
+                            <DialogDescription>APK aktif akan dihapus dan tidak lagi tersedia untuk diunduh.</DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>

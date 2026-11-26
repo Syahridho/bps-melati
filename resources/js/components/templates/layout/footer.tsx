@@ -10,11 +10,6 @@ interface FooterLink {
     href: string;
 }
 
-interface LinkColumnProps {
-    title: string;
-    links: FooterLink[];
-}
-
 interface LogoLockupProps {
     src: string;
     alt: string;
