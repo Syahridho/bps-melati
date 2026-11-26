@@ -40,40 +40,6 @@ function LogoLockup({ src, alt, imgClassName, children }: LogoLockupProps) {
     );
 }
 
-function LinkColumn({ title, links }: LinkColumnProps) {
-    return (
-        <nav aria-label={title} className="flex flex-col gap-3">
-            <h3 className="text-footer-foreground text-sm font-semibold tracking-wide">{title}</h3>
-            <ul className="flex flex-col gap-1">
-                {links.map((link) => {
-                    const isInternal = link.href.startsWith('/');
-                    return (
-                        <li key={link.href}>
-                            {isInternal ? (
-                                <Link
-                                    href={link.href}
-                                    className="text-footer-muted hover:text-footer-accent focus-visible:ring-ring/50 inline-block rounded-sm py-1 text-sm underline-offset-4 transition-colors outline-none hover:underline focus-visible:ring-[3px]"
-                                >
-                                    {link.label}
-                                </Link>
-                            ) : (
-                                <a
-                                    href={link.href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-footer-muted hover:text-footer-accent focus-visible:ring-ring/50 inline-block rounded-sm py-1 text-sm underline-offset-4 transition-colors outline-none hover:underline focus-visible:ring-[3px]"
-                                >
-                                    {link.label}
-                                </a>
-                            )}
-                        </li>
-                    );
-                })}
-            </ul>
-        </nav>
-    );
-}
-
 interface AndroidReleaseMeta {
     available: boolean;
     version: string;
@@ -91,19 +57,6 @@ interface BpsFooterProps {
 function formatBytes(bytes: number): string {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-function formatDate(iso: string | null): string {
-    if (!iso) return '-';
-    try {
-        return new Date(iso).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-        });
-    } catch {
-        return iso;
-    }
 }
 
 export function FooterSection({ className, androidRelease }: BpsFooterProps) {
