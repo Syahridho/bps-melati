@@ -21,6 +21,11 @@ class TicketPolicy
             return true;
         }
 
+        // PIC tiket (termasuk pembuat Input Data) selalu berhak membalas tiketnya sendiri.
+        if ($ticket->assigned_to !== null && (int) $ticket->assigned_to === (int) $user->id) {
+            return true;
+        }
+
         if (! $user->isOperator()) {
             return false;
         }
@@ -30,12 +35,13 @@ class TicketPolicy
             return false;
         }
 
-        // Mode free, atau tiket round robin tanpa kandidat operator.
-        if ($ticket->assigned_to === null) {
-            return true;
+        // Tiket ber-PIC hanya boleh dibalas PIC atau admin.
+        if ($ticket->assigned_to !== null) {
+            return false;
         }
 
-        return (int) $ticket->assigned_to === (int) $user->id;
+        // Mode free, atau tiket round robin tanpa kandidat operator.
+        return true;
     }
 
     public function claim(User $user, Ticket $ticket): bool

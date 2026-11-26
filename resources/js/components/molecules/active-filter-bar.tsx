@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 export interface ActiveFilterItem {
     key: string;
     label: string;
+    color?: string | null;
     onRemove: () => void;
 }
 
@@ -17,6 +18,9 @@ export function ActiveFilterBar({ items, onReset }: { items: ActiveFilterItem[];
             <span className="text-muted-foreground font-medium">Filter aktif:</span>
             {items.map((item) => (
                 <Badge key={item.key} variant="secondary" className="gap-1">
+                    {item.color && (
+                        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} aria-hidden="true" />
+                    )}
                     {item.label}
                     <button type="button" onClick={item.onRemove} aria-label={`Hapus filter ${item.label}`} className="hover:text-foreground">
                         <X className="size-3" />

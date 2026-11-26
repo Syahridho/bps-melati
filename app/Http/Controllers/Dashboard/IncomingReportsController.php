@@ -10,6 +10,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Services\AssignmentModeService;
 use App\Services\TicketCacheInvalidator;
+use App\Support\ChannelFilter;
 use App\Support\LaporanCache;
 use App\Support\LaporanFilter;
 use App\Support\LaporanTicketQuery;
@@ -41,6 +42,7 @@ class IncomingReportsController extends Controller
 
         // Query utama daftar tiket laporan masuk (kecuali tiket yang diinput manual dari admin dan yang sudah selesai)
         $baseQueryBuilder = fn () => LaporanTicketQuery::activeList($filter)
+            ->filterByChannels($filter->channels)
             ->when($filter->tab !== 'semua', function ($q) use ($filter) {
                 $q->applyTabFilter($filter->tab);
             });
@@ -62,11 +64,12 @@ class IncomingReportsController extends Controller
         }
 
         // Agregat counts per tab mengikuti rentang tanggal, TIDAK mengikuti search/tab
-        $countParams = ['tab_counts', 'from' => $filter->from, 'to' => $filter->to];
+        $countParams = ['tab_counts', 'from' => $filter->from, 'to' => $filter->to, 'channels' => $filter->channels];
         $fetchCounts = function () use ($filter) {
             $countBaseQuery = Ticket::query()
                 ->where('source_app', '!=', 'admin')
                 ->where('status', '!=', 'selesai')
+                ->filterByChannels($filter->channels)
                 ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
                     $q->where('created_at', '>=', $filter->from.' 00:00:00')
                         ->where('created_at', '<=', $filter->to.' 23:59:59');
@@ -106,6 +109,7 @@ class IncomingReportsController extends Controller
 
         return $this->renderPage($request, 'incoming-reports/index', [
             'tickets' => $tickets,
+            'channels' => ChannelFilter::tree(),
             'filters' => $filter->toFilterProps($frontendFilterKey),
             'counts' => $counts,
             'activeAssignmentMode' => app(AssignmentModeService::class)->current()->value,

@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\UserRole;
 use App\Events\ChannelStatsUpdated;
 use App\Events\DashboardUpdated;
 use App\Events\LaporanChanged;
@@ -27,7 +28,8 @@ class TicketObserver
      */
     public function updated(Ticket $ticket): void
     {
-        $changedFields = $ticket->wasChanged(['status', 'classification', 'channel_id', 'is_pengawasan', 'completed_at', 'is_flagged', 'assigned_to', 'is_read']);
+        // title & reporter_name ikut dipantau karena keduanya tampil di baris daftar.
+        $changedFields = $ticket->wasChanged(['status', 'classification', 'channel_id', 'is_pengawasan', 'completed_at', 'is_flagged', 'assigned_to', 'is_read', 'title', 'reporter_name']);
 
         if (empty($changedFields)) {
             return;
@@ -66,6 +68,8 @@ class TicketObserver
         } elseif ($ticket->wasChanged('is_pengawasan')) {
             $laporanAction = $ticket->is_pengawasan ? 'pengawasan_activated' : 'pengawasan_deactivated';
         } elseif ($ticket->wasChanged('assigned_to') || $ticket->wasChanged('is_read')) {
+            $laporanAction = 'updated';
+        } elseif ($ticket->wasChanged(['title', 'reporter_name'])) {
             $laporanAction = 'updated';
         }
 
@@ -174,26 +178,50 @@ class TicketObserver
             return;
         }
 
-        // Kumpulkan ID operator yang berhak menerima event (pembuat tiket jika operator).
-        $operatorUserIds = [];
-        foreach ([$ticket->created_by, $ticket->assigned_to, $ticket->getOriginal('assigned_to')] as $candidateUserId) {
-            if (! $candidateUserId) {
-                continue;
-            }
-            $candidate = User::find($candidateUserId);
-            if ($candidate && ($candidate->isOperator() || $candidate->isOperatorTim())) {
-                $operatorUserIds[] = (int) $candidateUserId;
-            }
-        }
-        $operatorUserIds = array_values(array_unique($operatorUserIds));
-
         event(new LaporanChanged(
             action: $action,
             ticketId: (int) $ticket->id,
             ticketNumber: $ticket->ticket_number,
             type: $ticket->classification,
             actorId: auth()->user()?->id,
-            operatorUserIds: $operatorUserIds,
+            operatorUserIds: $this->laporanOperatorRecipients($ticket),
+            status: $ticket->status,
+            occurredAt: now()->toIso8601String(),
+            isInputData: $ticket->source_app === 'admin',
+            channelName: $ticket->channel?->name,
         ));
+    }
+
+    /**
+     * Operator yang berhak menerima sinyal daftar untuk tiket ini.
+     *
+     * `Ticket::scopeVisibleTo()` memberi role operator akses ke semua tiket
+     * (Input Data menyaring source_app, Laporan Masuk menyaring sebaliknya),
+     * jadi seluruh operator aktif menerima sinyal. Operator tim hanya melihat
+     * tiket miliknya, sehingga cukup pembuat/penanggung jawab.
+     *
+     * @return array<int, int>
+     */
+    protected function laporanOperatorRecipients(Ticket $ticket): array
+    {
+        $recipientIds = User::query()
+            ->where('role', UserRole::Operator)
+            ->where('is_active', true)
+            ->pluck('id')
+            ->map(fn (int|string $id): int => (int) $id)
+            ->all();
+
+        foreach ([$ticket->created_by, $ticket->assigned_to, $ticket->getOriginal('assigned_to')] as $candidateUserId) {
+            if (! $candidateUserId) {
+                continue;
+            }
+
+            $candidate = User::find($candidateUserId);
+            if ($candidate && $candidate->isOperatorTim()) {
+                $recipientIds[] = (int) $candidateUserId;
+            }
+        }
+
+        return array_values(array_unique($recipientIds));
     }
 }

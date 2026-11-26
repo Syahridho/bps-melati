@@ -2,13 +2,15 @@
 
 namespace App\Services\Social;
 
+use App\Enums\UserRole;
+use App\Events\TicketCreated;
 use App\Models\Channel;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Services\Social\CommentClassifier;
-use App\Services\Social\RuleRepository;
+use App\Services\AuditLogger;
 use App\Services\TicketAssignmentService;
 use App\Support\ProfanityFilter;
+use App\Support\SafeBroadcast;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -21,8 +23,7 @@ class SocialCommentImporter
     public function __construct(
         private readonly TicketAssignmentService $assignmentService,
         private readonly ProfanityFilter $profanityFilter,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  list<NormalizedSocialComment>  $comments
@@ -77,12 +78,13 @@ class SocialCommentImporter
             $classifier = app(CommentClassifier::class);
             $result = $classifier->classify((string) $comment->content, $rules);
             if (($result['jenis'] ?? null) === null) {
-                \Illuminate\Support\Facades\Log::info('Komentar sosial dilewati (bukan laporan).', [
+                Log::info('Komentar sosial dilewati (bukan laporan).', [
                     'platform' => $platform,
                     'external_id' => $comment->externalId,
                     'alasan' => $result['alasan'] ?? '',
                 ]);
                 Cache::put($skipKey, $rulesVersion, now()->addDays(90));
+
                 continue;
             }
 
@@ -99,8 +101,12 @@ class SocialCommentImporter
 
             $this->notifyStaff($ticket);
             $this->cacheTicket($ticket);
+            SafeBroadcast::send('TicketCreated', fn () => TicketCreated::dispatch($ticket), [
+                'ticket_id' => $ticket->id,
+                'ticket_number' => $ticket->ticket_number,
+            ]);
 
-            \App\Services\AuditLogger::log(
+            AuditLogger::log(
                 eventType: 'social_import.ticket_created',
                 category: 'ticket',
                 actor: null,
@@ -127,6 +133,13 @@ class SocialCommentImporter
             $period
         );
 
+        $platformLabel = match ($platform) {
+            'youtube' => 'YouTube',
+            'facebook' => 'Facebook',
+            'instagram' => 'Instagram',
+            default => ucfirst($platform),
+        };
+
         return $this->assignmentService->createTicket([
             'ticket_number' => $generated['ticket_number'],
             'period' => $period,
@@ -143,37 +156,37 @@ class SocialCommentImporter
             'access_code' => Str::random(32),
             'status' => 'baru',
             'is_read' => false,
-            'source_app' => 'admin',
+            'source_app' => 'social_'.$platform,
             'created_by' => null,
             'external_id' => $comment->externalId,
             'external_parent_id' => $comment->externalParentId,
             'external_permalink' => $comment->externalPermalink,
             'external_occurred_at' => $comment->occurredAt,
             'external_author_handle' => $comment->externalAuthorHandle,
-        ]);
+        ], "Ditugaskan otomatis (Round Robin, Import {$platformLabel})");
     }
 
     private function notifyStaff(Ticket $ticket): void
     {
         $recipients = User::query()
             ->where('is_active', true)
-            ->whereIn('role', [\App\Enums\UserRole::Admin, \App\Enums\UserRole::Operator, \App\Enums\UserRole::OperatorTim])
+            ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
             ->get();
 
         foreach ($recipients as $recipient) {
             DB::table('notifications')->insert([
                 'id' => Str::uuid()->toString(),
-                'type' => 'input_data',
+                'type' => 'laporan_masuk',
                 'notifiable_type' => User::class,
                 'notifiable_id' => $recipient->id,
                 'data' => json_encode([
                     'id' => $ticket->id,
                     'ticket_number' => $ticket->ticket_number,
                     'type' => $ticket->classification,
-                    'title' => 'Data tiket baru ditambahkan',
+                    'title' => 'Laporan baru masuk',
                     'message' => $this->profanityFilter->censor(Str::limit((string) ($ticket->title ?? $ticket->content), 100)),
-                    'url' => '/dashboard/admin/input-data/'.$ticket->ticket_number,
-                    'actor_name' => null,
+                    'url' => '/dashboard/admin/incoming-reports/'.$ticket->ticket_number,
+                    'actor_name' => $ticket->reporter_name ?? null,
                 ]),
                 'read_at' => null,
                 'created_at' => now(),

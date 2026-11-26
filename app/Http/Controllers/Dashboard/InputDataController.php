@@ -5,16 +5,19 @@ namespace App\Http\Controllers\Dashboard;
 use App\Enums\UserRole;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
-use App\Jobs\SyncSocialToInputData;
 use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\UpdateTicketRequest;
+use App\Jobs\SyncSocialToInputData;
 use App\Mail\TicketCreatedMail;
 use App\Mail\TicketResponseSubmitted;
-use App\Models\Channel;
+use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\AssignmentModeService;
 use App\Services\TicketAssignmentService;
 use App\Services\TicketCacheInvalidator;
+use App\Support\ChannelFilter;
+use App\Support\LaporanCache;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
 use App\Support\ProfanityFilter;
@@ -92,6 +95,7 @@ class InputDataController extends Controller
                     ->where('created_at', '<=', $filter->to.' 23:59:59');
             })
             ->tap($searchClosure)
+            ->filterByChannels($filter->channels)
             ->when(! $isSelesaiTab && $filter->tab !== 'semua', function ($query) use ($filter) {
                 $query->applyTabFilter($filter->tab);
             });
@@ -121,17 +125,25 @@ class InputDataController extends Controller
                 'created_at' => $ticket->created_at->toIso8601String(),
             ], $this->profanityTicketProps($ticket)));
 
-        // Cache counts 20 detik untuk user/role yang relevan
+        // Cache counts 20 detik untuk user/role yang relevan. Memakai LaporanCache
+        // agar versinya ikut berputar saat TicketCacheInvalidator dijalankan
+        // (setiap tiket disimpan/dihapus), sehingga badge tab tidak basi.
         $userKey = $user->isOperatorTim() ? "user_{$user->id}" : 'shared';
-        $countCacheKey = sprintf('input_data:counts:%s:%s_%s:%s', $userKey, $filter->from ?? 'all', $filter->to ?? 'all', $filter->search ?? '');
 
-        $counts = Cache::remember($countCacheKey, 20, function () use ($user, $filter, $searchClosure) {
+        $counts = LaporanCache::remember('input-data', 'counts', [
+            'user' => $userKey,
+            'from' => $filter->from,
+            'to' => $filter->to,
+            'search' => $filter->search,
+            'channels' => $filter->channels,
+        ], 20, function () use ($user, $filter, $searchClosure) {
             // Base query untuk tab selain selesai (status != 'selesai')
             $countBaseQuery = Ticket::query()
                 ->where('source_app', 'admin')
                 ->where('status', '!=', 'selesai')
                 ->visibleTo($user)
                 ->tap($searchClosure)
+                ->filterByChannels($filter->channels)
                 ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
                     $q->where('created_at', '>=', $filter->from.' 00:00:00')
                         ->where('created_at', '<=', $filter->to.' 23:59:59');
@@ -159,6 +171,7 @@ class InputDataController extends Controller
                     ->where('status', 'selesai')
                     ->visibleTo($user)
                     ->tap($searchClosure)
+                    ->filterByChannels($filter->channels)
                     ->when(! $filter->isSemuaWaktu && $filter->from && $filter->to, function ($q) use ($filter) {
                         $q->where('created_at', '>=', $filter->from.' 00:00:00')
                             ->where('created_at', '<=', $filter->to.' 23:59:59');
@@ -179,32 +192,14 @@ class InputDataController extends Controller
             ];
         });
 
-        $channels = Cache::remember('channels:tree', now()->addHours(24), function () {
-            return Channel::with('children')
-                ->whereNull('parent_id')
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->get()
-                ->map(fn ($ch) => [
-                    'id' => $ch->id,
-                    'name' => $ch->name,
-                    'slug' => $ch->slug,
-                    'color' => $ch->color,
-                    'children' => $ch->children->where('is_active', true)->map(fn ($c) => [
-                        'id' => $c->id,
-                        'name' => $c->name,
-                        'slug' => $c->slug,
-                        'color' => $c->color ?? $ch->color,
-                    ])->values()->all(),
-                ])
-                ->all();
-        });
+        $channels = ChannelFilter::tree();
 
         return $this->renderPage($request, 'input-data/index', [
             'tickets' => $tickets,
             'channels' => $channels,
             'filters' => $filter->toFilterProps($frontendFilterKey),
             'counts' => $counts,
+            'isLiveEnabled' => (bool) Setting::get('dashboard_live_enabled', true),
         ]);
     }
 
@@ -216,7 +211,11 @@ class InputDataController extends Controller
         $ticket = Ticket::with([
             'channel',
             'creator',
+            'assignedTo',
             'attachments',
+            'assignmentLogs.fromUser',
+            'assignmentLogs.toUser',
+            'assignmentLogs.performer',
             'responses' => fn ($query) => $query->orderBy('created_at')->orderBy('id')->with(['user', 'attachments']),
         ])
             ->where('ticket_number', $ticketNumber)
@@ -228,6 +227,8 @@ class InputDataController extends Controller
             $ticket->update(['is_read' => true]);
         }
 
+        $user = $request->user();
+        $isAdmin = $user?->isAdmin() ?? false;
         $isSelesai = $ticket->status === 'selesai';
 
         return $this->renderPage($request, 'input-data/show/index', [
@@ -235,7 +236,29 @@ class InputDataController extends Controller
             'can' => [
                 'edit' => ! $isSelesai,
                 'delete' => true,
+                'reply' => $user?->can('reply', $ticket) ?? false,
+                'reassign' => $isAdmin,
+                'view_assignment_history' => $isAdmin,
             ],
+            'assignableOperators' => $isAdmin
+                ? User::query()->assignable()->get(['id', 'name'])->map(fn (User $operator): array => [
+                    'id' => $operator->id,
+                    'name' => $operator->name,
+                ])->all()
+                : [],
+            'assignmentLogs' => $isAdmin
+                ? $ticket->assignmentLogs->map(fn ($log): array => [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'action_label' => $log->actionLabel(),
+                    'from_user_name' => $log->fromUser?->name,
+                    'to_user_name' => $log->toUser?->name,
+                    'performed_by_name' => $log->performer?->name,
+                    'note' => $log->note,
+                    'created_at' => $log->created_at?->toIso8601String(),
+                ])->values()->all()
+                : [],
+            'activeAssignmentMode' => app(AssignmentModeService::class)->current()->value,
             'ticket' => $this->ticketPayload($ticket),
         ]);
     }
@@ -257,7 +280,7 @@ class InputDataController extends Controller
         // pembuat tetap tersimpan di kolom source_app dan created_by sendiri.
         $generated = Ticket::generateTicketNumber($validated['classification'], $period);
 
-        $ticket = $assignmentService->createTicket([
+        $ticket = $assignmentService->createInputDataTicket([
             'ticket_number' => $generated['ticket_number'],
             'period' => $period,
             'sequence' => $generated['sequence'],
@@ -275,7 +298,7 @@ class InputDataController extends Controller
             'is_read' => false,
             'source_app' => 'admin',
             'created_by' => $request->user()->id,
-        ]);
+        ], $request->user());
 
         // Notifikasi input_data ke admin dan semua operator aktif.
         $recipients = User::query()
@@ -543,7 +566,7 @@ class InputDataController extends Controller
     /**
      * Trigger sinkronisasi sosial (dispatch job).
      */
-    public function sync(\Illuminate\Http\Request $request, string $platform): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+    public function sync(Request $request, string $platform): RedirectResponse|JsonResponse
     {
         if (! in_array($platform, ['youtube', 'facebook', 'instagram'], true)) {
             abort(404);
@@ -566,11 +589,11 @@ class InputDataController extends Controller
     /**
      * Status sinkronisasi terakhir (JSON).
      */
-    public function syncStatus(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    public function syncStatus(Request $request): JsonResponse
     {
         $status = [];
         foreach (['youtube', 'facebook', 'instagram'] as $platform) {
-            $status[$platform] = \App\Models\Setting::get("social_import_{$platform}_last_synced_at");
+            $status[$platform] = Setting::get("social_import_{$platform}_last_synced_at");
         }
 
         return response()->json($status);

@@ -23,6 +23,9 @@ class LaporanFilter
 
     public bool $isSemuaWaktu;
 
+    /** @var list<int> */
+    public array $channels;
+
     public function __construct(Request $request, string $defaultDateMode = 'bulan_ini', int $defaultPerPage = 15)
     {
         $this->search = trim((string) ($request->query('q', $request->query('search', ''))));
@@ -35,6 +38,8 @@ class LaporanFilter
         }
 
         [$this->from, $this->to, $this->isSemuaWaktu] = self::resolveDateRange($request, $defaultDateMode);
+
+        $this->channels = ChannelFilter::idsFromRequest($request);
     }
 
     public static function resolveDateRange(Request $request, string $defaultMode = 'bulan_ini'): array
@@ -98,6 +103,7 @@ class LaporanFilter
             'per_page' => $this->perPage,
             'page' => $this->page,
             'q' => $this->search,
+            'channels' => $this->channels,
         ];
     }
 
@@ -111,6 +117,7 @@ class LaporanFilter
             'per_page' => $this->perPage,
             'from' => $this->from,
             'to' => $this->to,
+            'channels' => $this->channels,
         ];
     }
 }

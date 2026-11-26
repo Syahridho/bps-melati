@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Actions\AutoCloseTickets;
 use App\Services\TicketCacheInvalidator;
 use App\Services\TicketNumberGenerator;
+use App\Support\ChannelFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -153,6 +154,23 @@ class Ticket extends Model
     public function lastResponse(): HasOne
     {
         return $this->hasOne(TicketResponse::class)->latestOfMany('id');
+    }
+
+    /**
+     * Batasi daftar ke kanal terpilih. Induk yang dipilih otomatis mencakup
+     * seluruh sub-kanalnya, dan id hasil ekspansi selalu unik.
+     *
+     * @param  array<int, int|string>  $channelIds
+     */
+    public function scopeFilterByChannels(Builder $query, array $channelIds): Builder
+    {
+        $ids = ChannelFilter::expand($channelIds);
+
+        if ($ids === []) {
+            return $query;
+        }
+
+        return $query->whereIn('channel_id', $ids);
     }
 
     public function scopeVisibleTo(Builder $query, User $user): Builder

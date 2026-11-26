@@ -11,18 +11,33 @@ interface TicketAssignmentBadgesProps {
     assignmentMode?: AssignmentMode;
     activeAssignmentMode?: AssignmentMode;
     isOrphaned?: boolean;
+    showUnassigned?: boolean;
+    alwaysShowMode?: boolean;
 }
 
-export function TicketAssignmentBadges({ assignedToName, assignmentMode, activeAssignmentMode }: TicketAssignmentBadgesProps) {
+export function TicketAssignmentBadges({
+    assignedToName,
+    assignmentMode,
+    activeAssignmentMode,
+    showUnassigned = false,
+    alwaysShowMode = false,
+}: TicketAssignmentBadgesProps) {
     return (
         <>
-            {assignedToName && (
+            {assignedToName ? (
                 <Badge variant="outline" className="gap-1">
                     <UserRoundCog className="size-3" />
                     PIC: {assignedToName}
                 </Badge>
+            ) : (
+                showUnassigned && (
+                    <Badge variant="outline" className="text-muted-foreground gap-1">
+                        <UserRoundCog className="size-3" />
+                        Tanpa PIC
+                    </Badge>
+                )
             )}
-            {assignmentMode && assignmentMode !== activeAssignmentMode && (
+            {assignmentMode && (alwaysShowMode || assignmentMode !== activeAssignmentMode) && (
                 <Badge variant="secondary">Mode: {assignmentModeLabel(assignmentMode)}</Badge>
             )}
             {/* {isOrphaned && (

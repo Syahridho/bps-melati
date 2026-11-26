@@ -36,31 +36,27 @@ class TicketAssignmentService
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public function createTicket(array $attributes): Ticket
+    public function createTicket(array $attributes, ?string $autoAssignNote = null): Ticket
     {
         $mode = $this->currentMode();
 
         if ($mode !== AssignmentMode::RoundRobin) {
-            $ticket = DB::transaction(fn (): Ticket => Ticket::create(array_merge($attributes, [
+            return DB::transaction(fn (): Ticket => Ticket::create(array_merge($attributes, [
                 'assignment_mode' => $mode->value,
             ])));
-
-            $this->dispatchAssignedLaporanChanged($ticket);
-
-            return $ticket;
         }
 
         // Lock Redis lintas transaksi: dua tiket yang masuk bersamaan tidak
         // boleh membaca pointer giliran yang sama.
-        return Cache::lock(self::ROUND_ROBIN_LOCK, 10)->block(5, function () use ($attributes): Ticket {
+        return Cache::lock(self::ROUND_ROBIN_LOCK, 10)->block(5, function () use ($attributes, $autoAssignNote): Ticket {
             $assignedUserId = null;
 
-            $ticket = DB::transaction(function () use ($attributes, &$assignedUserId): Ticket {
+            $ticket = DB::transaction(function () use ($attributes, $autoAssignNote, &$assignedUserId): Ticket {
                 $ticket = Ticket::create(array_merge($attributes, [
                     'assignment_mode' => AssignmentMode::RoundRobin->value,
                 ]));
 
-                $assignedUserId = $this->assignRoundRobinLocked($ticket);
+                $assignedUserId = $this->assignRoundRobinLocked($ticket, $autoAssignNote);
 
                 return $ticket;
             });
@@ -69,10 +65,53 @@ class TicketAssignmentService
                 $this->notifyNoEligibleOperator($ticket);
             }
 
-            $this->dispatchAssignedLaporanChanged($ticket);
+            return $ticket;
+        });
+    }
+
+    /**
+     * Buat tiket khusus jalur Input Data: melewati Round Robin dan
+     * menugaskan pembuat sebagai PIC untuk semua peran pembuat.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function createInputDataTicket(array $attributes, User $creator): Ticket
+    {
+        $mode = $this->currentMode();
+
+        return DB::transaction(function () use ($attributes, $creator, $mode): Ticket {
+            $ticket = Ticket::create(array_merge($attributes, [
+                'assignment_mode' => $mode->value,
+                'assigned_to' => $creator->id,
+                'assigned_at' => now(),
+            ]));
+
+            $this->assignToCreator($ticket, $creator);
 
             return $ticket;
         });
+    }
+
+    /**
+     * Catat penugasan awal ke pembuat tiket (Input Data) tanpa mengubah
+     * counter Round Robin maupun memicu dispatch event ganda.
+     */
+    public function assignToCreator(Ticket $ticket, User $creator): void
+    {
+        if ((int) $ticket->assigned_to !== (int) $creator->id) {
+            $ticket->forceFill([
+                'assigned_to' => $creator->id,
+                'assigned_at' => now(),
+            ])->saveQuietly();
+        }
+
+        $this->log(
+            $ticket,
+            null,
+            $creator->id,
+            TicketAssignmentLog::ACTION_CREATOR_ASSIGNED,
+            $creator->id,
+        );
     }
 
     /**
@@ -180,6 +219,10 @@ class TicketAssignmentService
             type: $ticket->classification,
             actorId: $actorId ?? auth()->user()?->id,
             operatorUserIds: [(int) $assignedTo],
+            status: $ticket->status,
+            occurredAt: now()->toIso8601String(),
+            isInputData: $ticket->source_app === 'admin',
+            channelName: $ticket->channel?->name,
         ));
     }
 
@@ -211,7 +254,7 @@ class TicketAssignmentService
      *
      * @return int|null ID operator yang ditugaskan, null bila tidak ada kandidat.
      */
-    private function assignRoundRobinLocked(Ticket $ticket): ?int
+    private function assignRoundRobinLocked(Ticket $ticket, ?string $note = null): ?int
     {
         $operatorIds = User::query()
             ->assignable()
@@ -220,6 +263,11 @@ class TicketAssignmentService
             ->all();
 
         if ($operatorIds === []) {
+            Log::warning('Tidak ada operator valid untuk giliran Round Robin.', [
+                'ticket_id' => $ticket->id,
+                'ticket_number' => $ticket->ticket_number,
+            ]);
+
             return null;
         }
 
@@ -259,7 +307,7 @@ class TicketAssignmentService
             'assigned_at' => now(),
         ])->saveQuietly();
 
-        $this->log($ticket, null, $nextUserId, TicketAssignmentLog::ACTION_AUTO_ASSIGNED, null);
+        $this->log($ticket, null, $nextUserId, TicketAssignmentLog::ACTION_AUTO_ASSIGNED, null, $note);
 
         return $nextUserId;
     }
@@ -286,6 +334,7 @@ class TicketAssignmentService
             TicketAssignmentLog::ACTION_AUTO_ASSIGNED => 'ticket.assignment_auto_assigned',
             TicketAssignmentLog::ACTION_REASSIGNED => 'ticket.assignment_reassigned',
             TicketAssignmentLog::ACTION_RELEASED => 'ticket.assignment_released',
+            TicketAssignmentLog::ACTION_CREATOR_ASSIGNED => 'ticket.assignment_creator_assigned',
             default => 'ticket.assignment_changed',
         };
 

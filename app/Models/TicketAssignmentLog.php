@@ -15,6 +15,8 @@ class TicketAssignmentLog extends Model
 
     public const ACTION_RELEASED = 'released';
 
+    public const ACTION_CREATOR_ASSIGNED = 'creator_assigned';
+
     protected $fillable = [
         'ticket_id',
         'from_user_id',
@@ -51,6 +53,7 @@ class TicketAssignmentLog extends Model
             self::ACTION_AUTO_ASSIGNED => 'Ditugaskan otomatis',
             self::ACTION_REASSIGNED => 'PIC diubah',
             self::ACTION_RELEASED => 'PIC dilepas',
+            self::ACTION_CREATOR_ASSIGNED => 'Ditugaskan ke pembuat (Input Data)',
             default => $this->action,
         };
     }

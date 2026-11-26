@@ -9,7 +9,7 @@ export function mapIncomingReportsToDetailData(ticket: TicketDetail): TicketDeta
         assigned_to: ticket.assigned_to,
         assigned_to_name: ticket.assigned_to_name,
         assigned_at: ticket.assigned_at,
-        assignment_mode: ticket.assignment_mode,
+        assignment_mode: ticket.assignment_mode ?? undefined,
         is_orphaned: ticket.is_orphaned,
         id: ticket.id,
         ticket_number: ticket.ticket_number,
@@ -153,6 +153,11 @@ export function mapCompletedReportsToDetailData(ticket: CompletedReportsShowProp
 
 export function mapInputDataToDetailData(ticket: InputDataTicketDetail): TicketDetailData {
     return {
+        assigned_to: ticket.assigned_to,
+        assigned_to_name: ticket.assigned_to_name,
+        assigned_at: ticket.assigned_at,
+        assignment_mode: ticket.assignment_mode ?? undefined,
+        is_orphaned: ticket.is_orphaned,
         id: ticket.id,
         ticket_number: ticket.ticket_number,
         period: ticket.period,
@@ -263,7 +268,7 @@ export function toTicketListEntry(
         recently_answered_by: recentlyAnswered[ticket.id] ?? null,
         has_profanity: ticket.has_profanity,
         assigned_to_name: ticket.assigned_to_name ?? null,
-        assignment_mode: ticket.assignment_mode,
+        assignment_mode: ticket.assignment_mode ?? undefined,
         show_assignment_mode_badge: ticket.assignment_mode !== undefined && ticket.assignment_mode !== activeAssignmentMode,
     };
 }

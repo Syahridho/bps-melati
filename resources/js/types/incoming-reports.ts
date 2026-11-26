@@ -1,4 +1,5 @@
 import { type PaginatedData } from '@/components/molecules/pagination';
+import { type ChannelGroup } from '@/types/input-data';
 import { type SharedData } from '@/types';
 
 export type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
@@ -164,7 +165,9 @@ export interface IncomingReportsProps extends SharedData {
         per_page: number;
         from: string | null;
         to: string | null;
+        channels?: number[];
     };
+    channels?: ChannelGroup[];
     counts: {
         semua: number;
         belum_dibaca: number;

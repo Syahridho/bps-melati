@@ -1,5 +1,7 @@
+import { ConnectionIndicator } from '@/components/atoms/connection-indicator';
 import { ActiveFilterBar } from '@/components/molecules/active-filter-bar';
 import { AlertBanner } from '@/components/molecules/alert-banner';
+import { ChannelFilter } from '@/components/molecules/channel-filter';
 import { InputDataFilterTabs } from '@/components/molecules/input-data-filter-tabs';
 import { Pagination } from '@/components/molecules/pagination';
 import { ReportListToolbar } from '@/components/molecules/report-list-toolbar';
@@ -7,10 +9,11 @@ import { toTicketListEntry } from '@/components/organisms/ticket-list/adapter';
 import { TicketList } from '@/components/organisms/ticket-list/ticket-list';
 import { Button } from '@/components/ui/button';
 import { useFlashMessage } from '@/hooks/use-flash-message';
-import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
 import { useInputDataFilters } from '@/hooks/use-input-data-filters';
+import { useNewTicketToast } from '@/hooks/use-new-ticket-toast';
 import { useLaporanRealtime } from '@/hooks/use-reports-realtime';
 import AdminPage from '@/layouts/dashboard/page';
+import { buildChannelFilterChips } from '@/lib/channel-filter';
 import { buildActiveFilters } from '@/lib/report-list';
 import { InputDataPageProps } from '@/types/input-data';
 import { Head, usePage } from '@inertiajs/react';
@@ -19,26 +22,52 @@ import { useState } from 'react';
 import InputDataAddTicketDialog from './add-ticket-dialog';
 
 export default function InputDataView() {
-    const { auth, tickets, channels, filters, counts, flash } = usePage<InputDataPageProps>().props;
+    const { auth, tickets, channels, filters, counts, flash, isLiveEnabled = true } = usePage<InputDataPageProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [flagPopoverOpen, setFlagPopoverOpen] = useState(false);
     const flashMessage = useFlashMessage(flash?.success);
 
-    const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
-        useInputDataFilters(routePrefix, filters);
+    const {
+        searchQuery,
+        setSearchQuery,
+        isLoading,
+        handleFilterChange,
+        handleRangeChange,
+        handleChannelChange,
+        handlePerPageChange,
+        handleResetFilters,
+    } = useInputDataFilters(routePrefix, filters);
 
     const searching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
-
-    useInboxRealtime({ searching });
-    useLaporanRealtime({ isBusy: flagPopoverOpen, searching, only: ['tickets', 'counts'] });
-
-    const activeFilters = buildActiveFilters(filters, {
-        clearTab: () => handleFilterChange('semua'),
-        clearSearch: () => setSearchQuery(''),
-        clearDate: () => handleRangeChange('semua', 'semua'),
+    const handleNewTicket = useNewTicketToast({
+        enabled: auth.user.role === 'admin',
+        routePrefix,
     });
+
+    const { isLive } = useLaporanRealtime({
+        isBusy: flagPopoverOpen,
+        searching,
+        only: ['tickets', 'counts'],
+        onCreated: handleNewTicket,
+    });
+
+    const channelChips = buildChannelFilterChips(channels, filters.channels).map((chip) => ({
+        key: chip.key,
+        label: `Kanal: ${chip.label}`,
+        color: chip.color,
+        onRemove: () => handleChannelChange(filters.channels.filter((id) => !chip.ids.includes(id))),
+    }));
+
+    const activeFilters = [
+        ...buildActiveFilters(filters, {
+            clearTab: () => handleFilterChange('semua'),
+            clearSearch: () => setSearchQuery(''),
+            clearDate: () => handleRangeChange('semua', 'semua'),
+        }),
+        ...channelChips,
+    ];
 
     const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix));
 
@@ -53,10 +82,13 @@ export default function InputDataView() {
                         <h2 className="text-xl font-bold tracking-tight">Input Data</h2>
                         <p className="text-muted-foreground text-sm">Kelola dan tambahkan laporan, aspirasi, atau permintaan informasi baru.</p>
                     </div>
-                    <Button onClick={() => setIsAddDialogOpen(true)} className="shrink-0 gap-2">
-                        <Plus className="h-4 w-4" />
-                        Tambah Data Baru
-                    </Button>
+                    <div className="flex shrink-0 items-center gap-2">
+                        <ConnectionIndicator isLive={isLive} isLiveEnabled={isLiveEnabled} />
+                        <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Tambah Data Baru
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="bg-card overflow-hidden rounded-lg border">
@@ -66,6 +98,9 @@ export default function InputDataView() {
                         from={filters.from}
                         to={filters.to}
                         onRangeChange={handleRangeChange}
+                        channelFilter={
+                            <ChannelFilter channels={channels} value={filters.channels} onApply={handleChannelChange} />
+                        }
                     />
 
                     <ActiveFilterBar items={activeFilters} onReset={handleResetFilters} />

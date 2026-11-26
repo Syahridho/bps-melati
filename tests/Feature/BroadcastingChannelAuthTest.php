@@ -110,6 +110,19 @@ test('staff channel authorization rules', function () {
     authChannel('private-staff')->assertForbidden();
 });
 
+test('laporan.admin channel authorization rules', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin, 'is_active' => true]);
+    $operator = User::factory()->create(['role' => UserRole::Operator, 'is_active' => true]);
+    $operatorTim = User::factory()->create(['role' => UserRole::OperatorTim, 'is_active' => true]);
+    $inactiveAdmin = User::factory()->create(['role' => UserRole::Admin, 'is_active' => false]);
+
+    authChannel('private-laporan.admin', $admin)->assertSuccessful();
+    authChannel('private-laporan.admin', $operator)->assertForbidden();
+    authChannel('private-laporan.admin', $operatorTim)->assertForbidden();
+    authChannel('private-laporan.admin', $inactiveAdmin)->assertForbidden();
+    authChannel('private-laporan.admin')->assertForbidden();
+});
+
 test('laporan.operator.{userId} channel authorization rules', function () {
     $operator = User::factory()->create(['role' => UserRole::Operator, 'is_active' => true]);
     $otherOperator = User::factory()->create(['role' => UserRole::Operator, 'is_active' => true]);

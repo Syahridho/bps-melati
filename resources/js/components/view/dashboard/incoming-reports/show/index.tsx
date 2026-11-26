@@ -259,6 +259,14 @@ export default function ShowIncomingReportsView() {
                             viewers={live.viewers}
                             typingNames={live.typingNames}
                         />
+                    ) : !perms.reply &&
+                      auth.user.role !== 'admin' &&
+                      live.status !== 'selesai' &&
+                      Boolean(detailData.assigned_to_name) &&
+                      Number(detailData.assigned_to) !== Number(auth.user.id) ? (
+                        <p className="text-muted-foreground text-sm">
+                            Laporan ini ditangani oleh <span className="text-foreground font-medium">{detailData.assigned_to_name}</span>.
+                        </p>
                     ) : undefined
                 }
             />

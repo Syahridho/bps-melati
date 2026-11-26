@@ -95,7 +95,12 @@ class ReplyToTicket
                     // Pertahanan berlapis: jalur mana pun yang memanggil action ini
                     // tetap tunduk pada aturan balas yang sama.
                     if (! Gate::forUser($actor)->allows('reply', $locked)) {
-                        throw new AuthorizationException('Anda tidak berhak membalas tiket ini.');
+                        $picName = $locked->assignedTo?->name;
+                        $denyMessage = $picName
+                            ? "Laporan ini ditangani oleh {$picName}. Hanya PIC atau admin yang berhak membalas."
+                            : 'Anda tidak berhak membalas tiket ini.';
+
+                        throw new AuthorizationException($denyMessage);
                     }
 
                     // "Respon awal hanya sekali" — dicek di dalam lock agar pesan 409-nya informatif.

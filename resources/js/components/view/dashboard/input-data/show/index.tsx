@@ -2,6 +2,9 @@ import CompletedStamp from '@/components/atoms/completed-stamp';
 import { AttachmentPreviewDialog } from '@/components/molecules/attachment-preview-dialog';
 import { TicketFlagButton } from '@/components/molecules/ticket-flag-button';
 import { IncomingReportsReplyForm } from '@/components/organisms/incoming-reports/incoming-reports-reply-form';
+import { TicketAssignmentBadges } from '@/components/organisms/incoming-reports/ticket-assignment-badges';
+import { TicketAssignmentHistory } from '@/components/organisms/incoming-reports/ticket-assignment-history';
+import { TicketReassignDialog } from '@/components/organisms/incoming-reports/ticket-reassign-dialog';
 import { mapInputDataToDetailData } from '@/components/organisms/ticket-detail/adapters';
 import { buildTicketInfoFields } from '@/components/organisms/ticket-detail/info-fields';
 import SensorToggleButton from '@/components/organisms/ticket-detail/sensor-toggle-button';
@@ -21,21 +24,26 @@ import { useTicketEditDelete } from '@/hooks/use-ticket-edit-delete';
 import { useTicketLive } from '@/hooks/use-ticket-live';
 import { type InputDataShowProps } from '@/types/input-data';
 import { usePage } from '@inertiajs/react';
-import { Reply } from 'lucide-react';
+import { Reply, UserRoundCog } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import InputDataDeleteTicketDialog from '@/components/view/dashboard/input-data/delete-ticket-dialog';
 import InputDataUpdateTicketDialog from '@/components/view/dashboard/input-data/update-ticket-dialog';
 
 export default function ShowInputDataView() {
-    const { auth, ticket, can, flash } = usePage<InputDataShowProps>().props;
+    const { auth, ticket, can, flash, assignableOperators = [], assignmentLogs = [], activeAssignmentMode = 'free' } = usePage<InputDataShowProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
+    const isAdmin = auth.user.role === 'admin';
 
     const canEdit = can?.edit ?? true;
     const canDelete = can?.delete ?? true;
+    const canReply = Boolean(can?.reply);
+    const canReassign = can?.reassign ?? isAdmin;
+    const canViewAssignmentHistory = can?.view_assignment_history ?? isAdmin;
 
     const [showReplyForm, setShowReplyForm] = useState(false);
     const [showOriginal, setShowOriginal] = useState(false);
+    const [isReassignOpen, setIsReassignOpen] = useState(false);
     const toggleOriginal = () => setShowOriginal((prev) => !prev);
 
     const preview = useAttachmentPreviewItem();
@@ -64,6 +72,13 @@ export default function ShowInputDataView() {
         live.status === 'respon_awal' ||
         live.status === 'respon_substantif' ||
         live.status === 'selesai';
+
+    const showHandledByOtherNotice =
+        !canReply &&
+        !isAdmin &&
+        live.status !== 'selesai' &&
+        Boolean(detailData.assigned_to_name) &&
+        Number(detailData.assigned_to) !== Number(auth.user.id);
 
     const previewAttachment = (att: Parameters<typeof preview.preview>[0]) => preview.preview(att, detailData.attachments);
 
@@ -95,6 +110,15 @@ export default function ShowInputDataView() {
                         ticket={ticket}
                         handleDeleteSubmit={editDelete.confirmDelete}
                     />
+                    {canReassign && (
+                        <TicketReassignDialog
+                            open={isReassignOpen}
+                            onOpenChange={setIsReassignOpen}
+                            ticketId={ticket.id}
+                            currentPicId={ticket.assigned_to ?? null}
+                            operators={assignableOperators}
+                        />
+                    )}
                     <AttachmentPreviewDialog item={preview.item} items={preview.items} onClose={preview.close} />
                 </>
             }
@@ -110,8 +134,24 @@ export default function ShowInputDataView() {
                     pengawasanAt={detailData.pengawasan_at}
                     pengawasanByName={detailData.pengawasan_by_name}
                     kadarPengawasanDays={detailData.kadar_pengawasan_days}
+                    badges={
+                        <TicketAssignmentBadges
+                            assignedToName={detailData.assigned_to_name}
+                            assignmentMode={detailData.assignment_mode}
+                            activeAssignmentMode={activeAssignmentMode}
+                            isOrphaned={detailData.is_orphaned}
+                            showUnassigned
+                            alwaysShowMode
+                        />
+                    }
                     actions={
                         <>
+                            {canReassign && (
+                                <Button type="button" variant="outline" onClick={() => setIsReassignOpen(true)} className="gap-2">
+                                    <UserRoundCog className="size-4" />
+                                    Ubah PIC
+                                </Button>
+                            )}
                             {detailData.has_any_profanity && <SensorToggleButton showOriginal={showOriginal} onToggle={toggleOriginal} />}
                             <SupervisionToggle
                                 ticketNumber={detailData.ticket_number}
@@ -156,6 +196,8 @@ export default function ShowInputDataView() {
                 <TicketAttachments attachments={detailData.attachments} onPreview={previewAttachment} />
             </div>
 
+            {canViewAssignmentHistory && <TicketAssignmentHistory logs={assignmentLogs} />}
+
             <TicketResponseHistory
                 responses={detailData.responses}
                 ticketStatus={live.status}
@@ -164,30 +206,36 @@ export default function ShowInputDataView() {
                 showOriginal={showOriginal}
                 onToggle={toggleOriginal}
                 footerExtra={
-                    <>
-                        {!showReplyForm && live.status !== 'selesai' && (
-                            <Button onClick={() => setShowReplyForm(true)}>
-                                <Reply className="mr-2 h-4 w-4" />
-                                Balas Laporan
-                            </Button>
-                        )}
-                        <IncomingReportsReplyForm
-                            ticketId={ticket.id}
-                            ticketStatus={live.status}
-                            expectedVersion={ticket.version}
-                            hasResponAwal={hasResponAwal}
-                            routePrefix={routePrefix}
-                            open={showReplyForm && live.status !== 'selesai'}
-                            pendingNotice={null}
-                            conflict={null}
-                            onDismissConflict={() => {}}
-                            onCancel={() => setShowReplyForm(false)}
-                            onSuccess={() => setShowReplyForm(false)}
-                            onPreviewFile={() => {}}
-                            onTyping={() => {}}
-                            currentUserId={auth.user.id}
-                        />
-                    </>
+                    canReply ? (
+                        <>
+                            {!showReplyForm && live.status !== 'selesai' && (
+                                <Button onClick={() => setShowReplyForm(true)}>
+                                    <Reply className="mr-2 h-4 w-4" />
+                                    Balas Laporan
+                                </Button>
+                            )}
+                            <IncomingReportsReplyForm
+                                ticketId={ticket.id}
+                                ticketStatus={live.status}
+                                expectedVersion={ticket.version}
+                                hasResponAwal={hasResponAwal}
+                                routePrefix={routePrefix}
+                                open={showReplyForm && live.status !== 'selesai'}
+                                pendingNotice={null}
+                                conflict={null}
+                                onDismissConflict={() => {}}
+                                onCancel={() => setShowReplyForm(false)}
+                                onSuccess={() => setShowReplyForm(false)}
+                                onPreviewFile={() => {}}
+                                onTyping={() => {}}
+                                currentUserId={auth.user.id}
+                            />
+                        </>
+                    ) : showHandledByOtherNotice ? (
+                        <p className="text-muted-foreground text-sm">
+                            Laporan ini ditangani oleh <span className="text-foreground font-medium">{detailData.assigned_to_name}</span>.
+                        </p>
+                    ) : undefined
                 }
             />
         </TicketDetailLayout>

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\TicketFlagController;
 use App\Http\Controllers\Admin\TicketPengawasanController;
 use App\Http\Controllers\Admin\TicketResponseController;
+use App\Http\Controllers\AndroidDownloadController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\CheckAttachmentDownloadController;
 use App\Http\Controllers\CheckTicketController;
@@ -10,16 +11,15 @@ use App\Http\Controllers\Dashboard\CompletedReportsController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Dashboard\IncomingReportsController;
 use App\Http\Controllers\Dashboard\InputDataController;
-use App\Http\Controllers\Dashboard\SocialSyncController;
 use App\Http\Controllers\Dashboard\MyReportsController;
 use App\Http\Controllers\Dashboard\OperatorController;
 use App\Http\Controllers\Dashboard\Recap\MonthlyRecapController;
 use App\Http\Controllers\Dashboard\Recap\PeriodicRecapController;
+use App\Http\Controllers\Dashboard\SocialSyncController;
 use App\Http\Controllers\Dashboard\TicketAssignmentController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\WelcomeController;
-use App\Http\Controllers\AndroidDownloadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -136,6 +136,9 @@ Route::middleware(['auth'])->group(function () {
         Route::put('input-data/{ticketNumber}', [InputDataController::class, 'update'])->name('input-data.update')->where('ticketNumber', '.*');
         Route::delete('input-data/{ticketNumber}', [InputDataController::class, 'destroy'])->name('input-data.destroy')->where('ticketNumber', '.*');
         Route::patch('input-data/{ticketNumber}/tandai', [InputDataController::class, 'tandai'])->middleware('throttle:60,1')->name('input-data.tandai')->where('ticketNumber', '.*');
+        Route::post('incoming-reports/{ticket}/responses', [TicketResponseController::class, 'store'])
+            ->middleware('throttle:ticket-response')
+            ->name('incoming-reports.responses.store');
     });
 
     Route::middleware('role:operator')->prefix('dashboard/operator')->name('dashboard.operator.')->group(function () {
@@ -145,9 +148,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'show'])->name('incoming-reports.show')->where('ticketNumber', '.*');
         Route::put('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'update'])->name('incoming-reports.update')->where('ticketNumber', '.*');
         Route::delete('incoming-reports/{ticketNumber}', [IncomingReportsController::class, 'destroy'])->name('incoming-reports.destroy')->where('ticketNumber', '.*');
-        Route::post('incoming-reports/{ticket}/responses', [TicketResponseController::class, 'store'])
-            ->middleware('throttle:ticket-response')
-            ->name('incoming-reports.responses.store');
         Route::post('incoming-reports/{ticket}/claim', [TicketAssignmentController::class, 'claim'])
             ->name('incoming-reports.claim');
         Route::patch('incoming-reports/{ticketNumber}/pengawasan', [TicketPengawasanController::class, 'update'])->name('incoming-reports.pengawasan')->where('ticketNumber', '.*');

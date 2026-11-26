@@ -1,4 +1,5 @@
 import { ActiveFilterBar } from '@/components/molecules/active-filter-bar';
+import { ChannelFilter } from '@/components/molecules/channel-filter';
 import { IncomingReportsFilterTabs } from '@/components/molecules/incoming-reports-filter-tabs';
 import { Pagination } from '@/components/molecules/pagination';
 import { ReportListToolbar } from '@/components/molecules/report-list-toolbar';
@@ -10,6 +11,7 @@ import { useInboxRealtime } from '@/hooks/use-inbox-realtime';
 import { useIncomingReportsFilters } from '@/hooks/use-incoming-reports-filters';
 import { useLaporanRealtime } from '@/hooks/use-reports-realtime';
 import AdminPage from '@/layouts/dashboard/page';
+import { buildChannelFilterChips } from '@/lib/channel-filter';
 import { buildActiveFilters, buildMyReportsDetailQuery } from '@/lib/report-list';
 import { type IncomingReportsProps } from '@/types/incoming-reports';
 import { Head, usePage } from '@inertiajs/react';
@@ -34,15 +36,23 @@ const PAGE_TEXT = {
 } as const;
 
 export default function IncomingReportsView({ mode = 'incoming' }: IncomingReportsViewProps) {
-    const { auth, tickets, filters, counts, activeAssignmentMode } = usePage<IncomingReportsProps>().props;
+    const { auth, tickets, filters, counts, activeAssignmentMode, channels = [] } = usePage<IncomingReportsProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
     const isMyReports = mode === 'my-reports';
 
     const { title, description, routeSegment } = PAGE_TEXT[mode];
     const routeName = `${routePrefix}.${routeSegment}.index`;
 
-    const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
-        useIncomingReportsFilters(routeName, filters);
+    const {
+        searchQuery,
+        setSearchQuery,
+        isLoading,
+        handleFilterChange,
+        handleRangeChange,
+        handleChannelChange,
+        handlePerPageChange,
+        handleResetFilters,
+    } = useIncomingReportsFilters(routeName, filters);
 
     const isSearching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
     const { recentlyAnswered, clearRecentlyAnswered } = useInboxRealtime({ searching: isSearching });
@@ -55,11 +65,22 @@ export default function IncomingReportsView({ mode = 'incoming' }: IncomingRepor
         only: ['tickets', 'counts', 'inbox_open_count', 'my_reports_open_count'],
     });
 
-    const activeFilters = buildActiveFilters(filters, {
-        clearTab: () => handleFilterChange('semua'),
-        clearSearch: () => setSearchQuery(''),
-        clearDate: () => handleRangeChange('semua', 'semua'),
-    });
+    const selectedChannels = filters.channels ?? [];
+    const channelChips = buildChannelFilterChips(channels, selectedChannels).map((chip) => ({
+        key: chip.key,
+        label: `Kanal: ${chip.label}`,
+        color: chip.color,
+        onRemove: () => handleChannelChange(selectedChannels.filter((id) => !chip.ids.includes(id))),
+    }));
+
+    const activeFilters = [
+        ...buildActiveFilters(filters, {
+            clearTab: () => handleFilterChange('semua'),
+            clearSearch: () => setSearchQuery(''),
+            clearDate: () => handleRangeChange('semua', 'semua'),
+        }),
+        ...channelChips,
+    ];
 
     const detailQuery = isMyReports ? buildMyReportsDetailQuery(filters, tickets.current_page) : {};
     const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix, recentlyAnswered, activeAssignmentMode, detailQuery));
@@ -80,6 +101,11 @@ export default function IncomingReportsView({ mode = 'incoming' }: IncomingRepor
                         from={filters.from}
                         to={filters.to}
                         onRangeChange={handleRangeChange}
+                        channelFilter={
+                            channels.length > 0 ? (
+                                <ChannelFilter channels={channels} value={selectedChannels} onApply={handleChannelChange} />
+                            ) : null
+                        }
                     />
 
                     <ActiveFilterBar items={activeFilters} onReset={handleResetFilters} />

@@ -7,6 +7,7 @@ use App\Http\Requests\Settings\StoreChannelRequest;
 use App\Http\Requests\Settings\UpdateChannelRequest;
 use App\Models\Channel;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -70,6 +71,8 @@ class ChannelController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
+        self::forgetFilterTreeCache();
+
         return redirect()->back()->with('flash', [
             'success' => "Kanal {$channel->name} berhasil ditambahkan!",
         ]);
@@ -94,9 +97,17 @@ class ChannelController extends Controller
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $channel->is_active,
         ]);
 
+        self::forgetFilterTreeCache();
+
         return redirect()->back()->with('flash', [
             'success' => "Kanal {$channel->name} berhasil diperbarui!",
         ]);
+    }
+
+    private static function forgetFilterTreeCache(): void
+    {
+        Cache::forget('channels:filter-tree');
+        Cache::forget('channels:tree');
     }
 
     public function destroy(Channel $channel): RedirectResponse
@@ -122,6 +133,8 @@ class ChannelController extends Controller
 
         $name = $channel->name;
         $channel->delete();
+
+        self::forgetFilterTreeCache();
 
         return redirect()->back()->with('flash', [
             'success' => "Kanal {$name} berhasil dihapus!",

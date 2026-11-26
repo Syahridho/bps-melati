@@ -1,4 +1,5 @@
 import { PaginatedData } from '@/components/molecules/pagination';
+import { type AssignableOperator, type AssignmentLogItem } from '@/types/incoming-reports';
 import { FormEvent } from 'react';
 import { SharedData } from '.';
 
@@ -118,6 +119,11 @@ export interface InputDataTicketDetail {
     channel: string;
     external_permalink?: string | null;
     created_by_name: string | null;
+    assigned_to?: number | null;
+    assigned_to_name?: string | null;
+    assigned_at?: string | null;
+    assignment_mode?: 'free' | 'round_robin' | 'claim' | null;
+    is_orphaned?: boolean;
     completed_at: string | null;
     closed_reason: 'reporter' | 'staff' | 'auto_close' | null;
     rating?: number | null;
@@ -167,7 +173,13 @@ export interface InputDataShowProps {
     can?: {
         edit: boolean;
         delete: boolean;
+        reply?: boolean;
+        reassign?: boolean;
+        view_assignment_history?: boolean;
     };
+    assignableOperators?: AssignableOperator[];
+    assignmentLogs?: AssignmentLogItem[];
+    activeAssignmentMode?: 'free' | 'round_robin' | 'claim';
     from?: string;
     flash: {
         success?: string;
@@ -184,7 +196,9 @@ export interface InputDataPageProps extends SharedData {
         per_page: number;
         from: string | null;
         to: string | null;
+        channels: number[];
     };
+    isLiveEnabled?: boolean;
     counts: {
         semua: number;
         pengaduan: number;

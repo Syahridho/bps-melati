@@ -3,7 +3,6 @@
 use App\Jobs\ImportSocialComments;
 use App\Models\Channel;
 use App\Models\Ticket;
-use App\Services\Social\YoutubeCommentFetcher;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
@@ -66,7 +65,7 @@ test('youtube comment baru menjadi tiket dengan channel dan field external', fun
     expect($ticket->external_parent_id)->toBe('video-123');
     expect($ticket->external_author_handle)->toBe('UC-OTHER');
     expect($ticket->reporter_name)->toBe('Warga');
-    expect($ticket->source_app)->toBe('admin');
+    expect($ticket->source_app)->toBe('social_youtube');
     expect($ticket->reporter_email)->toBeNull();
     expect($ticket->ticket_number)->not->toBeEmpty();
 });

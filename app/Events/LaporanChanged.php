@@ -29,12 +29,16 @@ class LaporanChanged implements ShouldBroadcast, ShouldDispatchAfterCommit
      * @param  array<int, int>  $operatorUserIds  ID operator yang berhak menerima event (selain admin)
      */
     public function __construct(
-        public string $action, // 'created' | 'updated' | 'flagged' | 'unflagged' | 'pengawasan_activated' | 'pengawasan_deactivated'
+        public string $action, // 'created' | 'updated' | 'flagged' | 'unflagged' | 'pengawasan_activated' | 'pengawasan_deactivated' | 'completed' | 'status_changed' | 'deleted'
         public int $ticketId,
         public string $ticketNumber,
         public string $type, // classification: pengaduan | aspirasi | permintaan_informasi
         public ?int $actorId = null,
         public array $operatorUserIds = [],
+        public ?string $status = null,
+        public ?string $occurredAt = null,
+        public bool $isInputData = false,
+        public ?string $channelName = null,
     ) {}
 
     /**
@@ -68,7 +72,11 @@ class LaporanChanged implements ShouldBroadcast, ShouldDispatchAfterCommit
             'id' => $this->ticketId,
             'ticket_number' => $this->ticketNumber,
             'type' => $this->type,
+            'status' => $this->status,
             'actor_id' => $this->actorId,
+            'occurred_at' => $this->occurredAt,
+            'is_input_data' => $this->isInputData,
+            'channel_name' => $this->channelName,
         ];
     }
 }
