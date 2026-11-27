@@ -1,3 +1,4 @@
+import { RowActionsMenu } from '@/components/molecules/row-actions-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
 import { CensoredWordItem } from '@/types/settings';
 import { Head, usePage } from '@inertiajs/react';
-import { Plus, Search } from 'lucide-react';
+import { Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import SensorBulkFormDialog from '@/components/view/dashboard/settings/sensors/bulk-form-dialog';
@@ -94,7 +95,7 @@ export default function SensorsSettingsView() {
                                             <TableHead>Kata</TableHead>
                                             <TableHead>Mode Pencocokan</TableHead>
                                             <TableHead className="text-center">Status</TableHead>
-                                            <TableHead className="w-[110px] text-right">Aksi</TableHead>
+                                            <TableHead className="w-[80px] text-right">Aksi</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -121,14 +122,21 @@ export default function SensorsSettingsView() {
                                                         />
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        <div className="flex justify-end gap-1">
-                                                            <Button variant="ghost" size="sm" onClick={() => openEditModal(item)}>
-                                                                Edit
-                                                            </Button>
-                                                            <Button variant="ghost" size="sm" onClick={() => openDeleteModal(item)}>
-                                                                Hapus
-                                                            </Button>
-                                                        </div>
+                                                        <RowActionsMenu
+                                                            items={[
+                                                                {
+                                                                    label: 'Edit',
+                                                                    icon: Edit,
+                                                                    onSelect: () => openEditModal(item),
+                                                                },
+                                                                {
+                                                                    label: 'Hapus',
+                                                                    icon: Trash2,
+                                                                    variant: 'destructive',
+                                                                    onSelect: () => openDeleteModal(item),
+                                                                },
+                                                            ]}
+                                                        />
                                                     </TableCell>
                                                 </TableRow>
                                             ))

@@ -168,7 +168,6 @@ class AuditFlagController extends Controller
     {
         return [
             AuditFlag::TYPE_JARINGAN_SAMA => 'Jaringan Sama (IP)',
-            AuditFlag::TYPE_RATING_CEPAT => 'Rating Cepat',
             AuditFlag::TYPE_RATING_BERUNTUN_IP => 'Rating Beruntun IP',
             AuditFlag::TYPE_SELESAI_CEPAT_SETELAH_BALASAN => 'Selesai Cepat Setelah Balasan',
             AuditFlag::TYPE_PERANGKAT_SAMA => 'Perangkat Sama',

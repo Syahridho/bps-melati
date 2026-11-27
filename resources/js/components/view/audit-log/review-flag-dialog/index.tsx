@@ -1,10 +1,10 @@
-import { format } from 'date-fns';
 import type { FormEvent } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { formatAuditDateTime, formatAuditDuration, formatAuditFlagReason } from '@/lib/audit-log';
 import type { ReviewGroup, Severity, Tingkat } from '@/types/audit-log';
 
 interface ReviewFlagDialogProps {
@@ -54,9 +54,21 @@ export function ReviewFlagDialog({
     if (!group) return null;
 
     const details = group.representative.details;
+    const timeFlag = group.flags.find((f) => f.type === 'selesai_cepat_setelah_balasan') ?? group.flags.find((f) => Boolean(f.details?.action_at));
+    const replyAt = timeFlag?.details?.reply_at ?? group.flags.map((f) => f.details?.reply_at).find((v): v is string => Boolean(v));
+    const actionAt = timeFlag?.details?.action_at ?? group.flags.map((f) => f.details?.action_at).find((v): v is string => Boolean(v));
+    const selisihDetik = timeFlag?.details?.selisih_detik ?? group.flags.map((f) => f.details?.selisih_detik).find((v): v is number => typeof v === 'number');
 
-    // Alasan sistem: catatan unik dari semua flag dalam grup
-    const reasons = Array.from(new Set(group.flags.map((f) => f.details?.catatan).filter((c): c is string => Boolean(c))));
+    const showCreatedAt = (() => {
+        if (!actionAt) return true;
+        const createdMs = new Date(group.created_at).getTime();
+        const actionMs = new Date(actionAt).getTime();
+        if (Number.isNaN(createdMs) || Number.isNaN(actionMs)) return true;
+        return Math.abs(createdMs - actionMs) > 5000;
+    })();
+
+    // Alasan sistem: render dari data mentah jika ada, fallback ke catatan tersimpan.
+    const reasons = Array.from(new Set(group.flags.map((f) => formatAuditFlagReason(f)).filter((c): c is string => Boolean(c))));
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,7 +92,10 @@ export function ReviewFlagDialog({
                         <DetailRow label="Petugas (PIC)">{details?.petugas_nama ?? 'N/A'}</DetailRow>
                         <DetailRow label="IP Pelapor">{details?.reporter_ip ?? 'N/A'}</DetailRow>
                         <DetailRow label="IP PIC">{details?.pic_ip ?? 'N/A'}</DetailRow>
-                        <DetailRow label="Waktu dibuat">{format(new Date(group.created_at), 'dd MMM yyyy HH:mm')}</DetailRow>
+                        {replyAt && <DetailRow label="Balasan operator">{formatAuditDateTime(replyAt)}</DetailRow>}
+                        {actionAt && <DetailRow label="Aksi pelapor (tiket ditutup)">{formatAuditDateTime(actionAt)}</DetailRow>}
+                        {typeof selisihDetik === 'number' && <DetailRow label="Selisih">{formatAuditDuration(selisihDetik)}</DetailRow>}
+                        {showCreatedAt && <DetailRow label="Waktu dibuat">{formatAuditDateTime(group.created_at)}</DetailRow>}
                     </dl>
 
                     {reasons.length > 0 && (

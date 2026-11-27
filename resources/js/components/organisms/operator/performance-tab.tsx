@@ -61,10 +61,51 @@ interface PerformanceTabProps {
     active: boolean;
 }
 
+const PERFORMANCE_MODES = ['gabungan', 'selesai', 'otomatis'] as const;
+type PerformanceMode = (typeof PERFORMANCE_MODES)[number];
+const DEFAULT_PERFORMANCE_MODE: PerformanceMode = 'gabungan';
+
+const MODE_OPTIONS: Array<{ value: PerformanceMode; label: string; description: string }> = [
+    {
+        value: 'gabungan',
+        label: 'Gabungan',
+        description: 'Semua tiket selesai (ditutup otomatis maupun non-otomatis)',
+    },
+    {
+        value: 'selesai',
+        label: 'Selesai',
+        description: 'Hanya tiket yang ditutup non-otomatis (oleh pelapor atau staf)',
+    },
+    {
+        value: 'otomatis',
+        label: 'Otomatis',
+        description: 'Hanya tiket yang ditutup otomatis oleh sistem',
+    },
+];
+
+function resolveInitialMode(): PerformanceMode {
+    if (typeof window === 'undefined') return DEFAULT_PERFORMANCE_MODE;
+    const raw = new URLSearchParams(window.location.search).get('mode')?.toLowerCase() ?? '';
+    return (PERFORMANCE_MODES as readonly string[]).includes(raw) ? (raw as PerformanceMode) : DEFAULT_PERFORMANCE_MODE;
+}
+
 export default function OperatorPerformanceTab({ active }: PerformanceTabProps) {
     const [from, setFrom] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
     const [to, setTo] = useState<string>(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
-    const [mode, setMode] = useState<string>('gabungan');
+    const [mode, setMode] = useState<PerformanceMode>(() => resolveInitialMode());
+
+    const handleModeChange = (nextValue: string) => {
+        if (!nextValue || !(PERFORMANCE_MODES as readonly string[]).includes(nextValue)) {
+            return;
+        }
+        const nextMode = nextValue as PerformanceMode;
+        setMode(nextMode);
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('mode', nextMode);
+            window.history.replaceState({}, '', url.toString());
+        }
+    };
     const [sort, setSort] = useState<string>('completed');
     const [direction, setDirection] = useState<string>('desc');
     const [data, setData] = useState<PerformanceData | null>(null);
@@ -182,27 +223,28 @@ export default function OperatorPerformanceTab({ active }: PerformanceTabProps) 
                         <ToggleGroup
                             type="single"
                             value={mode}
-                            onValueChange={(v) => { if (v) setMode(v); }}
-                            className="border"
+                            onValueChange={handleModeChange}
+                            aria-label="Mode perhitungan kinerja"
+                            className="bg-muted/40 border-border rounded-lg border p-1"
                         >
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <ToggleGroupItem value="gabungan" aria-label="Gabungan">Gabungan</ToggleGroupItem>
-                                </TooltipTrigger>
-                                <TooltipContent>Semua tiket selesai (otomatis + non-otomatis)</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <ToggleGroupItem value="selesai" aria-label="Selesai">Selesai</ToggleGroupItem>
-                                </TooltipTrigger>
-                                <TooltipContent>Tiket yang ditutup non-otomatis (pelapor/staf)</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <ToggleGroupItem value="otomatis" aria-label="Otomatis">Otomatis</ToggleGroupItem>
-                                </TooltipTrigger>
-                                <TooltipContent>Tiket yang ditutup otomatis oleh sistem</TooltipContent>
-                            </Tooltip>
+                            {MODE_OPTIONS.map((option) => (
+                                <Tooltip key={option.value}>
+                                    <TooltipTrigger asChild>
+                                        <span className="inline-flex">
+                                            <ToggleGroupItem
+                                                value={option.value}
+                                                size="sm"
+                                                aria-label={option.label}
+                                                title={option.description}
+                                                className="text-muted-foreground hover:bg-muted hover:text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:font-semibold data-[state=on]:shadow-xs"
+                                            >
+                                                {option.label}
+                                            </ToggleGroupItem>
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{option.description}</TooltipContent>
+                                </Tooltip>
+                            ))}
                         </ToggleGroup>
                     </TooltipProvider>
                     <Button

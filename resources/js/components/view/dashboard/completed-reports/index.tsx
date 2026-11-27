@@ -1,4 +1,5 @@
 import { ActiveFilterBar } from '@/components/molecules/active-filter-bar';
+import { ChannelFilter } from '@/components/molecules/channel-filter';
 import { CompletedReportsFilterTabs } from '@/components/molecules/completed-reports-filter-tabs';
 import { Pagination } from '@/components/molecules/pagination';
 import { ReportListToolbar } from '@/components/molecules/report-list-toolbar';
@@ -7,28 +8,48 @@ import { TicketList } from '@/components/organisms/ticket-list/ticket-list';
 import { useCompletedReportsFilters } from '@/hooks/use-completed-reports-filters';
 import { useLaporanRealtime } from '@/hooks/use-reports-realtime';
 import AdminPage from '@/layouts/dashboard/page';
+import { buildChannelFilterChips } from '@/lib/channel-filter';
 import { buildActiveFilters } from '@/lib/report-list';
 import { type CompletedReportsProps } from '@/types/completed-reports';
 import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function CompletedReportsView() {
-    const { auth, tickets, filters, counts } = usePage<CompletedReportsProps>().props;
+    const { auth, tickets, filters, counts, channels = [] } = usePage<CompletedReportsProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
-    const { searchQuery, setSearchQuery, isLoading, handleFilterChange, handleRangeChange, handlePerPageChange, handleResetFilters } =
-        useCompletedReportsFilters(routePrefix, filters);
+    const {
+        searchQuery,
+        setSearchQuery,
+        isLoading,
+        handleFilterChange,
+        handleRangeChange,
+        handleChannelChange,
+        handlePerPageChange,
+        handleResetFilters,
+    } = useCompletedReportsFilters(routePrefix, filters);
 
     const [flagPopoverOpen, setFlagPopoverOpen] = useState(false);
     const searching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
 
     useLaporanRealtime({ isBusy: flagPopoverOpen, searching, only: ['tickets', 'counts'] });
 
-    const activeFilters = buildActiveFilters(filters, {
-        clearTab: () => handleFilterChange('semua'),
-        clearSearch: () => setSearchQuery(''),
-        clearDate: () => handleRangeChange(null, null),
-    });
+    const selectedChannels = filters.channels ?? [];
+    const channelChips = buildChannelFilterChips(channels, selectedChannels).map((chip) => ({
+        key: chip.key,
+        label: `Kanal: ${chip.label}`,
+        color: chip.color,
+        onRemove: () => handleChannelChange(selectedChannels.filter((id) => !chip.ids.includes(id))),
+    }));
+
+    const activeFilters = [
+        ...buildActiveFilters(filters, {
+            clearTab: () => handleFilterChange('semua'),
+            clearSearch: () => setSearchQuery(''),
+            clearDate: () => handleRangeChange(null, null),
+        }),
+        ...channelChips,
+    ];
 
     const entries = tickets.data.map((t) => toTicketListEntry(t, routePrefix));
 
@@ -45,6 +66,11 @@ export default function CompletedReportsView() {
                     from={filters.from}
                     to={filters.to}
                     onRangeChange={handleRangeChange}
+                    channelFilter={
+                        channels.length > 0 ? (
+                            <ChannelFilter channels={channels} value={selectedChannels} onApply={handleChannelChange} />
+                        ) : null
+                    }
                 />
 
                 <ActiveFilterBar items={activeFilters} onReset={handleResetFilters} />

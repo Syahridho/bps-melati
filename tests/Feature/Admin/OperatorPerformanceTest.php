@@ -137,3 +137,32 @@ test('invalid sort falls back to default', function () {
         ->assertOk()
         ->assertJsonPath('meta.sort', 'completed');
 });
+
+test('mode defaults to gabungan when empty or invalid and echoes valid modes', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    actingAs($admin)
+        ->getJson(route('dashboard.admin.operator.performance'))
+        ->assertOk()
+        ->assertJsonPath('meta.mode', 'gabungan');
+
+    actingAs($admin)
+        ->getJson(route('dashboard.admin.operator.performance', ['mode' => '']))
+        ->assertOk()
+        ->assertJsonPath('meta.mode', 'gabungan');
+
+    actingAs($admin)
+        ->getJson(route('dashboard.admin.operator.performance', ['mode' => 'tidak_valid']))
+        ->assertOk()
+        ->assertJsonPath('meta.mode', 'gabungan');
+
+    actingAs($admin)
+        ->getJson(route('dashboard.admin.operator.performance', ['mode' => 'selesai']))
+        ->assertOk()
+        ->assertJsonPath('meta.mode', 'selesai');
+
+    actingAs($admin)
+        ->getJson(route('dashboard.admin.operator.performance', ['mode' => 'otomatis']))
+        ->assertOk()
+        ->assertJsonPath('meta.mode', 'otomatis');
+});

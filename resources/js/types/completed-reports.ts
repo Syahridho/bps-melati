@@ -1,5 +1,6 @@
 import { type PaginatedData } from '@/components/molecules/pagination';
 import { type SharedData } from '@/types';
+import { type ChannelGroup } from '@/types/welcome';
 
 export type Classification = 'pengaduan' | 'aspirasi' | 'permintaan_informasi';
 export type Status = 'respon_awal' | 'respon_substantif' | 'selesai';
@@ -63,7 +64,9 @@ export interface CompletedReportsProps extends SharedData {
         per_page: number;
         from: string | null;
         to: string | null;
+        channels?: number[];
     };
+    channels?: ChannelGroup[];
     counts: {
         semua: number;
         pengaduan: number;

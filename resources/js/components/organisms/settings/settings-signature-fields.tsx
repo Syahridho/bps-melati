@@ -1,4 +1,3 @@
-import HeadingSmall from '@/components/atoms/heading-small';
 import { PengaturanFormField } from '@/components/molecules/settings-form-field';
 import { type ReportSignatureSettingValues } from '@/types/settings';
 
@@ -11,11 +10,6 @@ interface PengaturanSignatureFieldsProps {
 export function PengaturanSignatureFields({ data, setData, errors }: PengaturanSignatureFieldsProps) {
     return (
         <div className="space-y-6">
-            <HeadingSmall
-                title="Penanda Tangan Rekap & Laporan"
-                description="Pengaturan nama dan informasi pejabat penanda tangan yang akan tercetak secara dinamis pada rekap laporan."
-            />
-
             <PengaturanFormField
                 id="nama_penanda_tangan"
                 label="Nama Penanda Tangan"

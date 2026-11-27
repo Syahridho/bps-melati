@@ -1,15 +1,14 @@
 import { OperatorStatusBadge } from '@/components/atoms/operator-status-badge';
 import { type PaginatedData, Pagination } from '@/components/molecules/pagination';
 import { RoleFilter } from '@/components/molecules/role-filter';
+import { RowActionsMenu } from '@/components/molecules/row-actions-menu';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatLastLogin } from '@/lib/operator-utils';
 import { type Operator } from '@/types/operator';
-import { Edit, LogOut, MoreHorizontal, Search, Trash2 } from 'lucide-react';
+import { Edit, LogOut, Search, Trash2 } from 'lucide-react';
 
 interface OperatorTableProps {
     operators: PaginatedData<Operator>;
@@ -69,7 +68,7 @@ export function OperatorTable({
                                 <TableHead>Role</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Login Terakhir</TableHead>
-                                <TableHead className="w-[100px] text-right">Aksi</TableHead>
+                                <TableHead className="w-[80px] text-right">Aksi</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -117,44 +116,30 @@ export function OperatorTable({
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <DropdownMenu modal={false}>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                        <span className="sr-only">Buka menu</span>
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onSelect={() => {
-                                                            setTimeout(() => onEdit(op), 0);
-                                                        }}
-                                                    >
-                                                        <Edit className="mr-2 h-4 w-4" />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    {op.has_session && op.id !== authUserId && (
-                                                        <DropdownMenuItem
-                                                            onSelect={() => {
-                                                                setTimeout(() => onForceLogout(op), 0);
-                                                            }}
-                                                            className="text-amber-600 focus:text-amber-600 dark:text-amber-400"
-                                                        >
-                                                            <LogOut className="mr-2 h-4 w-4" />
-                                                            Paksa Logout
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    <DropdownMenuItem
-                                                        onSelect={() => {
-                                                            setTimeout(() => onDelete(op), 0);
-                                                        }}
-                                                        className="text-destructive focus:text-destructive"
-                                                    >
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        Hapus
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <RowActionsMenu
+                                                items={[
+                                                    {
+                                                        label: 'Edit',
+                                                        icon: Edit,
+                                                        onSelect: () => onEdit(op),
+                                                    },
+                                                    {
+                                                        label: 'Paksa Logout',
+                                                        icon: LogOut,
+                                                        variant: 'warning',
+                                                        hidden: !(op.has_session && op.id !== authUserId),
+                                                        onSelect: () => onForceLogout(op),
+                                                    },
+                                                    {
+                                                        label: 'Hapus',
+                                                        icon: Trash2,
+                                                        variant: 'destructive',
+                                                        disabled: op.id === authUserId,
+                                                        disabledReason: op.id === authUserId ? 'Tidak dapat menghapus akun sendiri' : undefined,
+                                                        onSelect: () => onDelete(op),
+                                                    },
+                                                ]}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ))

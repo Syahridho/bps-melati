@@ -3,6 +3,7 @@ import { AnimatedBeamFree } from '@/components/molecules/animated-beam-free';
 import { AnimatedBeamRoundRobin } from '@/components/molecules/animated-beam-round-robin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -75,97 +76,101 @@ export function AssignmentModeCard({ assignmentMode }: AssignmentModeCardProps) 
     };
 
     return (
-        <section className="space-y-4">
-            <div>
-                <h3 className="text-base font-semibold">Mode Penanganan Laporan</h3>
-                <p className="text-muted-foreground text-sm">
-                    Mode aktif saat ini: <span className="text-foreground font-medium">{assignmentMode.current_label}</span>
-                </p>
-            </div>
+        <>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg font-semibold">Mode Penanganan Laporan</CardTitle>
+                    <CardDescription>
+                        Mode aktif saat ini: <span className="text-foreground font-medium">{assignmentMode.current_label}</span>
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <section className="space-y-4">
+                        {assignmentMode.pending && (
+                            <div className="flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-700 dark:text-blue-400">
+                                <CalendarClock className="mt-0.5 size-4 shrink-0" />
+                                <span>
+                                    Mode <strong>{assignmentMode.pending.label}</strong> akan aktif pada{' '}
+                                    {assignmentMode.pending.scheduled_at ? formatFullDate(assignmentMode.pending.scheduled_at) : '-'}.
+                                </span>
+                            </div>
+                        )}
 
-            {assignmentMode.pending && (
-                <div className="flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-700 dark:text-blue-400">
-                    <CalendarClock className="mt-0.5 size-4 shrink-0" />
-                    <span>
-                        Mode <strong>{assignmentMode.pending.label}</strong> akan aktif pada{' '}
-                        {assignmentMode.pending.scheduled_at ? formatFullDate(assignmentMode.pending.scheduled_at) : '-'}.
-                    </span>
-                </div>
-            )}
+                        <div className="space-y-2">
+                            <Label htmlFor="assignment-mode">Mode Penanganan Laporan</Label>
+                            <Select value={form.data.mode} onValueChange={(value) => form.setData('mode', value as AssignmentModeValue)}>
+                                <SelectTrigger id="assignment-mode">
+                                    <SelectValue placeholder="Pilih mode" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {assignmentMode.options.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {selectedOption && <p className="text-muted-foreground text-xs">{selectedOption.description}</p>}
+                            {form.errors.mode && <p className="text-destructive text-xs">{form.errors.mode}</p>}
+                        </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="assignment-mode">Mode Penanganan Laporan</Label>
-                <Select value={form.data.mode} onValueChange={(value) => form.setData('mode', value as AssignmentModeValue)}>
-                    <SelectTrigger id="assignment-mode">
-                        <SelectValue placeholder="Pilih mode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {assignmentMode.options.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {selectedOption && <p className="text-muted-foreground text-xs">{selectedOption.description}</p>}
-                {form.errors.mode && <p className="text-destructive text-xs">{form.errors.mode}</p>}
-            </div>
+                        {(() => {
+                            const Preview = modePreviews[form.data.mode];
+                            return Preview ? <Preview key={form.data.mode} /> : null;
+                        })()}
 
-            {(() => {
-                const Preview = modePreviews[form.data.mode];
-                return Preview ? <Preview key={form.data.mode} /> : null;
-            })()}
+                        <div className="space-y-2">
+                            <Label>Waktu Penerapan</Label>
+                            <ToggleGroup
+                                type="single"
+                                value={form.data.apply}
+                                onValueChange={(value) => {
+                                    if (value) {
+                                        form.setData('apply', value as 'now' | 'scheduled');
+                                    }
+                                }}
+                                className="justify-start"
+                            >
+                                <ToggleGroupItem value="now" variant="outline" className="text-xs">
+                                    Terapkan sekarang
+                                </ToggleGroupItem>
+                                <ToggleGroupItem value="scheduled" variant="outline" className="text-xs">
+                                    Jadwalkan
+                                </ToggleGroupItem>
+                            </ToggleGroup>
 
-            <div className="space-y-2">
-                <Label>Waktu Penerapan</Label>
-                <ToggleGroup
-                    type="single"
-                    value={form.data.apply}
-                    onValueChange={(value) => {
-                        if (value) {
-                            form.setData('apply', value as 'now' | 'scheduled');
-                        }
-                    }}
-                    className="justify-start"
-                >
-                    <ToggleGroupItem value="now" variant="outline" className="text-xs">
-                        Terapkan sekarang
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="scheduled" variant="outline" className="text-xs">
-                        Jadwalkan
-                    </ToggleGroupItem>
-                </ToggleGroup>
+                            {form.data.apply === 'scheduled' && (
+                                <div className="space-y-1">
+                                    <Label htmlFor="assignment-mode-schedule" className="text-xs">
+                                        Tanggal & jam penerapan
+                                    </Label>
+                                    <Input
+                                        id="assignment-mode-schedule"
+                                        type="datetime-local"
+                                        value={form.data.scheduled_at}
+                                        onChange={(event) => form.setData('scheduled_at', event.target.value)}
+                                    />
+                                    {form.errors.scheduled_at && <p className="text-destructive text-xs">{form.errors.scheduled_at}</p>}
+                                </div>
+                            )}
+                            {form.errors.apply && <p className="text-destructive text-xs">{form.errors.apply}</p>}
+                        </div>
 
-                {form.data.apply === 'scheduled' && (
-                    <div className="space-y-1">
-                        <Label htmlFor="assignment-mode-schedule" className="text-xs">
-                            Tanggal & jam penerapan
-                        </Label>
-                        <Input
-                            id="assignment-mode-schedule"
-                            type="datetime-local"
-                            value={form.data.scheduled_at}
-                            onChange={(event) => form.setData('scheduled_at', event.target.value)}
+                        <Button type="button" onClick={() => setConfirmOpen(true)} disabled={form.processing} className="gap-2">
+                            {form.processing ? <LoaderCircle className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+                            Simpan Mode
+                        </Button>
+
+                        <ConfirmationAssignment
+                            confirmOpen={confirmOpen}
+                            setConfirmOpen={setConfirmOpen}
+                            selectedOption={selectedOption}
+                            form={form}
+                            handleSubmit={handleSubmit}
                         />
-                        {form.errors.scheduled_at && <p className="text-destructive text-xs">{form.errors.scheduled_at}</p>}
-                    </div>
-                )}
-                {form.errors.apply && <p className="text-destructive text-xs">{form.errors.apply}</p>}
-            </div>
-
-            <Button type="button" onClick={() => setConfirmOpen(true)} disabled={form.processing} className="gap-2">
-                {form.processing ? <LoaderCircle className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-                Simpan Mode
-            </Button>
-
-            <ConfirmationAssignment
-                confirmOpen={confirmOpen}
-                setConfirmOpen={setConfirmOpen}
-                selectedOption={selectedOption}
-                form={form}
-                handleSubmit={handleSubmit}
-            />
-
+                    </section>
+                </CardContent>
+            </Card>
             <div className="space-y-2 pt-2">
                 <h4 className="flex items-center gap-2 text-sm font-semibold">
                     <History className="size-4" />
@@ -198,6 +203,6 @@ export function AssignmentModeCard({ assignmentMode }: AssignmentModeCardProps) 
                     </div>
                 )}
             </div>
-        </section>
+        </>
     );
 }

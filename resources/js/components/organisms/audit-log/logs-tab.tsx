@@ -1,12 +1,10 @@
-import { format } from 'date-fns';
-
 import { LogsSkeleton } from '@/components/molecules/audit-log-skeletons';
 import { ErrorBox } from '@/components/molecules/error-box';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { useAuditLogs } from '@/hooks/audit-log/use-audit-logs';
-import { severityVariant } from '@/lib/audit-log';
+import { formatAuditDateTime, severityVariant } from '@/lib/audit-log';
 
 type LogsTabProps = ReturnType<typeof useAuditLogs>;
 
@@ -59,7 +57,7 @@ export function LogsTab({ logs, loading, error, newCount, category, setCategory,
                 <TableBody>
                     {logs.map((log) => (
                         <TableRow key={log.id} className="hover:bg-muted/50">
-                            <TableCell className="font-medium">{format(new Date(log.created_at), 'dd MMM HH:mm')}</TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">{formatAuditDateTime(log.created_at)}</TableCell>
                             <TableCell>{log.category}</TableCell>
                             <TableCell>{log.event_type}</TableCell>
                             <TableCell>

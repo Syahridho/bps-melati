@@ -1,3 +1,4 @@
+import { RowActionsMenu, type RowActionItem } from '@/components/molecules/row-actions-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { useSumberKanalManagement } from '@/hooks/use-sumber-kanal-management';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
-import { type SumberKanalPageProps } from '@/types/settings';
+import { type ChannelChildItem, type ChannelItem, type SumberKanalPageProps } from '@/types/settings';
 import { Head, usePage } from '@inertiajs/react';
 import { CheckCircle2, Edit, Plus, Trash2 } from 'lucide-react';
 import ChannelFormDialog from './channel-form-dialog';
@@ -35,6 +36,33 @@ export default function SumberKanalSettingsView() {
     } = useSumberKanalManagement(flash?.success);
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: 'Sumber Kanal', href: route('settings.sumber-kanal.index') }];
+
+    const buildChannelActions = (channel: ChannelItem | ChannelChildItem, hasChildren = false): RowActionItem[] => {
+        let deleteDisabledReason: string | undefined;
+        if (channel.slug === 'website') {
+            deleteDisabledReason = 'Kanal default tidak dapat dihapus';
+        } else if (hasChildren) {
+            deleteDisabledReason = 'Hapus atau pindahkan sub-kanal terlebih dahulu';
+        } else if (channel.tickets_count > 0) {
+            deleteDisabledReason = 'Kanal masih dipakai tiket dan tidak dapat dihapus';
+        }
+
+        return [
+            {
+                label: 'Edit',
+                icon: Edit,
+                onSelect: () => openEditModal(channel),
+            },
+            {
+                label: 'Hapus',
+                icon: Trash2,
+                variant: 'destructive',
+                disabled: Boolean(deleteDisabledReason),
+                disabledReason: deleteDisabledReason,
+                onSelect: () => openDeleteModal(channel),
+            },
+        ];
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -75,7 +103,7 @@ export default function SumberKanalSettingsView() {
                                             <TableHead>Urutan</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Jumlah Tiket</TableHead>
-                                            <TableHead className="w-[100px] text-right">Aksi</TableHead>
+                                            <TableHead className="w-[80px] text-right">Aksi</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -106,14 +134,7 @@ export default function SumberKanalSettingsView() {
                                                     </TableCell>
                                                     <TableCell>{root.tickets_count}</TableCell>
                                                     <TableCell className="text-right">
-                                                        <div className="flex justify-end gap-1">
-                                                            <Button variant="ghost" size="sm" onClick={() => openEditModal(root)}>
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button variant="ghost" size="sm" onClick={() => openDeleteModal(root)}>
-                                                                <Trash2 className="text-destructive h-4 w-4" />
-                                                            </Button>
-                                                        </div>
+                                                        <RowActionsMenu items={buildChannelActions(root, root.children.length > 0)} />
                                                     </TableCell>
                                                 </TableRow>,
                                                 ...root.children.map((child) => (
@@ -136,14 +157,7 @@ export default function SumberKanalSettingsView() {
                                                         </TableCell>
                                                         <TableCell>{child.tickets_count}</TableCell>
                                                         <TableCell className="text-right">
-                                                            <div className="flex justify-end gap-1">
-                                                                <Button variant="ghost" size="sm" onClick={() => openEditModal(child)}>
-                                                                    <Edit className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button variant="ghost" size="sm" onClick={() => openDeleteModal(child)}>
-                                                                    <Trash2 className="text-destructive h-4 w-4" />
-                                                                </Button>
-                                                            </div>
+                                                            <RowActionsMenu items={buildChannelActions(child, false)} />
                                                         </TableCell>
                                                     </TableRow>
                                                 )),

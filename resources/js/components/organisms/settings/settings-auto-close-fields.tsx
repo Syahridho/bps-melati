@@ -1,6 +1,5 @@
-import HeadingSmall from '@/components/atoms/heading-small';
-import { type AutoCloseSettingValues } from '@/types/settings';
 import { PengaturanFormField } from '@/components/molecules/settings-form-field';
+import { type AutoCloseSettingValues } from '@/types/settings';
 
 interface PengaturanAutoCloseFieldsProps {
     data: AutoCloseSettingValues;
@@ -11,11 +10,6 @@ interface PengaturanAutoCloseFieldsProps {
 export function PengaturanAutoCloseFields({ data, setData, errors }: PengaturanAutoCloseFieldsProps) {
     return (
         <div className="space-y-6">
-            <HeadingSmall
-                title="Batas Waktu Otomatis Selesai (Auto Close)"
-                description="Jumlah hari tanpa balasan dari pelapor setelah petugas memberikan respon sebelum tiket secara otomatis ditandai selesai. Isi 0 untuk menonaktifkan."
-            />
-
             <div className="grid gap-4 sm:grid-cols-3">
                 <PengaturanFormField
                     id="auto_close_pengaduan_days"

@@ -6,6 +6,7 @@ use App\Models\AuditFlag;
 use App\Models\AuditLog;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\AuditFlagTimeCalculator;
 use App\Support\ClientIpResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -15,9 +16,8 @@ use Illuminate\Support\Facades\Log;
  *
  * Aturan yang didukung:
  *  - jaringan_sama: IP pelapor sama dengan IP PIC (balasan terakhir).
- *  - rating_cepat: rating diberikan terlalu cepat setelah balasan operator.
  *  - rating_beruntun_ip: beberapa rating dari IP yang sama dalam jendela waktu.
- *  - selesai_cepat_setelah_balasan: tiket ditutup terlalu cepat setelah balasan operator.
+ *  - selesai_cepat_setelah_balasan: tiket ditutup (dengan/tanpa rating) terlalu cepat setelah balasan operator.
  */
 class AuditFlagDetector
 {
@@ -41,7 +41,6 @@ class AuditFlagDetector
     {
         if (! (bool) config('audit.flags.selesai_cepat_setelah_balasan.enabled', true)
             && ! (bool) config('audit.flags.jaringan_sama.enabled', true)
-            && ! (bool) config('audit.flags.rating_cepat.enabled', true)
             && ! (bool) config('audit.flags.rating_beruntun_ip.enabled', true)) {
             return;
         }
@@ -63,19 +62,18 @@ class AuditFlagDetector
         }
 
         $ticket->refresh();
-        $ticket->loadMissing(['assignedTo', 'responses']);
+        $ticket->loadMissing(['assignedTo', 'responses.user']);
 
-        $completedAt = $ticket->completed_at ?? now();
+        $tz = AuditFlagTimeCalculator::timezone();
+        $completedAt = $ticket->completed_at?->copy()->timezone($tz);
+        $ratedAt = ($ticket->rated_at ?? $ticket->completed_at)?->copy()->timezone($tz);
         $reporterIp = ClientIpResolver::resolve($request) ?? ClientIpResolver::normalize($auditLog->ip);
         $rating = $ticket->rating;
 
-        // Balasan operator terakhir sebelum penutupan.
-        $lastStaffResponse = $ticket->responses()
-            ->whereNotNull('user_id')
-            ->latest('sent_at')
-            ->first();
+        // Balasan operator terakhir sebelum penutupan (untuk info PIC/panjang balasan).
+        $referenceTime = $completedAt ?? $ratedAt ?? now()->timezone($tz);
+        $lastStaffResponse = AuditFlagTimeCalculator::findLastStaffResponseBefore($ticket, $referenceTime);
 
-        $lastReplyAt = $lastStaffResponse?->sent_at ?? $lastStaffResponse?->created_at;
         $replyMessage = (string) ($lastStaffResponse?->message ?? '');
         $replyLength = mb_strlen(trim($replyMessage));
 
@@ -90,14 +88,6 @@ class AuditFlagDetector
             ->first();
 
         $picIp = ClientIpResolver::normalize($replyAuditLog?->ip);
-
-        $diffSeconds = null;
-        if ($lastReplyAt !== null) {
-            $diffSeconds = (int) $completedAt->diffInSeconds($lastReplyAt, false);
-            if ($diffSeconds < 0) {
-                $diffSeconds = 0;
-            }
-        }
 
         $hasLoopbackIp = ClientIpResolver::isLoopback($reporterIp) || ClientIpResolver::isLoopback($picIp);
         $sameNonLoopbackIp = $reporterIp !== null
@@ -134,101 +124,109 @@ class AuditFlagDetector
             );
         }
 
-        // 2. rating_cepat (legacy, rating diberikan terlalu cepat setelah balasan)
-        if ((bool) config('audit.flags.rating_cepat.enabled', true)
-            && $rating !== null
-            && $diffSeconds !== null
-            && $diffSeconds <= (int) config('audit.flags.rating_cepat.window_minutes', 5) * 60) {
-            $tingkat = $diffSeconds < 120 ? 'tinggi' : 'sedang';
-            $this->createFlag(
-                AuditFlag::TYPE_RATING_CEPAT,
-                $ticket,
-                $auditLog,
-                [
-                    'tingkat' => $tingkat,
-                    'petugas_nama' => $picName,
-                    'reporter_ip' => $reporterIp,
-                    'pic_ip' => $picIp,
-                    'selisih_detik' => $diffSeconds,
-                    'rating' => $rating,
-                    'catatan' => "Rating diberikan {$diffSeconds} detik setelah balasan operator.",
-                ],
-                $tingkat,
-                $picUser,
-            );
-        }
-
-        // 3. selesai_cepat_setelah_balasan
+        // 2. selesai_cepat_setelah_balasan (penutupan oleh pelapor, dengan atau tanpa rating)
         $selesaiConfig = (array) config('audit.flags.selesai_cepat_setelah_balasan', []);
-        if (($selesaiConfig['enabled'] ?? true) && $diffSeconds !== null) {
-            $highSeconds = (int) ($selesaiConfig['high_seconds'] ?? 120);
-            $mediumSeconds = (int) ($selesaiConfig['medium_seconds'] ?? 600);
+        $isReporterClosure = $ticket->closed_reason === null || $ticket->closed_reason === 'reporter';
+        $actionAt = match (true) {
+            $completedAt !== null && $ratedAt !== null => $completedAt->lessThanOrEqualTo($ratedAt) ? $completedAt : $ratedAt,
+            $completedAt !== null => $completedAt,
+            default => $ratedAt,
+        };
 
-            if ($diffSeconds < $highSeconds) {
-                $tingkat = 'tinggi';
-            } elseif ($diffSeconds <= $mediumSeconds) {
-                $tingkat = 'sedang';
+        if (($selesaiConfig['enabled'] ?? true) && $isReporterClosure) {
+            $closeReply = $actionAt !== null
+                ? AuditFlagTimeCalculator::findLastStaffResponseBefore($ticket, $actionAt)
+                : null;
+            $closeReplyAt = ($closeReply?->sent_at ?? $closeReply?->created_at)?->copy()->timezone($tz);
+            $closeDiffSeconds = AuditFlagTimeCalculator::elapsedSeconds($closeReplyAt, $actionAt);
+
+            if ($closeDiffSeconds === null) {
+                Log::warning('Deteksi selesai_cepat_setelah_balasan dilewati karena data waktu tidak lengkap atau selisih negatif.', [
+                    'ticket_id' => $ticket->id,
+                    'ticket_number' => $ticket->ticket_number,
+                    'reply_at' => $closeReplyAt?->toIso8601String(),
+                    'action_at' => $actionAt?->toIso8601String(),
+                ]);
             } else {
-                $tingkat = null;
-            }
+                $highSeconds = (int) ($selesaiConfig['high_seconds'] ?? 120);
+                $mediumSeconds = (int) ($selesaiConfig['medium_seconds'] ?? 600);
 
-            if ($tingkat !== null) {
-                // Penguat
-                $boost = false;
-                if ($sameNonLoopbackIp) {
-                    $boost = true;
-                }
-                if ($rating === 5) {
-                    $boost = true;
-                }
-                $shortReplyChars = (int) ($selesaiConfig['short_reply_chars'] ?? 30);
-                if ($replyLength > 0 && $replyLength < $shortReplyChars) {
-                    $boost = true;
-                }
-                if ($this->isLowQualityReply($replyMessage, $ticket->ticket_number)) {
-                    $boost = true;
+                if ($closeDiffSeconds < $highSeconds) {
+                    $tingkat = 'tinggi';
+                } elseif ($closeDiffSeconds < $mediumSeconds) {
+                    $tingkat = 'sedang';
+                } else {
+                    $tingkat = null;
                 }
 
-                // Pelemah
-                $weaken = false;
-                if ($replyLength >= 100 && ! $sameNonLoopbackIp) {
-                    $weaken = true;
-                }
+                if ($tingkat !== null) {
+                    $closeReplyMessage = (string) ($closeReply?->message ?? $replyMessage);
+                    $closeReplyLength = mb_strlen(trim($closeReplyMessage));
 
-                if ($boost) {
-                    $tingkat = $this->raiseLevel($tingkat);
-                }
-                if ($weaken) {
-                    $tingkat = $this->lowerLevel($tingkat);
-                }
+                    // Penguat
+                    $boost = false;
+                    if ($sameNonLoopbackIp) {
+                        $boost = true;
+                    }
+                    if ($rating === 5) {
+                        $boost = true;
+                    }
+                    $shortReplyChars = (int) ($selesaiConfig['short_reply_chars'] ?? 30);
+                    if ($closeReplyLength > 0 && $closeReplyLength < $shortReplyChars) {
+                        $boost = true;
+                    }
+                    if ($this->isLowQualityReply($closeReplyMessage, $ticket->ticket_number)) {
+                        $boost = true;
+                    }
 
-                $catatan = "Tiket ditutup {$diffSeconds} detik setelah balasan operator";
-                if ($sameNonLoopbackIp) {
-                    $catatan .= ', IP sama dengan PIC';
-                }
-                $catatan .= '.';
+                    // Pelemah
+                    $weaken = false;
+                    if ($closeReplyLength >= 100 && ! $sameNonLoopbackIp) {
+                        $weaken = true;
+                    }
 
-                $this->createFlag(
-                    'selesai_cepat_setelah_balasan',
-                    $ticket,
-                    $auditLog,
-                    [
-                        'tingkat' => $tingkat,
-                        'petugas_nama' => $picName,
-                        'reporter_ip' => $reporterIp,
-                        'pic_ip' => $picIp,
-                        'selisih_detik' => $diffSeconds,
-                        'panjang_balasan' => $replyLength,
-                        'rating' => $rating,
-                        'catatan' => $catatan,
-                    ],
-                    $tingkat,
-                    $picUser,
-                );
+                    if ($boost) {
+                        $tingkat = $this->raiseLevel($tingkat);
+                    }
+                    if ($weaken) {
+                        $tingkat = $this->lowerLevel($tingkat);
+                    }
+
+                    $normalizedSeconds = AuditFlagTimeCalculator::normalizeSeconds($closeDiffSeconds);
+                    $catatan = AuditFlagTimeCalculator::buildReason(
+                        AuditFlag::TYPE_SELESAI_CEPAT_SETELAH_BALASAN,
+                        $closeDiffSeconds,
+                        $mediumSeconds,
+                        $sameNonLoopbackIp,
+                    );
+
+                    $this->createFlag(
+                        AuditFlag::TYPE_SELESAI_CEPAT_SETELAH_BALASAN,
+                        $ticket,
+                        $auditLog,
+                        [
+                            'tingkat' => $tingkat,
+                            'petugas_nama' => $picName,
+                            'reporter_ip' => $reporterIp,
+                            'pic_ip' => $picIp,
+                            'selisih_detik' => $normalizedSeconds,
+                            'response_id' => $closeReply?->id,
+                            'reply_at' => $closeReplyAt?->toIso8601String(),
+                            'action_at' => $actionAt?->toIso8601String(),
+                            'threshold_seconds' => $mediumSeconds,
+                            'same_ip' => $sameNonLoopbackIp,
+                            'panjang_balasan' => $closeReplyLength,
+                            'rating' => $rating,
+                            'catatan' => $catatan,
+                        ],
+                        $tingkat,
+                        $picUser,
+                    );
+                }
             }
         }
 
-        // 4. rating_beruntun_ip
+        // 3. rating_beruntun_ip
         if ((bool) config('audit.flags.rating_beruntun_ip.enabled', true)
             && $reporterIp !== null
             && ! ClientIpResolver::isLoopback($reporterIp)

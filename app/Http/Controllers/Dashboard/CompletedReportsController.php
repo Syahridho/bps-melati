@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\BuildsLaporanListPayload;
 use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Support\ChannelFilter;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
 use Illuminate\Http\Request;
@@ -47,6 +48,7 @@ class CompletedReportsController extends Controller
 
         $ticketsQuery = Ticket::with(['channel', 'flaggedBy'])
             ->whereIn('status', self::COMPLETED_STATUSES)
+            ->filterByChannels($filter->channels)
             ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($query) use ($fromInput, $toInput) {
                 $query->where('updated_at', '>=', $fromInput.' 00:00:00')
                     ->where('updated_at', '<=', $toInput.' 23:59:59');
@@ -74,6 +76,7 @@ class CompletedReportsController extends Controller
 
         $countBaseQuery = Ticket::query()
             ->whereIn('status', self::COMPLETED_STATUSES)
+            ->filterByChannels($filter->channels)
             ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($q) use ($fromInput, $toInput) {
                 $q->where('updated_at', '>=', $fromInput.' 00:00:00')
                     ->where('updated_at', '<=', $toInput.' 23:59:59');
@@ -102,13 +105,8 @@ class CompletedReportsController extends Controller
 
         return $this->renderPage($request, 'completed-reports/index', [
             'tickets' => $tickets,
-            'filters' => [
-                'search' => $search,
-                'filter' => $frontendFilterKey,
-                'per_page' => $perPage,
-                'from' => $fromInput,
-                'to' => $toInput,
-            ],
+            'channels' => ChannelFilter::tree(),
+            'filters' => $filter->toFilterProps($frontendFilterKey),
             'counts' => $counts,
         ]);
     }

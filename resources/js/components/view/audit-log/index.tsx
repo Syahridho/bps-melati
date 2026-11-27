@@ -10,13 +10,28 @@ import { useAuthRole } from '@/hooks/use-auth-role';
 import AdminPage from '@/layouts/dashboard/page';
 import { FLAG_TYPE_LABELS } from '@/lib/audit-log';
 import { TabKey } from '@/types/audit-log.js';
-import { Head } from '@inertiajs/react';
+import { type SharedData } from '@/types';
+import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { ReviewFlagDialog } from './review-flag-dialog/index.js';
 
+const VALID_TABS: readonly TabKey[] = ['logs', 'flags', 'summary'];
+
+function resolveInitialTab(newFlagsCount: number): TabKey {
+    if (typeof window !== 'undefined') {
+        const tabParam = new URLSearchParams(window.location.search).get('tab');
+        if (tabParam && VALID_TABS.includes(tabParam as TabKey)) {
+            return tabParam as TabKey;
+        }
+    }
+
+    return newFlagsCount > 0 ? 'flags' : 'logs';
+}
+
 export default function AuditLogView() {
     const { isAdmin } = useAuthRole();
-    const [activeTab, setActiveTab] = useState<TabKey>('logs');
+    const { audit_log_badge = 0 } = usePage<SharedData>().props;
+    const [activeTab, setActiveTab] = useState<TabKey>(() => resolveInitialTab(audit_log_badge));
 
     const logs = useAuditLogs(isAdmin, activeTab === 'logs');
     const flags = useAuditFlags(isAdmin, activeTab === 'flags');
@@ -43,7 +58,21 @@ export default function AuditLogView() {
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabKey)}>
                         <TabsList>
                             <TabsTrigger value="logs">Log Langsung</TabsTrigger>
-                            <TabsTrigger value="flags">Penanda</TabsTrigger>
+                            <TabsTrigger
+                                value="flags"
+                                className="gap-1.5"
+                                title={audit_log_badge > 0 ? `${audit_log_badge} penanda baru belum ditinjau` : undefined}
+                            >
+                                <span>Penanda</span>
+                                {audit_log_badge > 0 && (
+                                    <span
+                                        className="bg-primary inline-flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium text-white tabular-nums dark:bg-blue-500 dark:text-white"
+                                        title={`${audit_log_badge} penanda baru belum ditinjau`}
+                                    >
+                                        {audit_log_badge > 99 ? '99+' : audit_log_badge}
+                                    </span>
+                                )}
+                            </TabsTrigger>
                             <TabsTrigger value="summary">Ringkasan</TabsTrigger>
                         </TabsList>
                     </Tabs>

@@ -1,3 +1,4 @@
+import InputError from '@/components/atoms/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,9 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
 import type { FormDataConvertible } from '@inertiajs/core';
-import { useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { LoaderCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface CommentClassifierRules {
     min_length?: number;
@@ -36,7 +39,7 @@ const toList = (v: unknown): string[] => {
 };
 
 export default function CommentClassifierSettingsView() {
-    const { rules: rawRules, flash } = usePage<{ rules?: CommentClassifierRules; flash?: { success?: string } }>().props;
+    const { rules: rawRules, errors } = usePage<{ rules?: CommentClassifierRules; errors?: Record<string, string> }>().props;
     const rules = rawRules;
     const [minLength, setMinLength] = useState(rules?.min_length ?? 10);
     const [minWords, setMinWords] = useState(rules?.min_words ?? 3);
@@ -50,10 +53,30 @@ export default function CommentClassifierSettingsView() {
     const [testText, setTestText] = useState('');
     const [testResult, setTestResult] = useState<{ jenis: string; alasan: string; teks_normal: string } | null>(null);
     const [processing, setProcessing] = useState(false);
-    const [success] = useState(flash?.success);
+    const [resetting, setResetting] = useState(false);
     const [abbrError, setAbbrError] = useState('');
+    const savingRef = useRef(false);
+
+    useEffect(() => {
+        const removeInvalid = router.on('invalid', () => {
+            if (!savingRef.current) return;
+            toast.error('Terjadi kesalahan pada server. Silakan coba lagi.');
+        });
+        const removeException = router.on('exception', () => {
+            if (!savingRef.current) return;
+            toast.error('Gagal menghubungi server. Periksa koneksi jaringan Anda dan coba lagi.');
+        });
+
+        return () => {
+            removeInvalid();
+            removeException();
+        };
+    }, []);
 
     const breadcrumbs: BreadcrumbItem[] = [{ title: 'Klasifikasi Komentar', href: route('settings.comment-classifier.index') }];
+
+    const fieldError = (key: string): string | undefined =>
+        errors?.[key] ?? Object.entries(errors ?? {}).find(([k]) => k.startsWith(`${key}.`))?.[1];
 
     const splitList = (v: string) =>
         v
@@ -62,6 +85,7 @@ export default function CommentClassifierSettingsView() {
             .filter(Boolean);
 
     const handleSave = () => {
+        if (processing || resetting) return;
         setProcessing(true);
         setAbbrError('');
         let abbr: Record<string, FormDataConvertible> = {};
@@ -69,14 +93,17 @@ export default function CommentClassifierSettingsView() {
             abbr = abbreviations.trim() === '' ? {} : JSON.parse(abbreviations);
         } catch {
             setAbbrError('Singkatan (JSON) tidak valid. Perbaiki format JSON sebelum menyimpan.');
+            toast.error('Gagal menyimpan. Periksa kembali isian Anda.');
             setProcessing(false);
             return;
         }
         if (typeof abbr !== 'object' || abbr === null || Array.isArray(abbr)) {
             setAbbrError('Singkatan (JSON) harus berupa objek.');
+            toast.error('Gagal menyimpan. Periksa kembali isian Anda.');
             setProcessing(false);
             return;
         }
+        savingRef.current = true;
         router.post(
             route('settings.comment-classifier.update'),
             {
@@ -94,14 +121,54 @@ export default function CommentClassifierSettingsView() {
             },
             {
                 preserveScroll: true,
-                onSuccess: () => setProcessing(false),
-                onError: () => setProcessing(false),
+                onSuccess: () => {
+                    toast.success('Pengaturan klasifikasi komentar berhasil disimpan.');
+                },
+                onError: () => {
+                    toast.error('Gagal menyimpan. Periksa kembali isian Anda.');
+                },
+                onFinish: () => {
+                    savingRef.current = false;
+                    setProcessing(false);
+                },
             },
         );
     };
 
     const handleReset = () => {
-        router.post(route('settings.comment-classifier.reset'), {}, { preserveScroll: true });
+        if (processing || resetting) return;
+        setResetting(true);
+        savingRef.current = true;
+        router.post(
+            route('settings.comment-classifier.reset'),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: (page) => {
+                    const nextRules = (page.props as { rules?: CommentClassifierRules }).rules;
+                    if (nextRules) {
+                        setMinLength(nextRules.min_length ?? 10);
+                        setMinWords(nextRules.min_words ?? 3);
+                        setFallback(!!nextRules.fallback_when_uncertain);
+                        setPengaduan(toList(nextRules.keywords?.pengaduan).join(', '));
+                        setAspirasi(toList(nextRules.keywords?.aspirasi).join(', '));
+                        setPermintaan(toList(nextRules.keywords?.permintaan_informasi).join(', '));
+                        setIgnore(toList(nextRules.ignore).join(', '));
+                        setAbbreviations(JSON.stringify(nextRules.abbreviations ?? {}, null, 2));
+                        setPriority(toList(nextRules.priority ?? ['pengaduan', 'aspirasi', 'permintaan_informasi']).join(', '));
+                    }
+                    setAbbrError('');
+                    toast.success('Aturan klasifikasi dikembalikan ke default.');
+                },
+                onError: () => {
+                    toast.error('Gagal mengembalikan pengaturan ke default.');
+                },
+                onFinish: () => {
+                    savingRef.current = false;
+                    setResetting(false);
+                },
+            },
+        );
     };
 
     const handleTest = async () => {
@@ -145,12 +212,9 @@ export default function CommentClassifierSettingsView() {
             <Head title="Klasifikasi Komentar" />
             <SettingsLayout title="Klasifikasi Komentar" description="Atur kata kunci klasifikasi komentar media sosial.">
                 <div className="space-y-6">
-                    {success && (
-                        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600">{success}</div>
-                    )}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Aturan</CardTitle>
+                            <CardTitle className="text-lg font-semibold">Aturan</CardTitle>
                             <CardDescription>Pisahkan kata dengan koma.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -158,10 +222,12 @@ export default function CommentClassifierSettingsView() {
                                 <div>
                                     <Label>Panjang minimum (karakter)</Label>
                                     <Input type="number" value={minLength} onChange={(e) => setMinLength(Number(e.target.value))} />
+                                    <InputError message={fieldError('min_length')} />
                                 </div>
                                 <div>
                                     <Label>Jumlah kata minimum</Label>
                                     <Input type="number" value={minWords} onChange={(e) => setMinWords(Number(e.target.value))} />
+                                    <InputError message={fieldError('min_words')} />
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -171,34 +237,41 @@ export default function CommentClassifierSettingsView() {
                             <div>
                                 <Label>Kata kunci Pengaduan</Label>
                                 <Textarea value={pengaduan} onChange={(e) => setPengaduan(e.target.value)} />
+                                <InputError message={fieldError('keywords.pengaduan')} />
                             </div>
                             <div>
                                 <Label>Kata kunci Aspirasi</Label>
                                 <Textarea value={aspirasi} onChange={(e) => setAspirasi(e.target.value)} />
+                                <InputError message={fieldError('keywords.aspirasi')} />
                             </div>
                             <div>
                                 <Label>Kata kunci Permintaan Informasi</Label>
                                 <Textarea value={permintaan} onChange={(e) => setPermintaan(e.target.value)} />
+                                <InputError message={fieldError('keywords.permintaan_informasi')} />
                             </div>
                             <div>
                                 <Label>Daftar abaikan</Label>
                                 <Textarea value={ignore} onChange={(e) => setIgnore(e.target.value)} />
+                                <InputError message={fieldError('ignore')} />
                             </div>
                             <div>
                                 <Label>Singkatan (JSON)</Label>
                                 <Textarea value={abbreviations} onChange={(e) => setAbbreviations(e.target.value)} />
-                                {abbrError && <p className="text-sm text-red-600">{abbrError}</p>}
+                                <InputError message={abbrError || fieldError('abbreviations')} />
                             </div>
                             <div>
                                 <Label>Prioritas (koma)</Label>
                                 <Input value={priority} onChange={(e) => setPriority(e.target.value)} />
+                                <InputError message={fieldError('priority')} />
                             </div>
                             <div className="flex gap-2">
-                                <Button onClick={handleSave} disabled={processing}>
-                                    Simpan
+                                <Button onClick={handleSave} disabled={processing || resetting}>
+                                    {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                    {processing ? 'Menyimpan...' : 'Simpan'}
                                 </Button>
-                                <Button variant="outline" onClick={handleReset}>
-                                    Kembalikan ke default
+                                <Button variant="outline" onClick={handleReset} disabled={processing || resetting}>
+                                    {resetting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                    {resetting ? 'Mengembalikan...' : 'Kembalikan ke default'}
                                 </Button>
                             </div>
                         </CardContent>

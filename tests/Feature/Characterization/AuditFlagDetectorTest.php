@@ -69,7 +69,7 @@ test('audit flag detector creates jaringan_sama and selesai_cepat flags once', f
     expect(AuditFlag::where('ticket_id', $ticket->id)->where('type', 'selesai_cepat_setelah_balasan')->count())->toBe(1);
 });
 
-test('audit flag detector creates rating_cepat flag', function () {
+test('audit flag detector creates unified selesai_cepat_setelah_balasan flag instead of rating_cepat and is idempotent', function () {
     $operator = User::factory()->create(['role' => 'operator']);
     $channel = Channel::firstOrCreate(['slug' => 'website'], ['name' => 'Website', 'is_active' => true, 'sort_order' => 1]);
     $ticket = Ticket::create([
@@ -83,7 +83,8 @@ test('audit flag detector creates rating_cepat flag', function () {
         'reporter_name' => 'Reporter',
         'status' => 'selesai',
         'rating' => 4,
-        'completed_at' => now(),
+        'completed_at' => now()->subSeconds(30),
+        'rated_at' => now(),
         'assigned_to' => $operator->id,
         'source_app' => 'web',
         'created_at' => now(),
@@ -118,6 +119,8 @@ test('audit flag detector creates rating_cepat flag', function () {
     $request = Request::create('/', 'POST', [], [], [], ['REMOTE_ADDR' => '203.0.113.9']);
 
     app(AuditFlagDetector::class)->detect($ticket, $completionLog, $request);
+    app(AuditFlagDetector::class)->detect($ticket, $completionLog, $request);
 
-    expect(AuditFlag::where('ticket_id', $ticket->id)->where('type', 'rating_cepat')->count())->toBe(1);
+    expect(AuditFlag::where('ticket_id', $ticket->id)->where('type', 'rating_cepat')->count())->toBe(0)
+        ->and(AuditFlag::where('ticket_id', $ticket->id)->where('type', 'selesai_cepat_setelah_balasan')->count())->toBe(1);
 });

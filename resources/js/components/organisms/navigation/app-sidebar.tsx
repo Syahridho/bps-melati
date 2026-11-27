@@ -18,6 +18,7 @@ export function AppSidebar() {
     const [myReportsCount, setMyReportsCount] = useState(my_reports_open_count ?? 0);
     const [auditLogBadge, setAuditLogBadge] = useState(audit_log_badge ?? 0);
     const reloadTimerRef = useRef<number | null>(null);
+    const auditBadgeTimerRef = useRef<number | null>(null);
 
     // Sinkronkan state lokal dengan prop Inertia saat navigasi
     useEffect(() => {
@@ -36,6 +37,9 @@ export function AppSidebar() {
         return () => {
             if (reloadTimerRef.current !== null) {
                 window.clearTimeout(reloadTimerRef.current);
+            }
+            if (auditBadgeTimerRef.current !== null) {
+                window.clearTimeout(auditBadgeTimerRef.current);
             }
         };
     }, []);
@@ -74,32 +78,37 @@ export function AppSidebar() {
         return () => window.clearInterval(intervalId);
     }, [isOperator, canAccessInbox]);
 
-    const fetchAuditLogBadge = useCallback(async () => {
+    const fetchAuditLogBadge = useCallback(() => {
         if (!isAdmin) {
             return;
         }
-        try {
-            const response = await fetch(route('audit-log.flags-summary'), {
-                credentials: 'include',
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setAuditLogBadge((prev) => (typeof data.new_count === 'number' ? data.new_count : prev));
-            }
-        } catch {
-            // Silent fail - pertahankan nilai terakhir
+
+        if (auditBadgeTimerRef.current !== null) {
+            window.clearTimeout(auditBadgeTimerRef.current);
         }
+
+        auditBadgeTimerRef.current = window.setTimeout(() => {
+            auditBadgeTimerRef.current = null;
+            router.reload({
+                only: ['audit_log_badge'],
+            });
+        }, 400);
     }, [isAdmin]);
 
     useEffect(() => {
         if (!isAdmin) {
             return;
         }
-        fetchAuditLogBadge();
-        // Refresh badge setiap 30 detik (fallback polling)
-        const intervalId = setInterval(fetchAuditLogBadge, 30000);
-        return () => clearInterval(intervalId);
-    }, [isAdmin, fetchAuditLogBadge]);
+        // Refresh badge setiap 30 detik (fallback polling saat tab aktif)
+        const intervalId = window.setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                router.reload({
+                    only: ['audit_log_badge'],
+                });
+            }
+        }, 30000);
+        return () => window.clearInterval(intervalId);
+    }, [isAdmin]);
 
     // Realtime audit log dipasang lewat komponen anak (kondisional).
 

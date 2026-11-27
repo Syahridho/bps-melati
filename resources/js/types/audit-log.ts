@@ -27,6 +27,13 @@ export interface AuditFlag {
         petugas_nama?: string;
         reporter_ip?: string;
         pic_ip?: string;
+        selisih_detik?: number;
+        response_id?: number;
+        reply_at?: string;
+        action_at?: string;
+        rated_at?: string | null;
+        threshold_seconds?: number;
+        same_ip?: boolean;
         catatan?: string;
     };
     created_at: string;

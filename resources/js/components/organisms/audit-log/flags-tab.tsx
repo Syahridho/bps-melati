@@ -30,7 +30,6 @@ export function FlagsTab({ groups, loading, error, typeFilter, setTypeFilter, st
                 >
                     <option value="">Semua Tipe</option>
                     <option value="jaringan_sama">Jaringan Sama</option>
-                    <option value="rating_cepat">Rating Cepat</option>
                     <option value="rating_beruntun_ip">Rating Beruntun IP</option>
                     <option value="selesai_cepat_setelah_balasan">Selesai Cepat Setelah Balasan</option>
                 </select>

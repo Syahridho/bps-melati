@@ -173,3 +173,114 @@ test('channel tree only contains active channels ordered by sort order', functio
 
     expect($inactive->is_active)->toBeFalse();
 });
+
+test('completed reports filters by a single channel and updates tab counts', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    [, $instagram, $youtube, $website] = makeChannelFilterTree();
+
+    makeChannelFilterTicket($instagram, ['status' => 'selesai', 'classification' => 'pengaduan']);
+    makeChannelFilterTicket($youtube, ['status' => 'selesai', 'classification' => 'aspirasi']);
+    makeChannelFilterTicket($website, ['status' => 'selesai', 'classification' => 'aspirasi']);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.completed-reports.index', ['channels' => [$instagram->id]]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/admin/completed-reports/index')
+            ->where('filters.channels', [$instagram->id])
+            ->where('counts.semua', 1)
+            ->where('counts.pengaduan', 1)
+            ->where('counts.aspirasi', 0)
+            ->has('tickets.data', 1)
+            ->where('tickets.data.0.title', 'Tiket kanal Instagram')
+            ->has('channels')
+        );
+});
+
+test('completed reports parent channel includes all children without duplication', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    [$parent, $instagram, $youtube, $website] = makeChannelFilterTree();
+
+    makeChannelFilterTicket($instagram, ['status' => 'selesai']);
+    makeChannelFilterTicket($youtube, ['status' => 'selesai']);
+    makeChannelFilterTicket($website, ['status' => 'selesai']);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.completed-reports.index', ['channels' => [$parent->id]]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.channels', [$parent->id])
+            ->where('counts.semua', 2)
+            ->has('tickets.data', 2)
+        );
+});
+
+test('completed reports combines multiple channels with date range and tab filter', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    [, $instagram, $youtube, $website] = makeChannelFilterTree();
+
+    makeChannelFilterTicket($instagram, ['status' => 'selesai', 'classification' => 'pengaduan']);
+    makeChannelFilterTicket($youtube, ['status' => 'selesai', 'classification' => 'aspirasi']);
+    $oldWebsiteTicket = makeChannelFilterTicket($website, ['status' => 'selesai', 'classification' => 'aspirasi']);
+    $oldWebsiteTicket->forceFill(['updated_at' => now()->subMonths(2)])->saveQuietly();
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.completed-reports.index', [
+            'channels' => [$instagram->id, $website->id],
+            'tab' => 'pengaduan',
+            'from' => now()->startOfMonth()->toDateString(),
+            'to' => now()->endOfMonth()->toDateString(),
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.channels', [$instagram->id, $website->id])
+            ->where('filters.filter', 'pengaduan')
+            ->where('counts.semua', 1)
+            ->where('counts.pengaduan', 1)
+            ->where('counts.aspirasi', 0)
+            ->has('tickets.data', 1)
+            ->where('tickets.data.0.title', 'Tiket kanal Instagram')
+        );
+});
+
+test('operator can filter completed reports by channel and operator_tim is forbidden', function () {
+    $operator = User::factory()->create(['role' => 'operator']);
+    $operatorTim = User::factory()->create(['role' => 'operator_tim']);
+    [, $instagram, $youtube] = makeChannelFilterTree();
+
+    makeChannelFilterTicket($instagram, ['status' => 'selesai', 'classification' => 'pengaduan']);
+    makeChannelFilterTicket($youtube, ['status' => 'selesai', 'classification' => 'aspirasi']);
+
+    actingAs($operator)
+        ->get(route('dashboard.operator.completed-reports.index', ['channels' => [$youtube->id]]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard/operator/completed-reports/index')
+            ->where('filters.channels', [$youtube->id])
+            ->where('counts.semua', 1)
+            ->where('counts.aspirasi', 1)
+            ->has('tickets.data', 1)
+            ->where('tickets.data.0.title', 'Tiket kanal YouTube')
+        );
+
+    actingAs($operatorTim)
+        ->get(route('dashboard.operator.completed-reports.index', ['channels' => [$youtube->id]]))
+        ->assertForbidden();
+});
+
+test('completed reports ignores invalid channel ids', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    [, $instagram, $youtube] = makeChannelFilterTree();
+
+    makeChannelFilterTicket($instagram, ['status' => 'selesai']);
+    makeChannelFilterTicket($youtube, ['status' => 'selesai']);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.completed-reports.index', ['channels' => [999999]]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.channels', [])
+            ->where('counts.semua', 2)
+            ->has('tickets.data', 2)
+        );
+});

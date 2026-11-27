@@ -4,20 +4,48 @@ import { useEffect, useState } from 'react';
 
 export function useCompletedReportsFilters(
     routePrefix: string,
-    initialFilters: { search: string; filter: FilterTab; per_page: number; from: string | null; to: string | null },
+    initialFilters: {
+        search: string;
+        filter: FilterTab;
+        per_page: number;
+        from: string | null;
+        to: string | null;
+        channels?: number[];
+    },
 ) {
     const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
     const [isLoading, setIsLoading] = useState(false);
 
-    const queryParams = (overrides: Record<string, string | number | null> = {}) => ({
-        tab: initialFilters.filter,
-        q: searchQuery,
-        per_page: initialFilters.per_page,
-        from: initialFilters.from,
-        to: initialFilters.to,
-        page: 1,
-        ...overrides,
-    });
+    const queryParams = (
+        overrides: {
+            tab?: FilterTab;
+            q?: string;
+            per_page?: number;
+            from?: string | null;
+            to?: string | null;
+            page?: number;
+            channels?: number[];
+        } = {},
+    ) => {
+        const { channels = initialFilters.channels ?? [], ...rest } = overrides;
+        const params: Record<string, string | number | number[] | null | undefined> = {
+            tab: initialFilters.filter,
+            q: searchQuery,
+            per_page: initialFilters.per_page,
+            from: initialFilters.from,
+            to: initialFilters.to,
+            page: 1,
+            ...rest,
+        };
+
+        if (channels.length > 0) {
+            params.channels = channels;
+        } else {
+            delete params.channels;
+        }
+
+        return params;
+    };
 
     useEffect(() => {
         setSearchQuery(initialFilters.search || '');
@@ -38,6 +66,7 @@ export function useCompletedReportsFilters(
                     from: initialFilters.from,
                     to: initialFilters.to,
                     page: 1,
+                    ...(initialFilters.channels?.length ? { channels: initialFilters.channels } : {}),
                 },
                 {
                     preserveState: true,
@@ -50,7 +79,16 @@ export function useCompletedReportsFilters(
         }, 400);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, initialFilters.filter, initialFilters.per_page, initialFilters.from, initialFilters.to, initialFilters.search, routePrefix]);
+    }, [
+        searchQuery,
+        initialFilters.filter,
+        initialFilters.per_page,
+        initialFilters.from,
+        initialFilters.to,
+        initialFilters.search,
+        initialFilters.channels,
+        routePrefix,
+    ]);
 
     const handleFilterChange = (tab: FilterTab) => {
         router.get(route(`${routePrefix}.completed-reports.index`), queryParams({ tab }), {
@@ -64,6 +102,16 @@ export function useCompletedReportsFilters(
 
     const handleRangeChange = (from: string | null, to: string | null) => {
         router.get(route(`${routePrefix}.completed-reports.index`), queryParams({ from, to }), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            onStart: () => setIsLoading(true),
+            onFinish: () => setIsLoading(false),
+        });
+    };
+
+    const handleChannelChange = (channels: number[]) => {
+        router.get(route(`${routePrefix}.completed-reports.index`), queryParams({ channels }), {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -109,6 +157,7 @@ export function useCompletedReportsFilters(
         isLoading,
         handleFilterChange,
         handleRangeChange,
+        handleChannelChange,
         handlePerPageChange,
         handleResetFilters,
     };

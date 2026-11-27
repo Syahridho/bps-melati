@@ -12,12 +12,6 @@ return [
             'window_minutes' => 60,
         ],
 
-        'rating_cepat' => [
-            'enabled' => true,
-            'threshold' => 2,
-            'window_minutes' => 5,
-        ],
-
         'rating_beruntun_ip' => [
             'enabled' => true,
             'threshold' => 3,

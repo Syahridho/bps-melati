@@ -22,7 +22,7 @@ export default function CompletedStamp({ completedAt, rating }: CompletedStampPr
     return (
         // relative: jadi patokan posisi stempel. Margin bawah menjaga baris bintang tidak tertimpa kartu di bawahnya.
         <div
-            className="relative mb-16 flex items-center px-4 py-2.5 sm:px-6 lg:mb-20"
+            className="relative mb-20 flex items-center px-4 py-2.5 sm:px-6 lg:mb-24"
             style={
                 {
                     '--stamp-duration': '0.35s',
@@ -46,7 +46,7 @@ export default function CompletedStamp({ completedAt, rating }: CompletedStampPr
                 {/* Wrapper dalam khusus animasi supaya tidak bentrok dengan translate di atas */}
                 <div className="motion-safe:animate-[stamp-in_var(--stamp-duration)_ease-out]">
                     <svg
-                        viewBox="-8 -8 216 96"
+                        viewBox="-8 -8 216 128"
                         className="h-20 w-auto rotate-[10deg] overflow-visible stroke-red-600 opacity-90 sm:h-24 lg:h-28 dark:stroke-red-500"
                         fill="none"
                         role="img"
@@ -85,7 +85,7 @@ export default function CompletedStamp({ completedAt, rating }: CompletedStampPr
                             {starCount > 0 && (
                                 <g>
                                     {starPositions.map((x, index) => (
-                                        <g key={index} transform={`translate(${x}, 72)`}>
+                                        <g key={index} transform={`translate(${x}, 96)`}>
                                             <g
                                                 className="opacity-0 motion-reduce:opacity-100 motion-reduce:transform-none print:opacity-100 print:transform-none motion-safe:animate-[star-pop_var(--star-duration)_cubic-bezier(0.34,1.56,0.64,1)] print:animate-none motion-reduce:animate-none"
                                                 style={{
