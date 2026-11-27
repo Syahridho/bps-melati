@@ -114,4 +114,13 @@ class ChannelFilter
                 ->all();
         });
     }
+
+    /**
+     * Hapus cache pohon kanal saat kanal dibuat, diubah, atau dihapus.
+     */
+    public static function forget(): void
+    {
+        Cache::forget('channels:tree');
+        Cache::forget('channels:filter-tree');
+    }
 }

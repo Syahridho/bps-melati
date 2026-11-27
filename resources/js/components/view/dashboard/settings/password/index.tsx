@@ -55,7 +55,7 @@ export default function PasswordSettingsView() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="pengaturan Passwords" />
+            <Head title="Pengaturan Passwords" />
 
             <SettingsLayout>
                 <Card>
@@ -127,7 +127,7 @@ export default function PasswordSettingsView() {
                                         leave="transition ease-in-out"
                                         leaveTo="opacity-0"
                                     >
-                                        <p className="text-sm text-neutral-600">Saved</p>
+                                        <p className="text-sm text-neutral-600">Simpan</p>
                                     </Transition>
                                 </div>
                             </form>

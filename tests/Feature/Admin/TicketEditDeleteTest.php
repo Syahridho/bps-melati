@@ -40,7 +40,7 @@ test('admin can update allowed ticket fields', function () {
         ]);
 
     $response->assertRedirect();
-    $response->assertSessionHas('success');
+    $response->assertSessionHas('flash.success');
 
     $ticket->refresh();
     expect($ticket->reporter_name)->toBe('Budi Baru');
@@ -86,7 +86,7 @@ test('admin can delete a ticket and its attachments', function () {
         ->delete(route('dashboard.admin.incoming-reports.destroy', ['ticketNumber' => $ticket->ticket_number]));
 
     $response->assertRedirect(route('dashboard.admin.incoming-reports.index'));
-    $response->assertSessionHas('success');
+    $response->assertSessionHas('flash.success');
 
     expect(Ticket::find($ticket->id))->toBeNull();
     Storage::disk('public')->assertMissing('attachments/test_file.pdf');

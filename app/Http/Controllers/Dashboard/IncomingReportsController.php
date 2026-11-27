@@ -206,7 +206,9 @@ class IncomingReportsController extends Controller
 
         app(TicketCacheInvalidator::class)->invalidateDashboard();
 
-        return back()->with('success', 'Laporan berhasil diperbarui.');
+        return back()->with('flash', [
+            'success' => 'Laporan berhasil diperbarui.',
+        ]);
     }
 
     /**
@@ -245,6 +247,8 @@ class IncomingReportsController extends Controller
         $routePrefix = $request->user()->role->value === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
         return redirect()->route("{$routePrefix}.incoming-reports.index")
-            ->with('success', 'Laporan berhasil dihapus.');
+            ->with('flash', [
+                'success' => 'Laporan berhasil dihapus.',
+            ]);
     }
 }

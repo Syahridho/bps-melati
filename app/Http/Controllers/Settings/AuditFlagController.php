@@ -101,7 +101,9 @@ class AuditFlagController extends Controller
 
         // For tindak_lanjut status, note is mandatory
         if ($request->status === 'tindak_lanjut' && empty($request->note)) {
-            return back()->with('error', 'Catatan wajib diisi untuk status "Tindak Lanjut".');
+            return back()->with('flash', [
+                'error' => 'Catatan wajib diisi untuk status "Tindak Lanjut".',
+            ]);
         }
 
         DB::transaction(function () use ($flag, $request) {

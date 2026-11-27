@@ -15,7 +15,7 @@ export default function RecapSettingsView() {
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Laporan & Tanda Tangan',
-            href: route('settings.rating'),
+            href: route('settings.recap'),
         },
     ];
 

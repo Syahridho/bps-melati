@@ -6,6 +6,7 @@ use App\Events\ChannelStatsUpdated;
 use App\Models\Channel;
 use App\Models\Setting;
 use App\Support\CacheKeys;
+use App\Support\ChannelFilter;
 use Illuminate\Support\Facades\Cache;
 
 class ChannelObserver
@@ -23,12 +24,11 @@ class ChannelObserver
     public function deleted(Channel $channel): void
     {
         $this->bump($channel, 'deleted');
-        Cache::forget('channels:tree');
     }
 
     private function bump(Channel $channel, string $action): void
     {
-        Cache::forget('channels:tree');
+        ChannelFilter::forget();
         Cache::add(CacheKeys::DASHBOARD_ADMIN_VERSION, 0);
         Cache::increment(CacheKeys::DASHBOARD_ADMIN_VERSION);
 

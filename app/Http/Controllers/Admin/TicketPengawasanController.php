@@ -60,6 +60,8 @@ class TicketPengawasanController extends Controller
 
         app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
-        return back()->with('success', $aktif ? 'Kadar pengawasan berhasil diaktifkan.' : 'Kadar pengawasan berhasil dinonaktifkan.');
+        return back()->with('flash', [
+            'success' => $aktif ? 'Kadar pengawasan berhasil diaktifkan.' : 'Kadar pengawasan berhasil dinonaktifkan.',
+        ]);
     }
 }

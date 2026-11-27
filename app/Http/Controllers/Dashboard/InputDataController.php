@@ -522,7 +522,9 @@ class InputDataController extends Controller
 
         app(TicketCacheInvalidator::class)->invalidateTicket($ticket);
 
-        return back()->with('success', 'Data tiket berhasil diperbarui.');
+        return back()->with('flash', [
+            'success' => 'Data tiket berhasil diperbarui.',
+        ]);
     }
 
     /**
@@ -559,7 +561,9 @@ class InputDataController extends Controller
         $routePrefix = $request->user()->isAdmin() ? 'dashboard.admin' : 'dashboard.operator';
 
         return redirect()->route("{$routePrefix}.input-data.index")
-            ->with('success', 'Data tiket berhasil dihapus.');
+            ->with('flash', [
+                'success' => 'Data tiket berhasil dihapus.',
+            ]);
     }
 
     /**

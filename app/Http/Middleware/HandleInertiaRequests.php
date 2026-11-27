@@ -5,8 +5,8 @@ namespace App\Http\Middleware;
 use App\Models\AuditFlag;
 use App\Support\InboxCounter;
 use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -67,8 +67,8 @@ class HandleInertiaRequests extends Middleware
             'vapid_public_key' => env('VAPID_PUBLIC_KEY'),
             'flash' => [
                 'ticket_number' => fn () => $request->session()->get('ticket_number'),
-                'success' => fn () => $request->session()->get('flash.success'),
-                'error' => fn () => $request->session()->get('flash.error'),
+                'success' => fn () => $request->session()->get('flash.success') ?? $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('flash.error') ?? $request->session()->get('error'),
             ],
         ]);
     }

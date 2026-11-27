@@ -181,7 +181,7 @@ export default function ShowInputDataView() {
                     })}
                 />
 
-                {live.status === 'selesai' && live.completedAt && <CompletedStamp completedAt={live.completedAt} />}
+                {live.status === 'selesai' && live.completedAt && <CompletedStamp completedAt={live.completedAt} rating={live.rating} />}
 
                 <TicketContentCard
                     title={detailData.title}
