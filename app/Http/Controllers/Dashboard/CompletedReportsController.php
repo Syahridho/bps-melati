@@ -7,9 +7,11 @@ use App\Http\Controllers\Concerns\RendersRolePage;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Support\ChannelFilter;
+use App\Support\LaporanCache;
 use App\Support\LaporanFilter;
 use App\Support\LaporanFilterQuery;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Response;
 
 class CompletedReportsController extends Controller
@@ -45,63 +47,91 @@ class CompletedReportsController extends Controller
         $toInput = $filter->to;
 
         $searchQueryClosure = LaporanFilterQuery::searchClosure($search);
+        $roleKey = $request->user()?->role?->value ?? 'guest';
 
-        $ticketsQuery = Ticket::with(['channel', 'flaggedBy'])
-            ->whereIn('status', self::COMPLETED_STATUSES)
-            ->filterByChannels($filter->channels)
-            ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($query) use ($fromInput, $toInput) {
-                $query->where('updated_at', '>=', $fromInput.' 00:00:00')
-                    ->where('updated_at', '<=', $toInput.' 23:59:59');
-            })
-            ->tap($searchQueryClosure)
-            ->when($filterTab !== 'semua', function ($query) use ($filterTab) {
-                if ($filterTab === 'pengaduan') {
-                    $query->where('classification', 'pengaduan');
-                } elseif ($filterTab === 'aspirasi') {
-                    $query->where('classification', 'aspirasi');
-                } elseif ($filterTab === 'permintaan' || $filterTab === 'permintaan_informasi') {
-                    $query->where('classification', 'permintaan_informasi');
-                } elseif ($filterTab === 'berkadar_pengawasan') {
-                    $query->where('is_pengawasan', true);
-                } elseif ($filterTab === 'ditandai') {
-                    $query->where('is_flagged', true);
-                }
-            });
+        $fetchTickets = function () use ($filter, $isSemuaWaktu, $fromInput, $toInput, $searchQueryClosure, $filterTab, $perPage) {
+            return Ticket::with(['channel', 'flaggedBy'])
+                ->whereIn('status', self::COMPLETED_STATUSES)
+                ->filterByChannels($filter->channels)
+                ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($query) use ($fromInput, $toInput) {
+                    $query->completedBetween($fromInput, $toInput);
+                })
+                ->tap($searchQueryClosure)
+                ->when($filterTab !== 'semua', function ($query) use ($filterTab) {
+                    if ($filterTab === 'pengaduan') {
+                        $query->where('classification', 'pengaduan');
+                    } elseif ($filterTab === 'aspirasi') {
+                        $query->where('classification', 'aspirasi');
+                    } elseif ($filterTab === 'permintaan' || $filterTab === 'permintaan_informasi') {
+                        $query->where('classification', 'permintaan_informasi');
+                    } elseif ($filterTab === 'berkadar_pengawasan') {
+                        $query->where('is_pengawasan', true);
+                    } elseif ($filterTab === 'ditandai') {
+                        $query->where('is_flagged', true);
+                    }
+                })
+                ->orderByCompletedDesc()
+                ->paginate($perPage)
+                ->withQueryString()
+                ->through(fn (Ticket $ticket) => $this->completedListTicket($ticket));
+        };
 
-        $tickets = $ticketsQuery
-            ->orderByDesc('updated_at')
-            ->paginate($perPage)
-            ->withQueryString()
-            ->through(fn (Ticket $ticket) => $this->completedListTicket($ticket));
+        if ($search === '') {
+            $isRecent = ($isSemuaWaktu || ($toInput && (Carbon::parse($toInput)->isToday() || Carbon::parse($toInput)->isCurrentMonth())));
+            $ttl = $isRecent ? 60 : LaporanCache::TTL;
+            $tickets = LaporanCache::remember(
+                'completed-reports',
+                'list',
+                [...$filter->toCacheParams(), 'role' => $roleKey],
+                $ttl,
+                $fetchTickets,
+            );
+        } else {
+            $tickets = $fetchTickets();
+        }
 
-        $countBaseQuery = Ticket::query()
-            ->whereIn('status', self::COMPLETED_STATUSES)
-            ->filterByChannels($filter->channels)
-            ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($q) use ($fromInput, $toInput) {
-                $q->where('updated_at', '>=', $fromInput.' 00:00:00')
-                    ->where('updated_at', '<=', $toInput.' 23:59:59');
-            })
-            ->tap($searchQueryClosure);
+        $fetchCounts = function () use ($filter, $isSemuaWaktu, $fromInput, $toInput, $searchQueryClosure): array {
+            $countBaseQuery = Ticket::query()
+                ->whereIn('status', self::COMPLETED_STATUSES)
+                ->filterByChannels($filter->channels)
+                ->when(! $isSemuaWaktu && $fromInput && $toInput, function ($q) use ($fromInput, $toInput) {
+                    $q->completedBetween($fromInput, $toInput);
+                })
+                ->tap($searchQueryClosure);
 
-        $countsData = (clone $countBaseQuery)
-            ->selectRaw("
-                COUNT(*) as semua,
-                SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
-                SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
-                SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan,
-                SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan,
-                SUM(CASE WHEN is_flagged = 1 THEN 1 ELSE 0 END) as ditandai
-            ")
-            ->first();
+            $countsData = (clone $countBaseQuery)
+                ->selectRaw("
+                    COUNT(*) as semua,
+                    SUM(CASE WHEN classification = 'pengaduan' THEN 1 ELSE 0 END) as pengaduan,
+                    SUM(CASE WHEN classification = 'aspirasi' THEN 1 ELSE 0 END) as aspirasi,
+                    SUM(CASE WHEN classification = 'permintaan_informasi' THEN 1 ELSE 0 END) as permintaan,
+                    SUM(CASE WHEN is_pengawasan = 1 THEN 1 ELSE 0 END) as berkadar_pengawasan,
+                    SUM(CASE WHEN is_flagged = 1 THEN 1 ELSE 0 END) as ditandai
+                ")
+                ->first();
 
-        $counts = [
-            'semua' => (int) ($countsData->semua ?? 0),
-            'pengaduan' => (int) ($countsData->pengaduan ?? 0),
-            'aspirasi' => (int) ($countsData->aspirasi ?? 0),
-            'permintaan' => (int) ($countsData->permintaan ?? 0),
-            'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
-            'ditandai' => (int) ($countsData->ditandai ?? 0),
-        ];
+            return [
+                'semua' => (int) ($countsData->semua ?? 0),
+                'pengaduan' => (int) ($countsData->pengaduan ?? 0),
+                'aspirasi' => (int) ($countsData->aspirasi ?? 0),
+                'permintaan' => (int) ($countsData->permintaan ?? 0),
+                'berkadar_pengawasan' => (int) ($countsData->berkadar_pengawasan ?? 0),
+                'ditandai' => (int) ($countsData->ditandai ?? 0),
+            ];
+        };
+
+        if ($search === '') {
+            $countParams = [
+                'tab_counts',
+                'from' => $fromInput,
+                'to' => $toInput,
+                'channels' => $filter->channels,
+                'role' => $roleKey,
+            ];
+            $counts = LaporanCache::remember('completed-reports', 'counts', $countParams, 60, $fetchCounts);
+        } else {
+            $counts = $fetchCounts();
+        }
 
         return $this->renderPage($request, 'completed-reports/index', [
             'tickets' => $tickets,

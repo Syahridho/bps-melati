@@ -12,7 +12,7 @@ export default function DashboardAdminPage(props: DashboardProps) {
             {...props}
             isLive={isLive}
             isLiveEnabled={isLiveEnabled}
-            title="Dashboard Admin asdasdsa"
+            title="Dashboard Admin"
             headerTitle="PENANGANAN KONSULTASI PENGADUAN BPS PROVINSI RIAU"
             breadcrumbs={[{ title: 'Dashboard Admin', href: route('dashboard.admin.index') }]}
             channelCards={DASHBOARD_CHANNEL_CARDS}

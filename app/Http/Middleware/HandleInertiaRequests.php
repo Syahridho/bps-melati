@@ -7,6 +7,7 @@ use App\Support\InboxCounter;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -39,12 +40,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        $resolveQuote = function (): array {
+            [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
-        return array_merge(parent::share($request), [
+            return ['message' => trim($message), 'author' => trim($author)];
+        };
+
+        return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
+            'quote' => $request->routeIs('login', 'register', 'password.*', 'verification.*')
+                ? $resolveQuote
+                : Inertia::optional($resolveQuote),
             'auth' => [
                 'user' => $request->user(),
             ],
@@ -70,6 +77,6 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('flash.success') ?? $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('flash.error') ?? $request->session()->get('error'),
             ],
-        ]);
+        ];
     }
 }

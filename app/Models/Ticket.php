@@ -341,6 +341,34 @@ class Ticket extends Model
         };
     }
 
+    /**
+     * Filter tiket berdasarkan tanggal selesai inklusif (awal s/d akhir hari),
+     * dengan fallback ke `updated_at` bila `completed_at` masih NULL pada data lama.
+     */
+    public function scopeCompletedBetween(Builder $query, string $fromDate, string $toDate): Builder
+    {
+        $start = $fromDate.' 00:00:00';
+        $end = $toDate.' 23:59:59';
+
+        return $query->where(function (Builder $dateQuery) use ($start, $end): void {
+            $dateQuery->whereBetween('completed_at', [$start, $end])
+                ->orWhere(function (Builder $fallbackQuery) use ($start, $end): void {
+                    $fallbackQuery->whereNull('completed_at')
+                        ->whereBetween('updated_at', [$start, $end]);
+                });
+        });
+    }
+
+    /**
+     * Urutkan laporan selesai dari waktu selesai terbaru, dengan fallback `updated_at`
+     * untuk data lama dan tie-breaker `id DESC` agar urutan stabil.
+     */
+    public function scopeOrderByCompletedDesc(Builder $query): Builder
+    {
+        return $query->orderByRaw('COALESCE(completed_at, updated_at) DESC')
+            ->orderByDesc('id');
+    }
+
     public static function accessCodeRequired(): bool
     {
         return (bool) config('ticket.require_access_code', true);

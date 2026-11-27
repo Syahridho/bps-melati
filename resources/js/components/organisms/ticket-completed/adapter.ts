@@ -19,7 +19,7 @@ export function toTicketListEntry(ticket: TicketItem, routePrefix: string): Tick
         classification: ticket.classification,
         status: ticket.status,
         channel: ticket.channel,
-        created_at: ticket.created_at,
+        created_at: ticket.completed_at ?? ticket.updated_at ?? ticket.created_at,
         reporter_name: ticket.reporter_name,
         show_href: route(`${routePrefix}.completed-reports.show`, { ticketNumber: ticket.ticket_number }),
         is_flagged: ticket.is_flagged,

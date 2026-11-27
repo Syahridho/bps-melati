@@ -1,16 +1,24 @@
 import { ConnectionIndicator } from '@/components/atoms/connection-indicator';
 import { DashboardPeriodFilter } from '@/components/molecules/dashboard-period-filter';
-import { router } from '@inertiajs/react';
-import { ChartAreaLinear } from '@/components/organisms/dashboard/chart-area-linear';
-import { ChartBarDefault } from '@/components/organisms/dashboard/chart-bar';
-import { ChartPieLabel } from '@/components/organisms/dashboard/chart-pie-label';
 import { DashboardRecentTickets } from '@/components/organisms/dashboard/dashboard-recent-tickets';
 import { DashboardStatCards } from '@/components/organisms/dashboard/dashboard-stat-cards';
 import { DashboardStatusCards } from '@/components/organisms/dashboard/dashboard-status-cards';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthRole } from '@/hooks/use-auth-role';
 import AppLayout from '@/layouts/app-layout';
 import { ExtendedDashboardTemplateProps } from '@/types/dashboard';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
+import { Suspense, lazy } from 'react';
+
+const ChartAreaLinear = lazy(() =>
+    import('@/components/organisms/dashboard/chart-area-linear').then((m) => ({ default: m.ChartAreaLinear })),
+);
+const ChartBarDefault = lazy(() =>
+    import('@/components/organisms/dashboard/chart-bar').then((m) => ({ default: m.ChartBarDefault })),
+);
+const ChartPieLabel = lazy(() =>
+    import('@/components/organisms/dashboard/chart-pie-label').then((m) => ({ default: m.ChartPieLabel })),
+);
 
 export default function DashboardView({
     title,
@@ -91,15 +99,21 @@ export default function DashboardView({
                         {/* <ChartPieDonutText stats={stats} /> */}
 
                         <div className="min-w-0 lg:col-span-4">
-                            <ChartPieLabel stats={stats} />
+                            <Suspense fallback={<Skeleton className="h-[320px] w-full rounded-xl" />}>
+                                <ChartPieLabel stats={stats} />
+                            </Suspense>
                         </div>
                         <div className="min-w-0 lg:col-span-8">
-                            <ChartBarDefault sumberKanal={sumberKanal} />
+                            <Suspense fallback={<Skeleton className="h-[320px] w-full rounded-xl" />}>
+                                <ChartBarDefault sumberKanal={sumberKanal} />
+                            </Suspense>
                         </div>
                     </div>
 
                     {/* Tren */}
-                    <ChartAreaLinear data={trend} periodLabel={periodLabel} />
+                    <Suspense fallback={<Skeleton className="h-[320px] w-full rounded-xl" />}>
+                        <ChartAreaLinear data={trend} periodLabel={periodLabel} />
+                    </Suspense>
                     <div>
                         <div className="flex flex-col gap-1">
                             <p className="mb-2 text-xs font-semibold">Status Laporan</p>

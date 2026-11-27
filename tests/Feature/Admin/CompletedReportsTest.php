@@ -34,7 +34,7 @@ function selesaiTicket(array $attributes = []): Ticket
         'content' => 'Isi laporan selesai untuk pengujian filter.',
         'status' => 'selesai',
         'source_app' => 'web',
-        'completed_at' => now(),
+        'completed_at' => $updatedAt,
     ], $attributes));
 
     DB::table('tickets')->where('id', $ticket->id)->update(['updated_at' => $updatedAt]);
