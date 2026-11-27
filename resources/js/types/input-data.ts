@@ -198,7 +198,6 @@ export interface InputDataPageProps extends SharedData {
         to: string | null;
         channels: number[];
     };
-    isLiveEnabled?: boolean;
     counts: {
         semua: number;
         pengaduan: number;

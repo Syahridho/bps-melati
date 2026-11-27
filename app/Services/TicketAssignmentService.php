@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\AssignmentMode;
 use App\Events\LaporanChanged;
-use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\TicketAssignmentLog;
 use App\Models\User;
@@ -189,10 +188,6 @@ class TicketAssignmentService
     protected function dispatchAssignedLaporanChanged(Ticket $ticket, ?int $actorId = null): void
     {
         if (config('app.disable_dashboard_broadcast', false)) {
-            return;
-        }
-
-        if (! (bool) Setting::get('dashboard_live_enabled', true)) {
             return;
         }
 

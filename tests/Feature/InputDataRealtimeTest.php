@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Events\DashboardUpdated;
 use App\Events\LaporanChanged;
 use App\Models\Channel;
+use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Social\NormalizedSocialComment;
@@ -224,4 +226,61 @@ test('payload siaran minimal dan tidak memuat data pelapor', function () {
 
         return $event->ticketId === $ticket->id;
     });
+});
+
+test('input data tetap menyiarkan LaporanChanged dan tidak bergantung pengaturan saat live dashboard dimatikan', function () {
+    Event::fake([LaporanChanged::class, DashboardUpdated::class]);
+
+    Setting::set('dashboard_live_enabled', '0');
+
+    $admin = User::factory()->create(['role' => UserRole::Admin, 'is_active' => true]);
+    $operator = User::factory()->create(['role' => UserRole::Operator, 'is_active' => true]);
+
+    actingAs($admin)->post(route('dashboard.admin.input-data.store'), [
+        'classification' => 'pengaduan',
+        'title' => 'Tiket saat live dashboard mati',
+        'content' => 'Isi tiket yang tetap harus menyiarkan LaporanChanged.',
+        'channel_id' => realtimeWebsiteChannel()->id,
+    ])->assertRedirect();
+
+    Event::assertDispatched(LaporanChanged::class, function (LaporanChanged $event) use ($operator) {
+        return $event->action === 'created'
+            && in_array($operator->id, $event->operatorUserIds, true);
+    });
+
+    Event::assertNotDispatched(DashboardUpdated::class);
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.input-data.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->missing('isLiveEnabled'));
+
+    actingAs($operator)
+        ->get(route('dashboard.operator.input-data.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->missing('isLiveEnabled'));
+});
+
+test('dashboard mengikuti pengaturan dashboard_live_enabled termasuk saat bernilai lama atau belum diset', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin, 'is_active' => true]);
+    $operator = User::factory()->create(['role' => UserRole::Operator, 'is_active' => true]);
+
+    Setting::set('dashboard_live_enabled', '0');
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('isLiveEnabled', false));
+
+    actingAs($operator)
+        ->get(route('dashboard.operator.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('isLiveEnabled', false));
+
+    Setting::set('dashboard_live_enabled', '1');
+
+    actingAs($admin)
+        ->get(route('dashboard.admin.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('isLiveEnabled', true));
 });

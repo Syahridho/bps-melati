@@ -6,6 +6,7 @@ use App\Models\AuditFlag;
 use App\Models\AuditLog;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\ClientIpResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -65,7 +66,7 @@ class AuditFlagDetector
         $ticket->loadMissing(['assignedTo', 'responses']);
 
         $completedAt = $ticket->completed_at ?? now();
-        $reporterIp = $request?->ip() ?? $auditLog->ip;
+        $reporterIp = ClientIpResolver::resolve($request) ?? ClientIpResolver::normalize($auditLog->ip);
         $rating = $ticket->rating;
 
         // Balasan operator terakhir sebelum penutupan.
@@ -88,7 +89,7 @@ class AuditFlagDetector
             ->latest('created_at')
             ->first();
 
-        $picIp = $replyAuditLog?->ip;
+        $picIp = ClientIpResolver::normalize($replyAuditLog?->ip);
 
         $diffSeconds = null;
         if ($lastReplyAt !== null) {
@@ -98,10 +99,24 @@ class AuditFlagDetector
             }
         }
 
+        $hasLoopbackIp = ClientIpResolver::isLoopback($reporterIp) || ClientIpResolver::isLoopback($picIp);
+        $sameNonLoopbackIp = $reporterIp !== null
+            && $picIp !== null
+            && ! $hasLoopbackIp
+            && ClientIpResolver::equals($reporterIp, $picIp);
+
+        if ($hasLoopbackIp && (bool) config('audit.flags.jaringan_sama.enabled', true)) {
+            Log::warning('Deteksi jaringan_sama dilewati karena IP loopback/tidak valid (cek konfigurasi TRUSTED_PROXIES / reverse proxy).', [
+                'ticket_id' => $ticket->id,
+                'ticket_number' => $ticket->ticket_number,
+                'reporter_ip' => $reporterIp,
+                'pic_ip' => $picIp,
+            ]);
+        }
+
         // 1. jaringan_sama
         if ((bool) config('audit.flags.jaringan_sama.enabled', true)
-            && $reporterIp !== null && $picIp !== null
-            && $reporterIp === $picIp
+            && $sameNonLoopbackIp
             && ! $this->isIgnoredIp($reporterIp)) {
             $this->createFlag(
                 AuditFlag::TYPE_JARINGAN_SAMA,
@@ -160,7 +175,7 @@ class AuditFlagDetector
             if ($tingkat !== null) {
                 // Penguat
                 $boost = false;
-                if ($reporterIp !== null && $picIp !== null && $reporterIp === $picIp) {
+                if ($sameNonLoopbackIp) {
                     $boost = true;
                 }
                 if ($rating === 5) {
@@ -176,7 +191,7 @@ class AuditFlagDetector
 
                 // Pelemah
                 $weaken = false;
-                if ($replyLength >= 100 && ($reporterIp === null || $picIp === null || $reporterIp !== $picIp)) {
+                if ($replyLength >= 100 && ! $sameNonLoopbackIp) {
                     $weaken = true;
                 }
 
@@ -188,7 +203,7 @@ class AuditFlagDetector
                 }
 
                 $catatan = "Tiket ditutup {$diffSeconds} detik setelah balasan operator";
-                if ($reporterIp !== null && $picIp !== null && $reporterIp === $picIp) {
+                if ($sameNonLoopbackIp) {
                     $catatan .= ', IP sama dengan PIC';
                 }
                 $catatan .= '.';
@@ -216,6 +231,7 @@ class AuditFlagDetector
         // 4. rating_beruntun_ip
         if ((bool) config('audit.flags.rating_beruntun_ip.enabled', true)
             && $reporterIp !== null
+            && ! ClientIpResolver::isLoopback($reporterIp)
             && ! $this->isIgnoredIp($reporterIp)) {
             $windowMinutes = (int) config('audit.flags.rating_beruntun_ip.window_minutes', 60);
             $threshold = (int) config('audit.flags.rating_beruntun_ip.threshold', 3);

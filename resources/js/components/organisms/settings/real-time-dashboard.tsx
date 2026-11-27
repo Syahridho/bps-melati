@@ -13,11 +13,11 @@ export default function RealTimeDashboard({ enabled, processing, onToggle }: Rea
         <div className="flex items-center justify-between gap-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
             <div className="space-y-0.5">
                 <Label htmlFor="dashboard_live_enabled" className="text-sm font-medium">
-                    Pembaruan Realtime Dashboard
+                    Live Dashboard
                 </Label>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Aktifkan pembaruan data real-time via WebSocket di dashboard admin & operator. Bila dimatikan, halaman harus di-refresh manual
-                    untuk melihat data terbaru guna menghemat beban server.
+                    Aktifkan pembaruan data real-time via WebSocket khusus untuk halaman Dashboard admin & operator. Pengaturan ini tidak
+                    memengaruhi halaman Input Data maupun daftar laporan lainnya (tetap live).
                 </p>
             </div>
 

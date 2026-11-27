@@ -173,11 +173,6 @@ class TicketObserver
             return;
         }
 
-        // Cek pengaturan apakah fitur live dashboard dinonaktifkan
-        if (! (bool) Setting::get('dashboard_live_enabled', true)) {
-            return;
-        }
-
         event(new LaporanChanged(
             action: $action,
             ticketId: (int) $ticket->id,

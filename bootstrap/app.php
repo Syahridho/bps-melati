@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureSingleSession;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
+use App\Support\ClientIpResolver;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,6 +25,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $proxies = ClientIpResolver::configuredProxies();
+        if ($proxies !== null) {
+            $middleware->trustProxies(
+                at: $proxies,
+                headers: Request::HEADER_X_FORWARDED_FOR
+                    | Request::HEADER_X_FORWARDED_HOST
+                    | Request::HEADER_X_FORWARDED_PORT
+                    | Request::HEADER_X_FORWARDED_PROTO,
+            );
+        }
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'api.key' => EnsureApiKeyIsValid::class,

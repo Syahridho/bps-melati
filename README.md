@@ -364,6 +364,33 @@ worker.
     sudo systemctl reload nginx
     ```
 
+    ### Konfigurasi Reverse Proxy & IP Asli Pengguna (`TRUSTED_PROXIES`)
+
+    Jika aplikasi berada di belakang reverse proxy (Nginx, Caddy, Docker, atau Cloudflare),
+    konfigurasikan `TRUSTED_PROXIES` pada `.env` agar `ClientIpResolver` membaca IP asli
+    pengguna, bukan `127.0.0.1`:
+
+    - **Nginx di server yang sama**:
+      ```nginx
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header Host $host;
+      ```
+      Isi `.env`:
+      ```env
+      TRUSTED_PROXIES=127.0.0.1,::1
+      ```
+    - **Docker / Proxy di jaringan internal**: tambahkan CIDR jaringan proxy, misalnya
+      `TRUSTED_PROXIES=127.0.0.1,::1,172.16.0.0/12`.
+    - **Cloudflare di depan Nginx**: pastikan server hanya menerima trafik dari Nginx/Cloudflare,
+      set `TRUSTED_PROXIES` ke IP Nginx lokal (atau daftar IP/CIDR proxy tepercaya).
+      Header `CF-Connecting-IP` hanya akan dipercaya oleh aplikasi jika `REMOTE_ADDR` berasal
+      dari proxy yang terdaftar di `TRUSTED_PROXIES` (mencegah pemalsuan header).
+    - **Peringatan `*`**: jangan memakai `TRUSTED_PROXIES=*` kecuali port PHP/Nginx upstream
+      benar-benar tertutup dari akses internet langsung.
+    - Verifikasi dengan `php artisan ip:diagnose` setelah `php artisan config:clear` dan `php artisan queue:restart`.
+
 10. Sesuaikan PHP-FPM agar lampiran pada tiket dapat diterima.
 
     ```ini

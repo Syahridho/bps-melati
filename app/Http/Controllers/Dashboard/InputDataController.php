@@ -199,7 +199,6 @@ class InputDataController extends Controller
             'channels' => $channels,
             'filters' => $filter->toFilterProps($frontendFilterKey),
             'counts' => $counts,
-            'isLiveEnabled' => (bool) Setting::get('dashboard_live_enabled', true),
         ]);
     }
 

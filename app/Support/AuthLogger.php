@@ -65,7 +65,7 @@ final class AuthLogger
             'event' => $event,
             'email_hash' => $attemptedEmail !== null ? self::hashEmail($attemptedEmail) : null,
             'email_masked' => $attemptedEmail !== null ? self::maskEmail($attemptedEmail) : null,
-            'ip_address' => $request?->ip(),
+            'ip_address' => ClientIpResolver::resolve($request),
             'user_agent' => $request !== null ? UserAgentParser::summarize($request->userAgent()) : null,
             'context' => $context ?? self::contextFrom($request),
             'meta' => $extra === [] ? null : $extra,
@@ -112,7 +112,7 @@ final class AuthLogger
             'actor_name' => $user?->name,
             'actor_role' => $user?->role?->value,
             'ticket_id' => null,
-            'ip' => $request?->ip(),
+            'ip' => ClientIpResolver::resolve($request),
             'user_agent' => $request?->userAgent(),
             'meta' => array_filter($meta, static fn ($value): bool => $value !== null),
         ];

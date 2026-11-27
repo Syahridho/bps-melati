@@ -8,6 +8,7 @@ use App\Exceptions\AccountInUseException;
 use App\Exceptions\InvalidCredentialsException;
 use App\Models\User;
 use App\Support\AuthLogger;
+use App\Support\ClientIpResolver;
 use App\Support\IpMasker;
 use App\Support\UserAgentParser;
 use Illuminate\Http\Request;
@@ -146,7 +147,7 @@ class AuthenticateUser
             'current_session_id' => $request->session()->getId(),
             'last_activity_at' => now(),
             'last_login_at' => now(),
-            'last_login_ip' => $request->ip(),
+            'last_login_ip' => ClientIpResolver::resolve($request) ?? $request->ip(),
             'last_login_agent' => UserAgentParser::summarize($request->userAgent()),
         ])->save();
     }

@@ -6,6 +6,7 @@ use App\Events\AuditLogCreated;
 use App\Models\AuditLog;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\ClientIpResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -47,7 +48,7 @@ final class AuditLogger
             'actor_name' => $actor?->name,
             'actor_role' => $actor?->role?->value,
             'ticket_id' => $ticket?->id,
-            'ip' => $request?->ip(),
+            'ip' => ClientIpResolver::resolve($request),
             'user_agent' => $request?->userAgent(),
             'meta' => $meta === [] ? null : $meta,
         ], $broadcast, $ticket?->ticket_number);

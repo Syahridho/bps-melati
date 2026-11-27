@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { useConnectionStatus, useEcho } from '@laravel/echo-react';
+import { type ConnectionStatus, useConnectionStatus, useEcho } from '@laravel/echo-react';
 import { useCallback, useEffect, useRef } from 'react';
 
 const RELOAD_DEBOUNCE_MS = 500;
@@ -61,6 +61,8 @@ export interface LaporanChangedEvent {
 export interface UseLaporanRealtimeResult {
     /** True selama kanal Reverb terhubung. */
     isLive: boolean;
+    /** Status koneksi WebSocket saat ini. */
+    connectionStatus: ConnectionStatus;
 }
 
 export function useLaporanRealtime({
@@ -176,5 +178,5 @@ export function useLaporanRealtime({
         };
     }, []);
 
-    return { isLive: connectionStatus === 'connected' };
+    return { isLive: connectionStatus === 'connected', connectionStatus };
 }

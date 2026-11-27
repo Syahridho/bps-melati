@@ -1,4 +1,3 @@
-import { ConnectionIndicator } from '@/components/atoms/connection-indicator';
 import { ActiveFilterBar } from '@/components/molecules/active-filter-bar';
 import { AlertBanner } from '@/components/molecules/alert-banner';
 import { ChannelFilter } from '@/components/molecules/channel-filter';
@@ -10,8 +9,6 @@ import { TicketList } from '@/components/organisms/ticket-list/ticket-list';
 import { Button } from '@/components/ui/button';
 import { useFlashMessage } from '@/hooks/use-flash-message';
 import { useInputDataFilters } from '@/hooks/use-input-data-filters';
-import { useNewTicketToast } from '@/hooks/use-new-ticket-toast';
-import { useLaporanRealtime } from '@/hooks/use-reports-realtime';
 import AdminPage from '@/layouts/dashboard/page';
 import { buildChannelFilterChips } from '@/lib/channel-filter';
 import { buildActiveFilters } from '@/lib/report-list';
@@ -22,7 +19,7 @@ import { useState } from 'react';
 import InputDataAddTicketDialog from './add-ticket-dialog';
 
 export default function InputDataView() {
-    const { auth, tickets, channels, filters, counts, flash, isLiveEnabled = true } = usePage<InputDataPageProps>().props;
+    const { auth, tickets, channels, filters, counts, flash } = usePage<InputDataPageProps>().props;
     const routePrefix = auth.user.role === 'admin' ? 'dashboard.admin' : 'dashboard.operator';
 
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -40,18 +37,18 @@ export default function InputDataView() {
         handleResetFilters,
     } = useInputDataFilters(routePrefix, filters);
 
-    const searching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
-    const handleNewTicket = useNewTicketToast({
-        enabled: auth.user.role === 'admin',
-        routePrefix,
-    });
+    // const searching = searchQuery.trim() !== '' && searchQuery !== (filters.search || '');
+    // const handleNewTicket = useNewTicketToast({
+    //     enabled: auth.user.role === 'admin',
+    //     routePrefix,
+    // });
 
-    const { isLive } = useLaporanRealtime({
-        isBusy: flagPopoverOpen,
-        searching,
-        only: ['tickets', 'counts'],
-        onCreated: handleNewTicket,
-    });
+    // const { isLive, connectionStatus } = useLaporanRealtime({
+    //     isBusy: flagPopoverOpen,
+    //     searching,
+    //     only: ['tickets', 'counts'],
+    //     onCreated: handleNewTicket,
+    // });
 
     const channelChips = buildChannelFilterChips(channels, filters.channels).map((chip) => ({
         key: chip.key,
@@ -83,7 +80,7 @@ export default function InputDataView() {
                         <p className="text-muted-foreground text-sm">Kelola dan tambahkan laporan, aspirasi, atau permintaan informasi baru.</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                        <ConnectionIndicator isLive={isLive} isLiveEnabled={isLiveEnabled} />
+                        {/* <ConnectionIndicator isLive={isLive} connectionStatus={connectionStatus} /> */}
                         <Button onClick={() => setIsAddDialogOpen(true)} className="gap-2">
                             <Plus className="h-4 w-4" />
                             Tambah Data Baru
@@ -98,9 +95,7 @@ export default function InputDataView() {
                         from={filters.from}
                         to={filters.to}
                         onRangeChange={handleRangeChange}
-                        channelFilter={
-                            <ChannelFilter channels={channels} value={filters.channels} onApply={handleChannelChange} />
-                        }
+                        channelFilter={<ChannelFilter channels={channels} value={filters.channels} onApply={handleChannelChange} />}
                     />
 
                     <ActiveFilterBar items={activeFilters} onReset={handleResetFilters} />
