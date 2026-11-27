@@ -53,7 +53,7 @@ test('admin is notified and can filter tickets whose pic is no longer active', f
     expect($operator->fresh()->is_available)->toBeFalse()
         ->and(Ticket::withoutActivePic()->count())->toBe(1);
 
-    $notification = $admin->notifications()->first();
+    $notification = $admin->notifications()->where('data->type', 'tiket_yatim')->first();
 
     expect($notification)->not->toBeNull()
         ->and($notification->data['type'])->toBe('tiket_yatim');

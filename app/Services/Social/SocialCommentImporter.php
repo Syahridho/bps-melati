@@ -2,19 +2,16 @@
 
 namespace App\Services\Social;
 
-use App\Enums\UserRole;
 use App\Events\TicketCreated;
 use App\Models\Channel;
 use App\Models\Ticket;
-use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\NewReportNotificationService;
 use App\Services\TicketAssignmentService;
-use App\Support\ProfanityFilter;
 use App\Support\SafeBroadcast;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -22,7 +19,7 @@ class SocialCommentImporter
 {
     public function __construct(
         private readonly TicketAssignmentService $assignmentService,
-        private readonly ProfanityFilter $profanityFilter,
+        private readonly NewReportNotificationService $notifier,
     ) {}
 
     /**
@@ -30,98 +27,114 @@ class SocialCommentImporter
      */
     public function import(string $platform, Channel $channel, array $comments, ?Carbon $since = null): int
     {
-        $created = 0;
+        $createdTickets = NewReportNotificationService::withoutNotifications(function () use ($platform, $channel, $comments, $since): array {
+            $createdTickets = [];
 
-        foreach ($comments as $comment) {
-            if (trim($comment->content) === '') {
-                continue;
-            }
+            foreach ($comments as $comment) {
+                if (trim($comment->content) === '') {
+                    continue;
+                }
 
-            if ($since !== null && $comment->occurredAt->lessThanOrEqualTo($since)) {
-                continue;
-            }
+                if ($since !== null && $comment->occurredAt->lessThanOrEqualTo($since)) {
+                    continue;
+                }
 
-            if ($this->isOwnAccount($platform, $comment)) {
-                continue;
-            }
+                if ($this->isOwnAccount($platform, $comment)) {
+                    continue;
+                }
 
-            // Dedupe cepat via Redis (TTL 90 hari) dengan kunci sumber "platform:external_id".
-            $dedupeKey = 'social_import:dedupe:'.md5($platform.':'.$comment->externalId);
-            if (! Cache::add($dedupeKey, true, now()->addDays(90))) {
-                // Kunci sudah ada di cache: anggap duplikat, tapi tetap cek DB untuk keamanan.
+                // Dedupe cepat via Redis (TTL 90 hari) dengan kunci sumber "platform:external_id".
+                $dedupeKey = 'social_import:dedupe:'.md5($platform.':'.$comment->externalId);
+                if (! Cache::add($dedupeKey, true, now()->addDays(90))) {
+                    // Kunci sudah ada di cache: anggap duplikat, tapi tetap cek DB untuk keamanan.
+                    if (Ticket::query()
+                        ->where('channel_id', $channel->id)
+                        ->where('external_id', $comment->externalId)
+                        ->exists()) {
+                        continue;
+                    }
+                }
+
                 if (Ticket::query()
                     ->where('channel_id', $channel->id)
                     ->where('external_id', $comment->externalId)
                     ->exists()) {
                     continue;
                 }
-            }
 
-            if (Ticket::query()
-                ->where('channel_id', $channel->id)
-                ->where('external_id', $comment->externalId)
-                ->exists()) {
-                continue;
-            }
-
-            // Penanda komentar yang sudah dinilai (bukan laporan), berbasis version aturan.
-            $skipKey = 'social_import:skipped:'.md5($platform.':'.$comment->externalId);
-            $rules = app(RuleRepository::class)->rules();
-            $rulesVersion = (int) ($rules['version'] ?? 1);
-            $skipVersion = Cache::get($skipKey);
-            if ($skipVersion !== null && (int) $skipVersion >= $rulesVersion) {
-                // Sudah dinilai dengan aturan versi ini atau lebih baru: lewati.
-                continue;
-            }
-
-            // Klasifikasi berbasis aturan sebelum menyimpan.
-            $classifier = app(CommentClassifier::class);
-            $result = $classifier->classify((string) $comment->content, $rules);
-            if (($result['jenis'] ?? null) === null) {
-                Log::info('Komentar sosial dilewati (bukan laporan).', [
-                    'platform' => $platform,
-                    'external_id' => $comment->externalId,
-                    'alasan' => $result['alasan'] ?? '',
-                ]);
-                Cache::put($skipKey, $rulesVersion, now()->addDays(90));
-
-                continue;
-            }
-
-            try {
-                $ticket = $this->createTicket($platform, $channel, $comment, (string) $result['jenis']);
-            } catch (QueryException $e) {
-                // Race condition: unique index (channel_id, external_id) menang.
-                if ($this->isUniqueViolation($e)) {
+                // Penanda komentar yang sudah dinilai (bukan laporan), berbasis version aturan.
+                $skipKey = 'social_import:skipped:'.md5($platform.':'.$comment->externalId);
+                $rules = app(RuleRepository::class)->rules();
+                $rulesVersion = (int) ($rules['version'] ?? 1);
+                $skipVersion = Cache::get($skipKey);
+                if ($skipVersion !== null && (int) $skipVersion >= $rulesVersion) {
+                    // Sudah dinilai dengan aturan versi ini atau lebih baru: lewati.
                     continue;
                 }
 
-                throw $e;
+                // Klasifikasi berbasis aturan sebelum menyimpan.
+                $classifier = app(CommentClassifier::class);
+                $result = $classifier->classify((string) $comment->content, $rules);
+                if (($result['jenis'] ?? null) === null) {
+                    Log::info('Komentar sosial dilewati (bukan laporan).', [
+                        'platform' => $platform,
+                        'external_id' => $comment->externalId,
+                        'alasan' => $result['alasan'] ?? '',
+                    ]);
+                    Cache::put($skipKey, $rulesVersion, now()->addDays(90));
+
+                    continue;
+                }
+
+                try {
+                    $ticket = $this->createTicket($platform, $channel, $comment, (string) $result['jenis']);
+                } catch (QueryException $e) {
+                    // Race condition: unique index (channel_id, external_id) menang.
+                    if ($this->isUniqueViolation($e)) {
+                        continue;
+                    }
+
+                    throw $e;
+                }
+
+                $this->cacheTicket($ticket);
+                SafeBroadcast::send('TicketCreated', fn () => TicketCreated::dispatch($ticket), [
+                    'ticket_id' => $ticket->id,
+                    'ticket_number' => $ticket->ticket_number,
+                ]);
+
+                AuditLogger::log(
+                    eventType: 'social_import.ticket_created',
+                    category: 'ticket',
+                    actor: null,
+                    ticket: $ticket,
+                    meta: [
+                        'platform' => $platform,
+                        'external_id' => $comment->externalId,
+                        'channel' => $channel->slug,
+                    ],
+                );
+
+                $createdTickets[] = $ticket;
             }
 
-            $this->notifyStaff($ticket);
-            $this->cacheTicket($ticket);
-            SafeBroadcast::send('TicketCreated', fn () => TicketCreated::dispatch($ticket), [
-                'ticket_id' => $ticket->id,
-                'ticket_number' => $ticket->ticket_number,
-            ]);
+            return $createdTickets;
+        });
 
-            AuditLogger::log(
-                eventType: 'social_import.ticket_created',
-                category: 'ticket',
-                actor: null,
-                ticket: $ticket,
-                meta: [
-                    'platform' => $platform,
-                    'external_id' => $comment->externalId,
-                    'channel' => $channel->slug,
-                ],
-            );
+        $createdCount = count($createdTickets);
+        $pushSent = $createdCount > 0
+            ? $this->notifier->notifyBatch($this->platformLabel($platform), $createdTickets)
+            : 0;
 
-            $created++;
-        }
+        Log::info('Ringkasan impor komentar sosial.', [
+            'platform' => $platform,
+            'channel' => $channel->slug,
+            'fetched' => count($comments),
+            'created' => $createdCount,
+            'push_sent' => $pushSent,
+        ]);
 
-        return $created;
+        return $createdCount;
     }
 
     private function createTicket(string $platform, Channel $channel, NormalizedSocialComment $comment, ?string $classification = null): Ticket
@@ -133,12 +146,7 @@ class SocialCommentImporter
             $period
         );
 
-        $platformLabel = match ($platform) {
-            'youtube' => 'YouTube',
-            'facebook' => 'Facebook',
-            'instagram' => 'Instagram',
-            default => ucfirst($platform),
-        };
+        $platformLabel = $this->platformLabel($platform);
 
         return $this->assignmentService->createTicket([
             'ticket_number' => $generated['ticket_number'],
@@ -166,33 +174,14 @@ class SocialCommentImporter
         ], "Ditugaskan otomatis (Round Robin, Import {$platformLabel})");
     }
 
-    private function notifyStaff(Ticket $ticket): void
+    private function platformLabel(string $platform): string
     {
-        $recipients = User::query()
-            ->where('is_active', true)
-            ->whereIn('role', [UserRole::Admin, UserRole::Operator, UserRole::OperatorTim])
-            ->get();
-
-        foreach ($recipients as $recipient) {
-            DB::table('notifications')->insert([
-                'id' => Str::uuid()->toString(),
-                'type' => 'laporan_masuk',
-                'notifiable_type' => User::class,
-                'notifiable_id' => $recipient->id,
-                'data' => json_encode([
-                    'id' => $ticket->id,
-                    'ticket_number' => $ticket->ticket_number,
-                    'type' => $ticket->classification,
-                    'title' => 'Laporan baru masuk',
-                    'message' => $this->profanityFilter->censor(Str::limit((string) ($ticket->title ?? $ticket->content), 100)),
-                    'url' => '/dashboard/admin/incoming-reports/'.$ticket->ticket_number,
-                    'actor_name' => $ticket->reporter_name ?? null,
-                ]),
-                'read_at' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+        return match ($platform) {
+            'youtube' => 'YouTube',
+            'facebook' => 'Facebook',
+            'instagram' => 'Instagram',
+            default => ucfirst($platform),
+        };
     }
 
     private function cacheTicket(Ticket $ticket): void

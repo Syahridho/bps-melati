@@ -40,25 +40,35 @@ class TicketAssignmentService
         $mode = $this->currentMode();
 
         if ($mode !== AssignmentMode::RoundRobin) {
-            return DB::transaction(fn (): Ticket => Ticket::create(array_merge($attributes, [
-                'assignment_mode' => $mode->value,
-            ])));
+            $ticket = NewReportNotificationService::withoutNotifications(
+                fn (): Ticket => DB::transaction(fn (): Ticket => Ticket::create(array_merge($attributes, [
+                    'assignment_mode' => $mode->value,
+                ])))
+            );
+
+            app(NewReportNotificationService::class)->notifyForTicket($ticket);
+
+            return $ticket;
         }
 
         // Lock Redis lintas transaksi: dua tiket yang masuk bersamaan tidak
         // boleh membaca pointer giliran yang sama.
-        return Cache::lock(self::ROUND_ROBIN_LOCK, 10)->block(5, function () use ($attributes, $autoAssignNote): Ticket {
+        $ticket = Cache::lock(self::ROUND_ROBIN_LOCK, 10)->block(5, function () use ($attributes, $autoAssignNote): Ticket {
             $assignedUserId = null;
 
-            $ticket = DB::transaction(function () use ($attributes, $autoAssignNote, &$assignedUserId): Ticket {
-                $ticket = Ticket::create(array_merge($attributes, [
-                    'assignment_mode' => AssignmentMode::RoundRobin->value,
-                ]));
+            $ticket = NewReportNotificationService::withoutNotifications(
+                function () use ($attributes, $autoAssignNote, &$assignedUserId): Ticket {
+                    return DB::transaction(function () use ($attributes, $autoAssignNote, &$assignedUserId): Ticket {
+                        $ticket = Ticket::create(array_merge($attributes, [
+                            'assignment_mode' => AssignmentMode::RoundRobin->value,
+                        ]));
 
-                $assignedUserId = $this->assignRoundRobinLocked($ticket, $autoAssignNote);
+                        $assignedUserId = $this->assignRoundRobinLocked($ticket, $autoAssignNote);
 
-                return $ticket;
-            });
+                        return $ticket;
+                    });
+                }
+            );
 
             if ($assignedUserId === null) {
                 $this->notifyNoEligibleOperator($ticket);
@@ -66,6 +76,10 @@ class TicketAssignmentService
 
             return $ticket;
         });
+
+        app(NewReportNotificationService::class)->notifyForTicket($ticket);
+
+        return $ticket;
     }
 
     /**

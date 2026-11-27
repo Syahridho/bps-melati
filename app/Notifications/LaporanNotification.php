@@ -91,7 +91,7 @@ class LaporanNotification extends Notification implements ShouldQueue
             return false;
         }
 
-        $key = 'notification:dedup:'.$this->type.':'.($this->data['ticket_number'] ?? '').':'.(int) $notifiable->getKey();
+        $key = 'notification:dedup:'.$this->type.':'.($this->data['ticket_number'] ?? $this->data['batch_key'] ?? '').':'.(int) $notifiable->getKey();
         $ttl = config('notifications.dedup_ttl_seconds', 300);
 
         if (Cache::has($key)) {
@@ -288,6 +288,29 @@ class LaporanNotification extends Notification implements ShouldQueue
                 'title' => 'Data tiket baru ditambahkan',
                 'message' => Str::limit((string) ($ticket->title ?? $ticket->content ?? ''), 100),
                 'url' => '/dashboard/admin/input-data/'.$ticket->ticket_number,
+                'actor_name' => null,
+            ],
+            recipientUserIds: $recipientUserIds,
+        );
+    }
+
+    /**
+     * Buat payload ringkasan notifikasi untuk batch import sosial (> 5 tiket baru).
+     *
+     * @param  array<int, int>  $recipientUserIds
+     */
+    public static function forNewSocialBatch(string $platformLabel, int $count, array $recipientUserIds = []): self
+    {
+        return new self(
+            type: 'laporan_masuk',
+            data: [
+                'id' => 0,
+                'ticket_number' => null,
+                'batch_key' => 'social-batch:'.strtolower($platformLabel).':'.now()->format('YmdHis'),
+                'type' => 'pengaduan',
+                'title' => "{$count} laporan baru masuk dari {$platformLabel}",
+                'message' => "Terdapat {$count} laporan baru dari {$platformLabel} yang perlu ditindaklanjuti.",
+                'url' => '/dashboard/admin/incoming-reports',
                 'actor_name' => null,
             ],
             recipientUserIds: $recipientUserIds,

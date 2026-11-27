@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\NewReportNotificationService;
 use Illuminate\Support\Facades\Cache;
 
 class TicketObserver
@@ -21,6 +22,7 @@ class TicketObserver
     {
         $this->dispatchThrottled('created', $ticket);
         $this->dispatchLaporanChanged('created', $ticket);
+        app(NewReportNotificationService::class)->notifyForTicket($ticket);
     }
 
     /**
